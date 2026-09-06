@@ -116,7 +116,7 @@ export default function PropertiesPanel({ selectedNode, onUpdateNode, onAddVaria
 
   return (
     <div 
-      className={`absolute right-0 top-1/2 -translate-y-1/2 max-h-[90vh] w-[340px] p-5 flex flex-col z-[150] overflow-y-auto custom-scrollbar transition-all duration-300 ${extraClasses || 'border-l-2 border-y-2 rounded-l-2xl'}`}
+      className={`absolute right-0 top-20 bottom-5 w-[340px] p-5 flex flex-col z-[150] overflow-y-auto custom-scrollbar transition-all duration-300 ${extraClasses || 'border-l-2 border-t-2 border-b-2 rounded-tl-2xl rounded-bl-2xl'}`}
       style={customPanelStyle}
     >
       <div className="flex justify-between items-center mb-6 shrink-0">
@@ -128,42 +128,42 @@ export default function PropertiesPanel({ selectedNode, onUpdateNode, onAddVaria
         </button>
       </div>
 
-      <div className="space-y-4 flex-1">
-        <div>
-          <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider opacity-70">Título del Paso</label>
-          <input
-            type="text"
-            value={data.title || ''}
-            onChange={(e) => handleChange('title', e.target.value)}
-            className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none transition-colors"
-            style={{ backgroundColor: "var(--theme-bg)", border: "1px solid var(--theme-border)", color: "var(--theme-text)" }}
-            placeholder="Ej. Redactor Publicitario"
-          />
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-             <div className="flex items-center gap-2"><label className="block text-xs font-semibold uppercase tracking-wider opacity-70">Instrucción / Prompt</label><button onClick={() => playTTS(data.content as string)} className="opacity-50 hover:opacity-100 transition-opacity"><Volume2 size={14} className="text-emerald-400"/></button></div>
-             {isAgentConfigurable && (
-               <button 
-                 onClick={handleAutoSuggest} 
-                 disabled={isSuggesting || !data.content}
-                 title="Generar configuración con IA"
-                 className="text-[10px] px-2 py-1 rounded flex items-center gap-1 transition-colors disabled:opacity-50"
-                 style={{ backgroundColor: "var(--theme-border)", color: "var(--theme-text)" }}
-               >
-                 {isSuggesting ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
-                 <span>Autocompletar</span>
-               </button>
-             )}
+        <div className="space-y-4 flex-1 flex flex-col min-h-0">
+          <div className="shrink-0">
+            <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider opacity-70">Título del Paso</label>
+            <input
+              type="text"
+              value={data.title || ''}
+              onChange={(e) => handleChange('title', e.target.value)}
+              className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none transition-colors"
+              style={{ backgroundColor: "var(--theme-bg)", border: "1px solid var(--theme-border)", color: "var(--theme-text)" }}
+              placeholder="Ej. Redactor Publicitario"
+            />
           </div>
-          <textarea
-            value={data.content || ''}
-            onChange={(e) => handleChange('content', e.target.value)}
-            className="w-full min-h-[220px] rounded-lg px-3 py-2 text-sm focus:outline-none transition-colors resize-y theme-input"
-            placeholder="Describe la tarea que debe realizar este nodo..."
-          />
-        </div>
+  
+          <div className="flex-1 flex flex-col min-h-[220px]">
+            <div className="flex items-center justify-between mb-1.5 shrink-0">
+               <div className="flex items-center gap-2"><label className="block text-xs font-semibold uppercase tracking-wider opacity-70">Instrucción / Prompt</label><button onClick={() => playTTS(data.content as string)} className="opacity-50 hover:opacity-100 transition-opacity"><Volume2 size={14} className="text-emerald-400"/></button></div>
+               {isAgentConfigurable && (
+                 <button 
+                   onClick={handleAutoSuggest} 
+                   disabled={isSuggesting || !data.content}
+                   title="Generar configuración con IA"
+                   className="text-[10px] px-2 py-1 rounded flex items-center gap-1 transition-colors disabled:opacity-50"
+                   style={{ backgroundColor: "var(--theme-border)", color: "var(--theme-text)" }}
+                 >
+                   {isSuggesting ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                   <span>Autocompletar</span>
+                 </button>
+               )}
+            </div>
+            <textarea
+              value={data.content || ''}
+              onChange={(e) => handleChange('content', e.target.value)}
+              className="w-full flex-1 rounded-lg px-3 py-2 text-sm focus:outline-none transition-colors resize-y theme-input"
+              placeholder="Describe la tarea que debe realizar este nodo..."
+            />
+          </div>
 
         {isAgentConfigurable && (
           <>

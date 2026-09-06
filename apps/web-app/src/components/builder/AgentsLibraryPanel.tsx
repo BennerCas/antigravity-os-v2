@@ -46,7 +46,7 @@ export default function AgentsLibraryPanel({ onClose, onAddAgent }: AgentsLibrar
 
   return (
     <div 
-      className="absolute left-0 top-1/2 -translate-y-1/2 max-h-[90vh] h-[800px] w-[360px] p-5 flex flex-col z-[150] overflow-hidden transition-all duration-300 border-r-2 border-y-2 rounded-r-2xl shadow-2xl"
+      className="w-full h-full flex-grow flex flex-col overflow-hidden min-h-0 transition-all duration-300 border-r-2 border-t-2 border-b-2 rounded-tr-2xl rounded-br-2xl shadow-2xl p-5 pointer-events-auto"
       style={customPanelStyle}
     >
       <div className="flex justify-between items-center mb-2 shrink-0">

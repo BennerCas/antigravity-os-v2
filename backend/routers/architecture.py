@@ -46,7 +46,7 @@ from routers.search import (
     LEAK_DETECTOR_SYSTEM, KEY_ROTATOR_SYSTEM, ACCESS_AUDITOR_SYSTEM,
     CRYPTO_GUARDIAN_SYSTEM, SECRET_INJECTOR_SYSTEM, ZERO_TRUST_ENFORCER_SYSTEM,
     COMPLIANCE_REPORTER_SYSTEM, ANOMALY_DETECTOR_SYSTEM, CERTIFICATE_MANAGER_SYSTEM,
-    DYNAMIC_SECRETS_ISSUER_SYSTEM, SHAMIR_UNSEALER_SYSTEM
+    DYNAMIC_SECRETS_ISSUER_SYSTEM, SHAMIR_UNSEALER_SYSTEM, FLOW_GENERATOR_SYSTEM
 )
 
 router = APIRouter(prefix="/architecture", tags=["Architecture"])
@@ -303,7 +303,8 @@ def get_architecture():
                     {"key": "anomaly_detector", "used_at": "Vault (Escudo)", "text": ANOMALY_DETECTOR_SYSTEM, "explanation": "Bloquea claves instantáneamente si detecta uso desde IPs maliciosas o picos inusuales."},
                     {"key": "certificate_manager", "used_at": "Vault (SSL)", "text": CERTIFICATE_MANAGER_SYSTEM, "explanation": "Renueva certificados TLS de forma automática para evitar que dominios expiren."},
                     {"key": "dynamic_secrets_issuer", "used_at": "Vault (DBs)", "text": DYNAMIC_SECRETS_ISSUER_SYSTEM, "explanation": "Crea usuarios de Base de Datos efímeros (ej. válidos solo por 10 minutos) y luego los destruye."},
-                    {"key": "shamir_unsealer", "used_at": "Vault (Root)", "text": SHAMIR_UNSEALER_SYSTEM, "explanation": "Divide la Master Key en 5 fragmentos. Exige quorum (3 de 5) para reiniciar el sistema en crisis."}
+                    {"key": "shamir_unsealer", "used_at": "Vault (Root)", "text": SHAMIR_UNSEALER_SYSTEM, "explanation": "Divide la Master Key en 5 fragmentos. Exige quorum (3 de 5) para reiniciar el sistema en crisis."},
+                    {"key": "flow_generator", "used_at": "Builder (Co-Piloto)", "text": FLOW_GENERATOR_SYSTEM, "explanation": "Arquitecto generador de flujos JSON (nodos y edges) a partir de lenguaje natural."}
                 ]
             }
         ]

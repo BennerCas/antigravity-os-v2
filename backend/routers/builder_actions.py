@@ -14,6 +14,7 @@ import os
 # Credenciales centralizadas (backend/.env local, fallback legacy)
 import config  # noqa: F401  (carga dotenv al importar)
 import db
+from routers.search import FLOW_GENERATOR_SYSTEM
 
 db.init_db()
 
@@ -501,3 +502,34 @@ async def engine_status():
         "local": {"provider": "ollama", "model": "hermes3:8b", "ready": local_ready},
         "ollama_models": ollama_models[:12],
     }
+
+
+class GenerateFlowRequest(BaseModel):
+    prompt: str
+
+@router.post("/generate_flow")
+async def generate_flow(req: GenerateFlowRequest):
+    """Generador Mágico: Crea nodos y edges desde lenguaje natural."""
+    system = FLOW_GENERATOR_SYSTEM
+    user_prompt = f"Requerimiento del usuario: {req.prompt}"
+    
+    try:
+        response_text, model_used = await call_ai(system, user_prompt)
+        # Parse the JSON string
+        try:
+            # Encontrar el primer '{' y el ultimo '}' por si acaso el modelo escupio texto extra
+            start = response_text.find('{')
+            end = response_text.rfind('}') + 1
+            if start != -1 and end != 0:
+                json_str = response_text[start:end]
+                data = json.loads(json_str)
+            else:
+                data = json.loads(response_text)
+                
+            return {"status": "success", "model": model_used, "data": data}
+        except json.JSONDecodeError:
+            print("[Builder] Error parsing JSON from AI:", response_text)
+            raise HTTPException(status_code=500, detail="La IA no devolvió un JSON válido.")
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

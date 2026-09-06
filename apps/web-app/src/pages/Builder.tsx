@@ -26,7 +26,7 @@ import { getStroke } from 'perfect-freehand';
 import { getSvgPathFromStroke } from '../utils/drawUtils';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { ArrowUUpLeft, ArrowUUpRight, FloppyDisk, DownloadSimple, Trash } from '@phosphor-icons/react';
+import { ArrowUUpLeft, ArrowUUpRight, FloppyDisk, DownloadSimple, Trash, X } from '@phosphor-icons/react';
 
 import { MainPromptNode, ActionNode, PostItNode, TraducirNode, EditarNode, DrawingNode, RulerNode, LogicaNode } from '../components/BuilderNodes';
 import PropertiesPanel from '../components/builder/PropertiesPanel';
@@ -193,6 +193,9 @@ function BuilderContent() {
   const [bgPattern, setBgPattern] = useState(() => localStorage.getItem("builderBgPattern") || "dots");
   const [nodeStyle, setNodeStyle] = useState(() => localStorage.getItem("builderNodeStyle") || "default");
 
+  const [aiFlowPrompt, setAiFlowPrompt] = useState("");
+  const [isGeneratingFlow, setIsGeneratingFlow] = useState(false);
+
   const [cursorMode, setCursorMode] = useState<'pan' | 'draw' | 'line' | 'erase'>('pan');
   const [strokeColor, setStrokeColor] = useState<string>('#ffffff');
   const [edgeColor, setEdgeColor] = useState<string>('#58a6ff');
@@ -200,6 +203,7 @@ function BuilderContent() {
   const [currentDrawNodeId, setCurrentDrawNodeId] = useState<string | null>(null);
 
   const [showAgentLibrary, setShowAgentLibrary] = useState(false);
+  const [showCoPiloto, setShowCoPiloto] = useState(false);
 
   const handleAddAgentNode = (agentData: BuilderNodeData) => {
     const id = uuidv4();
@@ -848,6 +852,36 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
     setHistoryIndex(newHistory.length - 1);
   }, [history, historyIndex]);
 
+  const handleGenerateFlow = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter' || !aiFlowPrompt.trim() || isGeneratingFlow) return;
+    setIsGeneratingFlow(true);
+    try {
+      const res = await fetch(`${API_URL}/builder/generate_flow`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: aiFlowPrompt })
+      });
+      if (!res.ok) throw new Error("Error en generador de IA");
+      const resp = await res.json();
+      if (resp.data && Array.isArray(resp.data.nodes)) {
+        // Asignar el tipo mainPrompt u action según corresponda (por defecto mainPrompt si no viene)
+        const newNodes = resp.data.nodes.map((n: any) => ({
+          ...n,
+          type: n.type || 'mainPrompt'
+        }));
+        setNodes(newNodes);
+        setEdges(resp.data.edges || []);
+        saveHistory(newNodes, resp.data.edges || []);
+        setAiFlowPrompt("");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Hubo un error al generar el flujo.");
+    } finally {
+      setIsGeneratingFlow(false);
+    }
+  };
+
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     setNodes((nds) => applyNodeChanges(changes, nds));
   }, []);
@@ -1196,18 +1230,20 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
 
           
         `}</style>
-                <button
-          onClick={() => {
-            if (window.confirm("¿Seguro que deseas limpiar todo el lienzo?")) {
-              setNodes([]);
-              setEdges([]);
-            }
-          }}
-          className="rounded hover:bg-red-900/40 text-red-400 transition-colors flex items-center gap-1 font-medium text-xs px-2 py-1"
-          title="Limpiar todo el lienzo"
-        >
-          🗑️ Limpiar
-        </button>
+          <button
+            onClick={() => setShowCoPiloto(!showCoPiloto)}
+            className={`rounded theme-btn flex items-center gap-1 font-medium text-xs px-2 py-1 ${showCoPiloto ? 'active' : ''}`}
+            title="Co-Piloto AI"
+          >
+            ✨ Co-Piloto
+          </button>
+          <button 
+            onClick={() => setShowAgentLibrary(!showAgentLibrary)} 
+            className={`rounded theme-btn flex items-center gap-1 font-medium text-xs px-2 py-1 ${showAgentLibrary ? 'active' : ''}`} 
+            title="Catálogo de Agentes"
+          >
+            🤖 Agentes
+          </button>
         <div className="theme-divider"></div>
         <button onClick={handleCopy} className="rounded theme-btn" title="Copiar Nodos (Ctrl+C)">
           📋
@@ -1333,14 +1369,6 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
             {aiError}
           </div>
         )}
-
-        <button 
-          onClick={() => setShowAgentLibrary(!showAgentLibrary)} 
-          className={`rounded theme-btn flex items-center gap-1 ${showAgentLibrary ? 'active' : ''}`} 
-          title="Catálogo de Agentes"
-        >
-          🤖 Agentes
-        </button>
 
         <button
           onClick={() => handleAiAction('upgrade')}
@@ -1629,21 +1657,66 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
             selectionOnDrag={false}
           >
             {bgPattern !== 'none' && <Background color={(THEME_STYLES[theme] as Record<string, string>)['--theme-border']} gap={16} size={1} variant={bgPattern as BackgroundVariant} style={{ opacity: 0.8 }} />}
-            
-            {activeDrawPoints && currentDrawNodeId && <DrawingOverlay points={activeDrawPoints} cursorMode={cursorMode} strokeColor={strokeColor} strokeWidth={strokeWidth} startPos={activeDrawStartPos.current} />}
+             {activeDrawPoints && currentDrawNodeId && <DrawingOverlay points={activeDrawPoints} cursorMode={cursorMode} strokeColor={strokeColor} strokeWidth={strokeWidth} startPos={activeDrawStartPos.current} />}
 
             {showControls && <Controls />}
             {showMinimap && <MiniMap style={{ backgroundColor: 'var(--theme-card)' }} maskColor={'rgba(0,0,0,0.2)'} nodeColor={'var(--theme-border)'} />}
           </ReactFlow>
-        </main>
-        
-        {showAgentLibrary && (
-          <AgentsLibraryPanel 
-            onClose={() => setShowAgentLibrary(false)} 
-            onAddAgent={handleAddAgentNode} 
-            nodeStyle={nodeStyle} 
-          />
-        )}
+          </main>
+          
+          {/* Left Side Panels Container */}
+          <div className="absolute left-0 top-20 bottom-5 w-[360px] flex flex-col gap-4 z-[150] pointer-events-none">
+            {showCoPiloto && (
+              <div 
+                className="flex-shrink-0 h-[280px] p-5 flex flex-col overflow-hidden transition-all duration-300 border-r-2 border-t-2 border-b-2 rounded-tr-2xl rounded-br-2xl shadow-2xl bg-[var(--theme-card)] pointer-events-auto"
+                style={{ borderColor: "var(--theme-border)", color: "var(--theme-text)" }}
+              >
+                <div className="flex justify-between items-center mb-4 shrink-0">
+                  <h3 className="font-bold text-sm tracking-wide flex items-center gap-2">
+                    ✨ Co-Piloto
+                  </h3>
+                  <button onClick={() => setShowCoPiloto(false)} className="opacity-70 hover:opacity-100 transition-opacity">
+                    <X size={18} />
+                  </button>
+                </div>
+                <p className="text-xs opacity-70 mb-5 shrink-0 leading-relaxed">
+                  Describe el flujo que deseas crear y la IA lo generará automáticamente en el lienzo.
+                </p>
+                <div className="flex flex-col gap-3 h-full">
+                  <textarea
+                    placeholder="Ej: crea un flujo de login con validación..."
+                    value={aiFlowPrompt}
+                    onChange={(e) => setAiFlowPrompt(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleGenerateFlow(e as any);
+                      }
+                    }}
+                    className="bg-[var(--theme-bg)] text-[var(--theme-text)] border border-[var(--theme-border)] rounded-md p-3 text-sm outline-none resize-none flex-grow w-full"
+                    disabled={isGeneratingFlow}
+                  />
+                  <button
+                    onClick={handleGenerateFlow as any}
+                    disabled={isGeneratingFlow || !aiFlowPrompt.trim()}
+                    className="!bg-[#333333] hover:!bg-[#444444] !text-black !uppercase !text-base font-bold !border !border-[#555555] !rounded-md py-2 px-4 transition-colors flex justify-center items-center gap-2 disabled:!text-black disabled:!border-[#444444] disabled:!cursor-not-allowed mt-auto mb-[20px]"
+                  >
+                    {isGeneratingFlow ? 'Generando...' : 'Generar Flujo'}
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {showAgentLibrary && (
+              <div className="flex-grow flex pointer-events-auto min-h-0">
+                <AgentsLibraryPanel 
+                  onClose={() => setShowAgentLibrary(false)} 
+                  onAddAgent={handleAddAgentNode} 
+                  nodeStyle={nodeStyle} 
+                />
+              </div>
+            )}
+          </div>
 
         <PropertiesPanel 
           selectedNode={selectedNodes.length > 0 ? selectedNodes[0] : null} 

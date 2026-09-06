@@ -86,6 +86,8 @@ export default function Automations() {
   const [timeout, setTimeout] = useState(30);
   const [autoName, setAutoName] = useState('');
 
+  const [executions, setExecutions] = useState<any[]>([]);
+
   const fetchJobs = () => {
     fetch(`${API_URL}/automations/jobs`)
       .then(res => res.json())
@@ -108,9 +110,26 @@ export default function Automations() {
       });
   };
 
+  const fetchExecutions = () => {
+    fetch(`${API_URL}/builder/executions`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setExecutions(data);
+      })
+      .catch(err => console.error(err));
+  };
+
   useEffect(() => {
     fetchJobs();
     fetchFlows();
+    fetchExecutions();
+    
+    // Auto-refresh executions every 5 seconds if on LOGS tab
+    const interval = setInterval(() => {
+      fetchExecutions();
+      fetchJobs();
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleCreate = async () => {
@@ -139,9 +158,9 @@ export default function Automations() {
     fetchJobs();
   };
 
-  // Mock Stats
-  const totalExecutions = 1420;
-  const successRate = 98.5;
+  const totalExecutions = executions.length;
+  const successExecutions = executions.filter(e => e.exit_code === 0).length;
+  const successRate = totalExecutions > 0 ? ((successExecutions / totalExecutions) * 100).toFixed(1) : 0;
 
   return (
     <div className="h-full overflow-y-auto p-8 max-w-7xl mx-auto flex flex-col gap-6 relative">
@@ -192,7 +211,7 @@ export default function Automations() {
             <span className="text-xs font-bold uppercase tracking-wider">Próximo Trigger</span>
             <Clock size={20} className="text-orange-400" />
           </div>
-          <span className="text-lg font-bold text-white mt-2">en 14 minutos</span>
+          <span className="text-lg font-bold text-white mt-2">-</span>
         </div>
       </div>
 
@@ -212,9 +231,9 @@ export default function Automations() {
         </button>
         <button 
           onClick={() => setActiveTab('LOGS')}
-          className={`text-sm font-bold pb-2 border-b-2 transition-colors ${activeTab === 'LOGS' ? 'border-[var(--theme-border)] text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}
+          className={`text-sm font-bold pb-2 border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'LOGS' ? 'border-[var(--theme-border)] text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}
         >
-          Historial de Eventos
+          Historial de Eventos <span className="bg-[var(--theme-border)] text-black text-[10px] px-1.5 py-0.5 rounded-full">{executions.length}</span>
         </button>
       </div>
 
@@ -240,7 +259,6 @@ export default function Automations() {
                     <th className="px-4 py-3 font-bold">Pipeline</th>
                     <th className="px-4 py-3 font-bold">Disparador</th>
                     <th className="px-4 py-3 font-bold">Estado</th>
-                    <th className="px-4 py-3 font-bold">Próxima Ejecución</th>
                     <th className="px-4 py-3 text-right font-bold">Acciones</th>
                   </tr>
                 </thead>
@@ -273,12 +291,15 @@ export default function Automations() {
                             ACTIVO
                           </div>
                         </td>
-                        <td className="px-4 py-4 text-zinc-400 text-xs">
-                          {job.type === 'CRON' ? '2026-09-05 08:00:00' : 'Esperando evento...'}
-                        </td>
                         <td className="px-4 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button className="p-2 hover:bg-blue-900/30 text-[#7B9C7F] rounded transition-colors" title="Ejecutar Manualmente">
+                            <button 
+                              onClick={async () => {
+                                alert(`Encolando ejecución manual para: ${displayName}...`);
+                                await fetch(`${API_URL}/automations/trigger/${job.flow_id}?auto_id=${job.id}`, { method: 'POST' });
+                                fetchExecutions();
+                              }}
+                              className="p-2 hover:bg-blue-900/30 text-[#7B9C7F] rounded transition-colors" title="Ejecutar Manualmente">
                               <PlayCircle size={20} />
                             </button>
                             <button onClick={() => handleDelete(job.id)} className="p-2 hover:bg-red-900/30 text-red-400 rounded transition-colors" title="Desvincular">
@@ -297,11 +318,34 @@ export default function Automations() {
       )}
 
       {activeTab === 'LOGS' && (
-        <section className="bg-[var(--theme-card)] border border-[var(--theme-border)]/50 rounded-2xl p-6 shadow-2xl flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <Warning size={48} className="mx-auto text-zinc-600 mb-4" />
-            <p className="text-zinc-500 text-sm">Los logs de ejecución detallada se almacenan en Elastic/SQLite.<br/>Esta vista está en construcción.</p>
-          </div>
+        <section className="bg-[var(--theme-card)] border border-[var(--theme-border)]/50 rounded-2xl p-6 shadow-2xl min-h-[400px]">
+          <h2 className="text-xl font-bold text-white mb-4">Registro de Ejecuciones (Tiempo Real)</h2>
+          {executions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-[300px] text-zinc-500">
+              <ArrowsClockwise size={48} className="mb-4 text-zinc-700 animate-spin" />
+              <p>Esperando ejecuciones...</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {executions.map(exec => (
+                <div key={exec.id} className="bg-black/40 border border-[var(--theme-border)]/20 p-4 rounded-xl">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-1 rounded-md text-xs font-bold ${exec.exit_code === 0 ? 'bg-emerald-900/30 text-emerald-400' : 'bg-red-900/30 text-red-400'}`}>
+                        {exec.exit_code === 0 ? 'SUCCESS' : 'FAILED'} (Exit: {exec.exit_code})
+                      </span>
+                      <span className="text-zinc-500 text-xs font-mono">ID: {exec.id}</span>
+                      <span className="text-zinc-500 text-xs font-mono">FW: {exec.framework}</span>
+                    </div>
+                    <span className="text-zinc-400 text-xs">{new Date(exec.created_at).toLocaleString()}</span>
+                  </div>
+                  <pre className="text-zinc-300 text-xs font-mono whitespace-pre-wrap mt-3 bg-black/60 p-3 rounded border border-zinc-800 max-h-40 overflow-y-auto">
+                    {exec.log || "Sin logs de salida."}
+                  </pre>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
 

@@ -50,8 +50,29 @@ def execute_flow_task(flow_id: str, auto_id: str = None):
     retries = auto.get("retries") or 0
     
     # 3. Compile code
-    nodes = [Node(**n) for n in flow.get("nodes", [])]
-    edges = [Edge(**e) for e in flow.get("edges", [])]
+    # Extract node data from React Flow structure
+    try:
+        nodes = []
+        for n in flow.get("nodes", []):
+            data = n.get("data", {})
+            nodes.append(Node(
+                id=n.get("id"),
+                title=data.get("title", "Node"),
+                content=data.get("content", ""),
+                role=data.get("role", "assistant"),
+                llm_model=data.get("llm_model", "hermes3:8b"),
+                temperature=float(data.get("temperature", 0.7))
+            ))
+        edges = [Edge(source=e.get("source"), target=e.get("target")) for e in flow.get("edges", [])]
+    except Exception as e:
+        db.execution_log(
+            job_id=auto_id,
+            framework="langgraph",
+            model_used="system",
+            exit_code=1,
+            log=f"Error parsing flow nodes: {str(e)}"
+        )
+        return
     
     code = generate_langgraph_code(nodes, edges, execution_plan=master_prompt)
     

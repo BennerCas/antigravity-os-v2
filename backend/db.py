@@ -159,7 +159,7 @@ def execution_log(framework: str, model_used: str, exit_code: int, log: str) -> 
 def executions_recent(limit: int = 50) -> list[dict]:
     with _lock, _conn() as conn:
         rows = conn.execute(
-            "SELECT id, framework, model_used, exit_code, created_at FROM executions ORDER BY id DESC LIMIT ?",
+            "SELECT id, framework, model_used, exit_code, log, created_at FROM executions ORDER BY id DESC LIMIT ?",
             (limit,),
         ).fetchall()
     return [dict(r) for r in rows]
