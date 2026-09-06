@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Play, Stop, BookOpen, Code, GraduationCap, ArrowRight } from '@phosphor-icons/react';
+import { Play, Stop, BookOpen, Code, GraduationCap, ArrowRight, SpeakerHigh } from '@phosphor-icons/react';
 
 interface CodingAcademyPanelProps {
   onLoadExample: (content: string, framework: string) => void;
@@ -7,6 +7,7 @@ interface CodingAcademyPanelProps {
 
 export default function CodingAcademyPanel({ onLoadExample }: CodingAcademyPanelProps) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [playingCard, setPlayingCard] = useState<number | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(window.speechSynthesis);
 
   const guideText = `
@@ -26,6 +27,7 @@ A continuación, tienes 10 ejemplos reales para empezar. Haz clic en "Cargar al 
 
   const handleTTS = () => {
     if (!synthRef.current) return;
+    setPlayingCard(null);
     
     if (isPlaying) {
       synthRef.current.cancel();
@@ -118,6 +120,32 @@ A continuación, tienes 10 ejemplos reales para empezar. Haz clic en "Cargar al 
     }
   ];
 
+  const handleCardTTS = (index: number, title: string, desc: string, e: any) => {
+    e.stopPropagation();
+    if (!synthRef.current) return;
+    
+    setIsPlaying(false);
+
+    if (playingCard === index) {
+      synthRef.current.cancel();
+      setPlayingCard(null);
+      return;
+    }
+
+    setPlayingCard(index);
+    synthRef.current.cancel(); 
+    
+    const text = `${title}. ${desc}`;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'es-ES';
+    utterance.rate = 1.05;
+    
+    utterance.onend = () => setPlayingCard(null);
+    utterance.onerror = () => setPlayingCard(null);
+    
+    synthRef.current.speak(utterance);
+  };
+
   return (
     <div className="flex flex-col h-full bg-[#151515] p-5 text-white overflow-hidden">
       <div className="flex items-center justify-between mb-4 shrink-0">
@@ -176,7 +204,16 @@ A continuación, tienes 10 ejemplos reales para empezar. Haz clic en "Cargar al 
           <div key={i} className="group bg-[#000000] border border-[#2A2A2A] hover:border-[#4A4A4A] transition-all duration-300 rounded-xl p-4 flex flex-col justify-between overflow-hidden">
             <div className="flex flex-col h-full">
               <div className="flex flex-col mb-2 gap-2 shrink-0">
-                <h4 className="font-semibold text-[16px] leading-tight line-clamp-2">{ex.title}</h4>
+                <div className="flex items-start justify-between gap-2">
+                  <h4 className="font-semibold text-[16px] leading-tight line-clamp-2">{ex.title}</h4>
+                  <button
+                    onClick={(e) => handleCardTTS(i, ex.title, ex.desc, e)}
+                    className="text-[#8A8A8A] hover:text-[#00FF41] transition-colors shrink-0 mt-0.5"
+                    title="Escuchar explicación"
+                  >
+                    {playingCard === i ? <Stop size={16} weight="fill" className="text-[#FF6B6B]" /> : <SpeakerHigh size={16} />}
+                  </button>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                     ex.level === 'Básico' ? 'bg-[#1a2e1f] text-[#4ade80]' :
