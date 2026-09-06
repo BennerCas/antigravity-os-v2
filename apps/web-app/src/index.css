@@ -280,6 +280,16 @@ p, span, h1, h2, h3, h4, h5, h6, label {
   background-color: #000000 !important;
 }
 
+/* =====================================================
+   PANEL FOOTER — solid, never transparent
+   ===================================================== */
+.panel-footer {
+  background-color: #2A2A2A !important;
+  background-image: none !important;
+  border-top: 1px solid #3a3a3a !important;
+  flex-shrink: 0;
+}
+
 /* Active nav item: dark surface, white text, subtle border */
 .nav-item-active {
   background-color: #151515 !important;

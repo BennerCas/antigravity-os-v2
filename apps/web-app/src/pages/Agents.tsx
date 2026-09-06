@@ -954,9 +954,10 @@ const Agents = () => {
         
         <div className="flex-1 flex flex-col overflow-hidden relative">
           {inspectedAgent ? (
-            <div className="flex flex-col h-full relative">
-              
-              <div className="flex-1 overflow-y-auto p-5 custom-scrollbar" style={{ paddingBottom: 'calc(57px + 0.5cm)' }}>
+            <div className="flex flex-col h-full">
+
+              {/* Scroll content — stops 0.5cm above footer naturally */}
+              <div className="flex-1 overflow-y-auto p-5 custom-scrollbar" style={{ paddingBottom: '0.5cm' }}>
                 
                 {/* Herramientas IA en la parte superior */}
                 <div className="flex flex-col gap-2 mb-6">
@@ -1013,17 +1014,8 @@ const Agents = () => {
                 
               </div>
 
-              {/* Botón inferior FIJO al fondo */}
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  left: 0,
-                  width: '100%',
-                  padding: '0',
-                  borderTop: '1px solid #2A2A2A',
-                }}
-              >
+              {/* Footer — flex sibling, always visible at bottom */}
+              <div className="panel-footer">
                 <button
                   onClick={(e) => handleSetAgent(e as any, inspectedAgent)}
                   style={{
