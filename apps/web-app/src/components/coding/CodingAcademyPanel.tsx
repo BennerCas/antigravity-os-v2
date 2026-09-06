@@ -171,14 +171,14 @@ A continuación, tienes 10 ejemplos reales para empezar. Haz clic en "Cargar al 
         Ejemplos de Producción
       </h3>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pb-8">
+      <div className="grid grid-cols-5 gap-3 max-w-[750px] mx-auto pb-4">
         {examples.map((ex, i) => (
-          <div key={i} className="group aspect-square bg-[#000000] border border-[#2A2A2A] hover:border-[#4A4A4A] transition-all duration-300 rounded-lg p-4 flex flex-col justify-between">
+          <div key={i} className="group aspect-square bg-[#000000] border border-[#2A2A2A] hover:border-[#4A4A4A] transition-all duration-300 rounded-lg p-3 flex flex-col justify-between">
             <div>
-              <div className="flex flex-col mb-2 gap-2">
-                <h4 className="font-semibold text-[13px] leading-tight">{ex.title}</h4>
+              <div className="flex flex-col mb-1.5 gap-1.5">
+                <h4 className="font-semibold text-[11px] leading-tight truncate">{ex.title}</h4>
                 <div className="flex flex-wrap gap-1">
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                  <span className={`text-[8px] px-1 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                     ex.level === 'Básico' ? 'bg-[#1a2e1f] text-[#4ade80]' :
                     ex.level === 'Intermedio' ? 'bg-[#3b2a1a] text-[#fbbf24]' :
                     ex.level === 'Avanzado' ? 'bg-[#3a1a1f] text-[#f87171]' :
@@ -186,20 +186,17 @@ A continuación, tienes 10 ejemplos reales para empezar. Haz clic en "Cargar al 
                   }`}>
                     {ex.level}
                   </span>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#151515] border border-[#2A2A2A] text-[#8A8A8A] font-bold uppercase tracking-wider">
-                    {ex.framework}
-                  </span>
                 </div>
               </div>
-              <p className="text-xs text-[#8A8A8A] mb-3 line-clamp-3">{ex.desc}</p>
+              <p className="text-[10px] text-[#8A8A8A] leading-snug line-clamp-2">{ex.desc}</p>
             </div>
             
             <button
               onClick={() => onLoadExample(ex.content, ex.framework)}
-              className="flex items-center justify-center gap-1 w-full py-1.5 bg-[#151515] border border-[#2A2A2A] hover:bg-[#FFFFFF] hover:text-[#000000] hover:border-[#FFFFFF] transition-all rounded-md text-xs font-medium mt-auto"
+              className="flex items-center justify-center gap-1 w-full py-1 bg-[#151515] border border-[#2A2A2A] hover:bg-[#FFFFFF] hover:text-[#000000] hover:border-[#FFFFFF] transition-all rounded-md text-[10px] font-medium mt-auto"
             >
               Cargar
-              <ArrowRight size={14} />
+              <ArrowRight size={12} />
             </button>
           </div>
         ))}
