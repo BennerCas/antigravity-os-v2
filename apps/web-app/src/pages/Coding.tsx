@@ -1,52 +1,175 @@
 import { useState } from 'react';
+import { Play, Code } from '@phosphor-icons/react';
 import { API_URL } from '../lib/api';
+import CodingEditor from '../components/coding/CodingEditor';
+import CodingTerminal from '../components/coding/CodingTerminal';
+import PromptLibraryPanel from '../components/coding/PromptLibraryPanel';
+import CompilePanel from '../components/coding/CompilePanel';
+import AgentCard from '../components/coding/AgentCard';
 
 export default function Coding() {
-  const [response, setResponse] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(false);
+  const [framework, setFramework] = useState('crewai');
+  const [prompt, setPrompt] = useState('');
+  const [compiledCode, setCompiledCode] = useState('');
+  const [activeTab, setActiveTab] = useState<'editor' | 'compiled' | 'nodes'>('editor');
+  const [, setTerminalStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
+  const [triggerRun, setTriggerRun] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const testBackend = async () => {
-    setLoading(true);
-    setResponse('');
+  const handleGenerate = async () => {
+    setIsLoading(true);
+    // Simulation of generation
+    setTimeout(() => {
+      setPrompt((prev) => prev + '\n\n# AI Generated Task Additions:\n- Data processing\n- Output formatting');
+      setIsLoading(false);
+    }, 1000);
+  };
+
+  const handleCompile = async () => {
+    setIsLoading(true);
     try {
-      const res = await fetch(`${API_URL}/execute/`, {
+      const response = await fetch(`${API_URL}/api/v1/compile/generate`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ 
-          framework: 'autogen', 
-          task_description: 'Test connection from frontend',
-          preset_name: 'saas-landing' 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          framework,
+          nodes: [],
+          edges: [],
+          execution_plan: prompt
         })
       });
-      const data = await res.json();
-      setResponse(JSON.stringify(data, null, 2));
-    } catch (error: unknown) {
-      setResponse(`Error connecting to backend: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      setLoading(false);
+      if (response.ok) {
+        const data = await response.json();
+        setCompiledCode(data.code || '# Compiled code generated here\nprint("Hello World")');
+        setActiveTab('compiled');
+      } else {
+        setCompiledCode('# Error compiling code\nprint("Compilation failed")');
+      }
+    } catch (e) {
+      setCompiledCode('# Error connecting to compiler\nprint("Connection failed")');
     }
+    setIsLoading(false);
+    setActiveTab('compiled');
+  };
+
+  const handleRun = () => {
+    setTriggerRun(Date.now());
   };
 
   return (
-    <div className="flex h-full w-full flex-col p-8">
-      <h1 className="text-3xl font-bold text-white mb-4">Coding</h1>
-      <p className="text-gray-400 mb-6">Coding component scaffolding.</p>
+    <div className="flex flex-col h-full bg-[#000000] text-[#FFFFFF] overflow-hidden font-sans">
+      {/* Header */}
+      <header className="flex items-center justify-between px-6 py-4 border-b border-[#2A2A2A] bg-[#151515] shrink-0">
+        <div className="flex items-center gap-3">
+          <Code size={24} weight="bold" className="text-white" />
+          <h1 className="text-lg font-medium text-white tracking-wide">Coding Studio</h1>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 border border-[#2A2A2A] rounded-md px-3 py-1.5 bg-[#000000]">
+            <span className="text-xs text-[#8A8A8A] uppercase font-semibold">Framework</span>
+            <select 
+              value={framework} 
+              onChange={(e) => setFramework(e.target.value)}
+              className="bg-transparent text-sm text-white outline-none border-none cursor-pointer"
+            >
+              <option value="crewai">CrewAI</option>
+              <option value="autogen">AutoGen</option>
+              <option value="langgraph">LangGraph</option>
+            </select>
+          </div>
+          <button 
+            onClick={handleRun}
+            className="flex items-center gap-2 px-4 py-1.5 bg-[#151515] border border-[#2A2A2A] hover:bg-[#2A2A2A] transition-colors rounded-md text-white text-sm font-medium"
+          >
+            <Play size={16} weight="fill" />
+            <span>Run</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar - Prompt Library */}
+        <div className="w-[280px] border-r border-[#2A2A2A] shrink-0 overflow-y-auto">
+          <PromptLibraryPanel onSelectPrompt={(content) => setPrompt(content)} />
+        </div>
+
+        {/* Center Panel */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Tabs */}
+          <div className="flex items-center gap-6 px-6 pt-4 border-b border-[#2A2A2A] shrink-0">
+            {[
+              { id: 'editor', label: 'Editor' },
+              { id: 'compiled', label: 'Código Compilado' },
+              { id: 'nodes', label: 'Nodos' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`pb-3 text-sm font-medium transition-colors border-b-2 ${
+                  activeTab === tab.id 
+                    ? 'text-white border-white' 
+                    : 'text-[#8A8A8A] border-transparent hover:text-[#d0d0d0]'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab Content */}
+          <div className="flex-1 overflow-y-auto p-6">
+            {activeTab === 'editor' && (
+              <CodingEditor 
+                value={prompt}
+                onChange={setPrompt}
+                onGenerate={handleGenerate}
+                onCompile={handleCompile}
+                onClear={() => setPrompt('')}
+                framework={framework}
+                isLoading={isLoading}
+              />
+            )}
+            {activeTab === 'compiled' && (
+              <CompilePanel 
+                code={compiledCode}
+                framework={framework}
+                onExecute={handleRun}
+              />
+            )}
+            {activeTab === 'nodes' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <AgentCard 
+                  node={{ id: '1', title: 'Data Analyzer', role: 'Analyst', content: 'Analyze datasets for patterns', framework }}
+                  onChange={() => {}}
+                  onDelete={() => {}}
+                />
+                <AgentCard 
+                  node={{ id: '2', title: 'Report Writer', role: 'Writer', content: 'Summarize findings into reports', framework }}
+                  onChange={() => {}}
+                  onDelete={() => {}}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Panel - Terminal */}
+          <div className="h-[300px] border-t border-[#2A2A2A] shrink-0 bg-[#0a0a0a]">
+            <CodingTerminal 
+              wsUrl="ws://127.0.0.1:8001/ws/execute" 
+              onStatusChange={setTerminalStatus}
+              triggerRun={triggerRun}
+            />
+          </div>
+        </div>
+      </div>
       
-      <button 
-        onClick={testBackend}
-        disabled={loading}
-        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 w-max mb-4 disabled:opacity-50"
-      >
-        {loading ? 'Testing...' : 'Test Backend Connection'}
-      </button>
-      
-      {response && (
-        <pre className="p-4 bg-gray-800 text-green-400 rounded overflow-auto whitespace-pre-wrap text-sm border border-gray-700">
-          {response}
-        </pre>
-      )}
+      {/* Footer */}
+      <footer className="shrink-0 px-6 py-2 border-t border-[#2A2A2A] bg-[#000000] flex justify-end">
+        <span className="text-[10px] text-[#8A8A8A] tracking-wider uppercase font-mono">
+          HUMAN AI SYNERGY BY BENNER CASTILLO - 2026®
+        </span>
+      </footer>
     </div>
   );
 }
