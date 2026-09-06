@@ -267,3 +267,15 @@
 - Inyección de endpoints de persistencia de prompts vía Atlas en la API, y conexión directa a la API de ejecución/compilación.
 - Creación de nuevo router backend outers/coding.py con almacenamiento JSON para *snippets*.
 - Archivo main.py acoplado limpiamente a la nueva ruta sin afectar la carga de la aplicación.
+
+## Guía & Academy (TTS) - 2026-09-06
+- Se agregó un nuevo panel interactivo de Guía y Academia dentro del módulo Coding.
+- Motor **TTS (Text-to-Speech)** inyectado nativamente con la API de síntesis de voz, optimizado para español (es-ES).
+- El panel explica a detalle el flujo del orquestador: Editor -> Selección de Framework -> Compilación -> Ejecución.
+- Se implementaron **10 flujos de IA reales (Prompts de Producción)**:
+  - Básicos: Investigadores y Creadores de Contenido (CrewAI).
+  - Intermedios: Pair Programming y Analistas JSON (AutoGen).
+  - Avanzados: Scraping cíclico, Arquitectos AWS, Red/Blue Team (LangGraph, CrewAI).
+  - Expertos: Clasificadores condicionales y Meta-Ingenieros de Prompts.
+  - Máster: Pipeline completo desde producto hasta documentación final.
+- Sistema cableado para inyectar los prompts con 1 clic al editor y seleccionar automáticamente el motor/framework requerido.

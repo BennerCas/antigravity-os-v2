@@ -6,12 +6,13 @@ import CodingTerminal from '../components/coding/CodingTerminal';
 import PromptLibraryPanel from '../components/coding/PromptLibraryPanel';
 import CompilePanel from '../components/coding/CompilePanel';
 import AgentCard from '../components/coding/AgentCard';
+import CodingAcademyPanel from '../components/coding/CodingAcademyPanel';
 
 export default function Coding() {
   const [framework, setFramework] = useState('crewai');
   const [prompt, setPrompt] = useState('');
   const [compiledCode, setCompiledCode] = useState('');
-  const [activeTab, setActiveTab] = useState<'editor' | 'compiled' | 'nodes'>('editor');
+  const [activeTab, setActiveTab] = useState<'editor' | 'compiled' | 'nodes' | 'academy'>('academy');
   const [, setTerminalStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
   const [triggerRun, setTriggerRun] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -99,6 +100,7 @@ export default function Coding() {
           {/* Tabs */}
           <div className="flex items-center gap-6 px-6 pt-4 border-b border-[#2A2A2A] shrink-0">
             {[
+              { id: 'academy', label: 'Guía & Ejemplos' },
               { id: 'editor', label: 'Editor' },
               { id: 'compiled', label: 'Código Compilado' },
               { id: 'nodes', label: 'Nodos' }
@@ -118,8 +120,18 @@ export default function Coding() {
           </div>
 
           {/* Tab Content */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-0">
+            {activeTab === 'academy' && (
+              <CodingAcademyPanel 
+                onLoadExample={(content, fw) => {
+                  setPrompt(content);
+                  setFramework(fw);
+                  setActiveTab('editor');
+                }}
+              />
+            )}
             {activeTab === 'editor' && (
+              <div className="p-6 h-full">
               <CodingEditor 
                 value={prompt}
                 onChange={setPrompt}
@@ -129,15 +141,19 @@ export default function Coding() {
                 framework={framework}
                 isLoading={isLoading}
               />
+              </div>
             )}
             {activeTab === 'compiled' && (
+              <div className="p-6 h-full">
               <CompilePanel 
                 code={compiledCode}
                 framework={framework}
                 onExecute={handleRun}
               />
+              </div>
             )}
             {activeTab === 'nodes' && (
+              <div className="p-6 h-full">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <AgentCard 
                   node={{ id: '1', title: 'Data Analyzer', role: 'Analyst', content: 'Analyze datasets for patterns', framework }}
@@ -149,6 +165,7 @@ export default function Coding() {
                   onChange={() => {}}
                   onDelete={() => {}}
                 />
+              </div>
               </div>
             )}
           </div>
