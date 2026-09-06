@@ -290,20 +290,57 @@ p, span, h1, h2, h3, h4, h5, h6, label {
   flex-shrink: 0;
 }
 
-/* Active nav item: dark surface, white text, subtle border */
+/* Active nav item — dark forest green */
 .nav-item-active {
-  background-color: #151515 !important;
-  border: 1px solid #2A2A2A !important;
+  background-color: #0A1C0D !important;
+  border: 1px solid #174A1F !important;
   border-radius: 9999px !important;
-  color: #FFFFFF !important;
+  color: #7B9C7F !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-/* Inactive nav item: transparent */
+.nav-item-active svg {
+  color: #7B9C7F !important;
+  stroke: #7B9C7F !important;
+}
+
+/* Inactive nav item */
 .nav-item-inactive {
   background-color: transparent !important;
   border: 1px solid transparent !important;
   border-radius: 9999px !important;
   color: #8A8A8A !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* =====================================================
+   ACTIVE CARD — dark forest green selected state
+   ===================================================== */
+.active-card {
+  background-color: #0A1C0D !important;
+  background-image: none !important;
+  border: 1px solid #174A1F !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Text inside active card goes green-pale */
+.active-card h1,
+.active-card h2,
+.active-card h3,
+.active-card h4,
+.active-card p,
+.active-card span:not(.active-card-exempt),
+.active-card label {
+  color: #7B9C7F !important;
+  transition: color 0.2s ease;
+}
+
+/* Buttons inside active card stay dark — exception */
+.active-card button,
+.active-card .active-card-exempt {
+  background-color: #151515 !important;
+  border-color: #2A2A2A !important;
+  color: #FFFFFF !important;
 }
 
 /* =====================================================

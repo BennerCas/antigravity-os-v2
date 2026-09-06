@@ -846,7 +846,13 @@ const Agents = () => {
                     e.stopPropagation();
                     setInspectedAgent(agent);
                   }}
-                  className={`bg-gray-900 border rounded-2xl p-6 flex flex-col h-80 relative cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all group ${inChain ? 'border-purple-500 shadow-purple-900/30 shadow-lg' : (inspectedAgent && makeAgentKey(inspectedAgent) === key) ? 'border-[#39ff14] shadow-[0_0_15px_rgba(57,255,20,0.2)] !bg-[#39ff14]/10' : 'border-gray-800 hover:border-blue-500'}`}
+                  className={`border rounded-2xl p-6 flex flex-col h-80 relative cursor-pointer transition-all group ${
+                    inChain
+                      ? 'border-[#174A1F] active-card'
+                      : (inspectedAgent && makeAgentKey(inspectedAgent) === key)
+                        ? 'active-card'
+                        : 'bg-[#151515] border-[#2A2A2A] hover:border-[#3a3a3a]'
+                  }`}
                 >
                   {/* Chain position badge */}
                   {inChain && (
@@ -914,14 +920,16 @@ const Agents = () => {
                             }
                           });
                         }}
-                        className="text-white font-bold py-2 px-4 rounded-lg transition-colors w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
+                        className="active-card-exempt text-white font-bold py-2 px-4 rounded-lg transition-colors w-full flex items-center justify-center gap-2"
+                        style={{ backgroundColor: '#151515', border: '1px solid #2A2A2A' }}
                       >
                         <Sparkle size={18} /> Enviar Flujo a Builder
                       </button>
                     ) : (
                       <button
                         onClick={(e) => handleSetAgent(e, agent)}
-                        className={`text-white font-bold py-2 px-4 rounded-lg transition-colors w-full ${lastOpened ? 'bg-green-700 hover:bg-green-600' : 'bg-blue-600 hover:bg-blue-500'}`}
+                        className="active-card-exempt text-white font-bold py-2 px-4 rounded-lg transition-colors w-full"
+                        style={{ backgroundColor: '#151515', border: '1px solid #2A2A2A' }}
                       >
                         {lastOpened ? '🔁 Continuar en Builder' : 'Abrir en Builder'}
                       </button>

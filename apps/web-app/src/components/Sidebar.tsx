@@ -41,11 +41,12 @@ export function Sidebar() {
               }`
             }
             style={({ isActive }) => ({
-              backgroundColor: isActive ? '#151515' : 'transparent',
-              border: `1px solid ${isActive ? '#2A2A2A' : 'transparent'}`,
+              backgroundColor: isActive ? '#0A1C0D' : 'transparent',
+              border: `1px solid ${isActive ? '#174A1F' : 'transparent'}`,
               borderRadius: '9999px',
-              color: isActive ? '#FFFFFF' : '#8A8A8A',
+              color: isActive ? '#7B9C7F' : '#8A8A8A',
               textDecoration: 'none',
+              transition: 'background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease',
             })}
           >
             {item.icon}
