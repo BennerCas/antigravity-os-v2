@@ -28,14 +28,14 @@ export default function PromptLibraryPanel({ onSelectPrompt }: PromptLibraryPane
       const res = await fetch(`${API_URL}/api/v1/prompts/categories`);
       if (res.ok) {
         const data = await res.json();
-        setCategories(data.categories || []);
-        if (data.categories?.length > 0) {
-          fetchPrompts(data.categories[0]);
+        const cats = Array.isArray(data) ? data.map((d: any) => d.category || d) : (data.categories || []);
+        setCategories(cats);
+        if (cats.length > 0) {
+          fetchPrompts(cats[0]);
         }
       }
     } catch (e) {
       console.error('Failed to fetch categories', e);
-      // Dummy data fallback
       setCategories(['Agents', 'Tasks', 'Workflows']);
       fetchPrompts('Agents');
     }
@@ -48,11 +48,15 @@ export default function PromptLibraryPanel({ onSelectPrompt }: PromptLibraryPane
       const res = await fetch(`${API_URL}/api/v1/prompts/prompts/${category}`);
       if (res.ok) {
         const data = await res.json();
-        setPrompts(data.prompts || []);
+        const mappedPrompts = Array.isArray(data) ? data.map((p: any, idx: number) => ({
+          id: p.id || idx.toString(),
+          title: p.title || p.name || p.role || `Prompt ${idx + 1}`,
+          content: p.content || p.prompt || p.text || JSON.stringify(p, null, 2)
+        })) : (data.prompts || []);
+        setPrompts(mappedPrompts);
       }
     } catch (e) {
       console.error('Failed to fetch prompts', e);
-      // Dummy data fallback
       setPrompts([
         { id: '1', title: 'Data Scientist Agent', content: 'Create a Data Scientist agent...' },
         { id: '2', title: 'Code Reviewer', content: 'You are an expert code reviewer...' }

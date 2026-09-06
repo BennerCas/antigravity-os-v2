@@ -124,11 +124,10 @@ export default function Automations() {
         flow_id: selectedFlow,
         type: type,
         cron_expr: type === 'CRON' ? cronExpr : null,
-        // En una app real, estos se mandan al backend
-        // master_prompt: masterPrompt,
-        // retries: retries,
-        // timeout: timeout,
-        // name: autoName
+        master_prompt: masterPrompt,
+        retries: retries,
+        timeout: timeout,
+        name: autoName
       })
     });
     setShowSlider(false);
@@ -248,11 +247,12 @@ export default function Automations() {
                 <tbody>
                   {jobs.map((job) => {
                     const flowName = flows.find(f => f.id === job.flow_id)?.name || "Flujo Huérfano";
+                    const displayName = job.name ? job.name : flowName;
                     return (
                       <tr key={job.id} className="border-b border-[var(--theme-border)]/10 hover:bg-black/20 transition-colors">
                         <td className="px-4 py-4">
-                          <div className="font-bold text-white text-base">{flowName}</div>
-                          <div className="text-xs text-zinc-500 font-mono mt-1">ID: {job.id.substring(0,8)}...</div>
+                          <div className="font-bold text-white text-base">{displayName}</div>
+                          <div className="text-xs text-zinc-500 font-mono mt-1">Flow: {flowName} | ID: {job.id.substring(0,8)}...</div>
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-2">

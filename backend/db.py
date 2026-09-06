@@ -65,15 +65,36 @@ def init_db() -> None:
             );
             CREATE TABLE IF NOT EXISTS automations (
                 id TEXT PRIMARY KEY,
+                name TEXT,
                 type TEXT NOT NULL,
                 flow_id TEXT NOT NULL,
                 cron_expr TEXT,
+                master_prompt TEXT,
+                retries INTEGER DEFAULT 0,
+                timeout INTEGER DEFAULT 30,
                 status TEXT NOT NULL DEFAULT 'ACTIVE',
                 created_at TEXT NOT NULL
             );
             """
         )
-
+        
+        # Migration: Add missing columns if they don't exist
+        try:
+            conn.execute("ALTER TABLE automations ADD COLUMN name TEXT")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE automations ADD COLUMN master_prompt TEXT")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE automations ADD COLUMN retries INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE automations ADD COLUMN timeout INTEGER DEFAULT 30")
+        except sqlite3.OperationalError:
+            pass
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -180,13 +201,17 @@ def automations_all() -> list[dict]:
 def automation_save(auto: dict) -> None:
     with _lock, _conn() as conn:
         conn.execute(
-            """INSERT OR REPLACE INTO automations (id, type, flow_id, cron_expr, status, created_at)
-               VALUES (?, ?, ?, ?, ?, ?)""",
+            """INSERT OR REPLACE INTO automations (id, name, type, flow_id, cron_expr, master_prompt, retries, timeout, status, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 str(auto.get("id")),
+                auto.get("name"),
                 auto.get("type", "CRON"),
                 auto.get("flow_id"),
                 auto.get("cron_expr", ""),
+                auto.get("master_prompt"),
+                auto.get("retries", 0),
+                auto.get("timeout", 30),
                 auto.get("status", "ACTIVE"),
                 auto.get("created_at", _now()),
             )
