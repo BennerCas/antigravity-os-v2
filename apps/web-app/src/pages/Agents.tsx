@@ -1029,7 +1029,7 @@ const Agents = () => {
                   style={{
                     display: 'block',
                     width: '100%',
-                    backgroundColor: '#151515',
+                    backgroundColor: '#2A2A2A',
                     border: 'none',
                     borderRadius: '0',
                     color: '#FFFFFF',
@@ -1041,8 +1041,8 @@ const Agents = () => {
                     transition: 'background-color 150ms ease',
                     textAlign: 'center',
                   }}
-                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#1f1f1f')}
-                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#151515')}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#3a3a3a')}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#2A2A2A')}
                 >
                   Abrir en el Builder →
                 </button>
