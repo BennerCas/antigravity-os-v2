@@ -79,7 +79,7 @@ export default function Flows() {
     if (filtered.length === 0) return null;
 
     let gridClass = "flex-1 grid gap-6 h-full pb-6 ";
-    let itemClass = "group bg-gray-900/30 border border-gray-800 rounded-2xl p-6 flex flex-col hover:border-blue-500/50 transition-all shadow-lg relative ";
+    let itemClass = "group border rounded-2xl p-6 flex flex-col transition-all relative bg-[#151515] border-[#2A2A2A] hover:border-[#3a3a3a] ";
     
     if (activeLevel === 'Avanzado') {
       gridClass += "grid-cols-4 w-full h-full";
@@ -203,13 +203,13 @@ export default function Flows() {
       <div className="flex gap-4 mb-6 border-b border-gray-800 pb-px flex-shrink-0">
         <button 
           onClick={() => setActiveTab('my_flows')}
-          className={`flex items-center gap-2 pb-4 px-2 border-b-2 transition-colors ${activeTab === 'my_flows' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+          className={`flex items-center gap-2 pb-4 px-2 border-b-2 transition-colors ${activeTab === 'my_flows' ? 'border-[#174A1F] text-[#7B9C7F] font-bold' : 'border-transparent text-[#8A8A8A] hover:text-white'}`}
         >
           <SquaresFour size={20} /> Mis Ecosistemas
         </button>
         <button 
           onClick={() => setActiveTab('templates')}
-          className={`flex items-center gap-2 pb-4 px-2 border-b-2 transition-colors ${activeTab === 'templates' ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+          className={`flex items-center gap-2 pb-4 px-2 border-b-2 transition-colors ${activeTab === 'templates' ? 'border-[#174A1F] text-[#7B9C7F] font-bold' : 'border-transparent text-[#8A8A8A] hover:text-white'}`}
         >
           <Books size={20} /> Biblioteca de Plantillas
         </button>
@@ -219,7 +219,7 @@ export default function Flows() {
         {activeTab === 'my_flows' ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6 h-auto">
             {allFlows.map(flow => (
-              <div key={flow.id} className="relative group bg-gray-900/40 border border-gray-800 rounded-2xl p-6 overflow-hidden hover:border-blue-500/50 transition-all h-[240px] flex flex-col">
+              <div key={flow.id} className="relative group bg-[#151515] border border-[#2A2A2A] rounded-2xl p-6 overflow-hidden hover:border-[#3a3a3a] transition-all h-[240px] flex flex-col">
                 <div className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity" style={{ backgroundImage: 'linear-gradient(#334155 1px, transparent 1px), linear-gradient(90deg, #334155 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
                 
                 <div className="relative z-10 flex justify-between items-start mb-auto">
@@ -276,7 +276,7 @@ export default function Flows() {
                   <button 
                     key={level}
                     onClick={() => setActiveLevel(level)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${activeLevel === level ? config.color + ' shadow-lg scale-105' : 'bg-gray-800/50 border-gray-700 text-gray-400 hover:bg-gray-800'}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${activeLevel === level ? 'bg-[#0A1C0D] border-[#174A1F] text-[#7B9C7F]' : 'bg-transparent border-[#2A2A2A] text-[#8A8A8A] hover:text-white'}`}
                   >
                     {config.icon}
                     <span className="font-bold">{level}</span>

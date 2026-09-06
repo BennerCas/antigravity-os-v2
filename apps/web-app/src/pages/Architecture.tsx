@@ -221,23 +221,21 @@ export default function Architecture() {
                        <div className="flex flex-col gap-2">
                           {activeModule.prompts.map(p => {
                              const isSelected = selectedPrompt?.key === p.key;
-                             const colorTheme = isApp ? 
-                               { bg: '#38bdf8', text: '#082f49', border: '#7dd3fc' } : 
-                               { bg: '#10b981', text: '#022c22', border: '#34d399' };
-                             
-                             return (
-                                <button 
-                                   key={p.key}
-                                   onClick={() => setSelectedPrompt(p)}
-                                   style={{ 
-                                      backgroundColor: isSelected ? colorTheme.bg : 'rgba(39, 39, 42, 0.5)',
-                                      color: isSelected ? colorTheme.text : '#ffffff',
-                                      borderColor: isSelected ? colorTheme.border : '#3f3f46'
-                                   }}
-                                   className="w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all outline-none border hover:brightness-110 font-bold shadow-sm"
-                                >
-                                   <code className="text-sm font-mono truncate flex-1">{p.key}</code>
-                                   <CaretRight size={14} style={{ opacity: isSelected ? 1 : 0.3, color: isSelected ? colorTheme.text : '#ffffff' }} />
+                              const colorTheme = { bg: '#0A1C0D', text: '#7B9C7F', border: '#174A1F' };
+                              
+                              return (
+                                 <button 
+                                    key={p.key}
+                                    onClick={() => setSelectedPrompt(p)}
+                                    style={{ 
+                                       backgroundColor: isSelected ? colorTheme.bg : 'rgba(21, 21, 21, 0.8)',
+                                       color: isSelected ? colorTheme.text : '#ffffff',
+                                       borderColor: isSelected ? colorTheme.border : '#2A2A2A'
+                                    }}
+                                    className="w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all outline-none border hover:brightness-110 font-bold shadow-sm"
+                                 >
+                                    <code className="text-sm font-mono truncate flex-1">{p.key}</code>
+                                    <CaretRight size={14} style={{ opacity: isSelected ? 1 : 0.3, color: isSelected ? colorTheme.text : '#ffffff' }} />
                                 </button>
                              )
                           })}
