@@ -1,53 +1,61 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Inter', 'Outfit', 'Avenir Next', 'Segoe UI', 'Helvetica Neue', sans-serif;
-  --font-mono: 'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  --font-sans: 'Inter', 'SF Pro Display', 'Outfit', 'Segoe UI', 'Helvetica Neue', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
 }
 
+/* =====================================================
+   MONOCHROMATIC DARK MODE — STRICT SPECIFICATION
+   =====================================================
+   #000000  → App Background
+   #151515  → Card/Surface Background
+   #2A2A2A  → Borders (1px, subtle)
+   #FFFFFF  → Primary Text (active/content)
+   #8A8A8A  → Secondary Text (inactive/metadata)
+   NO bright colors. No red, blue, green, neon.
+   ===================================================== */
+
 :root {
-  /* Wireframe Theme */
-  --surface-canvas: #09090b;
-  --surface-card: transparent;
-  --surface-elevated: transparent;
-  --stroke-subtle: #ef4444;
+  --surface-canvas:   #000000;
+  --surface-card:     #151515;
+  --surface-elevated: #1a1a1a;
+  --stroke-subtle:    #2A2A2A;
+  --stroke-default:   #2A2A2A;
 
-  --text-primary: #FFFFFF;
-  --text-secondary: #9ca3af;
-  --text-muted: #9ca3af;
+  --text-primary:   #FFFFFF;
+  --text-secondary: #8A8A8A;
+  --text-muted:     #8A8A8A;
 
-  /* Accents */
-  --accent-cyan: #ef4444;
-  --accent-cyan-hover: #f87171;
-  --accent-violet: #ef4444;
-  --accent-violet-hover: #f87171;
-  
-  --accent-solid: var(--accent-cyan);
-  --accent-border: var(--accent-cyan-hover);
-  --accent-soft: rgba(239, 68, 68, 0.05);
-  --accent-ring: var(--accent-cyan);
-
-  /* Semantic States */
+  /* Semantic colors (only used in status badges/indicators) */
   --semantic-success: #10B981;
-  --semantic-error: #EF4444;
+  --semantic-error:   #EF4444;
   --semantic-warning: #F59E0B;
-  --semantic-info: #3B82F6;
+  --semantic-info:    #3B82F6;
+
+  /* Accents — remapped to grayscale */
+  --accent-solid:   #FFFFFF;
+  --accent-border:  #2A2A2A;
+  --accent-soft:    rgba(255, 255, 255, 0.05);
+  --accent-ring:    #2A2A2A;
+  --accent-cyan:    #FFFFFF;
+  --accent-violet:  #FFFFFF;
 
   /* Radii */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-sm:  4px;
+  --radius-md:  8px;
+  --radius-lg:  16px;
+  --radius-xl:  20px;
 
-  /* Shadows (Elevations) */
+  /* Shadows — none */
   --shadow-sm: none;
   --shadow-md: none;
   --shadow-lg: none;
 
-  /* Glassmorphism */
-  --glass-bg: transparent;
-  --glass-border: #ef4444;
-  --glass-blur: none;
+  /* Glass — solid card */
+  --glass-bg:     #151515;
+  --glass-border: #2A2A2A;
+  --glass-blur:   none;
 
   --motion-fast: 150ms;
   --motion-base: 250ms;
@@ -58,64 +66,26 @@
   font-synthesis: none;
 }
 
-/* Cyber-Glass Aesthetics - Wireframe */
-.cyber-glass-node {
-  background: transparent !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: 1px solid #ef4444 !important;
-  box-shadow: none !important;
-  color: #fff !important;
-}
-
-.cyber-glass-node textarea, .cyber-glass-node input, .cyber-glass-node select {
-  background: transparent !important;
-  color: #fff !important;
-  border: 1px solid #ef4444 !important;
-}
-
-.cyber-glass-node.variant {
-  background: transparent !important;
-  border-top: 1px solid #ef4444 !important;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --surface-canvas: #09090b;
-    --surface-card: transparent;
-    --surface-elevated: transparent;
-    --stroke-subtle: #ef4444;
-
-    --text-primary: #FFFFFF;
-    --text-secondary: #9ca3af;
-    --text-muted: #9ca3af;
-
-    --accent-soft: rgba(239, 68, 68, 0.05);
-
-    --shadow-sm: none;
-    --shadow-md: none;
-    --shadow-lg: none;
-
-    --glass-bg: transparent;
-    --glass-border: #ef4444;
-  }
-}
-
+/* =====================================================
+   GLOBAL RESETS — box-shadow & backdrop gone
+   ===================================================== */
 * {
-  border-color: var(--stroke-subtle);
-  box-shadow: none !important; /* Strict wireframe */
+  box-shadow: none !important;
 }
 
 *::selection {
-  background-color: var(--accent-soft);
-  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
 }
 
 *:focus-visible {
-  outline: 1px solid var(--accent-ring);
+  outline: 1px solid #2A2A2A;
   outline-offset: 2px;
 }
 
+/* =====================================================
+   BASE HTML/BODY — pitch black background
+   ===================================================== */
 html,
 body,
 #root {
@@ -123,15 +93,20 @@ body,
 }
 
 html {
-  background-color: #09090b;
-  color: var(--text-primary);
+  background-color: #000000;
+  color: #FFFFFF;
   scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+::-webkit-scrollbar {
+  display: none;
 }
 
 body {
   margin: 0;
-  background-color: #09090b;
-  color: var(--text-primary);
+  background-color: #000000;
+  color: #FFFFFF;
   font-family: var(--font-sans);
   line-height: 1.5;
   overflow-x: hidden;
@@ -155,10 +130,243 @@ samp {
   }
 }
 
+/* =====================================================
+   GLOBAL LAYOUT OVERRIDES — strip all backgrounds
+   ===================================================== */
+
+/* Remove ALL color fills, gradients, glow shadows */
+div, section, aside, header, nav, main, article, ul, form {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* Buttons — dark pill shape, gray border */
+button {
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 1px solid #2A2A2A !important;
+  border-radius: 9999px !important;
+  color: #FFFFFF !important;
+  cursor: pointer;
+  transition: border-color var(--motion-fast) var(--motion-ease),
+              background-color var(--motion-fast) var(--motion-ease);
+}
+
+button:hover {
+  border-color: #8A8A8A !important;
+  background-color: rgba(255,255,255,0.04) !important;
+}
+
+/* Inputs, Textareas, Selects */
+input, textarea, select {
+  background-color: #151515 !important;
+  background-image: none !important;
+  border: 1px solid #2A2A2A !important;
+  border-radius: var(--radius-md) !important;
+  color: #FFFFFF !important;
+  box-shadow: none !important;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: 1px solid #8A8A8A !important;
+  border-color: #8A8A8A !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #8A8A8A !important;
+}
+
+/* =====================================================
+   CARDS — #151515 surface, #2A2A2A border, 16px radius
+   ===================================================== */
+.card,
+[class*="rounded-xl"],
+[class*="rounded-2xl"] {
+  background-color: #151515 !important;
+  border: 1px solid #2A2A2A !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+/* =====================================================
+   BORDERS — everything to #2A2A2A, never colorful
+   ===================================================== */
+
+/* Default border color for everything */
+* {
+  border-color: #2A2A2A;
+}
+
+/* Dividers */
+hr,
+.border-b,
+.border-t,
+[class*="divide-"] > * {
+  border-color: #2A2A2A !important;
+}
+
+/* Remove any bright border utilities */
+[class*="border-red-"],
+[class*="border-blue-"],
+[class*="border-green-"],
+[class*="border-purple-"],
+[class*="border-yellow-"],
+[class*="border-emerald-"],
+[class*="border-cyan-"],
+[class*="border-violet-"] {
+  border-color: #2A2A2A !important;
+}
+
+/* =====================================================
+   TYPOGRAPHY — strict monochromatic
+   ===================================================== */
+p, span, h1, h2, h3, h4, h5, h6, label {
+  text-shadow: none !important;
+}
+
+/* Strip all bright text colors */
+[class*="text-red-"],
+[class*="text-blue-"],
+[class*="text-green-"],
+[class*="text-purple-"],
+[class*="text-emerald-"],
+[class*="text-cyan-"],
+[class*="text-violet-"],
+[class*="text-yellow-"] {
+  color: #8A8A8A !important;
+}
+
+/* Gray text → secondary */
+[class*="text-gray-"],
+[class*="text-zinc-"],
+[class*="text-slate-"],
+[class*="text-neutral-"] {
+  color: #8A8A8A !important;
+}
+
+/* White text → white */
+[class*="text-white"] {
+  color: #FFFFFF !important;
+}
+
+/* =====================================================
+   BACKGROUND UTILITIES — strip bright fills
+   ===================================================== */
+[class*="bg-red-"],
+[class*="bg-blue-"],
+[class*="bg-green-"],
+[class*="bg-purple-"],
+[class*="bg-emerald-"],
+[class*="bg-cyan-"],
+[class*="bg-violet-"],
+[class*="bg-yellow-"] {
+  background-color: #151515 !important;
+  background-image: none !important;
+}
+
+[class*="bg-gray-"],
+[class*="bg-zinc-"],
+[class*="bg-slate-"],
+[class*="bg-neutral-"],
+[class*="bg-black"] {
+  background-color: #151515 !important;
+  background-image: none !important;
+}
+
+/* =====================================================
+   SIDEBAR
+   ===================================================== */
+.sidebar-container {
+  border-right: 1px solid #2A2A2A !important;
+  background-color: #000000 !important;
+}
+
+/* Active nav item: dark surface, white text, subtle border */
+.nav-item-active {
+  background-color: #151515 !important;
+  border: 1px solid #2A2A2A !important;
+  border-radius: 9999px !important;
+  color: #FFFFFF !important;
+}
+
+/* Inactive nav item: transparent */
+.nav-item-inactive {
+  background-color: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 9999px !important;
+  color: #8A8A8A !important;
+}
+
+/* =====================================================
+   BUILDER (ReactFlow) NODE STYLES
+   ===================================================== */
+.cyber-glass-node {
+  background: #151515 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #2A2A2A !important;
+  color: #FFFFFF !important;
+}
+
+.cyber-glass-node textarea,
+.cyber-glass-node input,
+.cyber-glass-node select {
+  background: #1a1a1a !important;
+  color: #FFFFFF !important;
+  border: 1px solid #2A2A2A !important;
+}
+
+.cyber-glass-node.variant {
+  background: #1a1a1a !important;
+  border-top: 1px solid #2A2A2A !important;
+}
+
+/* =====================================================
+   REACTFLOW ANIMATIONS — monochromatic strokes
+   ===================================================== */
+@keyframes flowParticle {
+  to { stroke-dashoffset: -20; }
+}
+
+.animated path {
+  stroke-dasharray: 5 10;
+  animation: flowParticle 1s linear infinite;
+  stroke: #8A8A8A !important;
+  stroke-width: 1.5px !important;
+  filter: none;
+}
+
+@keyframes nodeBreathe {
+  0%   { border-color: #FFFFFF; }
+  50%  { border-color: #2A2A2A; }
+  100% { border-color: #FFFFFF; }
+}
+
+.node-processing {
+  animation: nodeBreathe 1.5s infinite cubic-bezier(0.66, 0, 0, 1);
+  border-width: 1px !important;
+  transform: scale(1.02);
+  transition: transform 0.3s ease;
+}
+
+/* Drawing Node Eraser Mode */
+.drawing-node-wrapper {
+  pointer-events: none;
+}
+.erase-mode .drawing-node-wrapper,
+.erase-mode .drawing-node-wrapper svg,
+.erase-mode .drawing-node-wrapper path,
+.erase-mode .drawing-node-wrapper line {
+  pointer-events: stroke !important;
+  cursor: crosshair !important;
+}
+
+/* =====================================================
+   MARKDOWN BODY
+   ===================================================== */
 .markdown-body {
   color-scheme: dark;
   background: transparent;
-  color: var(--text-secondary);
+  color: #8A8A8A;
   font-family: var(--font-sans);
   line-height: 1.7;
 }
@@ -169,17 +377,17 @@ samp {
 .markdown-body h4,
 .markdown-body h5,
 .markdown-body h6 {
-  color: var(--text-primary);
+  color: #FFFFFF;
   letter-spacing: -0.012em;
 }
 
 .markdown-body a {
-  color: var(--accent-solid);
-  text-decoration-color: color-mix(in oklab, var(--accent-solid) 42%, transparent);
+  color: #FFFFFF;
+  text-decoration-color: #2A2A2A;
 }
 
 .markdown-body a:hover {
-  text-decoration-color: var(--accent-border);
+  text-decoration-color: #8A8A8A;
 }
 
 .markdown-body hr,
@@ -187,28 +395,32 @@ samp {
 .markdown-body table th,
 .markdown-body table td,
 .markdown-body blockquote {
-  border-color: var(--stroke-subtle);
+  border-color: #2A2A2A;
 }
 
 .markdown-body blockquote {
-  color: var(--text-muted);
+  color: #8A8A8A;
   background-color: transparent;
 }
 
 .markdown-body code {
-  background-color: transparent;
-  color: var(--text-primary);
+  background-color: #151515;
+  color: #FFFFFF;
+  border: 1px solid #2A2A2A;
+  border-radius: 4px;
+  padding: 0 4px;
 }
 
 .markdown-body pre {
-  background-color: transparent;
-  border: 1px solid var(--stroke-subtle);
+  background-color: #151515;
+  border: 1px solid #2A2A2A;
   border-radius: var(--radius-lg);
-  box-shadow: none;
 }
 
 .markdown-body pre code {
   background-color: transparent;
+  border: none;
+  padding: 0;
 }
 
 .markdown-body pre code,
@@ -217,12 +429,12 @@ samp {
 .markdown-body pre .hljs-subst,
 .markdown-body pre .hljs-punctuation,
 .markdown-body pre .hljs-operator {
-  color: var(--text-primary) !important;
+  color: #FFFFFF !important;
 }
 
 .markdown-body pre .hljs-comment,
 .markdown-body pre .hljs-quote {
-  color: var(--text-secondary) !important;
+  color: #8A8A8A !important;
 }
 
 .markdown-body pre .hljs-keyword,
@@ -231,134 +443,14 @@ samp {
 .markdown-body pre .hljs-section,
 .markdown-body pre .hljs-title,
 .markdown-body pre .hljs-name {
-  color: #67e8f9 !important;
+  color: #FFFFFF !important;
 }
 
 .markdown-body pre .hljs-string,
 .markdown-body pre .hljs-literal,
 .markdown-body pre .hljs-number,
-.markdown-body pre .hljs-attr,
-.markdown-body pre .hljs-template-tag,
-.markdown-body pre .hljs-template-variable {
-  color: #a7f3d0 !important;
-}
-
-/* Chrome, Edge, Safari */
-::-webkit-scrollbar {
-  display: none;
-}
-/* Firefox */
-html {
-  scrollbar-width: none;
-}
-
-/* Drawing Node Eraser Mode */
-.drawing-node-wrapper {
-  pointer-events: none;
-}
-.erase-mode .drawing-node-wrapper, .erase-mode .drawing-node-wrapper svg, .erase-mode .drawing-node-wrapper path, .erase-mode .drawing-node-wrapper line {
-  pointer-events: stroke !important;
-  cursor: crosshair !important;
-}
-
-/* Antigravity OS ReactFlow Edge & Node Animations */
-@keyframes flowParticle {
-  to {
-    stroke-dashoffset: -20;
-  }
-}
-
-.animated path {
-  stroke-dasharray: 5 10;
-  animation: flowParticle 1s linear infinite;
-  stroke: var(--accent-cyan) !important;
-  stroke-width: 2px !important;
-  filter: none;
-}
-
-@keyframes nodeBreathe {
-  0% { box-shadow: none; border-color: rgba(239, 68, 68, 1); }
-  50% { box-shadow: none; border-color: rgba(239, 68, 68, 0.5); }
-  100% { box-shadow: none; border-color: rgba(239, 68, 68, 1); }
-}
-
-.node-processing {
-  animation: nodeBreathe 1.5s infinite cubic-bezier(0.66, 0, 0, 1);
-  border-width: 1px !important;
-  transform: scale(1.02);
-  transition: transform 0.3s ease;
-}
-
-/* Global Wireframe Overrides to Enforce Hard Rules */
-div, section, aside, header, nav, main, article, li, ul, form {
-  background-color: transparent !important;
-  background-image: none !important;
-}
-
-button {
-  background-color: transparent !important;
-  background-image: none !important;
-  border: 1px solid #ef4444 !important;
-  border-radius: 9999px !important;
-  color: #ffffff !important;
-}
-
-/* Specific Sidebar Exceptions */
-.sidebar-container {
-  border-right: 1px solid #ef4444 !important;
-}
-
-.sidebar-container .bg-red-500\/5,
-[class*="bg-red-500/"] {
-  background-color: rgba(239, 68, 68, 0.05) !important;
-}
-
-/* Enforce red borders on main elements */
-div[class*="border"],
-aside[class*="border"],
-nav[class*="border"],
-header[class*="border"] {
-  border-color: #ef4444 !important;
-}
-
-/* Internal Dividers (Gray) */
-hr,
-.border-b,
-.border-t,
-.border-\\[\\#2A2A2A\\],
-[class*="border-gray-"],
-[class*="border-zinc-"],
-[class*="divide-"] > * {
-  border-color: #27272a !important;
-}
-
-/* Enforce direct border-red-500 */
-.border-red-500 {
-  border-color: #ef4444 !important;
-}
-
-/* Texts */
-p, span, h1, h2, h3, h4, h5, h6, label {
-  text-shadow: none !important;
-}
-
-/* Enforce text grays */
-[class*="text-gray-"],
-[class*="text-zinc-"] {
-  color: #9ca3af !important;
-}
-
-[class*="text-white"] {
-  color: #FFFFFF !important;
-}
-
-/* Disable old manual hardcoded dark cards */
-.bg-\\[\\#151515\\],
-.bg-\\[\\#1C1C1C\\] {
-  background-color: transparent !important;
-}
-.border-\\[\\#2A2A2A\\] {
-  border-color: #ef4444 !important;
+.markdown-body pre .hljs-attr {
+  color: #8A8A8A !important;
 }
 
 @plugin "@tailwindcss/typography";
