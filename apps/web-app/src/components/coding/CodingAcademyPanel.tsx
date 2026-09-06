@@ -138,8 +138,8 @@ A continuación, tienes 10 ejemplos reales para empezar. Haz clic en "Cargar al 
         </button>
       </div>
 
-      <div className="bg-[#000000] border border-[#2A2A2A] rounded-xl p-5 mb-5 text-sm text-[#d0d0d0] leading-relaxed shadow-sm shrink-0">
-        <h3 className="text-white text-lg font-semibold mb-3 flex items-center gap-2">
+      <div className="bg-[#000000] border border-[#2A2A2A] rounded-xl p-5 mb-5 text-[15px] text-[#d0d0d0] leading-relaxed shadow-sm shrink-0">
+        <h3 className="text-white text-xl font-semibold mb-3 flex items-center gap-2">
           <BookOpen size={20} />
           ¿Cómo funciona el Módulo Coding?
         </h3>
@@ -176,9 +176,9 @@ A continuación, tienes 10 ejemplos reales para empezar. Haz clic en "Cargar al 
           <div key={i} className="group bg-[#000000] border border-[#2A2A2A] hover:border-[#4A4A4A] transition-all duration-300 rounded-xl p-4 flex flex-col justify-between overflow-hidden">
             <div className="flex flex-col h-full">
               <div className="flex flex-col mb-2 gap-2 shrink-0">
-                <h4 className="font-semibold text-[14px] leading-tight line-clamp-2">{ex.title}</h4>
+                <h4 className="font-semibold text-[16px] leading-tight line-clamp-2">{ex.title}</h4>
                 <div className="flex flex-wrap gap-2">
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                     ex.level === 'Básico' ? 'bg-[#1a2e1f] text-[#4ade80]' :
                     ex.level === 'Intermedio' ? 'bg-[#3b2a1a] text-[#fbbf24]' :
                     ex.level === 'Avanzado' ? 'bg-[#3a1a1f] text-[#f87171]' :
@@ -186,17 +186,17 @@ A continuación, tienes 10 ejemplos reales para empezar. Haz clic en "Cargar al 
                   }`}>
                     {ex.level}
                   </span>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#151515] border border-[#2A2A2A] text-[#8A8A8A] font-bold uppercase tracking-wider">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#151515] border border-[#2A2A2A] text-[#8A8A8A] font-bold uppercase tracking-wider">
                     {ex.framework}
                   </span>
                 </div>
               </div>
-              <p className="text-xs text-[#8A8A8A] leading-relaxed line-clamp-3 overflow-hidden flex-1">{ex.desc}</p>
+              <p className="text-[13px] text-[#8A8A8A] leading-relaxed line-clamp-3 overflow-hidden flex-1">{ex.desc}</p>
             </div>
             
             <button
               onClick={() => onLoadExample(ex.content, ex.framework)}
-              className="flex items-center justify-center gap-2 w-full py-1.5 bg-[#151515] border border-[#2A2A2A] hover:bg-[#FFFFFF] hover:text-[#000000] hover:border-[#FFFFFF] transition-all rounded-md text-xs font-medium shrink-0 mt-3"
+              className="flex items-center justify-center gap-2 w-full py-1.5 bg-[#151515] border border-[#2A2A2A] hover:bg-[#FFFFFF] hover:text-[#000000] hover:border-[#FFFFFF] transition-all rounded-md text-[14px] font-medium shrink-0 mt-3"
             >
               Cargar
               <ArrowRight size={14} />
