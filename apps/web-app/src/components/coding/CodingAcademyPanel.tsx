@@ -171,9 +171,9 @@ A continuación, tienes 10 ejemplos reales para empezar. Haz clic en "Cargar al 
         Ejemplos de Producción
       </h3>
       
-      <div className="grid grid-cols-5 gap-4 w-full max-w-[1050px] mx-auto pb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4 w-full pb-4">
         {examples.map((ex, i) => (
-          <div key={i} className="group aspect-square bg-[#000000] border border-[#2A2A2A] hover:border-[#4A4A4A] transition-all duration-300 rounded-lg p-4 flex flex-col justify-between">
+          <div key={i} className="group bg-[#000000] border border-[#2A2A2A] hover:border-[#4A4A4A] transition-all duration-300 rounded-lg p-4 flex flex-col justify-between">
             <div>
               <div className="flex flex-col mb-2 gap-1.5">
                 <h4 className="font-semibold text-[13px] leading-tight truncate">{ex.title}</h4>
