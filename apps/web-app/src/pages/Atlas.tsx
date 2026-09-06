@@ -631,7 +631,7 @@ const Atlas = () => {
           {generatedVariants.length > 0 && (
             <div className="mb-10 mt-10 overflow-hidden relative w-full border-t border-b border-gray-800/50 py-8 bg-[#0a0c10]">
               <div className="flex items-center gap-2 mb-6 px-4">
-                <Sparkle weight="fill" className="text-blue-500" size={24} />
+                <Sparkle weight="light" className="text-blue-500" size={24} />
                 <h3 className="text-xl font-bold text-gray-200 tracking-wide">Variantes IA Generadas</h3>
               </div>
               <style>{`
@@ -651,7 +651,7 @@ const Atlas = () => {
                 {generatedVariants.concat(generatedVariants).map((v, i) => (
                   <div key={i} className="w-[320px] h-40 bg-gradient-to-br from-blue-900/20 to-purple-900/10 border border-blue-800/40 rounded-2xl p-5 shrink-0 shadow-lg relative cursor-pointer hover:border-blue-400 transition-colors flex flex-col justify-between overflow-hidden group">
                     <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-100 transition-opacity">
-                      <Sparkle weight="fill" className="text-blue-400" />
+                      <Sparkle weight="light" className="text-blue-400" />
                     </div>
                     <div>
                       <h4 className="font-bold text-blue-300 text-lg truncate mb-1 pr-6">{v.title}</h4>

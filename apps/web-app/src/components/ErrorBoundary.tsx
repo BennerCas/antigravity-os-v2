@@ -28,7 +28,7 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="flex flex-col items-center justify-center w-full h-full bg-[#0a0c10] text-zinc-300 p-8">
-          <WarningCircle size={64} className="text-red-500 mb-6" weight="regular" />
+          <WarningCircle size={64} className="text-red-500 mb-6" weight="light" />
           <h1 className="text-3xl font-bold text-white mb-2">Fallo del Sistema en Interfaz</h1>
           <p className="text-zinc-400 mb-6 max-w-lg text-center">
             Se ha detectado una anomalía en el renderizado de este módulo. Antigravity OS ha interceptado el error para evitar el colapso total de la ventana.

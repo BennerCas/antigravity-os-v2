@@ -125,7 +125,7 @@ export default function Flows() {
                   {/* Learning Objectives & Framework Mastery */}
                   <div className="bg-blue-900/10 border border-blue-900/30 rounded-lg p-3">
                     <h4 className="text-[11px] uppercase tracking-wider font-bold text-blue-400 flex items-center gap-1.5 mb-1.5">
-                      <Target size={14} weight="fill" /> Objetivo de Aprendizaje
+                      <Target size={14} weight="light" /> Objetivo de Aprendizaje
                     </h4>
                     <p className="text-xs text-gray-300 leading-relaxed text-justify">
                       {tpl.learningObjective}
@@ -134,7 +134,7 @@ export default function Flows() {
 
                   <div className="bg-fuchsia-900/10 border border-fuchsia-900/30 rounded-lg p-3">
                     <h4 className="text-[11px] uppercase tracking-wider font-bold text-fuchsia-400 flex items-center gap-1.5 mb-1.5">
-                      <Lightning size={14} weight="fill" /> Masterclass de {tpl.engine}
+                      <Lightning size={14} weight="light" /> Masterclass de {tpl.engine}
                     </h4>
                     <p className="text-xs text-gray-300 leading-relaxed text-justify">
                       {tpl.frameworkMastery}
@@ -180,7 +180,7 @@ export default function Flows() {
                   className="px-5 py-2 bg-blue-600/10 hover:bg-blue-600/30 text-blue-400 rounded-lg transition-all flex items-center gap-2 font-bold hover:scale-105"
                   title="Abrir plantilla y guardar como nuevo"
                 >
-                  <DownloadSimple size={18} weight="bold" /> Utilizar
+                  <DownloadSimple size={18} weight="light" /> Utilizar
                 </button>
               </div>
             </div>
@@ -194,7 +194,7 @@ export default function Flows() {
     <div className="h-[calc(100vh)] w-full flex flex-col p-8 bg-[#0a0c10] overflow-hidden">
       <header className="mb-6 flex-shrink-0">
         <h1 className="text-4xl font-bold text-blue-500 tracking-wide flex items-center gap-3">
-          <Network size={36} weight="regular" /> Nexus
+          <Network size={36} weight="light" /> Nexus
         </h1>
         <p className="text-gray-400 mt-2">Tu red neuronal de pipelines y ecosistemas multi-agentes guardados.</p>
       </header>
@@ -231,7 +231,7 @@ export default function Flows() {
                   </div>
                   <div className="relative">
                     <button onClick={() => setOpenMenuId(openMenuId === flow.id ? null : flow.id)} className="text-gray-500 hover:text-white relative">
-                      <DotsThreeOutlineVertical size={20} weight="fill" />
+                      <DotsThreeOutlineVertical size={20} weight="light" />
                     </button>
                     {openMenuId === flow.id && (
                       <div className="absolute right-0 mt-2 w-32 bg-gray-800 border border-gray-700 rounded-lg shadow-xl overflow-hidden z-50">
@@ -254,7 +254,7 @@ export default function Flows() {
                     <Network size={18} /> Editar
                   </button>
                   <button onClick={() => alert("Próximamente: Ejecución Headless. Te permitirá correr este ecosistema en segundo plano y recibir los resultados directamente aquí, sin tener que abrir el entorno del Builder.")} className="w-12 bg-green-600/10 hover:bg-green-600/20 text-green-500 border border-green-900/50 rounded-xl flex items-center justify-center transition-colors" title="Ejecución Headless (Próximamente)">
-                    <Play size={18} weight="fill" />
+                    <Play size={18} weight="light" />
                   </button>
                 </div>
               </div>

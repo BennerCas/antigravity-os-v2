@@ -1,14 +1,11 @@
 @import "tailwindcss";
 
-
-@import 'github-markdown-css/github-markdown.css';
-@import 'highlight.js/styles/github.css' (prefers-color-scheme: light);
-@import 'highlight.js/styles/github-dark.css' (prefers-color-scheme: dark);
-
-:root {
+@theme {
   --font-sans: 'Inter', 'Outfit', 'Avenir Next', 'Segoe UI', 'Helvetica Neue', sans-serif;
   --font-mono: 'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+}
 
+:root {
   /* Wireframe Theme */
   --surface-canvas: #09090b;
   --surface-card: transparent;
@@ -61,44 +58,43 @@
   font-synthesis: none;
 }
 
-/* Cyber-Glass Aesthetics */
+/* Cyber-Glass Aesthetics - Wireframe */
 .cyber-glass-node {
-  background: rgba(10, 15, 25, 0.75) !important;
-  backdrop-filter: blur(16px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-top: 4px solid var(--theme-border, #00f0ff) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 165, 0, 0.1) !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #ef4444 !important;
+  box-shadow: none !important;
   color: #fff !important;
 }
 
 .cyber-glass-node textarea, .cyber-glass-node input, .cyber-glass-node select {
-  background: rgba(0, 0, 0, 0.4) !important;
+  background: transparent !important;
   color: #fff !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
+  border: 1px solid #ef4444 !important;
 }
 
 .cyber-glass-node.variant {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border-top: 4px solid var(--theme-text, #fff) !important;
+  background: transparent !important;
+  border-top: 1px solid #ef4444 !important;
 }
 
 @media (prefers-color-scheme: light) {
   :root {
-    --surface-canvas: transparent;
-    --surface-card: rgba(10, 14, 23, 0.85);
-    --surface-elevated: rgba(18, 24, 38, 0.9);
-    --stroke-subtle: rgba(173, 255, 47, 0.3);
+    --surface-canvas: #09090b;
+    --surface-card: transparent;
+    --surface-elevated: transparent;
+    --stroke-subtle: #ef4444;
 
     --text-primary: #FFFFFF;
-    --text-secondary: #CBD5E1;
-    --text-muted: #94A3B8;
+    --text-secondary: #9ca3af;
+    --text-muted: #9ca3af;
 
-    --accent-soft: rgba(173, 255, 47, 0.2);
+    --accent-soft: rgba(239, 68, 68, 0.05);
 
-    --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.05);
-    --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
-    --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.12);
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
 
     --glass-bg: transparent;
     --glass-border: #ef4444;
@@ -107,6 +103,7 @@
 
 * {
   border-color: var(--stroke-subtle);
+  box-shadow: none !important; /* Strict wireframe */
 }
 
 *::selection {
@@ -115,7 +112,7 @@
 }
 
 *:focus-visible {
-  outline: 2px solid var(--accent-ring);
+  outline: 1px solid var(--accent-ring);
   outline-offset: 2px;
 }
 
@@ -126,14 +123,14 @@ body,
 }
 
 html {
-  background-color: var(--surface-canvas);
+  background-color: #09090b;
   color: var(--text-primary);
   scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
-  background-color: transparent;
+  background-color: #09090b;
   color: var(--text-primary);
   font-family: var(--font-sans);
   line-height: 1.5;
@@ -195,32 +192,23 @@ samp {
 
 .markdown-body blockquote {
   color: var(--text-muted);
-  background-color: color-mix(in oklab, var(--surface-elevated) 68%, transparent);
-}
-
-.markdown-body code {
-  background-color: color-mix(in oklab, var(--surface-elevated) 82%, white 18%);
-  color: var(--text-primary);
-}
-
-.markdown-body pre {
-  background-color: color-mix(in oklab, var(--surface-elevated) 80%, white 20%);
-  border: 1px solid var(--stroke-subtle);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-}
-
-.markdown-body pre code {
   background-color: transparent;
 }
 
 .markdown-body code {
-  background-color: color-mix(in oklab, var(--surface-elevated) 88%, black 12%);
+  background-color: transparent;
+  color: var(--text-primary);
 }
 
 .markdown-body pre {
-  background-color: color-mix(in oklab, var(--surface-elevated) 94%, black 6%);
-  border-color: var(--stroke-subtle);
+  background-color: transparent;
+  border: 1px solid var(--stroke-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+}
+
+.markdown-body pre code {
+  background-color: transparent;
 }
 
 .markdown-body pre code,
@@ -284,72 +272,42 @@ html {
   stroke-dasharray: 5 10;
   animation: flowParticle 1s linear infinite;
   stroke: var(--accent-cyan) !important;
-  stroke-width: 4px !important;
-  filter: drop-shadow(0 0 8px var(--accent-cyan));
+  stroke-width: 2px !important;
+  filter: none;
 }
 
 @keyframes nodeBreathe {
-  0% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.7), inset 0 0 20px rgba(34, 211, 238, 0.5); border-color: rgba(34, 211, 238, 1); }
-  50% { box-shadow: 0 0 0 25px rgba(34, 211, 238, 0), inset 0 0 40px rgba(34, 211, 238, 0.8); border-color: rgba(34, 211, 238, 0.5); }
-  100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0), inset 0 0 20px rgba(34, 211, 238, 0.5); border-color: rgba(34, 211, 238, 1); }
+  0% { box-shadow: none; border-color: rgba(239, 68, 68, 1); }
+  50% { box-shadow: none; border-color: rgba(239, 68, 68, 0.5); }
+  100% { box-shadow: none; border-color: rgba(239, 68, 68, 1); }
 }
 
 .node-processing {
   animation: nodeBreathe 1.5s infinite cubic-bezier(0.66, 0, 0, 1);
-  border-width: 3px !important;
+  border-width: 1px !important;
   transform: scale(1.02);
   transition: transform 0.3s ease;
 }
 
-/* Dynamic Contrast Enforcement */
-:root {
-  --theme-text: var(--text-on-bg, #ffffff);
-}
-
-div[style*="--theme-card"],
-aside[style*="--theme-card"],
-.bg-\[var\(--surface-card\)\],
-.bg-\[var\(--theme-card\)\] {
-  --theme-text: var(--text-on-card, #ffffff);
-  color: var(--theme-text) !important;
-}
-
-div[style*="--theme-bar"] {
-  --theme-text: var(--text-on-bar, #ffffff);
-  color: var(--theme-text) !important;
-}
-
-.theme-btn, select {
-  --theme-text: var(--text-on-card, #ffffff);
-  color: var(--theme-text) !important;
-}
-
-
-@plugin "@tailwindcss/typography";
-
-/* Global Wireframe Overrides applied at the end to take precedence */
-html, body, #root {
-  background-color: #09090b !important;
-  color: #FFFFFF !important;
-}
-
-/* Force backgrounds transparent */
+/* Global Wireframe Overrides to Enforce Hard Rules */
 div, section, aside, header, nav, main, article, li, ul, form {
   background-color: transparent !important;
   background-image: none !important;
-  box-shadow: none !important;
 }
 
 button {
   background-color: transparent !important;
   background-image: none !important;
-  box-shadow: none !important;
   border: 1px solid #ef4444 !important;
   border-radius: 9999px !important;
   color: #ffffff !important;
 }
 
-/* Let the active menu have the special background */
+/* Specific Sidebar Exceptions */
+.sidebar-container {
+  border-right: 1px solid #ef4444 !important;
+}
+
 .sidebar-container .bg-red-500\/5,
 [class*="bg-red-500/"] {
   background-color: rgba(239, 68, 68, 0.05) !important;
@@ -363,7 +321,7 @@ header[class*="border"] {
   border-color: #ef4444 !important;
 }
 
-/* Internal Dividers */
+/* Internal Dividers (Gray) */
 hr,
 .border-b,
 .border-t,
@@ -374,7 +332,7 @@ hr,
   border-color: #27272a !important;
 }
 
-/* Force border-red-500 to be red */
+/* Enforce direct border-red-500 */
 .border-red-500 {
   border-color: #ef4444 !important;
 }
@@ -384,7 +342,7 @@ p, span, h1, h2, h3, h4, h5, h6, label {
   text-shadow: none !important;
 }
 
-/* Force all text-gray to be our gray */
+/* Enforce text grays */
 [class*="text-gray-"],
 [class*="text-zinc-"] {
   color: #9ca3af !important;
@@ -394,21 +352,13 @@ p, span, h1, h2, h3, h4, h5, h6, label {
   color: #FFFFFF !important;
 }
 
-/* Cards shouldn't have dark backgrounds like #151515 */
-.bg-\[\#151515\],
-.bg-\[\#1C1C1C\] {
+/* Disable old manual hardcoded dark cards */
+.bg-\\[\\#151515\\],
+.bg-\\[\\#1C1C1C\\] {
   background-color: transparent !important;
 }
-.border-\[\#2A2A2A\] {
+.border-\\[\\#2A2A2A\\] {
   border-color: #ef4444 !important;
 }
 
-/* Sidebar separator */
-.sidebar-container {
-  border-right: 1px solid #ef4444 !important;
-}
-
-/* Remove all glow and box-shadows */
-* {
-  box-shadow: none !important;
-}
+@plugin "@tailwindcss/typography";

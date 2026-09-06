@@ -4,14 +4,14 @@ import { EngineIndicator } from './EngineIndicator';
 
 export function Sidebar() {
   const navItems = [
-    { path: '/atlas', label: 'Atlas', icon: <Compass size={24} weight="regular" /> },
-    { path: '/agents', label: 'Agentes', icon: <Robot size={24} weight="regular" /> },
-    { path: '/flows', label: 'Nexus', icon: <Network size={24} weight="regular" /> },
-    { path: '/builder', label: 'Builder', icon: <Hammer size={24} weight="regular" /> },
-    { path: '/vault', label: 'Vault', icon: <LockKey size={24} weight="regular" /> },
-    { path: '/coding', label: 'Coding', icon: <Code size={24} weight="regular" /> },
-    { path: '/architecture', label: 'Arquitectura', icon: <TreeStructure size={24} weight="regular" /> },
-    { path: '/automations', label: 'Automatización', icon: <Code size={24} weight="regular" /> },
+    { path: '/atlas', label: 'Atlas', icon: <Compass size={24} weight="light" /> },
+    { path: '/agents', label: 'Agentes', icon: <Robot size={24} weight="light" /> },
+    { path: '/flows', label: 'Nexus', icon: <Network size={24} weight="light" /> },
+    { path: '/builder', label: 'Builder', icon: <Hammer size={24} weight="light" /> },
+    { path: '/vault', label: 'Vault', icon: <LockKey size={24} weight="light" /> },
+    { path: '/coding', label: 'Coding', icon: <Code size={24} weight="light" /> },
+    { path: '/architecture', label: 'Arquitectura', icon: <TreeStructure size={24} weight="light" /> },
+    { path: '/automations', label: 'Automatización', icon: <Code size={24} weight="light" /> },
   ];
 
   return (

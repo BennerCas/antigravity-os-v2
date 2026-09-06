@@ -161,7 +161,7 @@ export default function Automations() {
           onClick={() => setShowSlider(true)}
           className="px-6 py-3 bg-[var(--theme-border)] hover:opacity-80 text-[var(--theme-bg)] font-black rounded-xl shadow-lg transition-transform hover:scale-105 flex items-center gap-2"
         >
-          <Plus size={20} weight="bold" /> Nueva Automatización
+          <Plus size={20} weight="light" /> Nueva Automatización
         </button>
       </header>
 
@@ -496,7 +496,7 @@ export default function Automations() {
                 disabled={!selectedFlow || (type === 'CRON' && !cronExpr)}
                 className="px-8 py-3 bg-[var(--theme-border)] text-[var(--theme-bg)] font-black rounded-xl shadow-lg transition-transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 flex items-center gap-2"
               >
-                <CheckCircle size={20} weight="bold" /> Iniciar Orquestación
+                <CheckCircle size={20} weight="light" /> Iniciar Orquestación
               </button>
             </div>
 
