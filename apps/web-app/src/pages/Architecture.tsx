@@ -103,7 +103,7 @@ export default function Architecture() {
 
   if (!data) {
     return (
-      <div className="p-10 text-zinc-400 flex items-center gap-3">
+      <div className="p-10 text-[#8A8A8A] flex items-center gap-3">
         <span className="animate-spin">⚙️</span> Cargando mapa de arquitectura...
       </div>
     );
@@ -114,24 +114,24 @@ export default function Architecture() {
       <header className="mb-4 flex-shrink-0 flex flex-col lg:flex-row gap-4 lg:justify-between lg:items-end">
         <div>
           <h1 className="text-2xl font-bold text-white mb-1">Arquitectura del Sistema</h1>
-          <p className="text-zinc-400 text-xs">
+          <p className="text-[#8A8A8A] text-xs">
             Mapa vivo del flujo completo de {data.app}. Los master prompts mostrados son los que el backend
-            usa <strong className="text-emerald-400">en este momento</strong>.
+            usa <strong className="text-[#7B9C7F]">en este momento</strong>.
           </p>
         </div>
         
         {/* Motor Híbrido Compacto */}
-        <div className="flex gap-4 items-center bg-zinc-900/60 border border-zinc-800 rounded-xl px-4 py-3 text-xs">
+        <div className="flex gap-4 items-center bg-[#151515] border border-[#2A2A2A] rounded-xl px-4 py-3 text-xs">
           <div className="flex items-center gap-1 font-bold text-white">
-            <Cpu size={16} className="text-emerald-400" /> {data.engine.name}
+            <Cpu size={16} className="text-[#7B9C7F]" /> {data.engine.name}
           </div>
-          <div className="border-l border-zinc-700 pl-4">
-            <span className="text-sky-400 font-bold uppercase tracking-wide text-[9px] block">Nube</span>
-            <code className="text-zinc-200">{data.engine.cloud}</code>
+          <div className="border-l border-[#2A2A2A] pl-4">
+            <span className="text-[#7B9C7F] font-bold uppercase tracking-wide text-[9px] block">Nube</span>
+            <code className="text-[#FFFFFF]">{data.engine.cloud}</code>
           </div>
-          <div className="border-l border-zinc-700 pl-4">
-            <span className="text-amber-400 font-bold uppercase tracking-wide text-[9px] block">Local</span>
-            <code className="text-zinc-200">{data.engine.local}</code>
+          <div className="border-l border-[#2A2A2A] pl-4">
+            <span className="text-[#8A8A8A] font-bold uppercase tracking-wide text-[9px] block">Local</span>
+            <code className="text-[#FFFFFF]">{data.engine.local}</code>
           </div>
         </div>
       </header>
@@ -142,7 +142,7 @@ export default function Architecture() {
         {/* Column 1: Navigation (Modules) */}
         <div className="w-[300px] flex-shrink-0 flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
            <div className="mb-1 pl-2">
-              <h3 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Core Engine</h3>
+              <h3 className="text-[10px] font-bold text-[#7B9C7F] uppercase tracking-widest">Core Engine</h3>
            </div>
            
            {data.flow.map(step => {
@@ -154,14 +154,14 @@ export default function Architecture() {
                       setActiveStepId(step.id); 
                       if (!isActive) setSelectedPrompt(null);
                     }}
-                    className={`w-full flex items-center gap-3 p-4 text-left outline-none border rounded-xl transition-all duration-300 ${isActive ? 'bg-zinc-900/80 border-emerald-500/30 shadow-lg' : 'bg-zinc-950/60 border-zinc-800 hover:border-zinc-700'}`}
+                    className={`w-full flex items-center gap-3 p-4 text-left outline-none border rounded-xl transition-all duration-300 ${isActive ? 'bg-[#0A1C0D] border-[#174A1F]' : 'bg-transparent border-[#2A2A2A] hover:border-[#3a3a3a]'}`}
                  >
-                    <span className={`flex items-center justify-center w-7 h-7 rounded-lg font-mono font-bold text-sm transition-colors ${isActive ? 'bg-emerald-900/60 border border-emerald-500/50 text-emerald-300' : 'bg-zinc-800 border border-zinc-700 text-zinc-400'}`}>
+                    <span className={`flex items-center justify-center w-7 h-7 rounded-lg font-mono font-bold text-sm transition-colors ${isActive ? 'bg-[#0A1C0D] border border-[#174A1F] text-[#7B9C7F]' : 'bg-[#151515] border border-[#2A2A2A] text-[#8A8A8A]'}`}>
                       {step.step}
                     </span>
-                    <span className={isActive ? "text-emerald-400" : "text-zinc-500"}>{STEP_ICONS[step.id]}</span>
-                    <h2 className={`text-sm font-bold tracking-wide ${isActive ? 'text-white' : 'text-zinc-400'}`}>{step.name}</h2>
-                    <CaretRight size={16} className={`ml-auto transition-transform duration-300 ${isActive ? 'text-emerald-400' : 'text-zinc-600 opacity-0'}`} />
+                    <span className={isActive ? "text-[#7B9C7F]" : "text-[#8A8A8A]"}>{STEP_ICONS[step.id]}</span>
+                    <h2 className={`text-sm font-bold tracking-wide ${isActive ? 'text-[#7B9C7F]' : 'text-[#8A8A8A]'}`}>{step.name}</h2>
+                    <CaretRight size={16} className={`ml-auto transition-transform duration-300 ${isActive ? 'text-[#7B9C7F]' : 'text-[#2A2A2A] opacity-0'}`} />
                  </button>
               )
            })}
@@ -169,7 +169,7 @@ export default function Architecture() {
            {data.apps && data.apps.length > 0 && (
               <>
                  <div className="mt-4 mb-2 pl-2">
-                    <h3 className="text-[10px] font-bold text-sky-400 uppercase tracking-widest">OS Apps</h3>
+                    <h3 className="text-[10px] font-bold text-[#7B9C7F] uppercase tracking-widest">OS Apps</h3>
                  </div>
                  {data.apps.map(app => {
                     const isActive = activeStepId === app.id;
@@ -180,11 +180,11 @@ export default function Architecture() {
                             setActiveStepId(app.id); 
                             if (!isActive) setSelectedPrompt(null);
                           }}
-                          className={`w-full flex items-center gap-3 p-4 text-left outline-none border rounded-xl transition-all duration-300 ${isActive ? 'bg-sky-900/30 border-sky-500/30 shadow-lg' : 'bg-zinc-950/60 border-zinc-800 hover:border-zinc-700'}`}
+                          className={`w-full flex items-center gap-3 p-4 text-left outline-none border rounded-xl transition-all duration-300 ${isActive ? 'bg-[#0A1C0D] border-[#174A1F]' : 'bg-transparent border-[#2A2A2A] hover:border-[#3a3a3a]'}`}
                        >
-                          <span className={isActive ? "text-sky-400" : "text-zinc-500"}>{STEP_ICONS[app.id]}</span>
-                          <h2 className={`text-sm font-bold tracking-wide ${isActive ? 'text-white' : 'text-zinc-400'}`}>{app.name}</h2>
-                          <CaretRight size={16} className={`ml-auto transition-transform duration-300 ${isActive ? 'text-sky-400' : 'text-zinc-600 opacity-0'}`} />
+                          <span className={isActive ? "text-[#7B9C7F]" : "text-[#8A8A8A]"}>{STEP_ICONS[app.id]}</span>
+                          <h2 className={`text-sm font-bold tracking-wide ${isActive ? 'text-[#7B9C7F]' : 'text-[#8A8A8A]'}`}>{app.name}</h2>
+                          <CaretRight size={16} className={`ml-auto transition-transform duration-300 ${isActive ? 'text-[#7B9C7F]' : 'text-[#2A2A2A] opacity-0'}`} />
                        </button>
                     )
                  })}
@@ -193,14 +193,13 @@ export default function Architecture() {
         </div>
 
         {/* Column 2: Module Details & Prompts List */}
-        <div className="w-[380px] flex-shrink-0 bg-zinc-950/60 border border-zinc-800 rounded-2xl flex flex-col overflow-hidden relative shadow-lg">
+        <div className="w-[380px] flex-shrink-0 bg-[#000000] border border-[#2A2A2A] rounded-2xl flex flex-col overflow-hidden relative shadow-lg">
            {(() => {
               const activeModule = data.flow.find(s => s.id === activeStepId) || data.apps?.find(a => a.id === activeStepId);
-              const isApp = data.apps?.some(a => a.id === activeStepId);
               
               if (!activeModule) {
                  return (
-                    <div className="flex-1 flex flex-col items-center justify-center text-zinc-600 p-6 text-center">
+                    <div className="flex-1 flex flex-col items-center justify-center text-[#2A2A2A] p-6 text-center">
                        <Compass size={48} weight="light" className="mb-4 opacity-20" />
                        <p className="text-sm font-medium">Selecciona un módulo de la izquierda para ver sus detalles y agentes.</p>
                     </div>
@@ -209,13 +208,13 @@ export default function Architecture() {
               
               return (
                  <div className="flex flex-col h-full">
-                    <div className="p-6 border-b border-zinc-800/50 bg-zinc-900/30">
-                       <h2 className={`text-lg font-bold mb-3 ${isApp ? 'text-sky-300' : 'text-emerald-300'}`}>{activeModule.name}</h2>
-                       <p className="text-sm text-zinc-300 leading-relaxed">{activeModule.what}</p>
+                    <div className="p-6 border-b border-[#2A2A2A] bg-[#000000]">
+                       <h2 className={`text-lg font-bold mb-3 text-[#7B9C7F]`}>{activeModule.name}</h2>
+                       <p className="text-sm text-[#FFFFFF] leading-relaxed">{activeModule.what}</p>
                     </div>
                     
                     <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                       <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-3 pl-2">
+                       <div className="text-[10px] uppercase tracking-widest text-[#8A8A8A] font-bold mb-3 pl-2">
                          Master Prompts ({activeModule.prompts.length})
                        </div>
                        <div className="flex flex-col gap-2">
@@ -247,16 +246,16 @@ export default function Architecture() {
         </div>
 
         {/* Column 3: Prompt Viewer */}
-        <div className="flex-1 min-w-0 bg-zinc-950/60 border border-zinc-800 rounded-2xl flex flex-col overflow-hidden relative shadow-2xl">
+        <div className="flex-1 min-w-0 bg-[#000000] border border-[#2A2A2A] rounded-2xl flex flex-col overflow-hidden relative shadow-2xl">
            {selectedPrompt ? (
               <>
-                 <div className="flex items-center justify-between p-4 border-b border-zinc-800 bg-zinc-900/60 backdrop-blur-md">
+                 <div className="flex items-center justify-between p-4 border-b border-[#2A2A2A] bg-[#000000]">
                     <div className="flex items-center gap-3">
                        <code className="text-emerald-300 text-sm font-mono font-bold bg-emerald-950/50 px-2 py-1 rounded border border-emerald-900/50">{selectedPrompt.key}</code>
-                       <span className="text-zinc-500 text-xs font-mono hidden xl:inline-block">{selectedPrompt.used_at}</span>
+                       <span className="text-[#8A8A8A] text-xs font-mono hidden xl:inline-block">{selectedPrompt.used_at}</span>
                     </div>
                     <div className="flex items-center gap-4">
-                       <span className="text-xs text-zinc-500 font-mono hidden sm:inline-block">{selectedPrompt.text.length} caracteres</span>
+                       <span className="text-xs text-[#8A8A8A] font-mono hidden sm:inline-block">{selectedPrompt.text.length} caracteres</span>
                        <button
                           onClick={() => handleCopy(selectedPrompt.text)}
                           className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg bg-zinc-100 hover:bg-white text-zinc-900 transition-colors"
@@ -269,26 +268,26 @@ export default function Architecture() {
                  
                  <div className="flex-1 overflow-y-auto custom-scrollbar relative flex flex-col">
                     <div className="flex-1 p-6">
-                       <pre className="text-base md:text-lg text-zinc-200 whitespace-pre-wrap font-mono leading-relaxed drop-shadow-sm">
+                       <pre className="text-base md:text-lg text-[#FFFFFF] whitespace-pre-wrap font-mono leading-relaxed drop-shadow-sm">
                           {selectedPrompt.text}
                        </pre>
                     </div>
                     
                     {/* Explicación Inferior */}
                     {selectedPrompt.explanation && (
-                       <div className="p-6 bg-zinc-900/90 border-t border-zinc-800 flex items-start gap-4">
+                       <div className="p-6 bg-[#0A1C0D] border-t border-[#174A1F] flex items-start gap-4">
                           <button
                              onClick={() => handleSpeech(selectedPrompt.explanation!)}
                              className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                               speaking ? 'bg-sky-500 text-white animate-pulse' : 'bg-zinc-800 text-sky-400 hover:bg-zinc-700'
+                               speaking ? 'bg-[#0A1C0D] text-[#7B9C7F] animate-pulse' : 'bg-[#151515] text-[#8A8A8A] hover:bg-zinc-700'
                              }`}
                              title={speaking ? "Detener" : "Escuchar explicación"}
                           >
                              <SpeakerHigh size={20} weight={speaking ? "fill" : "regular"} />
                           </button>
                           <div>
-                             <h3 className="text-sky-400 text-xs font-bold uppercase tracking-wider mb-1">Explicación del Prompt</h3>
-                             <p className="text-zinc-300 text-sm leading-relaxed font-sans">
+                             <h3 className="text-[#7B9C7F] text-xs font-bold uppercase tracking-wider mb-1">Explicación del Prompt</h3>
+                             <p className="text-[#FFFFFF] text-sm leading-relaxed font-sans">
                                {selectedPrompt.explanation}
                              </p>
                           </div>
@@ -297,7 +296,7 @@ export default function Architecture() {
                  </div>
               </>
            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-zinc-600 bg-zinc-950/30">
+              <div className="flex-1 flex flex-col items-center justify-center text-[#2A2A2A] bg-[#000000]">
                  <Brain size={64} weight="light" className="mb-6 opacity-20" />
                  <p className="text-sm font-medium">Selecciona un Master Prompt para inspeccionar su código fuente.</p>
               </div>

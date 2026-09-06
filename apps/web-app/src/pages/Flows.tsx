@@ -57,10 +57,10 @@ export default function Flows() {
 
   const getEngineColor = (engine?: string) => {
     switch (engine) {
-      case 'CrewAI': return 'bg-orange-900/30 text-orange-400 border-orange-800/50';
-      case 'LangGraph': return 'bg-purple-900/30 text-purple-400 border-purple-800/50';
-      case 'AutoGen': return 'bg-green-900/30 text-green-400 border-green-800/50';
-      default: return 'bg-blue-900/30 text-blue-400 border-blue-800/50';
+      case 'CrewAI': return 'bg-[#151515] text-[#8A8A8A] border-[#2A2A2A]';
+      case 'LangGraph': return 'bg-[#151515] text-[#8A8A8A] border-[#2A2A2A]';
+      case 'AutoGen': return 'bg-[#0A1C0D] text-[#7B9C7F] border-[#174A1F]';
+      default: return 'bg-[#151515] text-[#8A8A8A] border-[#2A2A2A]';
     }
   };
 
@@ -93,7 +93,7 @@ export default function Flows() {
       <div className={gridClass}>
         {filtered.map((tpl) => (
           <div key={tpl.id} className={itemClass}>
-            <div className="absolute inset-0 opacity-10 group-hover:opacity-15 transition-opacity" style={{ backgroundImage: 'linear-gradient(#334155 1px, transparent 1px), linear-gradient(90deg, #334155 1px, transparent 1px)', backgroundSize: '15px 15px' }}></div>
+            <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity" style={{ backgroundImage: 'linear-gradient(#334155 1px, transparent 1px), linear-gradient(90deg, #334155 1px, transparent 1px)', backgroundSize: '15px 15px' }}></div>
             
             <div className="relative z-10 flex flex-col flex-grow h-full">
               {/* Header */}
@@ -234,8 +234,8 @@ export default function Flows() {
                       <DotsThreeOutlineVertical size={20} weight="light" />
                     </button>
                     {openMenuId === flow.id && (
-                      <div className="absolute right-0 mt-2 w-32 bg-gray-800 border border-gray-700 rounded-lg shadow-xl overflow-hidden z-50">
-                        <button onClick={() => handleDeleteFlow(flow.id)} className="w-full text-left px-4 py-2 text-red-400 hover:bg-gray-700 text-sm font-semibold transition-colors">
+                      <div className="absolute right-0 mt-2 w-32 bg-[#151515] border border-[#2A2A2A] rounded-lg shadow-xl overflow-hidden z-50">
+                        <button onClick={() => handleDeleteFlow(flow.id)} className="w-full text-left px-4 py-2 text-[#8A8A8A] hover:bg-[#1f1f1f] hover:text-white text-sm font-semibold transition-colors">
                           Eliminar
                         </button>
                       </div>
@@ -250,21 +250,21 @@ export default function Flows() {
                 </div>
 
                 <div className="relative z-10 flex gap-3">
-                  <button onClick={() => navigate('/builder', { state: { restoreFlow: flow } })} className="flex-1 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-900/50 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors">
+                  <button onClick={() => navigate('/builder', { state: { restoreFlow: flow } })} className="flex-1 bg-[#151515] hover:bg-[#1f1f1f] text-[#8A8A8A] hover:text-white border border-[#2A2A2A] py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors">
                     <Network size={18} /> Editar
                   </button>
-                  <button onClick={() => alert("Próximamente: Ejecución Headless. Te permitirá correr este ecosistema en segundo plano y recibir los resultados directamente aquí, sin tener que abrir el entorno del Builder.")} className="w-12 bg-green-600/10 hover:bg-green-600/20 text-green-500 border border-green-900/50 rounded-xl flex items-center justify-center transition-colors" title="Ejecución Headless (Próximamente)">
+                  <button onClick={() => alert("Próximamente: Ejecución Headless. Te permitirá correr este ecosistema en segundo plano y recibir los resultados directamente aquí, sin tener que abrir el entorno del Builder.")} className="w-12 bg-[#151515] hover:bg-[#1f1f1f] text-[#8A8A8A] hover:text-white border border-[#2A2A2A] rounded-xl flex items-center justify-center transition-colors" title="Ejecución Headless (Próximamente)">
                     <Play size={18} weight="light" />
                   </button>
                 </div>
               </div>
             ))}
 
-            <div onClick={() => navigate('/builder')} className="group bg-gray-900/20 border border-dashed border-gray-700 hover:border-blue-500 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-colors h-[240px]">
-              <div className="w-14 h-14 rounded-full bg-blue-900/20 text-blue-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <div onClick={() => navigate('/builder')} className="group bg-transparent border border-dashed border-[#2A2A2A] hover:border-[#174A1F] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-colors h-[240px]">
+              <div className="w-14 h-14 rounded-full bg-[#151515] text-[#8A8A8A] group-hover:text-[#7B9C7F] border border-[#2A2A2A] group-hover:border-[#174A1F] flex items-center justify-center mb-4 group-hover:scale-110 transition-all">
                 <Plus size={28} />
               </div>
-              <span className="font-bold text-gray-400 group-hover:text-blue-400">Diseñar Nuevo</span>
+              <span className="font-bold text-[#8A8A8A] group-hover:text-[#7B9C7F]">Diseñar Nuevo</span>
             </div>
           </div>
         ) : (

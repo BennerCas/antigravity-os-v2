@@ -170,14 +170,14 @@ export default function Automations() {
         <div className="bg-black/40 border border-[var(--theme-border)]/30 rounded-2xl p-5 flex flex-col justify-between">
           <div className="flex justify-between items-start text-zinc-400 mb-2">
             <span className="text-xs font-bold uppercase tracking-wider">Tareas Activas</span>
-            <Gear size={20} className="text-blue-400" />
+            <Gear size={20} className="text-[#7B9C7F]" />
           </div>
           <span className="text-3xl font-black text-white">{jobs.length}</span>
         </div>
         <div className="bg-black/40 border border-[var(--theme-border)]/30 rounded-2xl p-5 flex flex-col justify-between">
           <div className="flex justify-between items-start text-zinc-400 mb-2">
             <span className="text-xs font-bold uppercase tracking-wider">Ejecuciones Totales</span>
-            <ArrowsClockwise size={20} className="text-purple-400" />
+            <ArrowsClockwise size={20} className="text-[#8A8A8A]" />
           </div>
           <span className="text-3xl font-black text-white">{totalExecutions}</span>
         </div>
@@ -256,7 +256,7 @@ export default function Automations() {
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-2">
-                            <span className={`px-2 py-1 rounded text-xs font-bold flex items-center gap-1 ${job.type === 'CRON' ? 'bg-purple-900/30 text-purple-400 border border-purple-900' : 'bg-orange-900/30 text-orange-400 border border-orange-900'}`}>
+                            <span className={`px-2 py-1 rounded text-xs font-bold flex items-center gap-1 ${job.type === 'CRON' ? 'bg-purple-900/30 text-[#8A8A8A] border border-purple-900' : 'bg-orange-900/30 text-orange-400 border border-orange-900'}`}>
                               {job.type === 'CRON' ? <Clock size={14} /> : <FileCode size={14} />} {job.type}
                             </span>
                           </div>
@@ -278,7 +278,7 @@ export default function Automations() {
                         </td>
                         <td className="px-4 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button className="p-2 hover:bg-blue-900/30 text-blue-400 rounded transition-colors" title="Ejecutar Manualmente">
+                            <button className="p-2 hover:bg-blue-900/30 text-[#7B9C7F] rounded transition-colors" title="Ejecutar Manualmente">
                               <PlayCircle size={20} />
                             </button>
                             <button onClick={() => handleDelete(job.id)} className="p-2 hover:bg-red-900/30 text-red-400 rounded transition-colors" title="Desvincular">
@@ -321,7 +321,7 @@ export default function Automations() {
                   <h3 className="font-bold text-white text-md flex items-center gap-2">
                     {tmpl.title}
                   </h3>
-                  <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded flex items-center gap-1 ${tmpl.trigger === 'CRON' ? 'bg-purple-900/30 text-purple-400' : 'bg-orange-900/30 text-orange-400'}`}>
+                  <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded flex items-center gap-1 ${tmpl.trigger === 'CRON' ? 'bg-purple-900/30 text-[#8A8A8A]' : 'bg-orange-900/30 text-orange-400'}`}>
                     {tmpl.trigger === 'CRON' ? <Clock size={12}/> : <FileCode size={12}/>} {tmpl.trigger}
                   </span>
                 </div>
@@ -428,7 +428,7 @@ export default function Automations() {
                 )}
                 {type === 'WEBHOOK' && (
                   <div className="bg-blue-900/10 p-4 rounded-xl border border-blue-900/30 mt-4 flex items-start gap-3">
-                    <Key size={24} className="text-blue-400 flex-shrink-0" />
+                    <Key size={24} className="text-[#7B9C7F] flex-shrink-0" />
                     <div>
                       <h4 className="text-sm font-bold text-blue-300">Endpoint Protegido</h4>
                       <p className="text-xs text-blue-200/70 mt-1">
