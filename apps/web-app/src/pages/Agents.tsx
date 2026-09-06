@@ -956,7 +956,7 @@ const Agents = () => {
           {inspectedAgent ? (
             <div className="flex flex-col h-full relative">
               
-              <div className="flex-1 overflow-y-auto p-5 custom-scrollbar pb-28">
+              <div className="flex-1 overflow-y-auto p-5 custom-scrollbar" style={{ paddingBottom: 'calc(57px + 0.5cm)' }}>
                 
                 {/* Herramientas IA en la parte superior */}
                 <div className="flex flex-col gap-2 mb-6">
