@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pyyaml
+scikit-learn
+google-generativeai
+python-dotenv
+httpx
+apscheduler==3.11.3

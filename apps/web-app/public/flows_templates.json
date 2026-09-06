@@ -1,0 +1,83 @@
+[
+  {
+    "id": "tpl_b1",
+    "name": "Generador de Hilos Virales",
+    "engine": "Auto",
+    "nodes": 2,
+    "complexity": "Básico",
+    "category": "Redes Sociales",
+    "description": "Flujo lineal: Un agente investiga un tema y el segundo lo transforma en un hilo de Twitter/X altamente adictivo."
+  },
+  {
+    "id": "tpl_b2",
+    "name": "Analista de Documentos Express",
+    "engine": "LangGraph",
+    "nodes": 3,
+    "complexity": "Básico",
+    "category": "Productividad",
+    "description": "Extrae texto, resume los puntos clave y genera una lista de tareas accionables a partir de cualquier documento."
+  },
+  {
+    "id": "tpl_b3",
+    "name": "Brainstorming Estructurado",
+    "engine": "CrewAI",
+    "nodes": 3,
+    "complexity": "Básico",
+    "category": "Creatividad",
+    "description": "Tres agentes (Visionario, Crítico y Pragmático) debaten una idea inicial para entregar un concepto sólido."
+  },
+  {
+    "id": "tpl_i1",
+    "name": "Escuadrón de Ventas B2B",
+    "engine": "CrewAI",
+    "nodes": 5,
+    "complexity": "Intermedio",
+    "category": "Marketing & Ventas",
+    "description": "Identificador de leads, Investigador de perfiles, Redactor de Cold Emails, Experto en Follow-ups y Analista de Respuestas."
+  },
+  {
+    "id": "tpl_i2",
+    "name": "Auditor de Código & Seguridad",
+    "engine": "AutoGen",
+    "nodes": 4,
+    "complexity": "Intermedio",
+    "category": "Desarrollo",
+    "description": "Pipeline de revisión: Escáner estático, Buscador de vulnerabilidades (Exploit Tester), Creador de parches y Revisor final."
+  },
+  {
+    "id": "tpl_i3",
+    "name": "Fábrica de Landing Pages",
+    "engine": "LangGraph",
+    "nodes": 6,
+    "complexity": "Intermedio",
+    "category": "Desarrollo & UX",
+    "description": "Desde la estructura (Wireframe) y el Copywriter persuasivo, hasta el desarrollador React + Tailwind que genera el código final."
+  },
+  {
+    "id": "tpl_a1",
+    "name": "Ecosistema de Software Autónomo",
+    "engine": "AutoGen",
+    "nodes": 12,
+    "complexity": "Avanzado",
+    "category": "Ingeniería de Software",
+    "description": "Simula una empresa completa: Product Manager, Arquitecto, Frontend, Backend, DevOps, QA y Scrum Master colaborando en sprints."
+  },
+  {
+    "id": "tpl_a2",
+    "name": "Fondo de Cobertura (Quant AI)",
+    "engine": "LangGraph",
+    "nodes": 9,
+    "complexity": "Avanzado",
+    "category": "Finanzas",
+    "description": "Scraper de noticias financieras, Analista de sentimiento, Matemático Cuantitativo, Evaluador de Riesgos y Gestor de Portafolio."
+  },
+  {
+    "id": "tpl_a3",
+    "name": "Agencia de Marketing 360°",
+    "engine": "CrewAI",
+    "nodes": 10,
+    "complexity": "Avanzado",
+    "category": "Empresarial",
+    "description": "Operación masiva: Estratega SEO, Copywriter, Diseñador de Prompts (Midjourney), Gestor de Ads, Analista de Métricas y Director de Campaña."
+  }
+]

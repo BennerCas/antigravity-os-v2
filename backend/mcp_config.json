@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "node",
+      "args": [
+        "C:/antigravityAS/Antigravity_OS/External/mcp_servers/github-mcp-server/build/index.js"
+      ],
+      "env": {
+        "GITHUB_TOKEN": "vault:GITHUB_TOKEN"
+      }
+    },
+    "awesome-agent-skills": {
+      "command": "python",
+      "args": [
+        "C:/antigravityAS/Antigravity_OS/External/mcp_servers/awesome_agent_skills/server.py"
+      ],
+      "description": "Provider for 1,000+ agent skills from awesome_agent_skills repository"
+    }
+  },
+  "security": {
+    "enablePromptProtection": true,
+    "requireVaultForSecrets": true
+  }
+}
