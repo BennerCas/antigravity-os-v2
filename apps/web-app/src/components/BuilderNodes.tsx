@@ -7,6 +7,24 @@ import { API_URL } from '../lib/api';
 
 type BuilderNodeProps = NodeProps<Node<BuilderNodeData>>;
 
+/**
+ * Prevent the ReactFlow canvas from capturing scroll (zoom) events when the
+ * user is scrolling inside a textarea that still has content to scroll.
+ * If the textarea has reached its top/bottom limit, we let the event bubble
+ * so ReactFlow can zoom normally.
+ */
+const onWheelTextarea = (e: React.WheelEvent<HTMLTextAreaElement>) => {
+  const el = e.currentTarget;
+  const scrollingDown = e.deltaY > 0;
+  const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 1;
+  const atTop = el.scrollTop <= 0;
+
+  // Only block if the textarea can absorb this scroll direction
+  if ((scrollingDown && !atBottom) || (!scrollingDown && !atTop)) {
+    e.stopPropagation();
+  }
+};
+
 const handleCopy = (text: string) => {
   if (text) {
     navigator.clipboard.writeText(text).catch(err => console.error("Error al copiar: ", err));
@@ -131,7 +149,7 @@ export const MainPromptNode = ({ id, data, selected }: BuilderNodeProps) => {
       <CardHeaderActions id={id} data={data} customColor={isVariant ? "var(--theme-bg)" : undefined} />
       <UniversalHandles />
       <h3 className="font-bold text-lg mb-4 pr-32 flex-shrink-0">{data.title || "Main Prompt"}</h3>
-      <textarea 
+      <textarea onWheel={onWheelTextarea} 
         className="flex-grow w-full rounded p-2 text-sm resize-none outline-none overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--theme-border)] whitespace-pre-wrap"
         style={{ scrollbarWidth: 'none' }}
         value={textContent}
@@ -156,7 +174,7 @@ export const ActionNode = ({ id, data, selected }: BuilderNodeProps) => {
       <CardHeaderActions id={id} data={data} customColor={isVariant ? "var(--theme-bg)" : undefined} />
       <UniversalHandles />
       <h3 className="font-bold text-lg mb-4 pr-32 flex-shrink-0">{String(data.title || data.actionType || "Action Node")}</h3>
-      <textarea 
+      <textarea onWheel={onWheelTextarea} 
         className="flex-grow w-full rounded p-2 text-sm resize-none outline-none overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--theme-border)] whitespace-pre-wrap"
         style={{ scrollbarWidth: 'none' }}
         value={textContent}
@@ -181,7 +199,7 @@ export const LogicaNode = ({ id, data, selected }: BuilderNodeProps) => {
       <CardHeaderActions id={id} data={data} customColor={isVariant ? "var(--theme-bg)" : undefined} />
       <UniversalHandles />
       <h3 className="font-bold text-lg mb-4 pr-32 flex items-center gap-2 flex-shrink-0">🧠 Lógica del Prompt</h3>
-      <textarea 
+      <textarea onWheel={onWheelTextarea} 
         className="flex-grow w-full rounded p-2 text-sm resize-none outline-none scrollbar-none whitespace-pre-wrap opacity-90"
         style={{ scrollbarWidth: 'none' }}
         value={textContent}
@@ -216,7 +234,7 @@ export const TraducirNode = ({ id, data, selected }: BuilderNodeProps) => {
         <option value="Alemán" className="bg-black">Alemán</option>
         <option value="Italiano" className="bg-black">Italiano</option>
       </select>
-      <textarea 
+      <textarea onWheel={onWheelTextarea} 
         className="w-full rounded p-2 text-sm resize-none h-24 outline-none scrollbar-none"
         style={{ scrollbarWidth: 'none' }}
         value={content}
@@ -237,7 +255,7 @@ export const EditarNode = ({ id, data, selected }: BuilderNodeProps) => {
       <CardHeaderActions id={id} data={data} />
       <UniversalHandles />
       <h3 className="font-bold mb-4 pr-32">Editar</h3>
-      <textarea 
+      <textarea onWheel={onWheelTextarea} 
         className="w-full rounded p-2 text-sm resize-none h-32 outline-none scrollbar-none"
         style={{ scrollbarWidth: 'none' }}
         value={content}
@@ -292,7 +310,7 @@ export const PostItNode = ({ id, data, selected }: BuilderNodeProps) => {
 
       <CardHeaderActions id={id} data={data} customColor={textColor} />
 
-      <textarea 
+      <textarea onWheel={onWheelTextarea} 
         className="w-full h-32 bg-transparent resize-none outline-none font-mono text-sm leading-relaxed scrollbar-none"
         placeholder="Escribe una nota..."
         value={note}
