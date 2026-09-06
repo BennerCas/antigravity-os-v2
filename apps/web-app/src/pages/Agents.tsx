@@ -1014,10 +1014,35 @@ const Agents = () => {
               </div>
 
               {/* Botón inferior FIJO al fondo */}
-              <div className="absolute bottom-0 left-0 w-full p-5 bg-gradient-to-t from-[#0f111a] via-[#0f111a] to-transparent">
-                <button 
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  width: '100%',
+                  padding: '0',
+                  borderTop: '1px solid #2A2A2A',
+                }}
+              >
+                <button
                   onClick={(e) => handleSetAgent(e as any, inspectedAgent)}
-                  className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-4 rounded-xl shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all hover:-translate-y-1"
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    backgroundColor: '#151515',
+                    border: 'none',
+                    borderRadius: '0',
+                    color: '#FFFFFF',
+                    fontWeight: 700,
+                    fontSize: '14px',
+                    letterSpacing: '0.04em',
+                    padding: '18px 24px',
+                    cursor: 'pointer',
+                    transition: 'background-color 150ms ease',
+                    textAlign: 'center',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#1f1f1f')}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#151515')}
                 >
                   Abrir en el Builder →
                 </button>
