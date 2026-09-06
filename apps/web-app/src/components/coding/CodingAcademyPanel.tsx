@@ -119,8 +119,8 @@ A continuación, tienes 10 ejemplos reales para empezar. Haz clic en "Cargar al 
   ];
 
   return (
-    <div className="flex flex-col h-full bg-[#151515] p-6 text-white overflow-y-auto custom-scrollbar">
-      <div className="flex items-center justify-between mb-6">
+    <div className="flex flex-col h-full bg-[#151515] p-5 text-white overflow-hidden">
+      <div className="flex items-center justify-between mb-4 shrink-0">
         <div className="flex items-center gap-3">
           <GraduationCap size={28} weight="fill" className="text-white" />
           <h2 className="text-2xl font-bold tracking-tight">Guía & Academy</h2>
@@ -138,15 +138,15 @@ A continuación, tienes 10 ejemplos reales para empezar. Haz clic en "Cargar al 
         </button>
       </div>
 
-      <div className="bg-[#000000] border border-[#2A2A2A] rounded-xl p-6 mb-8 text-sm text-[#d0d0d0] leading-relaxed shadow-sm">
-        <h3 className="text-white text-lg font-semibold mb-4 flex items-center gap-2">
+      <div className="bg-[#000000] border border-[#2A2A2A] rounded-xl p-5 mb-5 text-sm text-[#d0d0d0] leading-relaxed shadow-sm shrink-0">
+        <h3 className="text-white text-lg font-semibold mb-3 flex items-center gap-2">
           <BookOpen size={20} />
           ¿Cómo funciona el Módulo Coding?
         </h3>
-        <p className="mb-4">
+        <p className="mb-3">
           Este entorno unifica tus ideas con el poder de ejecución multi-agente de Antigravity OS. El flujo sigue 4 etapas principales:
         </p>
-        <ul className="space-y-3 mb-4 list-none pl-1">
+        <ul className="space-y-2 mb-2 list-none pl-1">
           <li className="flex gap-3">
             <span className="text-[#8A8A8A] font-bold">1.</span>
             <span><strong>Editor y Atlas:</strong> Define tu tarea. Puedes apoyarte del panel izquierdo para extraer Prompts pre-validados.</span>
@@ -166,19 +166,19 @@ A continuación, tienes 10 ejemplos reales para empezar. Haz clic en "Cargar al 
         </ul>
       </div>
 
-      <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+      <h3 className="text-xl font-bold mb-3 flex items-center gap-2 shrink-0">
         <Code size={24} />
         Ejemplos de Producción
       </h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4 w-full pb-4">
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-5 grid-rows-2 gap-4 w-full pb-1">
         {examples.map((ex, i) => (
-          <div key={i} className="group bg-[#000000] border border-[#2A2A2A] hover:border-[#4A4A4A] transition-all duration-300 rounded-xl p-5 flex flex-col justify-between min-h-[240px]">
-            <div>
-              <div className="flex flex-col mb-3 gap-2">
-                <h4 className="font-semibold text-[15px] leading-tight">{ex.title}</h4>
+          <div key={i} className="group bg-[#000000] border border-[#2A2A2A] hover:border-[#4A4A4A] transition-all duration-300 rounded-xl p-4 flex flex-col justify-between overflow-hidden">
+            <div className="flex flex-col h-full">
+              <div className="flex flex-col mb-2 gap-2 shrink-0">
+                <h4 className="font-semibold text-[14px] leading-tight line-clamp-2">{ex.title}</h4>
                 <div className="flex flex-wrap gap-2">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                     ex.level === 'Básico' ? 'bg-[#1a2e1f] text-[#4ade80]' :
                     ex.level === 'Intermedio' ? 'bg-[#3b2a1a] text-[#fbbf24]' :
                     ex.level === 'Avanzado' ? 'bg-[#3a1a1f] text-[#f87171]' :
@@ -186,20 +186,20 @@ A continuación, tienes 10 ejemplos reales para empezar. Haz clic en "Cargar al 
                   }`}>
                     {ex.level}
                   </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#151515] border border-[#2A2A2A] text-[#8A8A8A] font-bold uppercase tracking-wider">
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#151515] border border-[#2A2A2A] text-[#8A8A8A] font-bold uppercase tracking-wider">
                     {ex.framework}
                   </span>
                 </div>
               </div>
-              <p className="text-sm text-[#8A8A8A] leading-relaxed line-clamp-4">{ex.desc}</p>
+              <p className="text-xs text-[#8A8A8A] leading-relaxed line-clamp-3 overflow-hidden flex-1">{ex.desc}</p>
             </div>
             
             <button
               onClick={() => onLoadExample(ex.content, ex.framework)}
-              className="flex items-center justify-center gap-2 w-full py-2 bg-[#151515] border border-[#2A2A2A] hover:bg-[#FFFFFF] hover:text-[#000000] hover:border-[#FFFFFF] transition-all rounded-md text-sm font-medium mt-auto"
+              className="flex items-center justify-center gap-2 w-full py-1.5 bg-[#151515] border border-[#2A2A2A] hover:bg-[#FFFFFF] hover:text-[#000000] hover:border-[#FFFFFF] transition-all rounded-md text-xs font-medium shrink-0 mt-3"
             >
               Cargar
-              <ArrowRight size={16} />
+              <ArrowRight size={14} />
             </button>
           </div>
         ))}
