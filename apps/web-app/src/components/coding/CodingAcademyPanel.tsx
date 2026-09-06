@@ -119,66 +119,66 @@ A continuación, tienes 10 ejemplos reales para empezar. Haz clic en "Cargar al 
   ];
 
   return (
-    <div className="flex flex-col h-full bg-[#151515] p-6 text-white overflow-y-auto custom-scrollbar">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <GraduationCap size={28} weight="fill" className="text-white" />
-          <h2 className="text-2xl font-bold tracking-tight">Guía & Academy</h2>
+    <div className="flex flex-col h-full bg-[#151515] p-4 text-white overflow-y-auto custom-scrollbar">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <GraduationCap size={24} weight="fill" className="text-white" />
+          <h2 className="text-xl font-bold tracking-tight">Guía & Academy</h2>
         </div>
         <button
           onClick={handleTTS}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-300 ${
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
             isPlaying 
               ? 'bg-[#FFFFFF] text-[#000000]' 
               : 'bg-[#2A2A2A] text-white hover:bg-[#3A3A3A]'
           }`}
         >
-          {isPlaying ? <Stop size={18} weight="fill" /> : <Play size={18} weight="fill" />}
-          <span>{isPlaying ? 'Detener Guía' : 'Escuchar Guía Interactiva'}</span>
+          {isPlaying ? <Stop size={16} weight="fill" /> : <Play size={16} weight="fill" />}
+          <span>{isPlaying ? 'Detener' : 'Escuchar Guía'}</span>
         </button>
       </div>
 
-      <div className="bg-[#000000] border border-[#2A2A2A] rounded-xl p-6 mb-8 text-sm text-[#d0d0d0] leading-relaxed shadow-sm">
-        <h3 className="text-white text-lg font-semibold mb-4 flex items-center gap-2">
-          <BookOpen size={20} />
+      <div className="bg-[#000000] border border-[#2A2A2A] rounded-xl p-4 mb-4 text-[12px] text-[#d0d0d0] leading-snug shadow-sm">
+        <h3 className="text-white text-[14px] font-semibold mb-2 flex items-center gap-2">
+          <BookOpen size={16} />
           ¿Cómo funciona el Módulo Coding?
         </h3>
-        <p className="mb-4">
-          Este entorno unifica tus ideas con el poder de ejecución multi-agente de Antigravity OS. El flujo sigue 4 etapas principales:
+        <p className="mb-2">
+          Este entorno unifica tus ideas con el poder de ejecución multi-agente de Antigravity OS:
         </p>
-        <ul className="space-y-3 mb-4 list-none pl-1">
-          <li className="flex gap-3">
+        <ul className="space-y-1.5 mb-1 list-none pl-1">
+          <li className="flex gap-2">
             <span className="text-[#8A8A8A] font-bold">1.</span>
-            <span><strong>Editor y Atlas:</strong> Define tu tarea. Puedes apoyarte del panel izquierdo para extraer Prompts pre-validados.</span>
+            <span><strong>Editor:</strong> Define tu tarea o usa la base de datos Atlas.</span>
           </li>
-          <li className="flex gap-3">
+          <li className="flex gap-2">
             <span className="text-[#8A8A8A] font-bold">2.</span>
-            <span><strong>Framework:</strong> Elige el motor (<span className="text-white">CrewAI</span> para colaboración, <span className="text-white">AutoGen</span> para debates, <span className="text-white">LangGraph</span> para flujos cíclicos/condicionales).</span>
+            <span><strong>Framework:</strong> Elige el motor (CrewAI, AutoGen, LangGraph).</span>
           </li>
-          <li className="flex gap-3">
+          <li className="flex gap-2">
             <span className="text-[#8A8A8A] font-bold">3.</span>
-            <span><strong>Compilación (Compiler):</strong> La IA traduce tu texto humano en código de orquestación nativo ejecutable.</span>
+            <span><strong>Compilación:</strong> La IA traduce tu texto en código de orquestación.</span>
           </li>
-          <li className="flex gap-3">
+          <li className="flex gap-2">
             <span className="text-[#8A8A8A] font-bold">4.</span>
-            <span><strong>Ejecución (Terminal):</strong> El script corre en el Sandbox seguro transmitiendo resultados vía WebSockets a la terminal inferior.</span>
+            <span><strong>Terminal:</strong> El código corre en el Sandbox seguro en tiempo real.</span>
           </li>
         </ul>
       </div>
 
-      <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-        <Code size={24} />
+      <h3 className="text-base font-bold mb-3 flex items-center gap-2">
+        <Code size={20} />
         Ejemplos de Producción
       </h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4 w-full pb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3 w-full pb-2">
         {examples.map((ex, i) => (
-          <div key={i} className="group bg-[#000000] border border-[#2A2A2A] hover:border-[#4A4A4A] transition-all duration-300 rounded-xl p-5 flex flex-col justify-between min-h-[240px]">
+          <div key={i} className="group bg-[#000000] border border-[#2A2A2A] hover:border-[#4A4A4A] transition-all duration-300 rounded-lg p-3.5 flex flex-col justify-between">
             <div>
-              <div className="flex flex-col mb-3 gap-2">
-                <h4 className="font-semibold text-[15px] leading-tight">{ex.title}</h4>
-                <div className="flex flex-wrap gap-2">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+              <div className="flex flex-col mb-2 gap-1">
+                <h4 className="font-semibold text-[13px] leading-tight">{ex.title}</h4>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                     ex.level === 'Básico' ? 'bg-[#1a2e1f] text-[#4ade80]' :
                     ex.level === 'Intermedio' ? 'bg-[#3b2a1a] text-[#fbbf24]' :
                     ex.level === 'Avanzado' ? 'bg-[#3a1a1f] text-[#f87171]' :
@@ -186,20 +186,20 @@ A continuación, tienes 10 ejemplos reales para empezar. Haz clic en "Cargar al 
                   }`}>
                     {ex.level}
                   </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#151515] border border-[#2A2A2A] text-[#8A8A8A] font-bold uppercase tracking-wider">
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#151515] border border-[#2A2A2A] text-[#8A8A8A] font-bold uppercase tracking-wider">
                     {ex.framework}
                   </span>
                 </div>
               </div>
-              <p className="text-sm text-[#8A8A8A] leading-relaxed line-clamp-4">{ex.desc}</p>
+              <p className="text-[11px] text-[#8A8A8A] leading-tight line-clamp-3">{ex.desc}</p>
             </div>
             
             <button
               onClick={() => onLoadExample(ex.content, ex.framework)}
-              className="flex items-center justify-center gap-2 w-full py-2 bg-[#151515] border border-[#2A2A2A] hover:bg-[#FFFFFF] hover:text-[#000000] hover:border-[#FFFFFF] transition-all rounded-md text-sm font-medium mt-auto"
+              className="flex items-center justify-center gap-1.5 w-full py-1.5 bg-[#151515] border border-[#2A2A2A] hover:bg-[#FFFFFF] hover:text-[#000000] hover:border-[#FFFFFF] transition-all rounded-md text-[11px] font-medium mt-3"
             >
               Cargar
-              <ArrowRight size={16} />
+              <ArrowRight size={14} />
             </button>
           </div>
         ))}
