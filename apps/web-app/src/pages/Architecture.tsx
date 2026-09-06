@@ -26,15 +26,15 @@ interface ArchitectureData {
 }
 
 const STEP_ICONS: Record<string, React.ReactNode> = {
-  atlas: <Compass size={22} weight="duotone" />,
-  builder: <Hammer size={22} weight="duotone" />,
-  orchestrator: <Brain size={22} weight="duotone" />,
-  compiler: <Gear size={22} weight="duotone" />,
-  runtime: <Rocket size={22} weight="duotone" />,
-  nexus: <Database size={22} weight="duotone" />,
-  coding: <TerminalWindow size={22} weight="duotone" />,
-  automatizacion: <Lightning size={22} weight="duotone" />,
-  vault: <LockKey size={22} weight="duotone" />,
+  atlas: <Compass size={22} weight="regular" />,
+  builder: <Hammer size={22} weight="regular" />,
+  orchestrator: <Brain size={22} weight="regular" />,
+  compiler: <Gear size={22} weight="regular" />,
+  runtime: <Rocket size={22} weight="regular" />,
+  nexus: <Database size={22} weight="regular" />,
+  coding: <TerminalWindow size={22} weight="regular" />,
+  automatizacion: <Lightning size={22} weight="regular" />,
+  vault: <LockKey size={22} weight="regular" />,
 };
 
 export default function Architecture() {
@@ -201,7 +201,7 @@ export default function Architecture() {
               if (!activeModule) {
                  return (
                     <div className="flex-1 flex flex-col items-center justify-center text-zinc-600 p-6 text-center">
-                       <Compass size={48} weight="duotone" className="mb-4 opacity-20" />
+                       <Compass size={48} weight="regular" className="mb-4 opacity-20" />
                        <p className="text-sm font-medium">Selecciona un módulo de la izquierda para ver sus detalles y agentes.</p>
                     </div>
                  );
@@ -300,7 +300,7 @@ export default function Architecture() {
               </>
            ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-zinc-600 bg-zinc-950/30">
-                 <Brain size={64} weight="duotone" className="mb-6 opacity-20" />
+                 <Brain size={64} weight="regular" className="mb-6 opacity-20" />
                  <p className="text-sm font-medium">Selecciona un Master Prompt para inspeccionar su código fuente.</p>
               </div>
            )}

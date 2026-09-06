@@ -4,14 +4,14 @@ import { EngineIndicator } from './EngineIndicator';
 
 export function Sidebar() {
   const navItems = [
-    { path: '/atlas', label: 'Atlas', icon: <Compass size={24} weight="duotone" /> },
-    { path: '/agents', label: 'Agentes', icon: <Robot size={24} weight="duotone" /> },
-    { path: '/flows', label: 'Nexus', icon: <Network size={24} weight="duotone" /> },
-    { path: '/builder', label: 'Builder', icon: <Hammer size={24} weight="duotone" /> },
-    { path: '/vault', label: 'Vault', icon: <LockKey size={24} weight="duotone" /> },
-    { path: '/coding', label: 'Coding', icon: <Code size={24} weight="duotone" /> },
-    { path: '/architecture', label: 'Arquitectura', icon: <TreeStructure size={24} weight="duotone" /> },
-    { path: '/automations', label: 'Automatización', icon: <Code size={24} weight="duotone" /> },
+    { path: '/atlas', label: 'Atlas', icon: <Compass size={24} weight="regular" /> },
+    { path: '/agents', label: 'Agentes', icon: <Robot size={24} weight="regular" /> },
+    { path: '/flows', label: 'Nexus', icon: <Network size={24} weight="regular" /> },
+    { path: '/builder', label: 'Builder', icon: <Hammer size={24} weight="regular" /> },
+    { path: '/vault', label: 'Vault', icon: <LockKey size={24} weight="regular" /> },
+    { path: '/coding', label: 'Coding', icon: <Code size={24} weight="regular" /> },
+    { path: '/architecture', label: 'Arquitectura', icon: <TreeStructure size={24} weight="regular" /> },
+    { path: '/automations', label: 'Automatización', icon: <Code size={24} weight="regular" /> },
   ];
 
   return (
@@ -26,10 +26,10 @@ export function Sidebar() {
             key={item.path}
             to={item.path}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors font-medium ${
+              `flex items-center gap-3 px-4 py-3 rounded-full transition-colors font-bold uppercase tracking-wide text-[11px] ${
                 isActive
-                  ? 'bg-[var(--accent-soft)] text-[var(--accent-cyan)] shadow-[inset_0_0_0_1px_var(--accent-cyan)]'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-elevated)]'
+                  ? 'bg-red-500/5 text-white border border-red-500'
+                  : 'text-[#9ca3af] hover:text-white border border-transparent'
               }`
             }
           >
@@ -39,9 +39,9 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="p-6 border-t border-[var(--stroke-subtle)] bg-[var(--surface-card)]">
+      <div className="p-6 border-t border-[var(--stroke-subtle)] bg-transparent">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[var(--accent-cyan)] to-[var(--accent-violet)] shadow-[0_0_10px_var(--accent-soft)]"></div>
+          <div className="w-8 h-8 rounded-full bg-transparent border border-red-500"></div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-[var(--text-primary)]">Agent 1</p>
             <p className="text-xs font-medium text-[var(--text-secondary)]">UI Architect</p>

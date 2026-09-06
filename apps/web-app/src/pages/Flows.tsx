@@ -194,7 +194,7 @@ export default function Flows() {
     <div className="h-[calc(100vh)] w-full flex flex-col p-8 bg-[#0a0c10] overflow-hidden">
       <header className="mb-6 flex-shrink-0">
         <h1 className="text-4xl font-bold text-blue-500 tracking-wide flex items-center gap-3">
-          <Network size={36} weight="duotone" /> Nexus
+          <Network size={36} weight="regular" /> Nexus
         </h1>
         <p className="text-gray-400 mt-2">Tu red neuronal de pipelines y ecosistemas multi-agentes guardados.</p>
       </header>

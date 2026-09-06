@@ -9,25 +9,25 @@
   --font-sans: 'Inter', 'Outfit', 'Avenir Next', 'Segoe UI', 'Helvetica Neue', sans-serif;
   --font-mono: 'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
 
-  /* Neon Camo Theme */
-  --surface-canvas: transparent;
-  --surface-card: rgba(10, 14, 23, 0.85);
-  --surface-elevated: rgba(18, 24, 38, 0.9);
-  --stroke-subtle: rgba(173, 255, 47, 0.3);
+  /* Wireframe Theme */
+  --surface-canvas: #09090b;
+  --surface-card: transparent;
+  --surface-elevated: transparent;
+  --stroke-subtle: #ef4444;
 
   --text-primary: #FFFFFF;
-  --text-secondary: #CBD5E1;
-  --text-muted: #94A3B8;
+  --text-secondary: #9ca3af;
+  --text-muted: #9ca3af;
 
   /* Accents */
-  --accent-cyan: #ADFF2F;
-  --accent-cyan-hover: #7FFF00;
-  --accent-violet: #A78BFA;
-  --accent-violet-hover: #8B5CF6;
+  --accent-cyan: #ef4444;
+  --accent-cyan-hover: #f87171;
+  --accent-violet: #ef4444;
+  --accent-violet-hover: #f87171;
   
   --accent-solid: var(--accent-cyan);
   --accent-border: var(--accent-cyan-hover);
-  --accent-soft: rgba(173, 255, 47, 0.15);
+  --accent-soft: rgba(239, 68, 68, 0.05);
   --accent-ring: var(--accent-cyan);
 
   /* Semantic States */
@@ -43,14 +43,14 @@
   --radius-xl: 16px;
 
   /* Shadows (Elevations) */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
 
   /* Glassmorphism */
-  --glass-bg: rgba(18, 24, 38, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-blur: blur(12px);
+  --glass-bg: transparent;
+  --glass-border: #ef4444;
+  --glass-blur: none;
 
   --motion-fast: 150ms;
   --motion-base: 250ms;
@@ -100,8 +100,8 @@
     --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
     --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.12);
 
-    --glass-bg: rgba(10, 14, 23, 0.85);
-    --glass-border: rgba(173, 255, 47, 0.3);
+    --glass-bg: transparent;
+    --glass-border: #ef4444;
   }
 }
 
@@ -301,105 +301,6 @@ html {
   transition: transform 0.3s ease;
 }
 
-/* Camo Themes Custom UI Overrides */
-[data-theme="Camo Green"] { --camo-bg: url('/camo-green.png'); }
-[data-theme="Camo Cyan"] { --camo-bg: url('/camo-cyan.png'); }
-[data-theme="Camo Light"] { --camo-bg: url('/camo-lightgreen.png'); }
-[data-theme="Camo Blue"] { --camo-bg: url('/camo-blue.png'); }
-
-[data-theme^="Camo"] div[style*="--theme-card"],
-[data-theme^="Camo"] div[style*="--theme-bar"],
-[data-theme^="Camo"] aside[style*="--theme-card"],
-[data-theme^="Camo"] .bg-\[var\(--surface-card\)\],
-[data-theme^="Camo"] .bg-\[var\(--theme-card\)\] {
-  background-image: var(--camo-bg) !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-blend-mode: overlay !important;
-  background-color: rgba(10, 14, 23, 0.85) !important;
-  text-shadow: 0 1px 3px rgba(0,0,0,1), 0 2px 8px rgba(0,0,0,0.8);
-}
-
-[data-theme^="Camo"] .theme-btn,
-[data-theme^="Camo"] .theme-select {
-  background-image: var(--camo-bg) !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-blend-mode: overlay !important;
-  background-color: rgba(10, 14, 23, 0.7) !important;
-  color: #ffffff !important;
-  text-shadow: 0 1px 3px rgba(0,0,0,1) !important;
-}
-
-[data-theme^="Camo"] .theme-btn:hover {
-  background-color: rgba(10, 14, 23, 0.4) !important;
-}
-
-[data-theme^="Camo"] .theme-btn.active {
-  background-color: var(--theme-text) !important;
-  background-image: none !important;
-  color: var(--theme-bg) !important;
-  text-shadow: none !important;
-}
-
-[data-theme^="Camo"] input, 
-[data-theme^="Camo"] textarea,
-[data-theme^="Camo"] select {
-  background-color: rgba(5, 7, 10, 0.9) !important;
-  background-image: none !important;
-  text-shadow: none !important;
-  color: #ffffff !important;
-}
-
-
-[data-theme^="Camo"] .sidebar-container nav a,
-[data-theme^="Camo"] .sidebar-container .text-white,
-[data-theme^="Camo"] .sidebar-container span {
-  background-image: var(--camo-bg) !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-blend-mode: overlay !important;
-  background-color: rgba(10, 14, 23, 0.7) !important;
-  color: #ffffff !important;
-  text-shadow: 0 1px 4px rgba(0,0,0,1) !important;
-}
-
-[data-theme^="Camo"] .sidebar-container nav a:hover {
-  background-color: rgba(10, 14, 23, 0.4) !important;
-}
-
-[data-theme^="Camo"] .sidebar-container nav a.active {
-  background-color: var(--accent-cyan) !important;
-  background-image: none !important;
-  color: #000 !important;
-  text-shadow: none !important;
-}
-
-/* Force specific UI elements to have contrast in Camo mode */
-[data-theme^="Camo"] button, 
-[data-theme^="Camo"] .top-bar-text,
-[data-theme^="Camo"] label,
-[data-theme^="Camo"] .text-sm,
-[data-theme^="Camo"] .text-xs,
-[data-theme^="Camo"] h1,
-[data-theme^="Camo"] h2,
-[data-theme^="Camo"] h3 {
-  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-}
-
-.theme-input {
-  background-color: var(--theme-bg) !important;
-  border: 1px solid var(--theme-border) !important;
-  color: var(--theme-text) !important;
-}
-
-[data-theme^="Camo"] .theme-input {
-  background-color: rgba(5, 7, 10, 0.9) !important;
-  color: #ffffff !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,1) !important;
-  border-color: rgba(255,255,255,0.2) !important;
-}
-
 /* Dynamic Contrast Enforcement */
 :root {
   --theme-text: var(--text-on-bg, #ffffff);
@@ -425,3 +326,89 @@ div[style*="--theme-bar"] {
 
 
 @plugin "@tailwindcss/typography";
+
+/* Global Wireframe Overrides applied at the end to take precedence */
+html, body, #root {
+  background-color: #09090b !important;
+  color: #FFFFFF !important;
+}
+
+/* Force backgrounds transparent */
+div, section, aside, header, nav, main, article, li, ul, form {
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+button {
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 1px solid #ef4444 !important;
+  border-radius: 9999px !important;
+  color: #ffffff !important;
+}
+
+/* Let the active menu have the special background */
+.sidebar-container .bg-red-500\/5,
+[class*="bg-red-500/"] {
+  background-color: rgba(239, 68, 68, 0.05) !important;
+}
+
+/* Enforce red borders on main elements */
+div[class*="border"],
+aside[class*="border"],
+nav[class*="border"],
+header[class*="border"] {
+  border-color: #ef4444 !important;
+}
+
+/* Internal Dividers */
+hr,
+.border-b,
+.border-t,
+.border-\\[\\#2A2A2A\\],
+[class*="border-gray-"],
+[class*="border-zinc-"],
+[class*="divide-"] > * {
+  border-color: #27272a !important;
+}
+
+/* Force border-red-500 to be red */
+.border-red-500 {
+  border-color: #ef4444 !important;
+}
+
+/* Texts */
+p, span, h1, h2, h3, h4, h5, h6, label {
+  text-shadow: none !important;
+}
+
+/* Force all text-gray to be our gray */
+[class*="text-gray-"],
+[class*="text-zinc-"] {
+  color: #9ca3af !important;
+}
+
+[class*="text-white"] {
+  color: #FFFFFF !important;
+}
+
+/* Cards shouldn't have dark backgrounds like #151515 */
+.bg-\[\#151515\],
+.bg-\[\#1C1C1C\] {
+  background-color: transparent !important;
+}
+.border-\[\#2A2A2A\] {
+  border-color: #ef4444 !important;
+}
+
+/* Sidebar separator */
+.sidebar-container {
+  border-right: 1px solid #ef4444 !important;
+}
+
+/* Remove all glow and box-shadows */
+* {
+  box-shadow: none !important;
+}
