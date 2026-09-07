@@ -195,6 +195,15 @@ export default function Coding() {
             />
           </div>
         </div>
+
+        {/* ── Right Panel: APEX-COPILOT ─────────────────────────────────── */}
+        <CopilotPanel
+          open={copilotOpen}
+          onClose={() => setCopilotOpen(false)}
+          editorCode={prompt}
+          language={framework}
+          filename={`agent_${framework}.py`}
+        />
       </div>
 
       {/* Footer */}
@@ -203,15 +212,6 @@ export default function Coding() {
           HUMAN AI SYNERGY BY BENNER CASTILLO - 2026®
         </span>
       </footer>
-
-      {/* ⚡ APEX-COPILOT — Panel flotante draggable (sobre el canvas) */}
-      <CopilotPanel
-        open={copilotOpen}
-        onClose={() => setCopilotOpen(false)}
-        editorCode={prompt}
-        language={framework}
-        filename={`agent_${framework}.py`}
-      />
     </div>
   );
 }
