@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Play, Code } from '@phosphor-icons/react';
+import { Play, Code, Lightning } from '@phosphor-icons/react';
 import { API_URL } from '../lib/api';
 import CodingEditor from '../components/coding/CodingEditor';
 import CodingTerminal from '../components/coding/CodingTerminal';
@@ -18,9 +18,11 @@ export default function Coding() {
   const [triggerRun, setTriggerRun] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
+  // ── APEX-COPILOT state ──────────────────────────────────────────────────────
+  const [copilotOpen, setCopilotOpen] = useState(false);
+
   const handleGenerate = async () => {
     setIsLoading(true);
-    // Simulation of generation
     setTimeout(() => {
       setPrompt((prev) => prev + '\n\n# AI Generated Task Additions:\n- Data processing\n- Output formatting');
       setIsLoading(false);
@@ -33,12 +35,7 @@ export default function Coding() {
       const response = await fetch(`${API_URL}/api/v1/compile/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          framework,
-          nodes: [],
-          edges: [],
-          execution_plan: prompt
-        })
+        body: JSON.stringify({ framework, nodes: [], edges: [], execution_plan: prompt })
       });
       if (response.ok) {
         const data = await response.json();
@@ -47,16 +44,14 @@ export default function Coding() {
       } else {
         setCompiledCode('# Error compiling code\nprint("Compilation failed")');
       }
-    } catch (e) {
+    } catch {
       setCompiledCode('# Error connecting to compiler\nprint("Connection failed")');
     }
     setIsLoading(false);
     setActiveTab('compiled');
   };
 
-  const handleRun = () => {
-    setTriggerRun(Date.now());
-  };
+  const handleRun = () => setTriggerRun(Date.now());
 
   return (
     <div className="flex flex-col h-full bg-[#000000] text-[#FFFFFF] overflow-hidden font-sans">
@@ -69,8 +64,8 @@ export default function Coding() {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 border border-[#2A2A2A] rounded-md px-3 py-1.5 bg-[#000000]">
             <span className="text-xs text-[#8A8A8A] uppercase font-semibold">Framework</span>
-            <select 
-              value={framework} 
+            <select
+              value={framework}
               onChange={(e) => setFramework(e.target.value)}
               className="bg-transparent text-sm text-white outline-none border-none cursor-pointer"
             >
@@ -79,7 +74,7 @@ export default function Coding() {
               <option value="langgraph">LangGraph</option>
             </select>
           </div>
-          <button 
+          <button
             onClick={handleRun}
             className="flex items-center gap-2 px-4 py-1.5 bg-[#151515] border border-[#2A2A2A] hover:bg-[#2A2A2A] transition-colors rounded-md text-white text-sm font-medium"
           >
@@ -91,9 +86,35 @@ export default function Coding() {
 
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar - Prompt Library */}
-        <div className="w-[280px] border-r border-[#2A2A2A] shrink-0 overflow-y-auto">
-          <PromptLibraryPanel onSelectPrompt={(content) => setPrompt(content)} />
+
+        {/* ── Left Sidebar ─────────────────────────────────────────────────── */}
+        <div className="w-[280px] border-r border-[#2A2A2A] shrink-0 flex flex-col">
+          {/* Prompt Library (ocupa todo el espacio disponible) */}
+          <div className="flex-1 overflow-y-auto">
+            <PromptLibraryPanel onSelectPrompt={(content) => setPrompt(content)} />
+          </div>
+
+          {/* ── Botón APEX-COPILOT al fondo del sidebar ─────────────────── */}
+          <div className="shrink-0 border-t border-[#2A2A2A] p-3">
+            <button
+              onClick={() => setCopilotOpen(v => !v)}
+              className={`
+                w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
+                text-sm font-semibold tracking-wide transition-all duration-200
+                border
+                ${copilotOpen
+                  ? 'bg-white text-black border-white'
+                  : 'bg-[#111111] text-white border-[#2A2A2A] hover:border-[#3A3A3A] hover:bg-[#181818]'
+                }
+              `}
+            >
+              <Lightning size={15} weight="fill" />
+              <span>APEX-COPILOT</span>
+              {copilotOpen && (
+                <span className="ml-1 w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Center Panel */}
@@ -101,17 +122,17 @@ export default function Coding() {
           {/* Tabs */}
           <div className="flex items-center gap-6 px-6 pt-4 border-b border-[#2A2A2A] shrink-0">
             {[
-              { id: 'academy', label: 'Guía & Ejemplos' },
-              { id: 'editor', label: 'Editor' },
+              { id: 'academy',  label: 'Guía & Ejemplos' },
+              { id: 'editor',   label: 'Editor' },
               { id: 'compiled', label: 'Código Compilado' },
-              { id: 'nodes', label: 'Nodos' }
+              { id: 'nodes',    label: 'Nodos' },
             ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`pb-3 text-sm font-medium transition-colors border-b-2 ${
-                  activeTab === tab.id 
-                    ? 'text-white border-white' 
+                  activeTab === tab.id
+                    ? 'text-white border-white'
                     : 'text-[#8A8A8A] border-transparent hover:text-[#d0d0d0]'
                 }`}
               >
@@ -123,7 +144,7 @@ export default function Coding() {
           {/* Tab Content */}
           <div className="flex-1 overflow-y-auto p-0">
             {activeTab === 'academy' && (
-              <CodingAcademyPanel 
+              <CodingAcademyPanel
                 onLoadExample={(content, fw) => {
                   setPrompt(content);
                   setFramework(fw);
@@ -133,55 +154,49 @@ export default function Coding() {
             )}
             {activeTab === 'editor' && (
               <div className="p-6 h-full">
-              <CodingEditor 
-                value={prompt}
-                onChange={setPrompt}
-                onGenerate={handleGenerate}
-                onCompile={handleCompile}
-                onClear={() => setPrompt('')}
-                framework={framework}
-                isLoading={isLoading}
-              />
+                <CodingEditor
+                  value={prompt}
+                  onChange={setPrompt}
+                  onGenerate={handleGenerate}
+                  onCompile={handleCompile}
+                  onClear={() => setPrompt('')}
+                  framework={framework}
+                  isLoading={isLoading}
+                />
               </div>
             )}
             {activeTab === 'compiled' && (
               <div className="p-6 h-full">
-              <CompilePanel 
-                code={compiledCode}
-                framework={framework}
-                onExecute={handleRun}
-              />
+                <CompilePanel code={compiledCode} framework={framework} onExecute={handleRun} />
               </div>
             )}
             {activeTab === 'nodes' && (
               <div className="p-6 h-full">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <AgentCard 
-                  node={{ id: '1', title: 'Data Analyzer', role: 'Analyst', content: 'Analyze datasets for patterns', framework }}
-                  onChange={() => {}}
-                  onDelete={() => {}}
-                />
-                <AgentCard 
-                  node={{ id: '2', title: 'Report Writer', role: 'Writer', content: 'Summarize findings into reports', framework }}
-                  onChange={() => {}}
-                  onDelete={() => {}}
-                />
-              </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <AgentCard
+                    node={{ id: '1', title: 'Data Analyzer', role: 'Analyst', content: 'Analyze datasets for patterns', framework }}
+                    onChange={() => {}} onDelete={() => {}}
+                  />
+                  <AgentCard
+                    node={{ id: '2', title: 'Report Writer', role: 'Writer', content: 'Summarize findings into reports', framework }}
+                    onChange={() => {}} onDelete={() => {}}
+                  />
+                </div>
               </div>
             )}
           </div>
 
           {/* Bottom Panel - Terminal */}
           <div className="h-[300px] border-t border-[#2A2A2A] shrink-0 bg-[#0a0a0a]">
-            <CodingTerminal 
-              wsUrl="ws://127.0.0.1:8001/ws/execute" 
+            <CodingTerminal
+              wsUrl="ws://127.0.0.1:8001/ws/execute"
               onStatusChange={setTerminalStatus}
               triggerRun={triggerRun}
             />
           </div>
         </div>
       </div>
-      
+
       {/* Footer */}
       <footer className="shrink-0 px-6 py-2 border-t border-[#2A2A2A] bg-[#000000] flex justify-end">
         <span className="text-[10px] text-[#8A8A8A] tracking-wider uppercase font-mono">
@@ -189,8 +204,10 @@ export default function Coding() {
         </span>
       </footer>
 
-      {/* ⚡ APEX-COPILOT — Panel flotante siempre disponible */}
+      {/* ⚡ APEX-COPILOT — Panel flotante draggable (sobre el canvas) */}
       <CopilotPanel
+        open={copilotOpen}
+        onClose={() => setCopilotOpen(false)}
         editorCode={prompt}
         language={framework}
         filename={`agent_${framework}.py`}
