@@ -25,6 +25,9 @@ from pydantic import BaseModel
 # Motor IA híbrido compartido — Free.AI → Ollama local fallback
 from routers.builder_actions import call_ai
 
+# System prompts de Coding (definidos en search.py junto al resto de APEX prompts)
+from routers.search import COPILOT_SYSTEM
+
 # ─── Rutas de persistencia ───────────────────────────────────────────────────
 
 _BACKEND_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -251,6 +254,14 @@ class GenerateCodeRequest(BaseModel):
     language: str = "python"
 
 
+class CopilotRequest(BaseModel):
+    code: str                              # Código o pregunta del usuario
+    language: Optional[str] = "auto"      # Lenguaje detectado en el editor
+    filename: Optional[str] = None        # Nombre del archivo activo (contexto)
+    context: Optional[str] = None         # Fragmento adicional de contexto (imports, tipos, etc.)
+    mode: Optional[str] = "auto"          # auto | completar | explicar | corregir | revisar
+
+
 # ─── Helpers de persistencia ──────────────────────────────────────────────────
 
 
@@ -456,3 +467,79 @@ def get_templates(framework: Optional[str] = None) -> dict:
         return {key: FRAMEWORK_TEMPLATES[key]}
 
     return FRAMEWORK_TEMPLATES
+
+
+# ─── Endpoint Copiloto ────────────────────────────────────────────────────────
+
+@router.post("/copilot")
+async def copilot_assist(body: CopilotRequest) -> dict:
+    """APEX-COPILOT: asistente de código en tiempo real.
+
+    Recibe un fragmento de código, pregunta técnica o error y responde
+    usando el motor IA híbrido (Free.AI → Ollama) con el COPILOT_SYSTEM
+    mejorado. Detecta automáticamente el modo (completar / explicar /
+    corregir / revisar) a partir del contenido enviado.
+
+    Args:
+        body.code:     Código, pregunta o stack trace del usuario.
+        body.language: Lenguaje detectado en el editor (default 'auto').
+        body.filename: Nombre del archivo activo para dar contexto.
+        body.context:  Fragmento adicional (imports, tipos, módulos vecinos).
+        body.mode:     Hint del modo — 'auto' deja que el modelo decida.
+
+    Returns:
+        ``{"response": str, "model_used": str, "mode_detected": str}``
+
+    Raises:
+        HTTPException 422: Si el campo 'code' está vacío.
+        HTTPException 502: Si todos los motores IA fallan.
+    """
+    if not body.code.strip():
+        raise HTTPException(status_code=422, detail="El campo 'code' no puede estar vacío.")
+
+    # Construir el user_prompt con todo el contexto disponible
+    parts: list[str] = []
+
+    if body.filename:
+        parts.append(f"Archivo activo: {body.filename}")
+
+    if body.language and body.language != "auto":
+        parts.append(f"Lenguaje: {body.language}")
+
+    if body.mode and body.mode != "auto":
+        parts.append(f"Modo solicitado: {body.mode.upper()}")
+
+    if body.context:
+        parts.append(f"\n--- Contexto del proyecto ---\n{body.context}\n---")
+
+    parts.append(f"\n--- Código / Consulta ---\n{body.code}\n---")
+
+    user_prompt = "\n".join(parts)
+
+    try:
+        response_text, model_used = await call_ai(COPILOT_SYSTEM, user_prompt)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"APEX-COPILOT: el motor IA no pudo responder: {exc}",
+        ) from exc
+
+    # Detectar el modo real usado (heurística simple sobre el input)
+    code_lower = body.code.lower()
+    if any(kw in code_lower for kw in ["error", "traceback", "exception", "failed", "syntaxerror"]):
+        mode_detected = "corregir"
+    elif any(kw in code_lower for kw in ["explica", "qué hace", "por qué", "what does", "explain"]):
+        mode_detected = "explicar"
+    elif any(kw in code_lower for kw in ["refactori", "mejora", "revisa", "review", "clean"]):
+        mode_detected = "revisar"
+    elif any(kw in code_lower for kw in ["...", "todo", "pass", "# incomplete", "# implement"]):
+        mode_detected = "completar"
+    else:
+        mode_detected = body.mode or "auto"
+
+    return {
+        "response": response_text,
+        "model_used": model_used,
+        "mode_detected": mode_detected,
+    }
+

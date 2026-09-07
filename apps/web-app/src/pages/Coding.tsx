@@ -7,6 +7,7 @@ import PromptLibraryPanel from '../components/coding/PromptLibraryPanel';
 import CompilePanel from '../components/coding/CompilePanel';
 import AgentCard from '../components/coding/AgentCard';
 import CodingAcademyPanel from '../components/coding/CodingAcademyPanel';
+import CopilotPanel from '../components/coding/CopilotPanel';
 
 export default function Coding() {
   const [framework, setFramework] = useState('crewai');
@@ -187,6 +188,13 @@ export default function Coding() {
           HUMAN AI SYNERGY BY BENNER CASTILLO - 2026®
         </span>
       </footer>
+
+      {/* ⚡ APEX-COPILOT — Panel flotante siempre disponible */}
+      <CopilotPanel
+        editorCode={prompt}
+        language={framework}
+        filename={`agent_${framework}.py`}
+      />
     </div>
   );
 }
