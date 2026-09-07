@@ -98,7 +98,7 @@ export default function Coding() {
         {/* Center Panel */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Tabs */}
-          <div className="flex items-center gap-6 px-6 pt-4 border-b border-[#2A2A2A] shrink-0">
+          <div className="flex items-center gap-2 px-6 border-b border-[#2A2A2A] shrink-0 h-[53px]">
             {[
               { id: 'academy',  label: 'Guía & Ejemplos' },
               { id: 'editor',   label: 'Editor' },
@@ -108,10 +108,10 @@ export default function Coding() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`pb-3 text-sm font-medium transition-colors border-b-2 ${
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
                   activeTab === tab.id
-                    ? 'text-white border-white'
-                    : 'text-[#8A8A8A] border-transparent hover:text-[#d0d0d0]'
+                    ? 'bg-[#2A2A2A] text-white'
+                    : 'text-[#8A8A8A] bg-transparent hover:text-white hover:bg-[#1A1A1A]'
                 }`}
               >
                 {tab.label}
