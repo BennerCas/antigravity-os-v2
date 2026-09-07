@@ -162,11 +162,11 @@ export default function CopilotPanel({
     ">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#2e2e2e] bg-[#1a1a1a] shrink-0">
+      <div className="flex items-center justify-between px-4 border-b border-[#2e2e2e] bg-[#1a1a1a] shrink-0 h-[53px]">
         <div className="flex items-center gap-2">
           <Robot size={16} weight="fill" className="text-[#d0d0d0]" />
           <span className="text-sm font-semibold text-[#d0d0d0] tracking-wide">APEX-COPILOT</span>
-          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#000000] text-green-400 border border-[#333333] uppercase tracking-wider">
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#000000] text-green-400 border border-[#333333] uppercase tracking-wider mt-0.5">
             Live
           </span>
         </div>
@@ -293,34 +293,35 @@ export default function CopilotPanel({
       </div>
 
       {/* ── Input ──────────────────────────────────────────────────────── */}
-      <div className="shrink-0 border-t border-[#2e2e2e] p-3 bg-[#1a1a1a]">
-        <div className="flex gap-2 items-end">
+      <div className="shrink-0 border-t border-[#2e2e2e] p-4 bg-[#1a1a1a]">
+        <div className="relative flex flex-col bg-[#222222] border border-[#333333] rounded-xl focus-within:border-[#555555] transition-colors overflow-hidden">
           <textarea
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKey}
-            rows={3}
+            rows={6}
             placeholder="Código o pregunta..."
             className="
-              flex-1 bg-[#111111] border border-[#333333] rounded-lg
-              p-2.5 text-sm text-[#d0d0d0] font-mono
+              w-full bg-transparent
+              p-4 pb-2 text-sm text-[#d0d0d0] font-mono
               placeholder:text-[#666666] resize-none outline-none
-              focus:border-[#555555] transition-colors leading-relaxed
+              leading-relaxed
             "
           />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || loading}
-            // Botón negro con texto gris claro
-            className="p-2 rounded-lg bg-[#000000] text-[#d0d0d0] border border-[#333333] hover:bg-[#111111] hover:border-[#555555] disabled:opacity-25 transition-all shrink-0 self-end"
-            title="Enviar (Enter)"
-          >
-            <PaperPlaneTilt size={14} weight="fill" />
-          </button>
+          <div className="flex justify-between items-center px-2 pb-2 pt-1">
+            <p className="text-[9px] text-[#666666] font-mono tracking-wide px-1">
+              Free.AI → Ollama · {messages.length} msgs
+            </p>
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || loading}
+              className="p-1.5 rounded-lg bg-[#000000] text-[#d0d0d0] border border-[#333333] hover:bg-[#111111] hover:border-[#555555] disabled:opacity-25 transition-all shrink-0"
+              title="Enviar (Enter)"
+            >
+              <PaperPlaneTilt size={15} weight="fill" />
+            </button>
+          </div>
         </div>
-        <p className="mt-1.5 text-[9px] text-[#666666] text-right font-mono tracking-wide">
-          Free.AI → Ollama · {messages.length} msgs
-        </p>
       </div>
     </div>
   );
