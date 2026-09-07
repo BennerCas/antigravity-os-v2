@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Play, Code, Lightning } from '@phosphor-icons/react';
+import { Play, Code } from '@phosphor-icons/react';
 import { API_URL } from '../lib/api';
 import CodingEditor from '../components/coding/CodingEditor';
 import CodingTerminal from '../components/coding/CodingTerminal';
@@ -18,8 +18,7 @@ export default function Coding() {
   const [triggerRun, setTriggerRun] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  // ── APEX-COPILOT state ──────────────────────────────────────────────────────
-  const [copilotOpen, setCopilotOpen] = useState(false);
+  // (No hay estado open: el panel copilot ahora es fijo a la derecha)
 
   const handleGenerate = async () => {
     setIsLoading(true);
@@ -89,33 +88,12 @@ export default function Coding() {
 
         {/* ── Left Sidebar ─────────────────────────────────────────────────── */}
         <div className="w-[280px] border-r border-[#2A2A2A] shrink-0 flex flex-col">
-          {/* Prompt Library (ocupa todo el espacio disponible) */}
+          {/* Prompt Library */}
           <div className="flex-1 overflow-y-auto">
             <PromptLibraryPanel onSelectPrompt={(content) => setPrompt(content)} />
           </div>
-
-          {/* ── Botón APEX-COPILOT al fondo del sidebar ─────────────────── */}
-          <div className="shrink-0 border-t border-[#2A2A2A] p-3">
-            <button
-              onClick={() => setCopilotOpen(v => !v)}
-              className={`
-                w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
-                text-sm font-semibold tracking-wide transition-all duration-200
-                border
-                ${copilotOpen
-                  ? 'bg-white text-black border-white'
-                  : 'bg-[#111111] text-white border-[#2A2A2A] hover:border-[#3A3A3A] hover:bg-[#181818]'
-                }
-              `}
-            >
-              <Lightning size={15} weight="fill" />
-              <span>APEX-COPILOT</span>
-              {copilotOpen && (
-                <span className="ml-1 w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              )}
-            </button>
-          </div>
         </div>
+
 
         {/* Center Panel */}
         <div className="flex-1 flex flex-col min-w-0">
@@ -198,8 +176,6 @@ export default function Coding() {
 
         {/* ── Right Panel: APEX-COPILOT ─────────────────────────────────── */}
         <CopilotPanel
-          open={copilotOpen}
-          onClose={() => setCopilotOpen(false)}
           editorCode={prompt}
           language={framework}
           filename={`agent_${framework}.py`}
