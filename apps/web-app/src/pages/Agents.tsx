@@ -16,6 +16,7 @@ interface Agent {
   instructions?: string;
   objective?: string;
   isMultiAgent?: boolean;
+  upgradeExplanation?: string;
   chain?: Agent[];
 }
 
@@ -91,6 +92,7 @@ const Agents = () => {
   const [isTranslating, setIsTranslating] = useState(false);
   const [upgradeProgress, setUpgradeProgress] = useState(0);
   const [upgradeTimeLeft, setUpgradeTimeLeft] = useState('');
+  const [explanationPopup, setExplanationPopup] = useState<{title: string, text: string} | null>(null);
 
   useEffect(() => {
     setPanelTab('content');
@@ -214,12 +216,21 @@ const Agents = () => {
     setUpgradeTimeLeft('Calculando...');
     
     try {
+      const promptText = `Eres un ingeniero de IA experto. Mejora y haz más profesional el siguiente prompt de sistema/agente. Añade secciones de contexto, personalidad y reglas claras. 
+Deberás responder ESTRICTAMENTE con un objeto JSON válido que contenga dos claves:
+1. "improved_prompt": El texto completo del nuevo prompt mejorado (en formato Markdown).
+2. "explanation": Una explicación breve (2-3 líneas) detallando por qué esta nueva versión es superior y qué se le añadió.
+
+Prompt Original:
+${inspectedAgent.instructions || inspectedAgent.content}`;
+
       const res = await fetch('http://127.0.0.1:11434/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'hermes3:8b',
-          prompt: `Mejora y haz mas profesional este prompt de sistema/agente. Añade secciones de contexto y reglas claras. Devuelve solo el resultado mejorado en Markdown.\n\nPrompt Original:\n${inspectedAgent.instructions || inspectedAgent.content}`,
+          format: 'json',
+          prompt: promptText,
           stream: true
         })
       });
@@ -276,11 +287,22 @@ const Agents = () => {
       setUpgradeProgress(100);
       setUpgradeTimeLeft('¡Listo!');
       
-      const newAgent = {
+      let finalPrompt = generatedText;
+      let explanation = "Mejora generada exitosamente.";
+      try {
+        const parsedJson = JSON.parse(generatedText);
+        finalPrompt = parsedJson.improved_prompt || generatedText;
+        explanation = parsedJson.explanation || explanation;
+      } catch (e) {
+        console.warn("No se pudo parsear el JSON de la mejora, usando texto crudo.");
+      }
+
+      const newAgent: Agent = {
         ...inspectedAgent,
         id: (inspectedAgent.id || Date.now().toString()) + '-upgraded',
         title: inspectedAgent.title + ' (Upgrade)',
-        instructions: generatedText
+        instructions: finalPrompt,
+        upgradeExplanation: explanation
       };
       
       let upgraded: Agent[] = [];
@@ -294,6 +316,7 @@ const Agents = () => {
       setAgentes(prev => [newAgent, ...prev]);
       setSearchResults(prev => prev ? [newAgent, ...prev] : null);
       setInspectedAgent(newAgent);
+      setExplanationPopup({ title: newAgent.title, text: explanation });
     } catch (err) {
       console.error(err);
       alert('Error al mejorar el agente. Verifica que Ollama este funcionando.');
@@ -960,7 +983,21 @@ const Agents = () => {
                     </div>
                   </div>
 
-                  <h3 className="font-bold text-lg text-gray-100 mb-2 line-clamp-2 leading-snug">{agent.title}</h3>
+                  <div className="flex justify-between items-start mb-2 gap-2">
+                    <h3 className="font-bold text-lg text-gray-100 line-clamp-2 leading-snug">{agent.title}</h3>
+                    {agent.upgradeExplanation && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExplanationPopup({ title: agent.title, text: agent.upgradeExplanation! });
+                        }}
+                        className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-blue-900/40 text-blue-400 hover:bg-blue-600 hover:text-white transition-colors border border-blue-700/50 shadow-sm"
+                        title="¿Por qué es mejor este agente?"
+                      >
+                        ?
+                      </button>
+                    )}
+                  </div>
                   
                   {agent.isMultiAgent && agent.chain ? (
                     <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-2 mt-1 pr-1 custom-scrollbar">
@@ -1145,6 +1182,37 @@ const Agents = () => {
           )}
         </div>
       </div>
+
+      {explanationPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-[#111] border border-blue-500/50 rounded-2xl p-6 max-w-md w-full shadow-2xl relative">
+            <button 
+              onClick={() => setExplanationPopup(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white bg-gray-800 rounded-full p-1 transition-colors"
+            >
+              <X size={16} />
+            </button>
+            <div className="flex items-center gap-3 mb-4">
+              <Sparkle weight="fill" className="text-blue-400" size={24} />
+              <h3 className="text-xl font-bold text-white">Mejora Aplicada</h3>
+            </div>
+            <p className="text-sm text-gray-400 mb-4">
+              Explicación de la optimización y cambios en <strong>{explanationPopup.title}</strong>:
+            </p>
+            <div className="bg-gray-900 border border-gray-800 p-4 rounded-xl text-gray-300 text-sm leading-relaxed custom-scrollbar max-h-48 overflow-y-auto">
+              {explanationPopup.text}
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button 
+                onClick={() => setExplanationPopup(null)}
+                className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
