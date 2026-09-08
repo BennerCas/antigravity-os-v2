@@ -48,7 +48,9 @@ function setPromptHistoryEntry(key: string, ts: string) {
 }
 
 function makePromptKey(p: Prompt): string {
-  return `${p.title}_${(p.category || '').replace(/\W/g, '_')}`.slice(0, 80);
+  // Use content to ensure uniqueness since many prompts share the same title
+  const contentPreview = (p.content || '').substring(0, 30).replace(/\W/g, '_');
+  return `${p.title}_${(p.category || '').replace(/\W/g, '_')}_${contentPreview}`.slice(0, 120);
 }
 
 // Scoring: simple TF match across title, category, content
@@ -928,7 +930,7 @@ ${inspectedPrompt.content}`;
               const key = makePromptKey(prompt);
               const lastOpened = promptHistory[key];
               const inChain = isInChain(prompt);
-              const isInspected = inspectedPrompt && makePromptKey(inspectedPrompt) === key;
+              const isInspected = inspectedPrompt === prompt;
               const chainPos = selectedForChain.findIndex(p => makePromptKey(p) === key);
 
               return (
