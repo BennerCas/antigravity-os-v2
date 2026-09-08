@@ -29,6 +29,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { FlowArchitect } from '../components/architecture/FlowArchitect';
 import { RunInspector } from '../components/architecture/RunInspector';
+import { RunResults } from '../components/architecture/RunResults';
 import { ArrowUUpLeft, ArrowUUpRight, FloppyDisk, DownloadSimple, Trash, X } from '@phosphor-icons/react';
 import { Joyride, STATUS } from 'react-joyride';
 import { tourSteps } from '../data/tourSteps';
@@ -157,7 +158,7 @@ function BuilderContent() {
   const canvasNodesKey = promptKey ? `builder_nodes_${promptKey}` : 'builderNodes';
   const canvasEdgesKey = promptKey ? `builder_edges_${promptKey}` : 'builderEdges';
 
-  const [builderTab, setBuilderTab] = useState<'flowarchitect' | 'runinspector' | 'flowboard'>('flowboard');
+  const [builderTab, setBuilderTab] = useState<'flowarchitect' | 'runinspector' | 'flowboard' | 'runresults'>('flowboard');
   const [nodes, setNodes] = useState<Node[]>(() => {
     if (restoreCanvas && promptKey) {
       const saved = localStorage.getItem(canvasNodesKey);
@@ -1455,10 +1456,22 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
         >
           FlowBoard
         </button>
+        <div className="w-[1px] h-6 bg-gray-800 mx-1"></div>
+        <button
+          onClick={() => setBuilderTab('runresults')}
+          className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold text-sm transition-all duration-300 cursor-pointer border ${
+            builderTab === 'runresults'
+              ? 'bg-blue-900/30 border-blue-500 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.5)]'
+              : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5 hover:border-gray-800'
+          }`}
+        >
+          Run Results
+        </button>
       </div>
 
       {builderTab === 'flowarchitect' && <div className="flex-1 overflow-hidden relative"><FlowArchitect /></div>}
       {builderTab === 'runinspector' && <div className="flex-1 overflow-hidden relative"><RunInspector runId="current-run-id" /></div>}
+      {builderTab === 'runresults' && <div className="flex-1 overflow-hidden relative"><RunResults /></div>}
       
       {builderTab === 'flowboard' && (
         <>
