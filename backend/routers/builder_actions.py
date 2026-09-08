@@ -25,8 +25,7 @@ OLLAMA_BASE = "http://127.0.0.1:11434"
 FREE_AI_BASE = os.getenv("FREE_AI_BASE_URL", "https://api.free.ai/v1")
 FREE_AI_KEY = os.getenv("FREE_AI_API_KEY")
 
-# Ollama fallback (local): Hermes 3 8B — Motor Híbrido confirmado
-OLLAMA_FALLBACK = ["hermes3:8b"]
+OLLAMA_FALLBACK = ["hermes3:8b", "qwen2.5-coder:7b", "qwen2.5-coder:1.5b"]
 
 # ─── Master Prompts ──────────────────────────────────────────────────────────
 
@@ -245,9 +244,12 @@ async def call_free_ai(system: str, user: str) -> tuple[str, str]:
     raise Exception("All Free.AI models failed")
 
 
-async def call_ollama_fallback(system: str, user: str) -> tuple[str, str]:
+async def call_ollama_fallback(system: str, user: str, model_override: Optional[str] = None) -> tuple[str, str]:
     """Try Ollama local models as fallback."""
-    for model in OLLAMA_FALLBACK:
+    models_to_try = [model_override] + OLLAMA_FALLBACK if model_override else OLLAMA_FALLBACK
+    models_to_try = list(dict.fromkeys(models_to_try)) # Deduplicate
+
+    for model in models_to_try:
         try:
             payload = {
                 "model": model,
@@ -281,7 +283,7 @@ async def call_ai(system: str, user: str, model_override: Optional[str] = None) 
     if model_override:
         # User explicitly chose a model — try Ollama first
         try:
-            return await call_ollama_fallback(system, user)
+            return await call_ollama_fallback(system, user, model_override)
         except Exception:
             pass
 
@@ -293,7 +295,7 @@ async def call_ai(system: str, user: str, model_override: Optional[str] = None) 
             pass
 
     # Fallback: local Ollama (Hermes 3, etc)
-    return await call_ollama_fallback(system, user)
+    return await call_ollama_fallback(system, user, model_override)
 
 
 # ─── Request / Response Models ────────────────────────────────────────────────
@@ -509,27 +511,45 @@ class GenerateFlowRequest(BaseModel):
 
 @router.post("/generate_flow")
 async def generate_flow(req: GenerateFlowRequest):
-    """Generador Mágico: Crea nodos y edges desde lenguaje natural."""
+    """AI Flow Generator con RAG: busca los mejores agentes/prompts de la base de datos y genera el flujo."""
+    import json as _json
+    import os as _os
+    import random
+
+    # 1. Cargar prompts y skills para búsqueda semántica ligera
+    from routers.semantic_search import _engine
+    
+    candidates = _engine.search(req.prompt, top_k=8)
+
+    # Top 8 candidatos más relevantes (ya ordenados por score por el engine)
+    top_candidates = candidates[:8]
+
+    # 2. Construir contexto comprimido para el LLM
+    context_str = ""
+    if top_candidates:
+        context_str = "\n\nAGENTES Y PROMPTS DISPONIBLES EN LA BASE DE DATOS (selecciona los más apropiados):\n"
+        for i, c in enumerate(top_candidates):
+            context_str += f"{i+1}. [{c['source'].upper()}] {c['title']} — {c['content'][:120]}...\n"
+
     system = FLOW_GENERATOR_SYSTEM
-    user_prompt = f"Requerimiento del usuario: {req.prompt}"
+    user_prompt = f"Requerimiento del usuario: {req.prompt}{context_str}"
     
     try:
-        response_text, model_used = await call_ai(system, user_prompt)
-        # Parse the JSON string
+        response_text, model_used = await call_ai(system, user_prompt, model_override="hermes3:8b")
         try:
-            # Encontrar el primer '{' y el ultimo '}' por si acaso el modelo escupio texto extra
             start = response_text.find('{')
             end = response_text.rfind('}') + 1
             if start != -1 and end != 0:
                 json_str = response_text[start:end]
-                data = json.loads(json_str)
+                data = _json.loads(json_str)
             else:
-                data = json.loads(response_text)
+                data = _json.loads(response_text)
                 
-            return {"status": "success", "model": model_used, "data": data}
-        except json.JSONDecodeError:
-            print("[Builder] Error parsing JSON from AI:", response_text)
+            return {"status": "success", "model": model_used, "data": data, "candidates_used": len(top_candidates)}
+        except _json.JSONDecodeError:
+            print("[AI Flow Generator] Error parsing JSON:", response_text)
             raise HTTPException(status_code=500, detail="La IA no devolvió un JSON válido.")
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+

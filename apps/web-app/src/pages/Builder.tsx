@@ -28,6 +28,8 @@ import { getSvgPathFromStroke } from '../utils/drawUtils';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { ArrowUUpLeft, ArrowUUpRight, FloppyDisk, DownloadSimple, Trash, X } from '@phosphor-icons/react';
+import { Joyride, STATUS } from 'react-joyride';
+import { tourSteps } from '../data/tourSteps';
 
 import { MainPromptNode, ActionNode, PostItNode, TraducirNode, EditarNode, DrawingNode, RulerNode, LogicaNode } from '../components/BuilderNodes';
 import { VariableNode } from '../components/builder/nodes/VariableNode';
@@ -413,6 +415,7 @@ function BuilderContent() {
   const [strokeWidth, setStrokeWidth] = useState<number>(5);
   const [currentDrawNodeId, setCurrentDrawNodeId] = useState<string | null>(null);
 
+  const [runTour, setRunTour] = useState(false);
   const [showAgentLibrary, setShowAgentLibrary] = useState(false);
   const [showCoPiloto, setShowCoPiloto] = useState(false);
   const [showPromptsLibrary, setShowPromptsLibrary] = useState(false);
@@ -913,7 +916,7 @@ function BuilderContent() {
         properties: {
           agent_name: n.title,
           prompt: n.content,
-          model: n.llm_model || 'qwen3-8b',
+          model: n.llm_model || 'hermes3:8b',
           temperature: n.temperature
         }
       }));
@@ -924,7 +927,8 @@ function BuilderContent() {
         body: JSON.stringify({
           nodes: mappedNodes,
           edges: edgesData,
-          recursion_limit: 25
+          recursion_limit: 25,
+          stream: true
         })
       });
       
@@ -933,38 +937,66 @@ function BuilderContent() {
       setTimeRemaining(0);
 
       if (res.ok) {
-        const data = await res.json();
+        const reader = res.body?.getReader();
+        const decoder = new TextDecoder();
         
-        if (data.updated_nodes && Array.isArray(data.updated_nodes)) {
-          setNodes((nds) => nds.map(n => {
-            const updated = data.updated_nodes.find((u: UpdatedNode) => u.id === n.id);
-            if (updated) {
-              return {
-                ...n,
-                data: {
-                  ...n.data,
-                  content: updated.content || n.data.content,
-                  role: updated.role || n.data.role,
-                  framework: updated.framework || n.data.framework,
-                  variables: updated.variables || n.data.variables
-                }
-              };
+        let finalResult = "";
+
+        if (reader) {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split("\n");
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const dataStr = line.slice(6);
+                if (dataStr === "[DONE]") break;
+                try {
+                  const event = JSON.parse(dataStr);
+                  if (event.type === 'update') {
+                     const nodeNames = Object.keys(event.data);
+                     if (nodeNames.length > 0) {
+                        setProgressSubtext(`Ejecutando: ${nodeNames.join(", ")}`);
+                        // Set nodes to glow
+                        setNodes((nds) => nds.map(n => ({
+                          ...n,
+                          style: {
+                            ...n.style,
+                            boxShadow: nodeNames.includes(n.id) ? '0 0 30px #4ade80, inset 0 0 10px #4ade80' : 'none',
+                            transition: 'box-shadow 0.3s ease-in-out'
+                          }
+                        })));
+                     }
+                     // Save output
+                     finalResult = JSON.stringify(event.data, null, 2);
+                  } else if (event.type === 'paused') {
+                     setProgressSubtext("Pausado (Human-in-the-loop)");
+                     setExecutionPaused(true);
+                  } else if (event.type === 'error') {
+                     setAiError("Error de Streaming: " + event.error);
+                     // Add Toast notification effect by briefly showing it with high contrast
+                  }
+                } catch(e) {}
+              }
             }
-            return n;
-          }));
+          }
         }
 
-        setTimeout(() => {
-          let planText = JSON.stringify(data.result, null, 2);
-          if (data.result && data.result.messages && data.result.messages.length > 0) {
-            const lastMsg = data.result.messages[data.result.messages.length - 1];
-            planText = typeof lastMsg === 'string' ? lastMsg : (lastMsg.content || planText);
+        // Remove glow
+        setNodes((nds) => nds.map(n => ({
+          ...n,
+          style: {
+            ...n.style,
+            boxShadow: 'none'
           }
-          
+        })));
+
+        setTimeout(() => {
           setExecutionResult({
             framework: 'LangGraph Native (Local)',
-            model_used: 'qwen3-8b',
-            execution_plan: planText
+            model_used: 'hermes3:8b (con Fallbacks)',
+            execution_plan: finalResult || "Ejecución finalizada."
           });
         }, 500);
       } else {
@@ -1117,7 +1149,7 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
     } else if (type === 'postIt') {
       newNode = { id, type: 'postIt', position: { x, y }, data: { note: '' } };
     } else if (type === 'rulerNode') {
-      newNode = { id, type: 'rulerNode', position: { x, y }, data: {} };
+      newNode = { id, type: 'rulerNode', position: { x, y }, selectable: false, data: {} };
     } else if (type === 'variable') {
       newNode = { id, type: 'variable', position: { x, y }, data: { variableName: '' } };
     } else if (type === 'condition') {
@@ -1386,6 +1418,26 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
 
   return (
     <div className={`w-full h-full relative flex flex-col transition-colors duration-300 theme-node-style-${nodeStyle}`} style={{ ...themeStyle, backgroundColor: "var(--theme-bg)", color: "var(--theme-text)" }}>
+      {React.createElement(Joyride as any, {
+        steps: tourSteps,
+        run: runTour,
+        continuous: true,
+        showProgress: true,
+        showSkipButton: true,
+        hideCloseButton: true,
+        callback: (data: any) => {
+          if (data.status === STATUS.FINISHED || data.status === STATUS.SKIPPED) {
+            setRunTour(false);
+          }
+        },
+        styles: {
+          tooltip: { backgroundColor: '#18181b', color: '#e4e4e7' },
+          tooltipContainer: { textAlign: 'left' },
+          buttonNext: { backgroundColor: '#2563eb', color: '#fff' },
+          buttonBack: { color: '#a1a1aa' },
+          buttonSkip: { color: '#a1a1aa' },
+        },
+      })}
       <div className="absolute top-2 left-4 z-[60] p-2 flex items-center gap-2 builder-top-bar max-w-[calc(100vw-220px)] overflow-x-auto custom-scrollbar" style={{ backgroundColor: "transparent", color: "var(--theme-text)" }}>
         <style>{`
           .builder-top-bar::-webkit-scrollbar { height: 4px; }
@@ -1411,12 +1463,36 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
           .react-flow__controls-button { background-color: var(--theme-card) !important; border-bottom: 1px solid #2A2A2A !important; fill: var(--theme-text) !important; }
           .react-flow__controls-button:hover { background-color: var(--theme-bg) !important; }
           /* Force all node borders to sidebar color #2A2A2A */
-          .react-flow__node > div { border: 1px solid #2563eb !important; }
-          .react-flow__node.selected > div { border-color: #60a5fa !important; box-shadow: 0 0 16px rgba(59, 130, 246, 0.5) !important; }
+          .react-flow__node:not(.react-flow__node-rulerNode) > div { border: 1px solid #2563eb !important; }
+          .react-flow__node:not(.react-flow__node-rulerNode).selected > div { border-color: #60a5fa !important; box-shadow: 0 0 16px rgba(59, 130, 246, 0.5) !important; }
+          div.react-flow__node-rulerNode,
+          div.react-flow__node-rulerNode.selected,
+          div.react-flow__node-rulerNode > div,
+          div.react-flow__node-rulerNode.selected > div,
+          [class*="theme-node-style-"] div.react-flow__node-rulerNode > div,
+          [class*="theme-node-style-"] div.react-flow__node-rulerNode.selected > div { 
+             border: 2px solid #3b82f6 !important; 
+             box-shadow: none !important; 
+             background: rgba(59, 130, 246, 0.1) !important;
+             border-radius: 4px !important;
+          }
           .react-flow__node.selected { box-shadow: none !important; outline: none !important; }
           .react-flow__handle { background: #2563eb !important; border-color: #60a5fa !important; }
-          .react-flow__edge-path { stroke: #3b82f6 !important; }
-          .react-flow__connection-path { stroke: #3b82f6 !important; }
+          .react-flow__handle:hover { box-shadow: 0 0 10px #60a5fa !important; transform: scale(1.2); }
+          .react-flow__edge-path { stroke: #3b82f6; stroke-width: 2; transition: all 0.3s; }
+          .react-flow__edge:hover .react-flow__edge-path { stroke: #60a5fa; stroke-width: 3; filter: drop-shadow(0 0 5px rgba(96,165,250,0.5)); }
+
+          /* Fix for bottom dock buttons being overridden by global CSS */
+          .bottom-dock-btn {
+            border: 1px solid #3b82f6 !important;
+            box-shadow: 0 0 8px rgba(37,99,235,0.3) !important;
+          }
+          .bottom-dock-btn:hover {
+            background-color: rgba(37, 99, 235, 0.2) !important;
+          }
+          .bottom-dock-btn.active-purple { background-color: #9333ea !important; color: white !important; }
+          .bottom-dock-btn.active-blue { background-color: #2563eb !important; color: white !important; }
+          .bottom-dock-btn.active-green { background-color: #16a34a !important; color: white !important; }
           .react-flow__controls { border-color: #2563eb !important; }
           .theme-node-style-neon .react-flow__node > div { box-shadow: 0 0 25px var(--theme-border), inset 0 0 10px var(--theme-border) !important; border-radius: 12px; }
           .theme-node-style-brutalist .react-flow__node > div { border-radius: 0 !important; border-width: 4px !important; border-style: solid; box-shadow: 8px 8px 0 var(--theme-text) !important; }
@@ -1578,75 +1654,84 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
         
 
         {/* Nodos de construcción desde cero al final de la barra */}
-        <button onClick={() => handleAddNode('mainPrompt', 'Inicio')} className="rounded-full flex items-center gap-1.5 px-4 py-1.5 theme-btn border border-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-900/30" title="Nodo de Inicio (Trigger)">
+        <button id="target-node-inicio" onClick={() => handleAddNode('mainPrompt', 'Inicio')} className="rounded-full flex items-center gap-1.5 px-4 py-1.5 theme-btn border border-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-900/30" title="Nodo de Inicio (Trigger)">
           <span className="text-sm">▶️</span> <span className="text-[11px] font-bold tracking-wide uppercase opacity-90">Inicio</span>
         </button>
-        <button onClick={() => handleAddNode('mainPrompt', 'Agente')} className="rounded-full flex items-center gap-1.5 px-4 py-1.5 theme-btn border border-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-900/30" title="Nuevo Agente (LLM)">
+        <button id="target-node-agente" onClick={() => handleAddNode('mainPrompt', 'Agente')} className="rounded-full flex items-center gap-1.5 px-4 py-1.5 theme-btn border border-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-900/30" title="Nuevo Agente (LLM)">
           <span className="text-sm">🤖</span> <span className="text-[11px] font-bold tracking-wide uppercase opacity-90">Agente</span>
         </button>
-        <button onClick={() => handleAddNode('variable', 'Variable')} className="rounded-full flex items-center gap-1.5 px-4 py-1.5 theme-btn border border-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-900/30" title="Variable Global">
+        <button id="target-node-variable" onClick={() => handleAddNode('variable', 'Variable')} className="rounded-full flex items-center gap-1.5 px-4 py-1.5 theme-btn border border-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-900/30" title="Variable Global">
           <span className="text-sm">🆅</span> <span className="text-[11px] font-bold tracking-wide uppercase opacity-90">Variable</span>
         </button>
-        <button onClick={() => handleAddNode('condition', 'Condición')} className="rounded-full flex items-center gap-1.5 px-4 py-1.5 theme-btn border border-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-900/30" title="Condición (If/Else)">
+        <button id="target-node-condicion" onClick={() => handleAddNode('condition', 'Condición')} className="rounded-full flex items-center gap-1.5 px-4 py-1.5 theme-btn border border-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-900/30" title="Condición (If/Else)">
           <span className="text-sm">⧖</span> <span className="text-[11px] font-bold tracking-wide uppercase opacity-90">Condición</span>
         </button>
-        <button onClick={() => handleAddNode('human', 'Humano')} className="rounded-full flex items-center gap-1.5 px-4 py-1.5 theme-btn border border-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-900/30" title="Punto de Revisión Humana">
+        <button id="target-node-humano" onClick={() => handleAddNode('human', 'Humano')} className="rounded-full flex items-center gap-1.5 px-4 py-1.5 theme-btn border border-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-900/30" title="Punto de Revisión Humana">
           <span className="text-sm">👤</span> <span className="text-[11px] font-bold tracking-wide uppercase opacity-90">Humano</span>
         </button>
-        <button onClick={() => handleAddNode('subflow', 'Sub-Flujo')} className="rounded-full flex items-center gap-1.5 px-4 py-1.5 theme-btn border border-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-900/30" title="Sub-Flujo (Macro)">
+        <button id="target-node-subflujo" onClick={() => handleAddNode('subflow', 'Sub-Flujo')} className="rounded-full flex items-center gap-1.5 px-4 py-1.5 theme-btn border border-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-900/30" title="Sub-Flujo (Macro)">
           <span className="text-sm">📦</span> <span className="text-[11px] font-bold tracking-wide uppercase opacity-90">Sub-Flujo</span>
         </button>
         
         <div className="w-1 h-1 flex-shrink-0"></div>
       </div>
 
-      {/* Barra de Navegación Flotante Inferior (Centro) */}
-      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-[80] flex items-center gap-3 bg-[var(--theme-card)] p-2 rounded-xl shadow-2xl border border-[var(--theme-border)] backdrop-blur-md">
+      {/* Barra de Navegación Flotante Inferior (Centro) — 5 botones */}
+      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-[80] flex items-center gap-3">
+        {/* 1. Guía */}
         <button
+          onClick={() => setRunTour(true)}
+          className="px-5 py-2 rounded-full font-bold flex items-center gap-2 transition-all bottom-dock-btn text-[var(--theme-text)]"
+          title="Iniciar Guía Interactiva"
+        >
+          🎓 Guía
+        </button>
+
+        {/* 2. AI Flow */}
+        <button
+          id="target-dock-ai-flow"
           onClick={() => setShowCoPiloto(!showCoPiloto)}
-          className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${showCoPiloto ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.6)]' : 'hover:bg-purple-600/20 text-[var(--theme-text)]'}`}
+          className={`px-5 py-2 rounded-full font-bold flex items-center gap-2 transition-all bottom-dock-btn ${showCoPiloto ? 'active-purple' : 'text-[var(--theme-text)]'}`}
           title="AI Flow Generator — Genera flujos desde lenguaje natural usando tus 22k prompts"
         >
           🪄 AI Flow
         </button>
-        <div className="w-[1px] h-6 bg-[var(--theme-border)] opacity-50"></div>
-        <button 
-          onClick={() => setShowAgentLibrary(!showAgentLibrary)} 
-          className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${showAgentLibrary ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.6)]' : 'hover:bg-blue-600/20 text-[var(--theme-text)]'}`} 
+
+        {/* 3. Agentes */}
+        <button
+          id="target-dock-agents"
+          onClick={() => setShowAgentLibrary(!showAgentLibrary)}
+          className={`px-5 py-2 rounded-full font-bold flex items-center gap-2 transition-all bottom-dock-btn ${showAgentLibrary ? 'active-blue' : 'text-[var(--theme-text)]'}`}
           title="Catálogo de Agentes"
         >
           🤖 Agentes
         </button>
-        <div className="w-[1px] h-6 bg-[var(--theme-border)] opacity-50"></div>
+
+        {/* 4. Prompts */}
         <button
+          id="target-dock-prompts"
           onClick={() => setShowPromptsLibrary(!showPromptsLibrary)}
-          className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${showPromptsLibrary ? 'bg-green-600 text-white shadow-[0_0_15px_rgba(22,163,74,0.6)]' : 'hover:bg-green-600/20 text-[var(--theme-text)]'}`}
+          className={`px-5 py-2 rounded-full font-bold flex items-center gap-2 transition-all bottom-dock-btn ${showPromptsLibrary ? 'active-green' : 'text-[var(--theme-text)]'}`}
           title="Atlas de Prompts"
         >
           📚 Prompts
         </button>
-      </div>
 
-      {/* Floating Action Button (Ejecutar) */}
-      
-      <div className="absolute bottom-6 right-6 z-[80] flex flex-col items-end gap-2">
+        {/* 5. Ejecutar */}
         <button
+          id="target-btn-execute"
           onClick={handleEjecutar}
           disabled={showProgressModal}
-          className={`execute-button font-bold flex items-center gap-2 shadow-lg ${showProgressModal ? 'opacity-50 cursor-wait' : 'hover:scale-105 transition-transform'}`}
-          style={{ 
-            background: 'linear-gradient(90deg, #1d4ed8 0%, #2563eb 50%, #3b82f6 100%)', 
-            color: '#fff', 
+          className={`px-5 py-2 rounded-full font-bold flex items-center gap-2 transition-all bottom-dock-btn ${showProgressModal ? 'opacity-50 cursor-wait' : ''}`}
+          style={{
+            background: 'linear-gradient(90deg, #1d4ed8 0%, #2563eb 50%, #3b82f6 100%)',
+            color: '#fff',
             border: '1.5px solid #60a5fa',
             boxShadow: '0 0 14px rgba(37, 99, 235, 0.6)',
-            padding: '7px 20px',
-            fontSize: '0.8rem',
-            borderRadius: '8px',
-            cursor: 'pointer'
           }}
           title="Ejecutar el flujo con Meta-Orquestador"
         >
-          {showProgressModal ? '⏳ Ejecutando...' : '🚀 EJECUTAR'}
+          {showProgressModal ? '⏳ Ejecutando...' : '🚀 Ejecutar'}
         </button>
       </div>
       {/* ProgressBar Modal */}
@@ -1856,7 +1941,7 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
         </div>
       )}
 
-        <main className="builder-canvas flex-1 h-full" style={{ cursor: cursorMode === 'pan' ? 'grab' : (cursorMode === 'erase' ? 'crosshair' : 'crosshair') }}>
+        <main id="target-canvas" className="builder-canvas flex-1 h-full" style={{ cursor: cursorMode === 'pan' ? 'grab' : (cursorMode === 'erase' ? 'crosshair' : 'crosshair') }}>
           <ReactFlow
             onSelectionChange={({ edges, nodes }) => { setSelectedEdges(edges); setSelectedNodes(nodes); }}
             nodes={nodes}
