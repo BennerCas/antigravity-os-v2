@@ -56,7 +56,7 @@ export const RunResults: React.FC = () => {
   const handleTranslate = async (id: string, text: string) => {
     setTranslatingId(id);
     try {
-      const res = await fetch(`${API_URL}/native_engine/chat`, {
+      const res = await fetch(`${API_URL}/engine/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

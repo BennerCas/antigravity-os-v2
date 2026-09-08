@@ -87,9 +87,9 @@ def create_node_function(node: Node, group_nodes: Dict[str, Node] = None) -> Cal
         
         from langchain_community.chat_models import ChatOllama
         
-        # Override to use Ollama with Hermes 8b as requested
+        # Override to use Ollama with Qwen2.5-Coder as requested
         model_kwargs = {
-            "model": "hermes3:8b",
+            "model": "qwen2.5-coder-local:latest",
             "temperature": temperature,
             "base_url": "http://127.0.0.1:11434"
         }
@@ -342,5 +342,24 @@ async def resume_graph(request: ResumeRequest):
             }
         }
         
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class ChatRequest(BaseModel):
+    messages: List[Dict[str, str]]
+
+@router.post("/chat")
+async def chat_endpoint(request: ChatRequest):
+    try:
+        from routers.builder_actions import call_ai
+        system = "Eres un asistente experto en traduccion."
+        user = ""
+        for m in request.messages:
+            if m.get("role") == "system":
+                system = m.get("content", system)
+            elif m.get("role") == "user":
+                user = m.get("content", user)
+        reply, _ = await call_ai(system, user)
+        return {"reply": reply}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

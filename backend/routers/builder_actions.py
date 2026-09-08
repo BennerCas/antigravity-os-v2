@@ -25,7 +25,7 @@ OLLAMA_BASE = "http://127.0.0.1:11434"
 FREE_AI_BASE = os.getenv("FREE_AI_BASE_URL", "https://api.free.ai/v1")
 FREE_AI_KEY = os.getenv("FREE_AI_API_KEY")
 
-OLLAMA_FALLBACK = ["hermes3:8b", "qwen2.5-coder:7b", "qwen2.5-coder:1.5b"]
+OLLAMA_FALLBACK = ["qwen2.5-coder-local:latest", "mistral-nemo-local:latest", "qwen3.5:9b"]
 
 # ─── Master Prompts ──────────────────────────────────────────────────────────
 
