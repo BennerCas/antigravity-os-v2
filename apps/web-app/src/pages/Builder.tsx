@@ -1422,7 +1422,7 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
   return (
     <div className={`w-full h-full relative flex flex-col transition-colors duration-300 theme-node-style-${nodeStyle}`} style={{ ...themeStyle, backgroundColor: "var(--theme-bg)", color: "var(--theme-text)" }}>
       {/* Tabs / Header Divider */}
-      <div className="flex-shrink-0 flex items-center justify-center bg-[#000000] border-b border-[#2A2A2A] px-4 h-[60px] gap-2 z-[70] relative w-full shadow-sm">
+      <div className="flex-shrink-0 flex items-center justify-center bg-[#000000] border-b border-[#2A2A2A] px-4 h-16 gap-2 z-[70] relative w-full shadow-sm">
         <button
           onClick={() => setBuilderTab('flowarchitect')}
           className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold text-sm transition-all duration-300 cursor-pointer border ${
