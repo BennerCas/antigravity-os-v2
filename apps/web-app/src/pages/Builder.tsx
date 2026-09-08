@@ -27,6 +27,8 @@ import { getStroke } from 'perfect-freehand';
 import { getSvgPathFromStroke } from '../utils/drawUtils';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { FlowArchitect } from '../components/architecture/FlowArchitect';
+import { RunInspector } from '../components/architecture/RunInspector';
 import { ArrowUUpLeft, ArrowUUpRight, FloppyDisk, DownloadSimple, Trash, X } from '@phosphor-icons/react';
 import { Joyride, STATUS } from 'react-joyride';
 import { tourSteps } from '../data/tourSteps';
@@ -155,6 +157,7 @@ function BuilderContent() {
   const canvasNodesKey = promptKey ? `builder_nodes_${promptKey}` : 'builderNodes';
   const canvasEdgesKey = promptKey ? `builder_edges_${promptKey}` : 'builderEdges';
 
+  const [builderTab, setBuilderTab] = useState<'flowarchitect' | 'runinspector' | 'flowboard'>('flowboard');
   const [nodes, setNodes] = useState<Node[]>(() => {
     if (restoreCanvas && promptKey) {
       const saved = localStorage.getItem(canvasNodesKey);
@@ -1418,6 +1421,45 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
 
   return (
     <div className={`w-full h-full relative flex flex-col transition-colors duration-300 theme-node-style-${nodeStyle}`} style={{ ...themeStyle, backgroundColor: "var(--theme-bg)", color: "var(--theme-text)" }}>
+      {/* Tabs */}
+      <div className="flex bg-black/40 border-b border-[#2A2A2A] p-2 gap-2 z-[70] relative">
+        <button
+          onClick={() => setBuilderTab('flowarchitect')}
+          className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+            builderTab === 'flowarchitect'
+              ? 'bg-blue-600 text-white shadow-[0_0_10px_rgba(37,99,235,0.5)]'
+              : 'text-gray-400 hover:text-white bg-transparent'
+          }`}
+        >
+          Flow Architect
+        </button>
+        <button
+          onClick={() => setBuilderTab('runinspector')}
+          className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+            builderTab === 'runinspector'
+              ? 'bg-purple-600 text-white shadow-[0_0_10px_rgba(147,51,234,0.5)]'
+              : 'text-gray-400 hover:text-white bg-transparent'
+          }`}
+        >
+          Run Inspector
+        </button>
+        <button
+          onClick={() => setBuilderTab('flowboard')}
+          className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+            builderTab === 'flowboard'
+              ? 'bg-emerald-600 text-white shadow-[0_0_10px_rgba(5,150,105,0.5)]'
+              : 'text-gray-400 hover:text-white bg-transparent'
+          }`}
+        >
+          FlowBoard
+        </button>
+      </div>
+
+      {builderTab === 'flowarchitect' && <div className="flex-1 overflow-hidden relative"><FlowArchitect /></div>}
+      {builderTab === 'runinspector' && <div className="flex-1 overflow-hidden relative"><RunInspector runId="current-run-id" /></div>}
+      
+      {builderTab === 'flowboard' && (
+        <>
       {React.createElement(Joyride as any, {
         steps: tourSteps,
         run: runTour,
@@ -2043,6 +2085,8 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
           nodeStyle={nodeStyle}
         />
       </div>
+      </>
+      )}
     </div>
   );
 }

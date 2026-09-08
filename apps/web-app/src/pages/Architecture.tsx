@@ -6,8 +6,6 @@ import { logicTaskManager, LogicTaskState } from '../lib/logicTaskManager';
 import { sendToBuilderBridge } from '../lib/builderBridge';
 import { useNavigate } from 'react-router-dom';
 import { SystemEvolutionPanel } from '../components/architecture/SystemEvolutionPanel';
-import { FlowArchitect } from '../components/architecture/FlowArchitect';
-import { RunInspector } from '../components/architecture/RunInspector';
 
 interface PromptDoc {
   key: string;
@@ -57,8 +55,8 @@ export default function Architecture() {
   const [panelTab, setPanelTab] = useState<'content' | 'logic'>(() => {
     return (localStorage.getItem('arch_panel_tab') as 'content' | 'logic') || 'content';
   });
-  const [mainTab, setMainTab] = useState<'map' | 'evolution' | 'architect' | 'inspector'>(() => {
-    return (localStorage.getItem('arch_main_view') as 'map' | 'evolution' | 'architect' | 'inspector') || 'map';
+  const [mainTab, setMainTab] = useState<'map' | 'evolution'>(() => {
+    return (localStorage.getItem('arch_main_view') as 'map' | 'evolution') || 'map';
   });
   const [currentLogicTask, setCurrentLogicTask] = useState<LogicTaskState | null>(null);
 
@@ -187,28 +185,6 @@ export default function Architecture() {
               <Sparkle size={18} className={mainTab === 'evolution' ? 'text-[#7B9C7F]' : ''} />
               Evolución & Auto-Mejora (131)
             </button>
-            <button
-              onClick={() => setMainTab('architect')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm transition-all cursor-pointer ${
-                mainTab === 'architect'
-                  ? 'selected-green shadow-[0_0_10px_rgba(23,74,31,0.5)]'
-                  : 'text-[#8A8A8A] hover:text-white border border-[#2A2A2A] bg-[#000000]'
-              }`}
-            >
-              <Brain size={18} className={mainTab === 'architect' ? 'text-[#7B9C7F]' : ''} />
-              Flow Architect
-            </button>
-            <button
-              onClick={() => setMainTab('inspector')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm transition-all cursor-pointer ${
-                mainTab === 'inspector'
-                  ? 'selected-green shadow-[0_0_10px_rgba(23,74,31,0.5)]'
-                  : 'text-[#8A8A8A] hover:text-white border border-[#2A2A2A] bg-[#000000]'
-              }`}
-            >
-              <Database size={18} className={mainTab === 'inspector' ? 'text-[#7B9C7F]' : ''} />
-              Run Inspector
-            </button>
           </div>
 
           {/* Motor Híbrido Compacto */}
@@ -231,10 +207,6 @@ export default function Architecture() {
       {/* Vista 1: Consola de Evolución & Auto-Mejora Sistémica */}
       {mainTab === 'evolution' ? (
         <SystemEvolutionPanel data={data} />
-      ) : mainTab === 'architect' ? (
-        <FlowArchitect />
-      ) : mainTab === 'inspector' ? (
-        <RunInspector runId="current-run-id" />
       ) : (
       /* Master-Detail-Subdetail Layout */
       <div className="flex gap-6 flex-1 min-h-0">
