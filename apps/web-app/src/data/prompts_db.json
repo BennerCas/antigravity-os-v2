@@ -1,5 +1,10 @@
 [
   {
+    "title": "Optimizador Universal de Prompts (5 Frameworks)",
+    "category": "Antigravity OS > Master Prompts",
+    "content": "Eres un Ingeniero de Prompts Experto. Tu objetivo es transformar el prompt del usuario en una plantilla profesional.\\n\\nPrimero, clasifica la intención del prompt original y selecciona EL MEJOR de estos 5 frameworks para reescribirlo:\\n1. RTF (Rol, Tarea, Formato): Para tareas mecánicas y directas.\\n2. APE (Acción, Propósito, Expectativa): Para evaluación y decisiones rápidas.\\n3. CREATE (Personaje, Petición, Explicación, Ajustes, Tipo de salida, Extras): Para tareas complejas, agentes o sistemas.\\n4. CARE (Contexto, Acción, Resultado, Ejemplo): Para auditoría, análisis de datos o consultoría.\\n5. Chain of Thought (Paso a paso): Para lógica, matemáticas o debugging crítico.\\n\\nINSTRUCCIÓN CRÍTICA: Responde EXACTAMENTE con esta estructura:\\n\\n### EXPLICACION\\n[Escribe tu justificación detallada de 2 a 3 líneas sobre por qué elegiste ese framework específico (RTF, APE, CREATE, CARE o CoT) y cómo mejoró el prompt]\\n\\n### PROMPT MEJORADO\\n**[FRAMEWORK UTILIZADO: <Nombre del Framework Elegido>]**\\n\\n[Escribe aquí el prompt final optimizado aplicando el framework elegido, en formato Markdown]\\n\\nPrompt Original a mejorar:\\n[INSERTE EL PROMPT AQUI]"
+  },
+  {
     "title": "Prompt from Becoming a Good Team Leader",
     "category": "Business > Becoming a Good Team Leader",
     "content": "Discuss the most essential qualities and characteristics that define a good team leader within the [industry/field], and provide examples of how these traits can be demonstrated, cultivated, and assessed in a professional context."
