@@ -120,15 +120,23 @@ const Agents = () => {
         instructions: item.instructions || 'Sin instrucciones detalladas.',
       }));
       
-      setAllAgents(data);
+      let upgraded: Agent[] = [];
+      try {
+        upgraded = JSON.parse(localStorage.getItem('upgraded_agents') || '[]');
+      } catch (e) {}
+      
+      const mergedData = [...upgraded, ...data];
+      setAllAgents(mergedData);
 
       const catMap: Record<string, Record<string, number>> = {};
-      data.forEach((p) => {
+      mergedData.forEach((p) => {
         const parts = (p.category || 'General').split(' > ');
         const main = parts[0].trim();
         const sub = parts[1] ? parts[1].trim() : 'General';
+        
         if (!catMap[main]) catMap[main] = {};
-        catMap[main][sub] = (catMap[main][sub] || 0) + 1;
+        if (!catMap[main][sub]) catMap[main][sub] = 0;
+        catMap[main][sub]++;
       });
 
       setCategories(Object.keys(catMap).map(cat => ({
@@ -274,6 +282,13 @@ const Agents = () => {
         title: inspectedAgent.title + ' (Upgrade)',
         instructions: generatedText
       };
+      
+      let upgraded: Agent[] = [];
+      try {
+        upgraded = JSON.parse(localStorage.getItem('upgraded_agents') || '[]');
+      } catch (e) {}
+      upgraded.unshift(newAgent);
+      localStorage.setItem('upgraded_agents', JSON.stringify(upgraded));
       
       setAllAgents(prev => [newAgent, ...prev]);
       setAgentes(prev => [newAgent, ...prev]);
@@ -1047,14 +1062,14 @@ const Agents = () => {
                   {/* Progress Bar for Upgrade */}
                   {isUpgrading && (
                     <div className="mt-2 flex flex-col gap-1">
-                      <div className="flex justify-between text-xs text-gray-400 font-medium">
+                      <div className="flex justify-between text-xs text-[#7B9C7F] font-medium">
                         <span>Generando mejora...</span>
                         <span>{upgradeProgress}% ({upgradeTimeLeft})</span>
                       </div>
-                      <div className="w-full bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                      <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden border border-[#2A2A2A]">
                         <div 
-                          className="bg-blue-500 h-1.5 rounded-full transition-all duration-300 ease-out"
-                          style={{ width: `${upgradeProgress}%` }}
+                          className="h-full rounded-full transition-all duration-300 ease-out"
+                          style={{ width: `${upgradeProgress}%`, backgroundColor: '#4ade80', boxShadow: '0 0 10px rgba(74,222,128,0.5)' }}
                         ></div>
                       </div>
                     </div>
