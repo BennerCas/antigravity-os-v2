@@ -18,7 +18,7 @@ async def analyze_discovery(req: DiscoveryRequest):
     Analyzes conversation to extract Intents and Requirements.
     """
     try:
-        analysis = ArchitectEngine.analyze_discovery(req.conversation_history)
+        analysis = await ArchitectEngine.analyze_discovery(req.conversation_history)
         return {"status": "success", "analysis": analysis}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -33,7 +33,7 @@ async def generate_blueprint(req: BlueprintRequest):
     Generates ArchitectureSpec v1 from Intents and Requirements.
     """
     try:
-        spec = ArchitectEngine.generate_blueprint(req.intent, req.requirements)
+        spec = await ArchitectEngine.generate_blueprint(req.intent, req.requirements)
         return {"status": "success", "spec": spec.model_dump()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
