@@ -1184,8 +1184,17 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
       </div>
 
       {explanationPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-[#111] border border-blue-500/50 rounded-2xl p-6 max-w-md w-full shadow-2xl relative">
+        <div 
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+          style={{ animation: 'fadeIn 0.2s ease-out' }}
+        >
+          <style>{`
+            @keyframes fadeIn {
+              from { opacity: 0; transform: scale(0.95); }
+              to { opacity: 1; transform: scale(1); }
+            }
+          `}</style>
+          <div className="bg-[#0a0c10] border border-blue-500/50 rounded-2xl p-6 max-w-md w-full shadow-[0_0_50px_rgba(59,130,246,0.15)] relative">
             <button 
               onClick={() => {
                 if ('speechSynthesis' in window) window.speechSynthesis.cancel();
