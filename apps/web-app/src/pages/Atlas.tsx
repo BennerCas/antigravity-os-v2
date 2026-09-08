@@ -91,6 +91,10 @@ const Atlas = () => {
     setPromptHistory(getPromptHistory());
     try {
       setGeneratedVariants(JSON.parse(localStorage.getItem('generated_variants') || '[]'));
+      const storedLogic = localStorage.getItem('atlas_logic_data');
+      if (storedLogic) setLogicData(JSON.parse(storedLogic));
+      const storedTrans = localStorage.getItem('atlas_translation_data');
+      if (storedTrans) setTranslationData(JSON.parse(storedTrans));
     } catch (err) {
       console.error(err);
     }
@@ -384,6 +388,8 @@ ${inspectedPrompt.content}`;
     if (translationData[key]) return;
 
     setIsTranslatingContent(true);
+    setTranslationData(prev => ({ ...prev, [key]: '' })); // Initialize empty to start streaming
+
     try {
       const res = await fetch('http://127.0.0.1:11434/api/generate', {
         method: 'POST',
@@ -391,12 +397,40 @@ ${inspectedPrompt.content}`;
         body: JSON.stringify({
           model: 'hermes3:8b',
           prompt: `Traduce el siguiente prompt al español manteniendo exactamente el mismo formato, estructura, y variables (como [texto]). No agregues comentarios ni explicaciones adicionales, solo la traducción directa del texto.\n\nPrompt:\n${inspectedPrompt.content}`,
-          stream: false
+          stream: true
         })
       });
-      if (!res.ok) throw new Error('Error al conectar con Ollama');
-      const data = await res.json();
-      setTranslationData(prev => ({ ...prev, [key]: data.response }));
+      if (!res.ok || !res.body) throw new Error('Error al conectar con Ollama');
+      
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let fullText = '';
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(l => l.trim() !== '');
+        
+        for (const line of lines) {
+          try {
+            const parsed = JSON.parse(line);
+            if (parsed.response) {
+              fullText += parsed.response;
+              setTranslationData(prev => ({ ...prev, [key]: fullText }));
+            }
+          } catch (e) {}
+        }
+      }
+      
+      // Save to localStorage
+      setTranslationData(prev => {
+        const updated = { ...prev, [key]: fullText };
+        localStorage.setItem('atlas_translation_data', JSON.stringify(updated));
+        return updated;
+      });
+      
     } catch (err) {
       console.error(err);
       setTranslationData(prev => ({ ...prev, [key]: 'Error al generar la traducción. Verifica la conexión con Ollama.' }));
@@ -922,7 +956,14 @@ ${inspectedPrompt.content}`;
                   return (
                     <div 
                       key={i} 
-                      onClick={(e) => { e.stopPropagation(); setInspectedPrompt(prompt); }}
+                      onClick={(e) => { 
+                      e.stopPropagation(); 
+                      setInspectedPrompt(prompt); 
+                      const key = makePromptKey(prompt);
+                      const now = new Date().toISOString();
+                      setPromptHistoryEntry(key, now);
+                      setPromptHistory(prev => ({ ...prev, [key]: now }));
+                    }}
                       className={`w-[320px] h-40 rounded-2xl p-5 shrink-0 shadow-lg relative cursor-pointer transition-colors flex flex-col justify-between overflow-hidden group border ${isInspected ? 'active-card' : 'bg-[#151515] border-[#2A2A2A] hover:border-gray-500'}`}
                     >
                       <div>
@@ -1036,7 +1077,14 @@ ${inspectedPrompt.content}`;
               return (
                 <div
                   key={idx}
-                  onClick={(e) => { e.stopPropagation(); setInspectedPrompt(prompt); }}
+                  onClick={(e) => { 
+                      e.stopPropagation(); 
+                      setInspectedPrompt(prompt); 
+                      const key = makePromptKey(prompt);
+                      const now = new Date().toISOString();
+                      setPromptHistoryEntry(key, now);
+                      setPromptHistory(prev => ({ ...prev, [key]: now }));
+                    }}
                   className={`border rounded-2xl p-6 flex flex-col h-80 relative cursor-pointer transition-all group ${inChain ? 'border-[#174A1F] active-card' : isInspected ? 'active-card' : 'bg-[#151515] border-[#2A2A2A] hover:border-[#3a3a3a]'}`}
                 >
                   {/* Chain position badge */}
@@ -1119,7 +1167,14 @@ ${inspectedPrompt.content}`;
                       </button>
                     ) : (
                       <button
-                        onClick={(e) => { e.stopPropagation(); setInspectedPrompt(prompt); }}
+                        onClick={(e) => { 
+                      e.stopPropagation(); 
+                      setInspectedPrompt(prompt); 
+                      const key = makePromptKey(prompt);
+                      const now = new Date().toISOString();
+                      setPromptHistoryEntry(key, now);
+                      setPromptHistory(prev => ({ ...prev, [key]: now }));
+                    }}
                         className="active-card-exempt text-white font-bold py-2 px-4 rounded-lg transition-colors w-full" style={{ backgroundColor: '#151515', border: '1px solid #2A2A2A' }}
                       >
                         {lastOpened ? '🔁 Continuar en Builder' : 'Abrir en Builder'}
@@ -1215,11 +1270,7 @@ ${inspectedPrompt.content}`;
                     >
                       🇪🇸 Traducir
                     </button>
-                    {panelTab === 'logic' && (
-                      <div className="text-xs font-bold px-3 py-1.5 rounded-lg border flex items-center gap-1 shadow-sm shrink-0 bg-blue-900/40 text-blue-300 border-blue-700/50">
-                        🧠 Vista de Lógica
-                      </div>
-                    )}
+
                   </div>
                 </div>
                 
@@ -1228,10 +1279,10 @@ ${inspectedPrompt.content}`;
                     <ReactMarkdown>{inspectedPrompt.content}</ReactMarkdown>
                   )}
                   {panelTab === 'translation' && (
-                    <ReactMarkdown>{translationData[makePromptKey(inspectedPrompt)] || (isTranslatingContent ? '🇪🇸 Traduciendo el prompt al español de forma natural... (Esto puede tomar unos segundos)' : 'No hay datos.')}</ReactMarkdown>
+                    <ReactMarkdown>{translationData[makePromptKey(inspectedPrompt)] || (isTranslatingContent ? '🇪🇸 Conectando y traduciendo...' : 'No hay datos.')}</ReactMarkdown>
                   )}
                   {panelTab === 'logic' && (
-                    <ReactMarkdown>{logicData[makePromptKey(inspectedPrompt)] || (isGeneratingLogic ? '🧠 Generando análisis profundo de la lógica del prompt... (Esto puede tomar unos segundos)' : 'No hay datos.')}</ReactMarkdown>
+                    <ReactMarkdown>{logicData[makePromptKey(inspectedPrompt)] || (isGeneratingLogic ? '🧠 Conectando y generando análisis...' : 'No hay datos.')}</ReactMarkdown>
                   )}
                 </div>
                 
