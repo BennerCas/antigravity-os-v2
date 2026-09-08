@@ -21,7 +21,8 @@ import {
 import '@xyflow/react/dist/style.css';
 import { v4 as uuidv4 } from 'uuid';
 import type { BuilderNodeData, PromptChainItem, ExecutionResult, UpdatedNode } from '../types/builder';
-import { API_URL, WS_EXECUTE_URL } from '../lib/api';
+import { BuilderInjectionPayload, drainPendingBuilderInjections } from '../lib/builderBridge';
+import { API_URL } from '../lib/api';
 import { getStroke } from 'perfect-freehand';
 import { getSvgPathFromStroke } from '../utils/drawUtils';
 import html2canvas from 'html2canvas';
@@ -29,8 +30,13 @@ import jsPDF from 'jspdf';
 import { ArrowUUpLeft, ArrowUUpRight, FloppyDisk, DownloadSimple, Trash, X } from '@phosphor-icons/react';
 
 import { MainPromptNode, ActionNode, PostItNode, TraducirNode, EditarNode, DrawingNode, RulerNode, LogicaNode } from '../components/BuilderNodes';
+import { VariableNode } from '../components/builder/nodes/VariableNode';
+import { ConditionNode } from '../components/builder/nodes/ConditionNode';
+import { HumanNode } from '../components/builder/nodes/HumanNode';
+import { SubflowNode } from '../components/builder/nodes/SubflowNode';
 import PropertiesPanel from '../components/builder/PropertiesPanel';
 import AgentsLibraryPanel from '../components/builder/AgentsLibraryPanel';
+import PromptsLibraryPanel from '../components/builder/PromptsLibraryPanel';
 
 const nodeTypes = {
   mainPrompt: MainPromptNode,
@@ -41,6 +47,10 @@ const nodeTypes = {
   drawingNode: DrawingNode,
   rulerNode: RulerNode,
   logicaNode: LogicaNode,
+  variable: VariableNode,
+  condition: ConditionNode,
+  human: HumanNode,
+  subflow: SubflowNode,
 };
 
 const THEMES = [
@@ -134,7 +144,7 @@ function BuilderContent() {
         source: i === 0 ? 'main' : `chain-${i}`,
         target: `chain-${i + 1}`,
         animated: true,
-        style: { stroke: '#a855f7', strokeWidth: 3 }
+        style: { stroke: '#2A2A2A', strokeWidth: 3 }
       }));
     }
     return [];
@@ -178,13 +188,214 @@ function BuilderContent() {
     localStorage.setItem('builderEdges', JSON.stringify(edges));
   }, [nodes, edges, canvasNodesKey, canvasEdgesKey]);
 
-  const initialNavState = useRef({ incomingPrompt, incomingChain, flowToLoad });
+  // ──────────────────────────────────────────────────────────────────────────
+  // LOGICA ROBUSTA DE INYECCION Y AGREGADO SIN REEMPLAZAR (APPENDING ENGINE)
+  // ──────────────────────────────────────────────────────────────────────────
+  const processIncomingPayload = useCallback((payload: BuilderInjectionPayload) => {
+    if (!payload) return;
+    console.log("Builder -> Procesando payload entrante:", payload);
+
+    // 1. Template Flow o Restore Flow completo
+    const flowData = payload.templateFlow || (payload.restoreFlow?.nodes ? payload.restoreFlow : null);
+    if (flowData && flowData.nodes && flowData.nodes.length > 0) {
+      setNodes(prevNodes => {
+        const isOnlyDefault = (
+          prevNodes.length === 1 &&
+          prevNodes[0].id === 'main' &&
+          (!prevNodes[0].data?.title || prevNodes[0].data.title === 'Nuevo Prompt' || prevNodes[0].data.title === 'Main Prompt') &&
+          (!prevNodes[0].data?.content || prevNodes[0].data.content === 'Prompt inicial por defecto' || prevNodes[0].data.content === '')
+        );
+
+        if (isOnlyDefault || prevNodes.length === 0) {
+          if (flowData.edges) setEdges(flowData.edges);
+          return flowData.nodes;
+        } else {
+          // Agregar a la derecha sin reemplazar cards existentes
+          const maxX = Math.max(...prevNodes.map(n => n.position.x));
+          const offsetX = maxX + 450;
+          const minTemplateX = Math.min(...flowData.nodes.map((n: Node) => n.position.x));
+
+          const timestamp = Date.now();
+          const mappedNodes: Node[] = flowData.nodes.map((n: Node, idx: number) => ({
+            ...n,
+            id: `flow_${n.id}_${timestamp}_${idx}`,
+            position: {
+              x: n.position.x - minTemplateX + offsetX,
+              y: n.position.y
+            }
+          }));
+
+          if (flowData.edges) {
+            const mappedEdges: Edge[] = flowData.edges.map((e: Edge, idx: number) => ({
+              ...e,
+              id: `e_flow_${e.id}_${timestamp}_${idx}`,
+              source: `flow_${e.source}_${timestamp}_0`,
+              target: `flow_${e.target}_${timestamp}_1`,
+              style: { stroke: '#3b82f6', strokeWidth: 3 }
+            }));
+            setEdges(prevEdges => [...prevEdges, ...mappedEdges]);
+          }
+
+          return [...prevNodes, ...mappedNodes];
+        }
+      });
+      return;
+    }
+
+    // 2. Extraer lista de prompts o agentes a agregar
+    const itemsToAdd: Array<{
+      title: string;
+      content: string;
+      role?: string;
+      framework?: string;
+      llm_model?: string;
+      temperature?: number;
+      variables?: string;
+      output_schema?: string;
+    }> = [];
+
+    if (payload.prompt) {
+      const p = payload.prompt;
+      itemsToAdd.push({
+        title: p.title || p.name || 'Prompt',
+        content: p.content || p.instructions || p.text || '',
+        role: p.role || p.category || 'General',
+        framework: p.framework || 'auto',
+        llm_model: p.llm_model || 'hermes3:8b',
+        temperature: p.temperature ?? 0.7,
+        variables: p.variables || '',
+        output_schema: p.output_schema || ''
+      });
+    } else if (payload.agent) {
+      const a = payload.agent;
+      itemsToAdd.push({
+        title: a.name || a.title || 'Agente',
+        content: a.instructions || a.content || a.text || '',
+        role: a.role || a.name || 'Agente Autónomo',
+        framework: a.framework || 'auto',
+        llm_model: a.llm_model || 'hermes3:8b',
+        temperature: a.temperature ?? 0.7,
+        variables: a.variables || '',
+        output_schema: a.output_schema || ''
+      });
+    }
+
+    const chain = payload.promptChain || payload.agentChain;
+    if (chain && Array.isArray(chain) && chain.length > 0) {
+      chain.forEach((item: any) => {
+        itemsToAdd.push({
+          title: item.title || item.name || 'Paso del Flujo',
+          content: item.content || item.instructions || item.text || '',
+          role: item.role || item.category || 'General',
+          framework: item.framework || 'auto',
+          llm_model: item.llm_model || 'hermes3:8b',
+          temperature: item.temperature ?? 0.7,
+          variables: item.variables || '',
+          output_schema: item.output_schema || ''
+        });
+      });
+    }
+
+    if (itemsToAdd.length === 0) return;
+
+    // 3. Aplicar regla de agregado sin reemplazar
+    setNodes(prevNodes => {
+      const isOnlyDefault = (
+        prevNodes.length === 1 &&
+        prevNodes[0].id === 'main' &&
+        (!prevNodes[0].data?.title || prevNodes[0].data.title === 'Nuevo Prompt' || prevNodes[0].data.title === 'Main Prompt') &&
+        (!prevNodes[0].data?.content || prevNodes[0].data.content === 'Prompt inicial por defecto' || prevNodes[0].data.content === '')
+      );
+
+      const baseNodes = isOnlyDefault ? [] : prevNodes;
+
+      // Calcular coordenadas contiguas sin superposición
+      let startX = 250;
+      let startY = 250;
+
+      if (baseNodes.length > 0) {
+        const maxX = Math.max(...baseNodes.map(n => n.position.x));
+        const correspondingNodes = baseNodes.filter(n => Math.abs(n.position.x - maxX) < 50);
+        const maxYAtMaxX = Math.max(...correspondingNodes.map(n => n.position.y));
+
+        if (maxX > 1800) {
+          // Salto a siguiente fila
+          const absoluteMaxY = Math.max(...baseNodes.map(n => n.position.y));
+          startX = 100;
+          startY = absoluteMaxY + 700;
+        } else {
+          // Desplazar a la derecha
+          startX = maxX + 420;
+          startY = maxYAtMaxX;
+        }
+      }
+
+      const timestamp = Date.now();
+      const newCreatedNodes: Node[] = itemsToAdd.map((item, idx) => {
+        const newId = `node_${timestamp}_${idx}_${Math.random().toString(36).substring(2, 6)}`;
+        return {
+          id: newId,
+          type: 'mainPrompt',
+          position: { x: startX + idx * 420, y: startY },
+          data: {
+            title: item.title,
+            content: item.content,
+            role: item.role,
+            framework: item.framework,
+            llm_model: item.llm_model,
+            temperature: item.temperature,
+            variables: item.variables,
+            output_schema: item.output_schema,
+            selectedForPdf: false
+          }
+        };
+      });
+
+      // Si es un encadenamiento, crear aristas automáticas entre los nuevos nodos
+      if (itemsToAdd.length > 1) {
+        const createdEdges: Edge[] = [];
+        for (let k = 0; k < newCreatedNodes.length - 1; k++) {
+          createdEdges.push({
+            id: `e-${newCreatedNodes[k].id}-${newCreatedNodes[k + 1].id}`,
+            source: newCreatedNodes[k].id,
+            target: newCreatedNodes[k + 1].id,
+            animated: true,
+            style: { stroke: '#3b82f6', strokeWidth: 3 }
+          });
+        }
+        setEdges(prevEdges => [...(isOnlyDefault ? [] : prevEdges), ...createdEdges]);
+      }
+
+      return [...baseNodes, ...newCreatedNodes];
+    });
+  }, []);
+
+  // Escuchar reactivamente inyecciones entrantes (Router, Evento Global y Cola de LocalStorage)
   useEffect(() => {
-    const { incomingPrompt: p, incomingChain: c, flowToLoad: t } = initialNavState.current;
-    if (p || c || t) {
+    // A. Drenar cola pendiente de localStorage
+    const pending = drainPendingBuilderInjections();
+    if (pending.length > 0) {
+      pending.forEach(p => processIncomingPayload(p));
+    }
+
+    // B. Detectar payload directo en location.state
+    if (location.state && (location.state.prompt || location.state.agent || location.state.promptChain || location.state.agentChain || location.state.templateFlow || location.state.restoreFlow)) {
+      processIncomingPayload(location.state);
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [navigate, location.pathname]);
+
+    // C. Escuchar evento en vivo
+    const handleCustomInject = (e: Event) => {
+      const customEvent = e as CustomEvent<BuilderInjectionPayload>;
+      if (customEvent.detail) {
+        processIncomingPayload(customEvent.detail);
+      }
+    };
+    window.addEventListener('builder:inject', handleCustomInject);
+    return () => {
+      window.removeEventListener('builder:inject', handleCustomInject);
+    };
+  }, [location.state, location.key, location.pathname, processIncomingPayload, navigate]);
 
   
   const [historyIndex, setHistoryIndex] = useState(0);
@@ -198,49 +409,44 @@ function BuilderContent() {
 
   const [cursorMode, setCursorMode] = useState<'pan' | 'draw' | 'line' | 'erase'>('pan');
   const [strokeColor, setStrokeColor] = useState<string>('#ffffff');
-  const [edgeColor, setEdgeColor] = useState<string>('#58a6ff');
+  const [edgeColor, setEdgeColor] = useState<string>('#2A2A2A');
   const [strokeWidth, setStrokeWidth] = useState<number>(5);
   const [currentDrawNodeId, setCurrentDrawNodeId] = useState<string | null>(null);
 
   const [showAgentLibrary, setShowAgentLibrary] = useState(false);
   const [showCoPiloto, setShowCoPiloto] = useState(false);
+  const [showPromptsLibrary, setShowPromptsLibrary] = useState(false);
 
   const handleAddAgentNode = (agentData: BuilderNodeData) => {
     const id = uuidv4();
     const selectedNode = nodes.find(n => n.data?.selectedForPdf) || nodes.find(n => n.id === 'main') || nodes[0];
-    const x = selectedNode ? selectedNode.position.x + 350 + (Math.random() * 50) : 150;
-    const y = selectedNode ? selectedNode.position.y + (Math.random() * 50) : 150;
-
-    const newNode: Node = {
+    const baseX = selectedNode ? selectedNode.position.x + 350 : 200;
+    const baseY = selectedNode ? selectedNode.position.y : 200;
+    const newNode = {
       id,
-      type: 'mainPrompt',
-      position: { x, y },
-      data: {
-        ...agentData,
-        role: agentData.role || 'Asistente IA',
-        framework: 'auto',
-        llm_model: 'hermes3:8b',
-        temperature: 0.7
-      }
+      type: 'mainPrompt' as const,
+      position: { x: baseX + Math.random() * 50, y: baseY + Math.random() * 50 },
+      data: agentData,
     };
+    const nextNodes = [...nodes, newNode];
+    setNodes(nextNodes);
+    saveHistory(nextNodes, edges);
+  };
 
-    const updatedNodes = [...nodes, newNode];
-    let updatedEdges = edges;
-    
-    if (selectedNode) {
-      const newEdge: Edge = {
-        id: `e-${selectedNode.id}-${id}`,
-        source: selectedNode.id,
-        target: id,
-        animated: true,
-        style: { stroke: edgeColor, strokeWidth: 3 }
-      };
-      updatedEdges = [...edges, newEdge];
-    }
-
-    setNodes(updatedNodes);
-    setEdges(updatedEdges);
-    saveHistory(updatedNodes, updatedEdges);
+  const handleAddPromptNode = (promptData: BuilderNodeData) => {
+    const id = uuidv4();
+    const selectedNode = nodes.find(n => n.data?.selectedForPdf) || nodes.find(n => n.id === 'main') || nodes[0];
+    const baseX = selectedNode ? selectedNode.position.x + 350 : 200;
+    const baseY = selectedNode ? selectedNode.position.y + 100 : 300;
+    const newNode = {
+      id,
+      type: 'mainPrompt' as const,
+      position: { x: baseX + Math.random() * 60, y: baseY + Math.random() * 60 },
+      data: promptData,
+    };
+    const nextNodes = [...nodes, newNode];
+    setNodes(nextNodes);
+    saveHistory(nextNodes, edges);
   };
 
   const [clipboard, setClipboard] = useState<{ nodes: Node[], edges: Edge[] } | null>(null);
@@ -298,14 +504,29 @@ function BuilderContent() {
   };
 
   const handleGroup = () => {
-    const selected = nodes.filter(n => n.selected && !n.parentId);
-    if (selected.length < 1) return;
+    const selected = nodes.filter(n => n.data?.selectedForPdf);
+    if (selected.length < 2) {
+      alert("Por favor, marca el checkbox de al menos 2 nodos para agruparlos.");
+      return;
+    }
     
-    // Use an approximate width/height if measured is not available
-    const minX = Math.min(...selected.map(n => n.position.x));
-    const minY = Math.min(...selected.map(n => n.position.y));
-    const maxX = Math.max(...selected.map(n => n.position.x + (n.measured?.width || 350)));
-    const maxY = Math.max(...selected.map(n => n.position.y + (n.measured?.height || 200)));
+    const getAbsolutePos = (node: Node) => {
+      let x = node.position.x;
+      let y = node.position.y;
+      if (node.parentId) {
+        const parent = nodes.find(p => p.id === node.parentId);
+        if (parent) {
+          x += parent.position.x;
+          y += parent.position.y;
+        }
+      }
+      return { x, y };
+    };
+
+    const minX = Math.min(...selected.map(n => getAbsolutePos(n).x));
+    const minY = Math.min(...selected.map(n => getAbsolutePos(n).y));
+    const maxX = Math.max(...selected.map(n => getAbsolutePos(n).x + (n.measured?.width || n.width || 350)));
+    const maxY = Math.max(...selected.map(n => getAbsolutePos(n).y + (n.measured?.height || n.height || 200)));
     
     const padding = 30;
     const groupId = uuidv4();
@@ -316,8 +537,8 @@ function BuilderContent() {
       style: {
         width: (maxX - minX) + padding * 2,
         height: (maxY - minY) + padding * 2,
-        backgroundColor: 'rgba(255, 255, 255, 0.03)',
-        border: '1px dashed var(--theme-border)',
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        border: '2px dashed rgba(255, 255, 255, 0.5)',
         borderRadius: '16px',
         zIndex: -1
       },
@@ -325,152 +546,78 @@ function BuilderContent() {
     };
     
     const selectedIds = new Set(selected.map(n => n.id));
-    const updatedNodes = [
+    let updatedNodes = [
       groupNode,
       ...nodes.map(n => {
         if (selectedIds.has(n.id)) {
+          const absPos = getAbsolutePos(n);
           return { 
             ...n, 
-            parentNode: groupId,
+            parentId: groupId,
             extent: 'parent' as const,
-            position: { x: n.position.x - (minX - padding), y: n.position.y - (minY - padding) }
+            position: { x: absPos.x - (minX - padding), y: absPos.y - (minY - padding) }
           };
         }
         return n;
       })
     ];
+
+    // Clean up any empty groups left behind
+    const groupsToKeep = new Set();
+    updatedNodes.forEach(n => { if (n.parentId) groupsToKeep.add(n.parentId); });
+    updatedNodes = updatedNodes.filter(n => n.type !== 'group' || groupsToKeep.has(n.id));
+
     setNodes(updatedNodes);
     saveHistory(updatedNodes, edges);
   };
 
-  // AI Action state
-  const [aiLoading, setAiLoading] = useState<string | null>(null); // which action is loading
-  const [aiError, setAiError] = useState<string | null>(null);
-  const BACKEND_URL = API_URL;
-
-  /** Call the backend and create a result node on the canvas */
-    /** Call the backend and create a result node on the canvas */
-  const handleAiAction = async (
-    action: 'upgrade' | 'atomizar' | 'traducir' | 'editar' | 'logica',
-    extras?: { target_language?: string; edit_instruction?: string }
-  ) => {
-    let targetNodes = nodes.filter(n => n.data?.selectedForPdf);
-    if (targetNodes.length === 0) {
-      const fallback = nodes.find(n => n.id === 'main') || nodes[0];
-      if (fallback) targetNodes = [fallback];
-    }
-
-    if (targetNodes.length === 0) {
-      setAiError('Selecciona o escribe un prompt primero');
-      setTimeout(() => setAiError(null), 3000);
+  const handleUngroup = () => {
+    const selected = nodes.filter(n => n.data?.selectedForPdf);
+    if (selected.length < 1) {
+      alert("Por favor, marca el checkbox de los nodos que deseas desagrupar.");
       return;
     }
 
-    setAiLoading(action);
-    setAiError(null);
-    setShowProgressModal(true);
-    setProgressTitle(`Procesando: ${action.toUpperCase()}`);
-    setProgressDesc('Analizando y conectando con el motor de IA...');
-    setProgress(0);
+    const selectedIds = new Set(selected.map(n => n.id));
     
-    const EST_PER_NODE = 10;
-    setTimeRemaining(targetNodes.length * EST_PER_NODE);
-    
-    const progressInterval = setInterval(() => {
-       setTimeRemaining(t => Math.max(1, t - 1));
-       setProgress(p => {
-         // Fake local increment so the bar moves while waiting for current node
-         if (p % 100 >= 95) return p;
-         return p + 1;
-       });
-    }, 1000);
-
-    try {
-      let currentNodes = [...nodes];
-      let currentEdges = [...edges];
-
-      for (let i = 0; i < targetNodes.length; i++) {
-        const sourceNode = targetNodes[i];
-        const promptContent = String(sourceNode.data?.content || sourceNode.data?.title || '');
-        
-        setProgressSubtext(`Nodo ${i + 1} de ${targetNodes.length}`);
-        setProgress(Math.floor((i / targetNodes.length) * 100));
-        
-        if (!promptContent.trim()) continue;
-
-        const res = await fetch(`${BACKEND_URL}/builder/action`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action,
-            prompt_content: promptContent,
-            target_language: extras?.target_language || 'Español',
-            edit_instruction: extras?.edit_instruction || 'Mejora la claridad y precisión'
-          })
-        });
-
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.detail || 'Error del servidor');
-        }
-
-        const data = await res.json();
-        const actionLabels: Record<string, string> = {
-          upgrade: '⬆️ Upgrade',
-          atomizar: '⚛️ Variante',
-          traducir: '🌍 Traducido',
-          editar: '✏️ Editado',
-          logica: '🧠 Lógica'
-        };
-
-        const newId = `ai-${action}-${Date.now()}-${i}`;
-        const newNode: Node = {
-          id: newId,
-          type: action === 'logica' ? 'logicaNode' : action === 'traducir' ? 'traducir' : action === 'editar' ? 'editar' : 'mainPrompt',
-          position: {
-            x: (sourceNode.position?.x ?? 250) + 420,
-            y: (sourceNode.position?.y ?? 250) + (i * 700) // 700px spacing vertical
-          },
-          data: {
-            title: actionLabels[action],
-            content: data.result,
-            model: data.model_used
-          }
-        };
-
-        const newEdge: Edge = {
-          id: `e-${sourceNode.id}-${newId}`,
-          source: sourceNode.id,
-          target: newId,
-          animated: true,
-          style: { stroke: '#a855f7', strokeWidth: 2 }
-        };
-
-        currentNodes = [...currentNodes, newNode];
-        currentEdges = [...currentEdges, newEdge];
+    let updatedNodes = nodes.map(n => {
+      if (selectedIds.has(n.id) && n.parentId) {
+         let x = n.position.x;
+         let y = n.position.y;
+         const parent = nodes.find(p => p.id === n.parentId);
+         if (parent) {
+             x += parent.position.x;
+             y += parent.position.y;
+         }
+         
+         const newNode = { ...n };
+         delete newNode.parentId;
+         delete newNode.extent;
+         newNode.position = { x, y };
+         return newNode;
       }
+      return n;
+    });
 
-      clearInterval(progressInterval);
-      setProgress(100);
-      setTimeRemaining(0);
-      
-      setNodes(currentNodes);
-      setEdges(currentEdges);
-      saveHistory(currentNodes, currentEdges);
+    const groupsToKeep = new Set();
+    updatedNodes.forEach(n => { if (n.parentId) groupsToKeep.add(n.parentId); });
+    updatedNodes = updatedNodes.filter(n => n.type !== 'group' || groupsToKeep.has(n.id));
 
-      setTimeout(() => {
-        setShowProgressModal(false);
-      }, 800);
+    setNodes(updatedNodes);
+    saveHistory(updatedNodes, edges);
+  };
 
-    } catch (e: unknown) {
-      clearInterval(progressInterval);
-      setAiError(`Error: ${e instanceof Error ? e.message : String(e)}`);
-      setShowProgressModal(false);
-      setTimeout(() => setAiError(null), 5000);
-    } finally {
-      setAiLoading(null);
+  const handleClear = () => {
+    if (window.confirm('¿Estás seguro de que quieres limpiar el lienzo? Se perderán todos los nodos y conexiones.')) {
+      setNodes([]);
+      setEdges([]);
+      saveHistory([], []);
+      setFinalOutputContent("");
     }
   };
+
+  const [aiError, setAiError] = useState<string | null>(null);
+  const BACKEND_URL = API_URL;
 
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [progressTitle, setProgressTitle] = useState('');
@@ -478,6 +625,12 @@ function BuilderContent() {
   const [progressSubtext, setProgressSubtext] = useState('');
   const [progress, setProgress] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(45); // Estimación inicial
+  
+  const [executionPaused, setExecutionPaused] = useState(false);
+  const [threadId, setThreadId] = useState<string | null>(null);
+  const [pendingNode, setPendingNode] = useState<string | null>(null);
+  const [humanInput, setHumanInput] = useState<string>("");
+
   const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(() => {
     try {
       const saved = localStorage.getItem('builder_executionResult');
@@ -516,109 +669,124 @@ function BuilderContent() {
       // Limpiar animaciones al inicio
       setEdges((eds) => eds.map((e) => ({ ...e, animated: false, className: (e.className || "").replace("animated", "") })));
       setNodes((nds) => nds.map((n) => ({ ...n, className: (n.className || "").replace("node-processing", "") })));
-      terminalLogsRef.current = ['[BUILD] Compilando grafo actual antes de ejecutar...'];
+      terminalLogsRef.current = ['[BUILD] Compilando grafo actual y enviando al Motor Nativo...'];
       setTerminalLogs(terminalLogsRef.current);
 
-      // Compilar SIEMPRE el grafo actual → el runtime ejecuta ESTE código, no uno viejo
+      // Extraer nodos y aristas para enviarlos al motor
       const nodesData = nodes.filter(n => n.type !== 'postIt' && n.type !== 'drawingNode' && n.type !== 'rulerNode').map(n => ({
         id: n.id,
-        title: n.data?.title || 'Sin Título',
-        content: String(n.data?.content || ''),
-        role: n.data?.role || 'Default Agent',
-        framework: n.data?.framework || 'auto',
         type: n.type || 'mainPrompt',
-        variables: n.data?.variables || '',
-        llm_model: n.data?.llm_model || 'hermes3:8b',
-        temperature: n.data?.temperature || 0.7,
-        output_schema: n.data?.output_schema || '{"type": "object"}'
+        properties: {
+          title: n.data?.title || 'Sin Título',
+          content: String(n.data?.content || ''),
+          prompt: String(n.data?.content || ''),
+          role: n.data?.role || 'Default Agent',
+          llm_model: n.data?.llm_model || 'hermes3:8b',
+          temperature: n.data?.temperature || 0.7,
+        }
       }));
       const edgesData = edges.map(e => ({ source: e.source, target: e.target }));
 
-      const compileRes = await fetch(`${API_URL}/compile/generate`, {
+      // Llamada síncrona al nuevo motor LangGraph
+      const compileRes = await fetch(`${API_URL}/engine/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nodes: nodesData,
           edges: edgesData,
-          framework: executionResult?.framework || 'auto',
-          execution_plan: executionResult?.execution_plan || ''
+          inputs: { context: "Ejecución lanzada desde el lienzo (Motor Nativo)" }
         })
       });
+
       if (!compileRes.ok) {
-        throw new Error('Falló la compilación del grafo');
+        throw new Error('Falló la ejecución del Motor Nativo');
       }
-      terminalLogsRef.current = [...terminalLogsRef.current, '[BUILD] Grafo compilado → sandbox/runner.py', 'Iniciando conexión con Runtime...'];
-      setTerminalLogs(terminalLogsRef.current);
 
-      const ws = new WebSocket(WS_EXECUTE_URL);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      terminalLogsRef.current = [...terminalLogsRef.current, 'Conectado. Enviando comando run...'];
-      setTerminalLogs(terminalLogsRef.current);
-      ws.send(JSON.stringify({ command: 'run' }));
-    };
-
-    ws.onmessage = (event) => {
-      // Ocultar mensaje de NODE-START en la terminal y usarlo para animación
-      const dataStr = event.data;
-      const nodeStartMatch = dataStr.match(/\[NODE-START\]\s+(.*)/);
+      const responseJson = await compileRes.json();
       
-      if (nodeStartMatch && nodeStartMatch[1]) {
-        const activeNodeId = nodeStartMatch[1].trim();
-        // Animar nodo específico y los bordes que lo apuntan
-        setNodes((nds) => nds.map((n) => ({
-          ...n,
-          className: n.id === activeNodeId 
-            ? ((n.className || "").replace("node-processing", "") + " node-processing").trim()
-            : (n.className || "").replace("node-processing", "").trim()
-        })));
-        
-        setEdges((eds) => eds.map((e) => ({
-          ...e,
-          animated: e.target === activeNodeId,
-          className: e.target === activeNodeId 
-            ? ((e.className || "").replace("animated", "") + " animated").trim()
-            : (e.className || "").replace("animated", "").trim()
-        })));
-      } else {
-        terminalLogsRef.current = [...terminalLogsRef.current, dataStr];
-        setTerminalLogs(terminalLogsRef.current);
+      if (responseJson.status === "paused") {
+        setExecutionPaused(true);
+        setThreadId(responseJson.thread_id);
+        setPendingNode(responseJson.pending_node);
+        setProgressTitle('Esperando Revisión Humana');
+        setProgressDesc(`El flujo está pausado en el nodo: ${responseJson.pending_node}`);
+        setShowProgressModal(true);
+        setIsExecuting(false);
+        return;
       }
       
-      if (dataStr.includes('[DONE] Process exited with code 0')) {
-        const fullText = terminalLogsRef.current.join('\n');
-        const match = fullText.match(/Final Output:\s([\s\S]*?)(?:\[DONE\]|$)/);
-        if (match && match[1]) {
-           setFinalOutputContent(match[1].trim());
-        } else {
-           // Fallback: Just grab the last chunks if Final Output string is missing somehow
-           const lines = terminalLogsRef.current;
-           const lastLines = lines.slice(Math.max(lines.length - 20, 0)).join('\n');
-           setFinalOutputContent("### Resultado Final\n\n" + lastLines);
-        }
-        setShowArtifactModal(true);
-      }
-    };
-
-    ws.onerror = () => {
-      setTerminalLogs(prev => [...prev, `Error WebSocket`]);
-    };
-
-    ws.onclose = () => {
-      setTerminalLogs(prev => [...prev, 'Conexión cerrada.']);
+      const finalMsg = responseJson.result?.messages?.[responseJson.result.messages.length - 1]?.content || "Ejecución finalizada.";
+      
+      terminalLogsRef.current = [
+        ...terminalLogsRef.current,
+        '[SISTEMA] Motor Nativo LangGraph procesó los nodos exitosamente.',
+        '[DONE] Process exited with code 0'
+      ];
+      setTerminalLogs(terminalLogsRef.current);
+      
+      setFinalOutputContent(`### Resultado Final\n\n${finalMsg}`);
+      setShowArtifactModal(true);
       setIsExecuting(false);
-      setShowArtifactModal(true); // Mantiene el panel flotante abierto para que el usuario pueda ver los logs o el error
-      setEdges((eds) => eds.map((e) => ({ ...e, animated: false, className: (e.className || "").replace("animated", "") })));
-      setNodes((nds) => nds.map((n) => ({ ...n, className: (n.className || "").replace("node-processing", "") })));
-    };
-    } catch (err) {
-      alert('Error in startExecution: ' + err);
+
+    } catch (err: any) {
       console.error(err);
+      terminalLogsRef.current = [...terminalLogsRef.current, `[ERROR] ${err.message}`];
+      setTerminalLogs(terminalLogsRef.current);
       setIsExecuting(false);
       setShowArtifactModal(true);
       setEdges((eds) => eds.map((e) => ({ ...e, animated: false, className: (e.className || "").replace("animated", "") })));
       setNodes((nds) => nds.map((n) => ({ ...n, className: (n.className || "").replace("node-processing", "") })));
+    }
+  };
+
+  const handleResumeExecution = async () => {
+    if (!threadId) return;
+    try {
+      setExecutionPaused(false);
+      setProgressTitle('Reanudando Ejecución');
+      setProgressDesc('Enviando feedback humano y continuando el flujo...');
+      
+      const res = await fetch(`${API_URL}/engine/resume`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          thread_id: threadId,
+          user_input: humanInput
+        })
+      });
+
+      if (!res.ok) throw new Error('Falló al reanudar la ejecución');
+      const responseJson = await res.json();
+      
+      if (responseJson.status === "paused") {
+          setExecutionPaused(true);
+          setThreadId(responseJson.thread_id);
+          setPendingNode(responseJson.pending_node);
+          setProgressTitle('Esperando Revisión Humana');
+          setProgressDesc(`El flujo está pausado en el nodo: ${responseJson.pending_node}`);
+          setHumanInput("");
+          return;
+      }
+      
+      const finalMsg = responseJson.result?.messages?.[responseJson.result.messages.length - 1]?.content || "Ejecución finalizada.";
+      
+      terminalLogsRef.current = [
+        ...terminalLogsRef.current,
+        '[SISTEMA] Motor Nativo LangGraph procesó los nodos exitosamente (tras reanudación).',
+        '[DONE] Process exited with code 0'
+      ];
+      setTerminalLogs(terminalLogsRef.current);
+      
+      setFinalOutputContent(`### Resultado Final\n\n${finalMsg}`);
+      setShowArtifactModal(true);
+      setIsExecuting(false);
+      setHumanInput("");
+      setShowProgressModal(false);
+    } catch (err: any) {
+      console.error(err);
+      setAiError('Error al reanudar: ' + err.message);
+      setIsExecuting(false);
+      setShowProgressModal(false);
     }
   };
 
@@ -738,13 +906,25 @@ function BuilderContent() {
     }, 1000);
 
     try {
-      const res = await fetch(`${BACKEND_URL}/execute/task`, {
+      // Formatear nodos para el motor nativo de LangGraph (native_engine.py)
+      const mappedNodes = nodesData.map(n => ({
+        id: n.id,
+        type: n.type || 'agent',
+        properties: {
+          agent_name: n.title,
+          prompt: n.content,
+          model: n.llm_model || 'qwen3-8b',
+          temperature: n.temperature
+        }
+      }));
+
+      const res = await fetch(`${BACKEND_URL}/engine/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          task_description: String(nodes[0]?.data?.content || 'Flujo Automático'),
-          nodes: nodesData,
-          edges: edgesData
+          nodes: mappedNodes,
+          edges: edgesData,
+          recursion_limit: 25
         })
       });
       
@@ -774,7 +954,19 @@ function BuilderContent() {
           }));
         }
 
-        setTimeout(() => setExecutionResult(data), 500);
+        setTimeout(() => {
+          let planText = JSON.stringify(data.result, null, 2);
+          if (data.result && data.result.messages && data.result.messages.length > 0) {
+            const lastMsg = data.result.messages[data.result.messages.length - 1];
+            planText = typeof lastMsg === 'string' ? lastMsg : (lastMsg.content || planText);
+          }
+          
+          setExecutionResult({
+            framework: 'LangGraph Native (Local)',
+            model_used: 'qwen3-8b',
+            execution_plan: planText
+          });
+        }, 500);
       } else {
         const errData = await res.json().catch(() => ({}));
         setAiError(errData.detail || 'Error al orquestar la ejecución');
@@ -852,8 +1044,8 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
     setHistoryIndex(newHistory.length - 1);
   }, [history, historyIndex]);
 
-  const handleGenerateFlow = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key !== 'Enter' || !aiFlowPrompt.trim() || isGeneratingFlow) return;
+  const handleGenerateFlow = async () => {
+    if (!aiFlowPrompt.trim() || isGeneratingFlow) return;
     setIsGeneratingFlow(true);
     try {
       const res = await fetch(`${API_URL}/builder/generate_flow`, {
@@ -926,8 +1118,16 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
       newNode = { id, type: 'postIt', position: { x, y }, data: { note: '' } };
     } else if (type === 'rulerNode') {
       newNode = { id, type: 'rulerNode', position: { x, y }, data: {} };
+    } else if (type === 'variable') {
+      newNode = { id, type: 'variable', position: { x, y }, data: { variableName: '' } };
+    } else if (type === 'condition') {
+      newNode = { id, type: 'condition', position: { x, y }, data: { condition: 'If / Else' } };
+    } else if (type === 'human') {
+      newNode = { id, type: 'human', position: { x, y }, data: { instructions: '' } };
     } else if (type === 'logicaNode') {
       newNode = { id, type: 'logicaNode', position: { x, y }, data: { content: "Explicando la lógica de:\n\n" + sourceContent } };
+    } else if (type === 'subflow') {
+      newNode = { id, type: 'subflow', position: { x, y }, data: { title: title || 'Sub-Flujo', content: '' } };
     } else {
       newNode = {
         id,
@@ -1186,18 +1386,21 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
 
   return (
     <div className={`w-full h-full relative flex flex-col transition-colors duration-300 theme-node-style-${nodeStyle}`} style={{ ...themeStyle, backgroundColor: "var(--theme-bg)", color: "var(--theme-text)" }}>
-      <div className="absolute top-2 left-4 z-[60] backdrop-blur-xl rounded-2xl p-1.5 flex items-center gap-1.5 shadow-2xl transition-colors duration-300 border-2 builder-top-bar max-w-[calc(100vw-220px)] overflow-x-auto custom-scrollbar" style={{ backgroundColor: "var(--theme-bar)", borderColor: "var(--theme-border)", color: "var(--theme-text)" }}>
+      <div className="absolute top-2 left-4 z-[60] p-2 flex items-center gap-2 builder-top-bar max-w-[calc(100vw-220px)] overflow-x-auto custom-scrollbar" style={{ backgroundColor: "transparent", color: "var(--theme-text)" }}>
         <style>{`
           .builder-top-bar::-webkit-scrollbar { height: 4px; }
           .builder-top-bar::-webkit-scrollbar-track { background: transparent; }
           .builder-top-bar::-webkit-scrollbar-thumb { background: var(--theme-border); border-radius: 4px; }
           .builder-top-bar { scrollbar-width: thin; scrollbar-color: var(--theme-border) transparent; }
-          .theme-btn { color: var(--theme-text); background: var(--theme-bg); transition: all 0.2s; border: 1px solid var(--theme-border); border-radius: 6px; font-weight: 500; font-size: 0.75rem; padding: 4px 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-          .theme-btn:hover { background: var(--theme-border); color: var(--theme-bg); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-          .theme-btn.active { background: var(--theme-bg) !important; color: var(--theme-text) !important; border-color: #39ff14 !important; box-shadow: 0 0 10px rgba(57, 255, 20, 0.6), inset 0 0 5px rgba(57, 255, 20, 0.2) !important; transform: none; }
-          .theme-divider { width: 1px; height: 18px; background: var(--theme-border); opacity: 0.5; margin: 0 4px; flex-shrink: 0; }
-          .theme-select { background: var(--theme-card); color: var(--theme-text); border: 1px solid var(--theme-border); padding: 2px 6px; border-radius: 6px; font-weight: 500; font-size: 0.75rem; outline: none; cursor: pointer; flex-shrink: 0; }
-          .theme-select:hover { border-color: var(--theme-text); }
+          .builder-top-bar { border: none !important; box-shadow: none !important; }
+          .theme-btn { color: var(--theme-text); background: var(--theme-bg); transition: all 0.2s; border: 1px solid #2563eb !important; border-radius: 6px; font-weight: 500; font-size: 0.875rem; padding: 4px 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+          .theme-btn:hover { background: #2563eb !important; color: #ffffff !important; transform: translateY(-1px); box-shadow: 0 0 12px rgba(37, 99, 235, 0.6); }
+          .theme-btn.active { background: #1e3a8a !important; color: #93c5fd !important; border-color: #60a5fa !important; box-shadow: 0 0 12px rgba(96, 165, 250, 0.6) !important; transform: none; }
+          .theme-divider { width: 1px; height: 18px; background: #2563eb; opacity: 0.7; margin: 0 4px; flex-shrink: 0; }
+          .theme-select { background: var(--theme-card); color: var(--theme-text); border: 1px solid #2563eb !important; padding: 2px 6px; border-radius: 6px; font-weight: 500; font-size: 0.875rem; outline: none; cursor: pointer; flex-shrink: 0; }
+          .theme-select:hover { border-color: #60a5fa !important; }
+          .execute-button { border: 1.5px solid #60a5fa !important; box-shadow: 0 0 14px rgba(37, 99, 235, 0.6) !important; }
+          .execute-button:hover { border-color: #93c5fd !important; box-shadow: 0 0 20px rgba(59, 130, 246, 0.8) !important; }
           .builder-top-bar .theme-btn, .builder-top-bar span, .builder-top-bar svg { text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
           [data-theme^="Camo"] .builder-top-bar .theme-btn { color: #ffffff !important; }
           [data-theme^="Camo"] .builder-top-bar .theme-select { color: #ffffff !important; text-shadow: 0 1px 2px rgba(0,0,0,1); }
@@ -1205,8 +1408,16 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
           .theme-node-btn:hover { opacity: 1; color: var(--theme-text); }
           .theme-node-btn-danger { color: var(--theme-border); opacity: 0.5; transition: all 0.2s; }
           .theme-node-btn-danger:hover { opacity: 1; color: var(--theme-border); }
-          .react-flow__controls-button { background-color: var(--theme-card) !important; border-bottom: 1px solid var(--theme-border) !important; fill: var(--theme-text) !important; }
+          .react-flow__controls-button { background-color: var(--theme-card) !important; border-bottom: 1px solid #2A2A2A !important; fill: var(--theme-text) !important; }
           .react-flow__controls-button:hover { background-color: var(--theme-bg) !important; }
+          /* Force all node borders to sidebar color #2A2A2A */
+          .react-flow__node > div { border: 1px solid #2563eb !important; }
+          .react-flow__node.selected > div { border-color: #60a5fa !important; box-shadow: 0 0 16px rgba(59, 130, 246, 0.5) !important; }
+          .react-flow__node.selected { box-shadow: none !important; outline: none !important; }
+          .react-flow__handle { background: #2563eb !important; border-color: #60a5fa !important; }
+          .react-flow__edge-path { stroke: #3b82f6 !important; }
+          .react-flow__connection-path { stroke: #3b82f6 !important; }
+          .react-flow__controls { border-color: #2563eb !important; }
           .theme-node-style-neon .react-flow__node > div { box-shadow: 0 0 25px var(--theme-border), inset 0 0 10px var(--theme-border) !important; border-radius: 12px; }
           .theme-node-style-brutalist .react-flow__node > div { border-radius: 0 !important; border-width: 4px !important; border-style: solid; box-shadow: 8px 8px 0 var(--theme-text) !important; }
           .theme-node-style-glass .react-flow__node > div { background: rgba(0,0,0,0.1) !important; backdrop-filter: blur(12px) !important; border-radius: 16px; border: 1px solid var(--theme-border) !important; box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important; }
@@ -1230,20 +1441,7 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
 
           
         `}</style>
-          <button
-            onClick={() => setShowCoPiloto(!showCoPiloto)}
-            className={`rounded theme-btn flex items-center gap-1 font-medium text-xs px-2 py-1 ${showCoPiloto ? 'active' : ''}`}
-            title="Co-Piloto AI"
-          >
-            ✨ Co-Piloto
-          </button>
-          <button 
-            onClick={() => setShowAgentLibrary(!showAgentLibrary)} 
-            className={`rounded theme-btn flex items-center gap-1 font-medium text-xs px-2 py-1 ${showAgentLibrary ? 'active' : ''}`} 
-            title="Catálogo de Agentes"
-          >
-            🤖 Agentes
-          </button>
+
         <div className="theme-divider"></div>
         <button onClick={handleCopy} className="rounded theme-btn" title="Copiar Nodos (Ctrl+C)">
           📋
@@ -1256,6 +1454,12 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
         </button>
         <button onClick={handleGroup} className="rounded theme-btn" title="Agrupar Nodos">
           📦
+        </button>
+        <button onClick={handleUngroup} className="rounded theme-btn" title="Desagrupar Nodos">
+          🔓
+        </button>
+        <button onClick={handleClear} className="rounded theme-btn text-red-500" title="Limpiar Lienzo">
+          <Trash size={16} />
         </button>
         <div className="theme-divider"></div>
         <button onClick={handleUndo} disabled={historyIndex === 0} className="rounded disabled:opacity-50 theme-btn" title="Deshacer">
@@ -1277,7 +1481,9 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
         <button onClick={() => setCursorMode('draw')} className={`rounded theme-btn ${cursorMode === 'draw' ? 'active' : ''}`} title="Lápiz (Dibujo Libre)">✏️</button>
         <button onClick={() => setCursorMode('line')} className={`rounded theme-btn ${cursorMode === 'line' ? 'active' : ''}`} title="Línea">📏</button>
         <button onClick={() => setCursorMode('erase')} className={`rounded theme-btn ${cursorMode === 'erase' ? 'active' : ''}`} title="Borrador">🧽</button>
-        <button onClick={() => handleAddNode('rulerNode', 'Regla')} className="rounded theme-btn" title="Regla">📐</button>
+        <button onClick={() => handleAddNode('rulerNode', 'Regla')} className="rounded theme-btn" title="Una regla de 25cm">📐</button>
+        
+
         
                 <div className="relative w-5 h-5 rounded-full overflow-hidden border shadow-sm cursor-pointer ml-1 flex-shrink-0" title="Color de Tinta" style={{ borderColor: 'var(--theme-border)' }}>
           <input 
@@ -1362,98 +1568,86 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
 
         </select>
         <div className="theme-divider"></div>
-        
+
         {/* AI Error Toast */}
         {aiError && (
-          <div className="absolute top-14 left-1/2 -translate-x-1/2 z-[100] bg-red-500/90 text-white text-xs px-4 py-2 rounded-xl shadow-lg backdrop-blur-sm">
+          <div className="absolute top-14 left-1/2 -translate-x-1/2 z-[100] bg-red-500/90 text-white text-xs px-4 py-2 rounded-xl shadow-lg backdrop-blur-sm transition-all">
             {aiError}
           </div>
         )}
+        
 
-        <button
-          onClick={() => handleAiAction('upgrade')}
-          disabled={!!aiLoading}
-          className="rounded flex items-center gap-1 disabled:opacity-50 theme-btn"
-          title="Upgrade: Mejora el nodo seleccionado"
-        >
-          {aiLoading === 'upgrade' ? '⏳' : '⬆️'} Upgrade
+        {/* Nodos de construcción desde cero al final de la barra */}
+        <button onClick={() => handleAddNode('mainPrompt', 'Inicio')} className="rounded-full flex items-center gap-1.5 px-4 py-1.5 theme-btn border border-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-900/30" title="Nodo de Inicio (Trigger)">
+          <span className="text-sm">▶️</span> <span className="text-[11px] font-bold tracking-wide uppercase opacity-90">Inicio</span>
         </button>
-        <button
-          onClick={() => handleAiAction('atomizar')}
-          disabled={!!aiLoading}
-          className={`rounded flex items-center gap-1 theme-btn ${aiLoading === 'atomizar' ? 'opacity-50 cursor-wait' : ''}`}
-          title="Atomizar: Divide un nodo complejo en sub-tareas"
-        >
-          {aiLoading === 'atomizar' ? '⏳' : '⚛️'} Atomizar
+        <button onClick={() => handleAddNode('mainPrompt', 'Agente')} className="rounded-full flex items-center gap-1.5 px-4 py-1.5 theme-btn border border-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-900/30" title="Nuevo Agente (LLM)">
+          <span className="text-sm">🤖</span> <span className="text-[11px] font-bold tracking-wide uppercase opacity-90">Agente</span>
         </button>
-        <button
-          onClick={() => {
-            const lang = prompt('¿A qué idioma traducir?', 'English') || 'English';
-            handleAiAction('traducir', { target_language: lang });
-          }}
-          disabled={!!aiLoading}
-          className={`rounded flex items-center gap-1 theme-btn ${aiLoading === 'traducir' ? 'opacity-50 cursor-wait' : ''}`}
-          title="Traducir el prompt a otro idioma"
-        >
-          {aiLoading === 'traducir' ? '⏳' : '🌍'} Traducir
+        <button onClick={() => handleAddNode('variable', 'Variable')} className="rounded-full flex items-center gap-1.5 px-4 py-1.5 theme-btn border border-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-900/30" title="Variable Global">
+          <span className="text-sm">🆅</span> <span className="text-[11px] font-bold tracking-wide uppercase opacity-90">Variable</span>
         </button>
-        <button
-          onClick={() => {
-            const instr = prompt('¿Qué editar o cómo regenerar?', 'Hazlo más conciso y directo') || 'Mejora la claridad';
-            handleAiAction('editar', { edit_instruction: instr });
-          }}
-          disabled={!!aiLoading}
-          className={`rounded flex items-center gap-1 theme-btn ${aiLoading === 'editar' ? 'opacity-50 cursor-wait' : ''}`}
-          title="Editar o regenerar el prompt"
-        >
-          {aiLoading === 'editar' ? '⏳' : '✏️'} Editar
+        <button onClick={() => handleAddNode('condition', 'Condición')} className="rounded-full flex items-center gap-1.5 px-4 py-1.5 theme-btn border border-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-900/30" title="Condición (If/Else)">
+          <span className="text-sm">⧖</span> <span className="text-[11px] font-bold tracking-wide uppercase opacity-90">Condición</span>
         </button>
-        <button onClick={() => handleAddNode('postIt', 'Nota')} className="rounded flex items-center gap-1 theme-btn" title="Agregar nota libre">
-          📝 Nota
+        <button onClick={() => handleAddNode('human', 'Humano')} className="rounded-full flex items-center gap-1.5 px-4 py-1.5 theme-btn border border-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-900/30" title="Punto de Revisión Humana">
+          <span className="text-sm">👤</span> <span className="text-[11px] font-bold tracking-wide uppercase opacity-90">Humano</span>
         </button>
-        <button
-          onClick={() => handleAiAction('logica')}
-          disabled={!!aiLoading}
-          className={`rounded flex items-center gap-1 theme-btn ${aiLoading === 'logica' ? 'opacity-50 cursor-wait' : ''}`}
-          title="Explicar la lógica del prompt"
-        >
-          {aiLoading === 'logica' ? '⏳' : '🧠'} Lógica
+        <button onClick={() => handleAddNode('subflow', 'Sub-Flujo')} className="rounded-full flex items-center gap-1.5 px-4 py-1.5 theme-btn border border-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-900/30" title="Sub-Flujo (Macro)">
+          <span className="text-sm">📦</span> <span className="text-[11px] font-bold tracking-wide uppercase opacity-90">Sub-Flujo</span>
         </button>
         
         <div className="w-1 h-1 flex-shrink-0"></div>
       </div>
 
-      {/* Floating Action Button (Ejecutar) - Moved outside the crowded top bar */}
-      
-      <div className="absolute top-2 right-4 z-[80] flex items-center gap-2">
-        {aiLoading && (
-          <div className="flex items-center gap-1.5 text-[11px] bg-black/50 text-white px-2 py-1 rounded-md border border-white/10 backdrop-blur-md shadow-lg">
-            <span className="animate-spin">⚙️</span>
-            <span>Procesando...</span>
-          </div>
-        )}
-        <div 
-          className="backdrop-blur-xl rounded-2xl p-1.5 flex items-center shadow-2xl transition-colors duration-300 border-2"
-          style={{ backgroundColor: "var(--theme-bar)", borderColor: "var(--theme-border)", color: "var(--theme-text)" }}
+      {/* Barra de Navegación Flotante Inferior (Centro) */}
+      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-[80] flex items-center gap-3 bg-[var(--theme-card)] p-2 rounded-xl shadow-2xl border border-[var(--theme-border)] backdrop-blur-md">
+        <button
+          onClick={() => setShowCoPiloto(!showCoPiloto)}
+          className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${showCoPiloto ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.6)]' : 'hover:bg-purple-600/20 text-[var(--theme-text)]'}`}
+          title="AI Flow Generator — Genera flujos desde lenguaje natural usando tus 22k prompts"
         >
-          <button
-            onClick={handleEjecutar}
-            disabled={showProgressModal}
-            className={`execute-button font-bold flex items-center gap-2 shadow-lg ${showProgressModal ? 'opacity-50 cursor-wait' : 'hover:scale-105 transition-transform hover:shadow-purple-500/30'}`}
-            style={{ 
-              background: 'linear-gradient(90deg, #a855f7 0%, #3b82f6 100%)', 
-              color: '#fff', 
-              border: 'none',
-              padding: '4px 16px',
-              fontSize: '0.75rem',
-              borderRadius: '6px',
-              height: '100%'
-            }}
-            title="Ejecutar el flujo con Meta-Orquestador"
-          >
-            {showProgressModal ? '⏳ Ejecutando...' : '🚀 EJECUTAR'}
-          </button>
-        </div>
+          🪄 AI Flow
+        </button>
+        <div className="w-[1px] h-6 bg-[var(--theme-border)] opacity-50"></div>
+        <button 
+          onClick={() => setShowAgentLibrary(!showAgentLibrary)} 
+          className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${showAgentLibrary ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.6)]' : 'hover:bg-blue-600/20 text-[var(--theme-text)]'}`} 
+          title="Catálogo de Agentes"
+        >
+          🤖 Agentes
+        </button>
+        <div className="w-[1px] h-6 bg-[var(--theme-border)] opacity-50"></div>
+        <button
+          onClick={() => setShowPromptsLibrary(!showPromptsLibrary)}
+          className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${showPromptsLibrary ? 'bg-green-600 text-white shadow-[0_0_15px_rgba(22,163,74,0.6)]' : 'hover:bg-green-600/20 text-[var(--theme-text)]'}`}
+          title="Atlas de Prompts"
+        >
+          📚 Prompts
+        </button>
+      </div>
+
+      {/* Floating Action Button (Ejecutar) */}
+      
+      <div className="absolute bottom-6 right-6 z-[80] flex flex-col items-end gap-2">
+        <button
+          onClick={handleEjecutar}
+          disabled={showProgressModal}
+          className={`execute-button font-bold flex items-center gap-2 shadow-lg ${showProgressModal ? 'opacity-50 cursor-wait' : 'hover:scale-105 transition-transform'}`}
+          style={{ 
+            background: 'linear-gradient(90deg, #1d4ed8 0%, #2563eb 50%, #3b82f6 100%)', 
+            color: '#fff', 
+            border: '1.5px solid #60a5fa',
+            boxShadow: '0 0 14px rgba(37, 99, 235, 0.6)',
+            padding: '7px 20px',
+            fontSize: '0.8rem',
+            borderRadius: '8px',
+            cursor: 'pointer'
+          }}
+          title="Ejecutar el flujo con Meta-Orquestador"
+        >
+          {showProgressModal ? '⏳ Ejecutando...' : '🚀 EJECUTAR'}
+        </button>
       </div>
       {/* ProgressBar Modal */}
       {showProgressModal && (
@@ -1469,16 +1663,38 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
                </div>
              )}
 
-             <div className="w-full h-4 bg-zinc-800 rounded-full overflow-hidden mb-2 relative">
-               <div 
-                 className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300 ease-out"
-                 style={{ width: `${progress}%` }}
-               />
-             </div>
-             <div className="w-full flex justify-between text-xs text-zinc-500 font-mono font-bold uppercase tracking-widest">
-                <span>{progress}% Completado</span>
-                <span>~ {timeRemaining}s restantes</span>
-             </div>
+             {executionPaused ? (
+               <div className="w-full mt-4 flex flex-col gap-3">
+                 <div className="text-xs text-blue-400 font-mono mb-2 text-center">
+                   Esperando respuesta para el nodo: {pendingNode}
+                 </div>
+                 <textarea
+                   className="w-full h-24 p-3 bg-black/50 border border-zinc-700 text-white rounded-lg focus:outline-none focus:border-blue-500 text-sm"
+                   placeholder="Escribe correcciones, feedback o da tu aprobación para continuar..."
+                   value={humanInput}
+                   onChange={(e) => setHumanInput(e.target.value)}
+                 />
+                 <button 
+                   onClick={handleResumeExecution}
+                   className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg font-bold transition-colors"
+                 >
+                   Continuar Flujo
+                 </button>
+               </div>
+             ) : (
+               <>
+                 <div className="w-full h-4 bg-zinc-800 rounded-full overflow-hidden mb-2 relative">
+                   <div 
+                     className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300 ease-out"
+                     style={{ width: `${progress}%` }}
+                   />
+                 </div>
+                 <div className="w-full flex justify-between text-xs text-zinc-500 font-mono font-bold uppercase tracking-widest">
+                    <span>{progress}% Completado</span>
+                    <span>~ {timeRemaining}s restantes</span>
+                 </div>
+               </>
+             )}
           </div>
         </div>
       )}
@@ -1610,7 +1826,7 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
       >
         
       {selectedEdges.length > 0 && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[60] backdrop-blur-xl rounded-2xl p-2 flex items-center gap-2 shadow-2xl transition-colors duration-300 border-2" style={{ backgroundColor: "var(--theme-card)", borderColor: "var(--theme-border)", color: "var(--theme-text)" }}>
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[60] backdrop-blur-xl rounded-2xl p-2 flex items-center gap-2 shadow-2xl transition-colors duration-300 border-2" style={{ backgroundColor: "var(--theme-card)", borderColor: "#2563eb", color: "var(--theme-text)", boxShadow: "0 0 15px rgba(37, 99, 235, 0.25)" }}>
           <span className="text-xs font-bold px-2 opacity-70">Enlace</span>
           <div className="relative w-6 h-6 rounded-full overflow-hidden border border-black/20 shadow-sm cursor-pointer" title="Color">
             <input 
@@ -1650,13 +1866,13 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
             onConnect={onConnect}
             onNodeClick={onNodeClick}
             nodeTypes={nodeTypes}
-            defaultEdgeOptions={{ style: { stroke: '#ffffff', strokeWidth: 2 } }}
+            defaultEdgeOptions={{ style: { stroke: '#2A2A2A', strokeWidth: 2 } }}
             fitView
             className="bg-transparent"
             panOnDrag={cursorMode === 'pan'}
             selectionOnDrag={false}
           >
-            {bgPattern !== 'none' && <Background color={(THEME_STYLES[theme] as Record<string, string>)['--theme-border']} gap={16} size={1} variant={bgPattern as BackgroundVariant} style={{ opacity: 0.8 }} />}
+            {bgPattern !== 'none' && <Background color="#2A2A2A" gap={16} size={1} variant={bgPattern as BackgroundVariant} style={{ opacity: 0.8 }} />}
              {activeDrawPoints && currentDrawNodeId && <DrawingOverlay points={activeDrawPoints} cursorMode={cursorMode} strokeColor={strokeColor} strokeWidth={strokeWidth} startPos={activeDrawStartPos.current} />}
 
             {showControls && <Controls />}
@@ -1668,51 +1884,64 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
           <div className="absolute left-0 top-20 bottom-5 w-[360px] flex flex-col gap-4 z-[150] pointer-events-none">
             {showCoPiloto && (
               <div 
-                className="flex-shrink-0 h-[280px] p-5 flex flex-col overflow-hidden transition-all duration-300 border-r-2 border-t-2 border-b-2 rounded-tr-2xl rounded-br-2xl shadow-2xl bg-[var(--theme-card)] pointer-events-auto"
-                style={{ borderColor: "var(--theme-border)", color: "var(--theme-text)" }}
+                className="flex-shrink-0 p-4 flex flex-col overflow-hidden transition-all duration-300 border-r-2 border-t-2 border-b-2 rounded-tr-2xl rounded-br-2xl shadow-2xl bg-[var(--theme-card)] pointer-events-auto"
+                style={{ borderColor: "#7c3aed", color: "var(--theme-text)" }}
               >
-                <div className="flex justify-between items-center mb-4 shrink-0">
-                  <h3 className="font-bold text-sm tracking-wide flex items-center gap-2">
-                    ✨ Co-Piloto
+                <div className="flex justify-between items-center mb-2 shrink-0">
+                  <h3 className="font-bold text-base tracking-wide flex items-center gap-2">
+                    🪄 AI Flow Generator
                   </h3>
                   <button onClick={() => setShowCoPiloto(false)} className="opacity-70 hover:opacity-100 transition-opacity">
                     <X size={18} />
                   </button>
                 </div>
-                <p className="text-xs opacity-70 mb-5 shrink-0 leading-relaxed">
-                  Describe el flujo que deseas crear y la IA lo generará automáticamente en el lienzo.
+                <p className="text-xs opacity-60 mb-3 shrink-0 leading-relaxed">
+                  Describe tu flujo. La IA usará 22,000+ prompts para construirlo.
                 </p>
-                <div className="flex flex-col gap-3 h-full">
+                <div className="flex flex-col gap-2 shrink-0">
                   <textarea
-                    placeholder="Ej: crea un flujo de login con validación..."
+                    placeholder="Ej: Analizar competidores en SEO y redactar post para LinkedIn..."
                     value={aiFlowPrompt}
                     onChange={(e) => setAiFlowPrompt(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleGenerateFlow(e as any);
-                      }
-                    }}
-                    className="bg-[var(--theme-bg)] text-[var(--theme-text)] border border-[var(--theme-border)] rounded-md p-3 text-sm outline-none resize-none flex-grow w-full"
+                    rows={3}
+                    className="bg-[var(--theme-bg)] text-[var(--theme-text)] border border-[#7c3aed] rounded-md p-2 text-sm outline-none resize-none w-full"
                     disabled={isGeneratingFlow}
+                    style={{ minHeight: '60px' }}
                   />
                   <button
-                    onClick={handleGenerateFlow as any}
+                    onClick={() => handleGenerateFlow()}
                     disabled={isGeneratingFlow || !aiFlowPrompt.trim()}
-                    className="!bg-[#333333] hover:!bg-[#444444] !text-black !uppercase !text-base font-bold !border !border-[#555555] !rounded-md py-2 px-4 transition-colors flex justify-center items-center gap-2 disabled:!text-black disabled:!border-[#444444] disabled:!cursor-not-allowed mt-auto mb-[20px]"
+                    className="rounded-md py-2 px-4 font-bold text-base transition-all flex justify-center items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: '#7c3aed', color: '#fff' }}
                   >
-                    {isGeneratingFlow ? 'Generando...' : 'Generar Flujo'}
+                    {isGeneratingFlow ? (
+                      <><span className="animate-spin">⚙️</span> Buscando en tu base de datos...</>
+                    ) : (
+                      <>🪄 Generar Flujo con IA</>
+                    )}
                   </button>
+                  <p className="text-xs opacity-40 text-center">
+                    Busca en prompts + agentes · Auto-layout · LangGraph nativo
+                  </p>
                 </div>
               </div>
             )}
             
             {showAgentLibrary && (
-              <div className="flex-grow flex pointer-events-auto min-h-0">
+              <div className="flex-1 flex flex-col pointer-events-auto min-h-0">
                 <AgentsLibraryPanel 
                   onClose={() => setShowAgentLibrary(false)} 
                   onAddAgent={handleAddAgentNode} 
                   nodeStyle={nodeStyle} 
+                />
+              </div>
+            )}
+
+            {showPromptsLibrary && (
+              <div className="flex-1 flex flex-col pointer-events-auto min-h-0">
+                <PromptsLibraryPanel
+                  onClose={() => setShowPromptsLibrary(false)}
+                  onAddPrompt={handleAddPromptNode}
                 />
               </div>
             )}
