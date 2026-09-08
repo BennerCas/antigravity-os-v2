@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import config  # carga .env local (o fallback legacy) antes que todo
-from routers import execute, search, prompts, builder_actions, vault, compiler, runtime, flows, architecture, automations, coding, native_engine, semantic_search
+from routers import execute, search, prompts, builder_actions, vault, compiler, runtime, flows, architecture, automations, coding, native_engine, semantic_search, builder_v1
 
 app = FastAPI(
     title="Antigravity_OS Backend API",
@@ -31,6 +31,7 @@ app.include_router(automations.router, prefix="/api/v1")
 app.include_router(coding.router, prefix="/api/v1")
 app.include_router(native_engine.router, prefix="/api/v1")
 app.include_router(semantic_search.router, prefix="/api/v1")
+app.include_router(builder_v1.router, prefix="/api/v1")
 
 @app.on_event("startup")
 async def startup_event():
