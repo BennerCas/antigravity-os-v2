@@ -276,6 +276,8 @@ const Agents = () => {
       };
       
       setAllAgents(prev => [newAgent, ...prev]);
+      setAgentes(prev => [newAgent, ...prev]);
+      setSearchResults(prev => prev ? [newAgent, ...prev] : null);
       setInspectedAgent(newAgent);
     } catch (err) {
       console.error(err);
