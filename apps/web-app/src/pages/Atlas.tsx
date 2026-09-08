@@ -188,7 +188,9 @@ const Atlas = () => {
 
   // --- NUEVOS ESTADOS DEL PANEL ---
   const [inspectedPrompt, setInspectedPrompt] = useState<Prompt | null>(null);
-  const [panelTab, setPanelTab] = useState<'content' | 'instructions' | 'logic'>('content');
+  const [panelTab, setPanelTab] = useState<'content' | 'translation' | 'logic'>('content');
+  const [translationData, setTranslationData] = useState<Record<string, string>>({});
+  const [isTranslatingContent, setIsTranslatingContent] = useState(false);
   const [logicData, setLogicData] = useState<Record<string, string>>({});
   const [isTranslating, setIsTranslating] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
@@ -203,9 +205,12 @@ const Atlas = () => {
     e.stopPropagation();
     if (!inspectedPrompt) return;
     
-    const currentText = panelTab === 'content' 
+    const key = makePromptKey(inspectedPrompt);
+    const currentText = panelTab === 'content'
       ? inspectedPrompt.content
-      : (logicData[inspectedPrompt.id || ''] || '');
+      : panelTab === 'translation'
+      ? (translationData[key] || '')
+      : (logicData[key] || '');
       
     if (!currentText) return;
 
@@ -371,10 +376,40 @@ ${inspectedPrompt.content}`;
     }
   };
 
+
+  const handleTranslate = async () => {
+    if (!inspectedPrompt) return;
+    const key = makePromptKey(inspectedPrompt);
+    setPanelTab('translation');
+    if (translationData[key]) return;
+
+    setIsTranslatingContent(true);
+    try {
+      const res = await fetch('http://127.0.0.1:11434/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'hermes3:8b',
+          prompt: `Traduce el siguiente prompt al español manteniendo exactamente el mismo formato, estructura, y variables (como [texto]). No agregues comentarios ni explicaciones adicionales, solo la traducción directa del texto.\n\nPrompt:\n${inspectedPrompt.content}`,
+          stream: false
+        })
+      });
+      if (!res.ok) throw new Error('Error al conectar con Ollama');
+      const data = await res.json();
+      setTranslationData(prev => ({ ...prev, [key]: data.response }));
+    } catch (err) {
+      console.error(err);
+      setTranslationData(prev => ({ ...prev, [key]: 'Error al generar la traducción. Verifica la conexión con Ollama.' }));
+    } finally {
+      setIsTranslatingContent(false);
+    }
+  };
+
   const handleLogic = async () => {
     if (!inspectedPrompt) return;
     setPanelTab('logic');
-    if (logicData[inspectedPrompt.id || '']) return;
+    const key = makePromptKey(inspectedPrompt);
+    if (logicData[key]) return;
 
     setIsGeneratingLogic(true);
     try {
@@ -389,10 +424,10 @@ ${inspectedPrompt.content}`;
       });
       if (!res.ok) throw new Error('Error al conectar con Ollama');
       const data = await res.json();
-      setLogicData(prev => ({ ...prev, [inspectedPrompt.id || '']: data.response }));
+      setLogicData(prev => ({ ...prev, [key]: data.response }));
     } catch (err) {
       console.error(err);
-      setLogicData(prev => ({ ...prev, [inspectedPrompt.id || '']: 'No se pudo generar la explicacion. Verifica la conexion con Ollama local.' }));
+      setLogicData(prev => ({ ...prev, [key]: 'No se pudo generar la explicacion. Verifica la conexion con Ollama local.' }));
     } finally {
       setIsGeneratingLogic(false);
     }
@@ -1095,28 +1130,37 @@ ${inspectedPrompt.content}`;
                     <span className="text-xs font-bold text-blue-400 uppercase tracking-widest">{inspectedPrompt.category?.split(' > ').pop() || 'Prompt'}</span>
                     <h3 className="text-2xl font-bold text-white mt-1 leading-tight">{inspectedPrompt.title}</h3>
                   </div>
-                  {panelTab === 'content' ? (
-                  <button 
-                    onClick={handleLogic} 
-                    className="text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors flex items-center gap-1 shadow-sm shrink-0 bg-blue-900/40 text-blue-300 border-blue-700/50 hover:bg-blue-800"
-                  >
-                    🧠 Lógica
-                  </button>
-                ) : (
-                  <button 
-                    onClick={() => setPanelTab('content')} 
-                    className="text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors flex items-center gap-1 shadow-sm shrink-0 bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700 hover:text-white"
-                  >
-                    ⬅️ Volver
-                  </button>
-                )}
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setPanelTab('content')} 
+                      className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors flex items-center gap-1 shadow-sm shrink-0 ${panelTab === 'content' ? 'bg-gray-800 text-white border-gray-500' : 'bg-transparent text-gray-400 border-gray-700 hover:text-gray-200'}`}
+                    >
+                      💬 Original
+                    </button>
+                    <button 
+                      onClick={handleTranslate} 
+                      className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors flex items-center gap-1 shadow-sm shrink-0 ${panelTab === 'translation' ? 'bg-green-900/40 text-green-300 border-green-700/50' : 'bg-transparent text-green-500/70 border-green-900/50 hover:text-green-400 hover:border-green-700'}`}
+                    >
+                      🇪🇸 Traducir
+                    </button>
+                    <button 
+                      onClick={handleLogic} 
+                      className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors flex items-center gap-1 shadow-sm shrink-0 ${panelTab === 'logic' ? 'bg-blue-900/40 text-blue-300 border-blue-700/50' : 'bg-transparent text-blue-500/70 border-blue-900/50 hover:text-blue-400 hover:border-blue-700'}`}
+                    >
+                      🧠 Lógica
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="bg-gray-900/80 p-5 rounded-xl border border-gray-800 text-sm text-gray-300 leading-relaxed prose prose-invert prose-sm max-w-none prose-headings:text-blue-400 prose-a:text-blue-400 shadow-inner">
-                  {panelTab === 'content' ? (
+                  {panelTab === 'content' && (
                     <ReactMarkdown>{inspectedPrompt.content}</ReactMarkdown>
-                  ) : (
-                    <ReactMarkdown>{logicData[inspectedPrompt.id || ''] || (isGeneratingLogic ? '🧠 Generando análisis profundo de la lógica del prompt... (Esto puede tomar unos segundos)' : 'No hay datos.')}</ReactMarkdown>
+                  )}
+                  {panelTab === 'translation' && (
+                    <ReactMarkdown>{translationData[makePromptKey(inspectedPrompt)] || (isTranslatingContent ? '🇪🇸 Traduciendo el prompt al español de forma natural... (Esto puede tomar unos segundos)' : 'No hay datos.')}</ReactMarkdown>
+                  )}
+                  {panelTab === 'logic' && (
+                    <ReactMarkdown>{logicData[makePromptKey(inspectedPrompt)] || (isGeneratingLogic ? '🧠 Generando análisis profundo de la lógica del prompt... (Esto puede tomar unos segundos)' : 'No hay datos.')}</ReactMarkdown>
                   )}
                 </div>
                 
