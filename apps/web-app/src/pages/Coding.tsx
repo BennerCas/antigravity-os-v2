@@ -100,28 +100,28 @@ export default function Coding() {
           {/* Tabs */}
           <div className="flex items-center gap-2 px-6 border-b border-[#2A2A2A] shrink-0 h-[53px]">
             {[
-              { id: 'academy',  label: 'Guía y Ejemplos' },
-              { id: 'editor',   label: 'Editor' },
-              { id: 'compiled', label: 'Código Compilado' },
-              { id: 'nodes',    label: 'Nodos' },
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                  activeTab === tab.id
-                    ? 'shadow-[0_0_10px_rgba(23,74,31,0.5)]'
-                    : 'hover:text-[#d0d0d0] hover:bg-[#1A1A1A]'
-                }`}
-                style={{
-                  backgroundColor: activeTab === tab.id ? '#0A1C0D' : 'transparent',
-                  border: `1px solid ${activeTab === tab.id ? '#174A1F' : 'transparent'}`,
-                  color: activeTab === tab.id ? '#7B9C7F' : '#8A8A8A'
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
+          { id: 'academy',  label: 'Guía y Ejemplos' },
+          { id: 'editor',   label: 'Editor' },
+          { id: 'compiled', label: 'Código Compilado' },
+          { id: 'nodes',    label: 'Nodos' },
+        ].map(tab => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200"
+              style={{
+                backgroundColor: isActive ? '#0A1C0D' : 'transparent',
+                border: `1px solid ${isActive ? '#174A1F' : '#333333'}`,
+                color: isActive ? '#7B9C7F' : '#8A8A8A',
+                boxShadow: isActive ? '0 0 10px rgba(23,74,31,0.5)' : 'none'
+              }}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
           </div>
 
           {/* Tab Content */}

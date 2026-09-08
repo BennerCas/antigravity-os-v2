@@ -200,20 +200,32 @@ export default function Flows() {
       </header>
 
       {/* Tabs Principales */}
-      <div className="flex gap-4 mb-6 border-b border-gray-800 pb-px flex-shrink-0">
-        <button 
-          onClick={() => setActiveTab('my_flows')}
-          className={`flex items-center gap-2 pb-4 px-2 border-b-2 transition-colors ${activeTab === 'my_flows' ? 'border-[#174A1F] text-[#7B9C7F] font-bold' : 'border-transparent text-[#8A8A8A] hover:text-white'}`}
-        >
-          <SquaresFour size={20} /> Mis Ecosistemas
-        </button>
-        <button 
-          onClick={() => setActiveTab('templates')}
-          className={`flex items-center gap-2 pb-4 px-2 border-b-2 transition-colors ${activeTab === 'templates' ? 'border-[#174A1F] text-[#7B9C7F] font-bold' : 'border-transparent text-[#8A8A8A] hover:text-white'}`}
-        >
-          <Books size={20} /> Biblioteca de Plantillas
-        </button>
-      </div>
+        <div className="flex gap-3 mb-6 border-b border-gray-800 pb-4 flex-shrink-0">
+          <button 
+            onClick={() => setActiveTab('my_flows')}
+            className="flex items-center gap-2 px-5 py-2 rounded-full font-medium transition-all duration-200"
+            style={{
+              backgroundColor: activeTab === 'my_flows' ? '#0A1C0D' : 'transparent',
+              border: `1px solid ${activeTab === 'my_flows' ? '#174A1F' : '#333333'}`,
+              color: activeTab === 'my_flows' ? '#7B9C7F' : '#8A8A8A',
+              boxShadow: activeTab === 'my_flows' ? '0 0 10px rgba(23,74,31,0.5)' : 'none'
+            }}
+          >
+            <SquaresFour size={20} /> Mis Ecosistemas
+          </button>
+          <button 
+            onClick={() => setActiveTab('templates')}
+            className="flex items-center gap-2 px-5 py-2 rounded-full font-medium transition-all duration-200"
+            style={{
+              backgroundColor: activeTab === 'templates' ? '#0A1C0D' : 'transparent',
+              border: `1px solid ${activeTab === 'templates' ? '#174A1F' : '#333333'}`,
+              color: activeTab === 'templates' ? '#7B9C7F' : '#8A8A8A',
+              boxShadow: activeTab === 'templates' ? '0 0 10px rgba(23,74,31,0.5)' : 'none'
+            }}
+          >
+            <Books size={20} /> Biblioteca de Plantillas
+          </button>
+        </div>
 
       <div className="flex-1 overflow-hidden flex flex-col">
         {activeTab === 'my_flows' ? (
@@ -272,11 +284,18 @@ export default function Flows() {
             <div className="flex gap-3 mb-6 flex-shrink-0">
               {['Basico', 'Intermedio', 'Avanzado', 'Experto'].map(level => {
                 const config = getLevelConfig(level);
+                const isActive = activeLevel === level;
                 return (
                   <button 
                     key={level}
                     onClick={() => setActiveLevel(level)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${activeLevel === level ? 'bg-[#0A1C0D] border-[#174A1F] text-[#7B9C7F]' : 'bg-transparent border-[#2A2A2A] text-[#8A8A8A] hover:text-white'}`}
+                    className="flex items-center gap-2 px-5 py-2 rounded-full font-medium transition-all duration-200"
+                    style={{
+                      backgroundColor: isActive ? '#0A1C0D' : 'transparent',
+                      border: `1px solid ${isActive ? '#174A1F' : '#333333'}`,
+                      color: isActive ? '#7B9C7F' : '#8A8A8A',
+                      boxShadow: isActive ? '0 0 10px rgba(23,74,31,0.5)' : 'none'
+                    }}
                   >
                     {config.icon}
                     <span className="font-bold">{level}</span>
