@@ -219,7 +219,7 @@ const Agents = () => {
       const promptText = `Eres un ingeniero de IA experto. Mejora y haz más profesional el siguiente prompt de sistema/agente. Añade secciones de contexto, personalidad y reglas claras. 
 Deberás responder ESTRICTAMENTE con un objeto JSON válido que contenga dos claves:
 1. "improved_prompt": El texto completo del nuevo prompt mejorado (en formato Markdown).
-2. "explanation": Una explicación breve (2-3 líneas) detallando por qué esta nueva versión es superior y qué se le añadió.
+2. "explanation": Una explicación breve (2-3 líneas) EN ESPAÑOL detallando por qué esta nueva versión es superior y qué se le añadió. IMPORTANTE: La explicación DEBE estar en idioma español.
 
 Prompt Original:
 ${inspectedAgent.instructions || inspectedAgent.content}`;
@@ -1187,7 +1187,10 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="bg-[#111] border border-blue-500/50 rounded-2xl p-6 max-w-md w-full shadow-2xl relative">
             <button 
-              onClick={() => setExplanationPopup(null)}
+              onClick={() => {
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                setExplanationPopup(null);
+              }}
               className="absolute top-4 right-4 text-gray-400 hover:text-white bg-gray-800 rounded-full p-1 transition-colors"
             >
               <X size={16} />
@@ -1202,9 +1205,26 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
             <div className="bg-gray-900 border border-gray-800 p-4 rounded-xl text-gray-300 text-sm leading-relaxed custom-scrollbar max-h-48 overflow-y-auto">
               {explanationPopup.text}
             </div>
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 flex justify-between items-center">
               <button 
-                onClick={() => setExplanationPopup(null)}
+                onClick={() => {
+                  if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(explanationPopup.text);
+                    utterance.lang = 'es-ES';
+                    utterance.rate = 1.05;
+                    window.speechSynthesis.speak(utterance);
+                  }
+                }}
+                className="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+              >
+                🔊 Escuchar
+              </button>
+              <button 
+                onClick={() => {
+                  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                  setExplanationPopup(null);
+                }}
                 className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-medium transition-colors"
               >
                 Entendido
