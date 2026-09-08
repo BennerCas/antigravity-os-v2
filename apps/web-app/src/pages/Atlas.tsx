@@ -266,14 +266,23 @@ const Atlas = () => {
     setUpgradeTimeLeft('Calculando...');
     
     try {
-      const promptText = `Eres un Ingeniero de IA hispanohablante. Tu objetivo es mejorar este prompt.
-INSTRUCCIÓN CRÍTICA: Responde EXACTAMENTE con esta estructura (incluyendo los encabezados):
+      const promptText = `Eres un Ingeniero de Prompts Experto. Tu objetivo es transformar el prompt del usuario en una plantilla profesional.
+Primero, clasifica la intención del prompt original y selecciona EL MEJOR de estos 5 frameworks para reescribirlo:
+1. RTF (Rol, Tarea, Formato): Para tareas mecánicas y directas.
+2. APE (Acción, Propósito, Expectativa): Para evaluación y decisiones rápidas.
+3. CREATE (Personaje, Petición, Explicación, Ajustes, Tipo de salida, Extras): Para tareas complejas, agentes o sistemas.
+4. CARE (Contexto, Acción, Resultado, Ejemplo): Para auditoría, análisis de datos o consultoría.
+5. Chain of Thought (Paso a paso): Para lógica, matemáticas o debugging crítico.
+
+INSTRUCCIÓN CRÍTICA: Responde EXACTAMENTE con esta estructura:
 
 ### EXPLICACION
-[Escribe aquí tu justificación detallada en ESPAÑOL de por qué es mejor (2 a 3 líneas)]
+[Escribe tu justificación detallada de 2 a 3 líneas sobre por qué elegiste ese framework específico (RTF, APE, CREATE, CARE o CoT) y cómo mejoró el prompt]
 
 ### PROMPT MEJORADO
-[Escribe aquí el prompt mejorado en formato Markdown, estrictamente en español]
+**[FRAMEWORK UTILIZADO: <Nombre del Framework Elegido>]**
+
+[Escribe aquí el prompt final optimizado aplicando el framework elegido, en formato Markdown]
 
 Prompt Original a mejorar:
 ${inspectedPrompt.content}`;
@@ -1330,20 +1339,9 @@ ${inspectedPrompt.content}`;
 
       {explanationPopup && (
         <div 
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-          style={{ 
-            backgroundColor: 'rgba(5, 10, 15, 0.95)',
-            transform: 'translateZ(0)',
-            animation: 'fadeIn 0.2s ease-out' 
-          }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-[#050a0f]/60 backdrop-blur-md animate-in fade-in duration-200"
         >
-          <style>{`
-            @keyframes fadeIn {
-              from { opacity: 0; backdrop-filter: blur(0px); }
-              to { opacity: 1; backdrop-filter: blur(8px); }
-            }
-          `}</style>
-          <div className="bg-[#12141a] border border-[#2A2A2A] rounded-2xl p-6 md:p-8 max-w-xl w-full shadow-2xl relative">
+          <div className="bg-[#12141a] border border-[#2A2A2A] rounded-2xl p-6 md:p-8 max-w-xl w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
             <button 
               onClick={() => setExplanationPopup(null)}
               className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors bg-gray-800/50 hover:bg-gray-700 p-2 rounded-full"
