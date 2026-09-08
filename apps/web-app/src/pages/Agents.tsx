@@ -217,12 +217,13 @@ const Agents = () => {
     
     try {
       const promptText = `Eres un Ingeniero de IA hispanohablante. Tu objetivo es mejorar este prompt.
-INSTRUCCIÓN CRÍTICA: Tu respuesta debe ser estrictamente un objeto JSON. Todos los textos y explicaciones deben redactarse obligatoriamente en idioma ESPAÑOL.
+INSTRUCCIÓN CRÍTICA: Responde EXACTAMENTE con esta estructura (incluyendo los encabezados):
 
-{
-  "prompt_mejorado": "<el prompt mejorado aquí en formato Markdown, escrito en español>",
-  "explicacion": "<tu justificación detallada en idioma ESPAÑOL de por qué es mejor (2 a 3 líneas)>"
-}
+### EXPLICACION
+[Escribe aquí tu justificación detallada en ESPAÑOL de por qué es mejor (2 a 3 líneas)]
+
+### PROMPT MEJORADO
+[Escribe aquí el prompt mejorado en formato Markdown, estrictamente en español]
 
 Prompt Original a mejorar:
 ${inspectedAgent.instructions || inspectedAgent.content}`;
@@ -232,7 +233,6 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'hermes3:8b',
-          format: 'json',
           system: 'Eres un sistema nativo en idioma ESPAÑOL. Absolutamente TODO el contenido que generes (explicaciones, respuestas, código, notas) DEBE estar única y exclusivamente en ESPAÑOL. NUNCA respondas en inglés.',
           prompt: promptText,
           stream: true
@@ -293,12 +293,19 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
       
       let finalPrompt = generatedText;
       let explanation = "Mejora generada exitosamente.";
+      
       try {
-        const parsedJson = JSON.parse(generatedText);
-        finalPrompt = parsedJson.prompt_mejorado || parsedJson.improved_prompt || generatedText;
-        explanation = parsedJson.explicacion || parsedJson.explanation || explanation;
+        const expMatch = generatedText.match(/### EXPLICACION\s*([\s\S]*?)(?:### PROMPT MEJORADO|$)/i);
+        const promptMatch = generatedText.match(/### PROMPT MEJORADO\s*([\s\S]*)$/i);
+        
+        if (expMatch && expMatch[1]) {
+          explanation = expMatch[1].trim();
+        }
+        if (promptMatch && promptMatch[1]) {
+          finalPrompt = promptMatch[1].trim();
+        }
       } catch (e) {
-        console.warn("No se pudo parsear el JSON de la mejora, usando texto crudo.");
+        console.warn("Error al extraer secciones del texto generado.");
       }
 
       const newAgent: Agent = {
@@ -1191,9 +1198,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
         <div 
           className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
           style={{ 
-            backgroundColor: 'rgba(5, 10, 15, 0.65)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
+            backgroundColor: 'rgba(5, 10, 15, 0.95)',
             transform: 'translateZ(0)',
             animation: 'fadeIn 0.2s ease-out' 
           }}
