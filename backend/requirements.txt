@@ -6,3 +6,5 @@ google-generativeai
 python-dotenv
 httpx
 apscheduler==3.11.3
+langgraph
+langgraph-checkpoint-sqlite
