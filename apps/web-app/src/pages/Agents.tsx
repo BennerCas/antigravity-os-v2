@@ -216,12 +216,15 @@ const Agents = () => {
     setUpgradeTimeLeft('Calculando...');
     
     try {
-      const promptText = `Eres un ingeniero de IA experto. Mejora y haz más profesional el siguiente prompt de sistema/agente. Añade secciones de contexto, personalidad y reglas claras. 
-Deberás responder ESTRICTAMENTE con un objeto JSON válido que contenga dos claves:
-1. "improved_prompt": El texto completo del nuevo prompt mejorado (en formato Markdown).
-2. "explanation": Una explicación breve (2-3 líneas) EN ESPAÑOL detallando por qué esta nueva versión es superior y qué se le añadió. IMPORTANTE: La explicación DEBE estar en idioma español.
+      const promptText = `Eres un Ingeniero de IA hispanohablante. Tu objetivo es mejorar este prompt.
+INSTRUCCIÓN CRÍTICA: Tu respuesta debe ser estrictamente un objeto JSON. La clave "explanation" TIENE QUE ESTAR ESCRITA EN ESPAÑOL (SPANISH). Si escribes la explicación en inglés, el sistema fallará.
 
-Prompt Original:
+{
+  "improved_prompt": "<el prompt mejorado aquí en formato Markdown>",
+  "explanation": "<tu explicación detallada en ESPAÑOL de por qué es mejor (2 a 3 líneas)>"
+}
+
+Prompt Original a mejorar:
 ${inspectedAgent.instructions || inspectedAgent.content}`;
 
       const res = await fetch('http://127.0.0.1:11434/api/generate', {
@@ -1185,8 +1188,14 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
 
       {explanationPopup && (
         <div 
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
-          style={{ animation: 'fadeIn 0.2s ease-out' }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          style={{ 
+            backgroundColor: 'rgba(5, 10, 15, 0.65)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            transform: 'translateZ(0)',
+            animation: 'fadeIn 0.2s ease-out' 
+          }}
         >
           <style>{`
             @keyframes fadeIn {
