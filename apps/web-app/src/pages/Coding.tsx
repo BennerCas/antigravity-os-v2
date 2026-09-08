@@ -110,13 +110,7 @@ export default function Coding() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200"
-              style={{
-                backgroundColor: isActive ? '#0A1C0D' : 'transparent',
-                border: `1px solid ${isActive ? '#174A1F' : '#333333'}`,
-                color: isActive ? '#7B9C7F' : '#8A8A8A',
-                boxShadow: isActive ? '0 0 10px rgba(23,74,31,0.5)' : 'none'
-              }}
+              className={`px-5 py-2 font-medium transition-all duration-200 ${isActive ? 'nav-item-active shadow-[0_0_10px_rgba(23,74,31,0.5)]' : 'nav-item-inactive'}`}
             >
               {tab.label}
             </button>
