@@ -154,9 +154,9 @@ export default function Architecture() {
                       setActiveStepId(step.id); 
                       if (!isActive) setSelectedPrompt(null);
                     }}
-                    className={`w-full flex items-center gap-3 p-4 text-left outline-none border rounded-xl transition-all duration-300 ${isActive ? 'bg-[#0A1C0D] border-[#174A1F]' : 'bg-transparent border-[#2A2A2A] hover:border-[#3a3a3a]'}`}
+                    className={`w-full flex items-center gap-3 p-4 text-left outline-none transition-all duration-300 ${isActive ? 'nav-item-active shadow-[0_0_10px_rgba(23,74,31,0.5)]' : 'nav-item-inactive'}`}
                  >
-                    <span className={`flex items-center justify-center w-7 h-7 rounded-lg font-mono font-bold text-sm transition-colors ${isActive ? 'bg-[#0A1C0D] border border-[#174A1F] text-[#7B9C7F]' : 'bg-[#151515] border border-[#2A2A2A] text-[#8A8A8A]'}`}>
+                    <span className={`flex items-center justify-center w-7 h-7 rounded-full font-mono font-bold text-sm transition-colors ${isActive ? 'bg-[#0A1C0D] border border-[#174A1F] text-[#7B9C7F]' : 'bg-[#151515] border border-[#2A2A2A] text-[#8A8A8A]'}`}>
                       {step.step}
                     </span>
                     <span className={isActive ? "text-[#7B9C7F]" : "text-[#8A8A8A]"}>{STEP_ICONS[step.id]}</span>
@@ -180,7 +180,7 @@ export default function Architecture() {
                             setActiveStepId(app.id); 
                             if (!isActive) setSelectedPrompt(null);
                           }}
-                          className={`w-full flex items-center gap-3 p-4 text-left outline-none border rounded-xl transition-all duration-300 ${isActive ? 'bg-[#0A1C0D] border-[#174A1F]' : 'bg-transparent border-[#2A2A2A] hover:border-[#3a3a3a]'}`}
+                          className={`w-full flex items-center gap-3 p-4 text-left outline-none transition-all duration-300 ${isActive ? 'nav-item-active shadow-[0_0_10px_rgba(23,74,31,0.5)]' : 'nav-item-inactive'}`}
                        >
                           <span className={isActive ? "text-[#7B9C7F]" : "text-[#8A8A8A]"}>{STEP_ICONS[app.id]}</span>
                           <h2 className={`text-sm font-bold tracking-wide ${isActive ? 'text-[#7B9C7F]' : 'text-[#8A8A8A]'}`}>{app.name}</h2>
@@ -220,22 +220,16 @@ export default function Architecture() {
                        <div className="flex flex-col gap-2">
                           {activeModule.prompts.map(p => {
                              const isSelected = selectedPrompt?.key === p.key;
-                              const colorTheme = { bg: '#0A1C0D', text: '#7B9C7F', border: '#174A1F' };
                               
                               return (
                                  <button 
-                                    key={p.key}
-                                    onClick={() => setSelectedPrompt(p)}
-                                    style={{ 
-                                       backgroundColor: isSelected ? colorTheme.bg : 'rgba(21, 21, 21, 0.8)',
-                                       color: isSelected ? colorTheme.text : '#ffffff',
-                                       borderColor: isSelected ? colorTheme.border : '#2A2A2A'
-                                    }}
-                                    className="w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all outline-none border hover:brightness-110 font-bold shadow-sm"
-                                 >
-                                    <code className="text-sm font-mono truncate flex-1">{p.key}</code>
-                                    <CaretRight size={14} style={{ opacity: isSelected ? 1 : 0.3, color: isSelected ? colorTheme.text : '#ffffff' }} />
-                                </button>
+                                      key={p.key}
+                                      onClick={() => setSelectedPrompt(p)}
+                                      className={`w-full flex items-center gap-3 p-3 text-left transition-all outline-none hover:brightness-110 font-bold shadow-sm ${isSelected ? 'nav-item-active shadow-[0_0_10px_rgba(23,74,31,0.5)]' : 'nav-item-inactive'}`}
+                                   >
+                                      <code className="text-sm font-mono truncate flex-1">{p.key}</code>
+                                      <CaretRight size={14} style={{ opacity: isSelected ? 1 : 0.3, color: isSelected ? '#7B9C7F' : '#ffffff' }} />
+                                  </button>
                              )
                           })}
                        </div>
