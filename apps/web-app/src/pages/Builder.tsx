@@ -1421,34 +1421,36 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
 
   return (
     <div className={`w-full h-full relative flex flex-col transition-colors duration-300 theme-node-style-${nodeStyle}`} style={{ ...themeStyle, backgroundColor: "var(--theme-bg)", color: "var(--theme-text)" }}>
-      {/* Tabs */}
-      <div className="flex bg-black/40 border-b border-[#2A2A2A] p-2 gap-2 z-[70] relative">
+      {/* Tabs / Header Divider */}
+      <div className="flex-shrink-0 flex items-center justify-center bg-[#000000] border-b border-[#2A2A2A] px-4 h-[60px] gap-2 z-[70] relative w-full shadow-sm">
         <button
           onClick={() => setBuilderTab('flowarchitect')}
-          className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+          className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold text-sm transition-all duration-300 cursor-pointer border ${
             builderTab === 'flowarchitect'
-              ? 'bg-blue-600 text-white shadow-[0_0_10px_rgba(37,99,235,0.5)]'
-              : 'text-gray-400 hover:text-white bg-transparent'
+              ? 'bg-[#0D1A3B] border-[#1D3A8A] text-[#93C5FD] shadow-[0_0_15px_rgba(37,99,235,0.4)]'
+              : 'bg-transparent border-transparent text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-[#111111] hover:border-[#2A2A2A]'
           }`}
         >
           Flow Architect
         </button>
+        <div className="w-[1px] h-6 bg-[#2A2A2A] mx-1"></div>
         <button
           onClick={() => setBuilderTab('runinspector')}
-          className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+          className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold text-sm transition-all duration-300 cursor-pointer border ${
             builderTab === 'runinspector'
-              ? 'bg-purple-600 text-white shadow-[0_0_10px_rgba(147,51,234,0.5)]'
-              : 'text-gray-400 hover:text-white bg-transparent'
+              ? 'bg-[#0D1A3B] border-[#1D3A8A] text-[#93C5FD] shadow-[0_0_15px_rgba(37,99,235,0.4)]'
+              : 'bg-transparent border-transparent text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-[#111111] hover:border-[#2A2A2A]'
           }`}
         >
           Run Inspector
         </button>
+        <div className="w-[1px] h-6 bg-[#2A2A2A] mx-1"></div>
         <button
           onClick={() => setBuilderTab('flowboard')}
-          className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+          className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold text-sm transition-all duration-300 cursor-pointer border ${
             builderTab === 'flowboard'
-              ? 'bg-emerald-600 text-white shadow-[0_0_10px_rgba(5,150,105,0.5)]'
-              : 'text-gray-400 hover:text-white bg-transparent'
+              ? 'bg-[#0D1A3B] border-[#1D3A8A] text-[#93C5FD] shadow-[0_0_15px_rgba(37,99,235,0.4)]'
+              : 'bg-transparent border-transparent text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-[#111111] hover:border-[#2A2A2A]'
           }`}
         >
           FlowBoard
@@ -1480,7 +1482,7 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
           buttonSkip: { color: '#a1a1aa' },
         },
       })}
-      <div className="absolute top-2 left-4 z-[60] p-2 flex items-center gap-2 builder-top-bar max-w-[calc(100vw-220px)] overflow-x-auto custom-scrollbar" style={{ backgroundColor: "transparent", color: "var(--theme-text)" }}>
+      <div className="absolute top-[70px] left-4 z-[60] p-2 flex items-center gap-2 builder-top-bar max-w-[calc(100vw-220px)] overflow-x-auto custom-scrollbar" style={{ backgroundColor: "transparent", color: "var(--theme-text)" }}>
         <style>{`
           .builder-top-bar::-webkit-scrollbar { height: 4px; }
           .builder-top-bar::-webkit-scrollbar-track { background: transparent; }
