@@ -30,7 +30,8 @@ import jsPDF from 'jspdf';
 import { FlowArchitect } from '../components/architecture/FlowArchitect';
 import { RunInspector } from '../components/architecture/RunInspector';
 import { RunResults } from '../components/architecture/RunResults';
-import { ArrowUUpLeft, ArrowUUpRight, FloppyDisk, DownloadSimple, Trash, X } from '@phosphor-icons/react';
+import { ArrowUUpLeft, ArrowUUpRight, FloppyDisk, DownloadSimple, Trash, X, Play, StopCircle, Translate, CheckCircle } from '@phosphor-icons/react';
+import { useTTSStore } from '../lib/ttsStore';
 import { Joyride, STATUS } from 'react-joyride';
 import { tourSteps } from '../data/tourSteps';
 
@@ -106,6 +107,37 @@ function BuilderContent() {
   const location = useLocation();
   const navigate = useNavigate();
   const { screenToFlowPosition } = useReactFlow();
+  const [translatingModal, setTranslatingModal] = useState(false);
+  const { play, pause, stop, isActive, isPaused, currentSection } = useTTSStore();
+
+  const handleTranslateModal = async (text: string) => {
+    setTranslatingModal(true);
+    try {
+      const res = await fetch(`${API_URL}/engine/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          messages: [
+            { role: "system", content: "Traduce fielmente el siguiente texto al español, manteniendo la estructura, tono profesional y términos técnicos clave (puedes dejarlos en inglés si es el estándar en desarrollo/IA). Devuelve SOLO la traducción directa, sin introducciones ni comentarios adicionales." },
+            { role: "user", content: text }
+          ]
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFinalOutputContent(data.reply);
+        const stored = JSON.parse(localStorage.getItem('builder_run_results') || '[]');
+        if (stored.length > 0) {
+          stored[0].result_text = data.reply;
+          localStorage.setItem('builder_run_results', JSON.stringify(stored));
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setTranslatingModal(false);
+    }
+  };
 
   const templateFlow = location.state?.templateFlow;
   const restoreFlow = location.state?.restoreFlow;
@@ -1969,7 +2001,34 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
           
           {showArtifactModal && finalOutputContent && (
             <div className="flex-1 min-h-[200px] flex flex-col mb-3">
-              <div className="text-xs uppercase tracking-widest text-emerald-500 mb-1 font-semibold">Resultado Final:</div>
+              <div className="flex justify-between items-center mb-1">
+                <div className="text-xs uppercase tracking-widest text-emerald-500 font-semibold">Resultado Final:</div>
+                <div className="flex gap-2">
+                  {isActive && currentSection === 'modal' ? (
+                    <>
+                      {isPaused ? (
+                        <button onClick={play} className="flex items-center gap-1 text-[10px] bg-amber-900/40 text-amber-400 px-2 py-1 rounded border border-amber-800/50 hover:bg-amber-900/60 transition-colors">
+                          <Play weight="fill" size={12} /> Continuar
+                        </button>
+                      ) : (
+                        <button onClick={pause} className="flex items-center gap-1 text-[10px] bg-amber-900/40 text-amber-400 px-2 py-1 rounded border border-amber-800/50 hover:bg-amber-900/60 transition-colors">
+                          <StopCircle weight="fill" size={12} /> Pausar
+                        </button>
+                      )}
+                      <button onClick={stop} className="flex items-center gap-1 text-[10px] bg-red-900/40 text-red-400 px-2 py-1 rounded border border-red-800/50 hover:bg-red-900/60 transition-colors">
+                        <StopCircle weight="fill" size={12} /> Detener
+                      </button>
+                    </>
+                  ) : (
+                    <button onClick={() => play(finalOutputContent, 'modal')} className="flex items-center gap-1 text-[10px] bg-emerald-900/40 text-emerald-400 px-2 py-1 rounded border border-emerald-800/50 hover:bg-emerald-900/60 transition-colors">
+                      <Play weight="fill" size={12} /> Escuchar
+                    </button>
+                  )}
+                  <button onClick={() => handleTranslateModal(finalOutputContent)} disabled={translatingModal} className="flex items-center gap-1 text-[10px] bg-blue-900/40 text-blue-400 px-2 py-1 rounded border border-blue-800/50 hover:bg-blue-900/60 transition-colors disabled:opacity-50">
+                    <Translate weight="fill" size={12} /> {translatingModal ? 'Traduciendo...' : 'Traducir a ES'}
+                  </button>
+                </div>
+              </div>
               <div className="flex-1 overflow-y-auto bg-emerald-950/30 rounded-lg border border-emerald-800/50 p-4 scrollbar-thin scrollbar-thumb-zinc-700">
                 <pre className="text-xs whitespace-pre-wrap text-emerald-100 font-mono" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' }}>
                   {finalOutputContent}
