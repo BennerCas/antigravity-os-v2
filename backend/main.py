@@ -20,7 +20,7 @@ app.add_middleware(
 
 app.include_router(execute.router, prefix="/api/v1")
 app.include_router(search.router, prefix="/api/v1")
-app.include_router(prompts.router, prefix="/api/v1")
+app.include_router(prompts.router, prefix="/api/v1/prompts")
 app.include_router(builder_actions.router, prefix="/api/v1")
 app.include_router(vault.router, prefix="/api/v1")
 app.include_router(compiler.router, prefix="/api/v1")

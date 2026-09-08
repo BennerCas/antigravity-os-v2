@@ -92,27 +92,27 @@ export default function PromptLibraryPanel({ onSelectPrompt }: PromptLibraryPane
         <div className="p-2">
           {categories.map(cat => (
             <div key={cat} className="mb-2">
-              <button
+              <div
                 onClick={() => fetchPrompts(cat)}
-                className={`w-full text-left px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                className={`w-full text-left px-3 py-1.5 rounded text-xs font-medium transition-colors cursor-pointer ${
                   activeCategory === cat ? 'bg-[#2A2A2A] text-white' : 'text-[#8A8A8A] hover:bg-[#151515]'
                 }`}
               >
                 {cat}
-              </button>
+              </div>
               {activeCategory === cat && (
                 <div className="mt-1 ml-2 border-l border-[#2A2A2A] pl-2 flex flex-col gap-1">
                   {loading ? (
                     <span className="text-xs text-[#4A4A4A] py-1">Loading...</span>
                   ) : (
                     filteredPrompts.map(prompt => (
-                      <button
+                      <div
                         key={prompt.id}
                         onClick={() => onSelectPrompt(prompt.content)}
-                        className="text-left px-2 py-1.5 rounded text-[11px] text-[#8A8A8A] hover:text-white hover:bg-[#151515] transition-colors line-clamp-2"
+                        className="text-left cursor-pointer px-2 py-1.5 rounded text-[11px] text-[#8A8A8A] hover:text-white hover:bg-[#151515] transition-colors line-clamp-2"
                       >
                         {prompt.title}
-                      </button>
+                      </div>
                     ))
                   )}
                 </div>
