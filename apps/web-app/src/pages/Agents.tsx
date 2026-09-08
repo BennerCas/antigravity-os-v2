@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
-import type { BuilderNodeData } from '../types/builder';
+import { sendToBuilderBridge } from '../lib/builderBridge';
 import { API_URL } from '../lib/api';
+import { logicTaskManager, LogicTaskState } from '../lib/logicTaskManager';
 import {
   SpeakerHigh, ArrowLeft, MagnifyingGlass, MagicWand,
-  CaretRight, CheckSquare, Square, X, Sparkle
+  CaretRight, CheckSquare, Square, X, Sparkle, Clock
 } from '@phosphor-icons/react';
 
 interface Agent {
@@ -52,6 +53,22 @@ function makeAgentKey(p: Agent): string {
   return `${p.title}_${(p.category || '').replace(/\W/g, '_')}`.slice(0, 80);
 }
 
+export function isGeneratedAgent(p?: Agent | null): boolean {
+  if (!p) return false;
+  if (p.category?.includes('Master Prompts') && !p.title?.includes('(Upgrade)')) {
+    return false;
+  }
+  if (!p.title?.includes('(Upgrade)') && !(p.id && (p.id.endsWith('-upgraded') || p.id.includes('upgraded') || p.id.startsWith('gen-'))) && !p.upgradeExplanation && !(p as any).isGenerated) {
+    return false;
+  }
+  return Boolean(
+    p.upgradeExplanation ||
+    (p.id && (p.id.endsWith('-upgraded') || p.id.includes('upgraded') || p.id.startsWith('gen-'))) ||
+    p.title?.includes('(Upgrade)') ||
+    (p as any).isGenerated
+  );
+}
+
 // Scoring: simple TF match across title, category, content
 function scoreAgent(p: Agent, terms: string[]): number {
   let score = 0;
@@ -65,14 +82,23 @@ function scoreAgent(p: Agent, terms: string[]): number {
 
 const Agents = () => {
   const navigate = useNavigate();
-  const [view, setView] = useState<'categories' | 'subcategories' | 'agentes'>('categories');
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
+  const [view, setView] = useState<'categories' | 'subcategories' | 'agentes'>(() => {
+    return (localStorage.getItem('agents_view') as any) || 'categories';
+  });
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(() => {
+    const saved = localStorage.getItem('agents_selected_category');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return null;
+  });
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(() => {
+    return localStorage.getItem('agents_selected_subcategory') || null;
+  });
   const [categories, setCategories] = useState<Category[]>([]);
   const [agentes, setAgentes] = useState<Agent[]>([]);
   const [allAgents, setAllAgents] = useState<Agent[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [generatedVariants, setGeneratedVariants] = useState<BuilderNodeData[]>([]);
 
   // Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -85,27 +111,105 @@ const Agents = () => {
   // History
   const [agentHistory, setAgentHistory] = useState<Record<string, string>>({});
   const [inspectedAgent, setInspectedAgent] = useState<Agent | null>(null);
-  const [panelTab, setPanelTab] = useState<'content' | 'logic'>('content');
-  const [logicData, setLogicData] = useState<Record<string, string>>({});
-  const [isGeneratingLogic, setIsGeneratingLogic] = useState(false);
+  const [panelTab, setPanelTab] = useState<'content' | 'translation' | 'logic'>(() => {
+    return (localStorage.getItem('agents_panel_tab') as any) || 'content';
+  });
+  const [translationData, setTranslationData] = useState<Record<string, string>>(() => {
+    try {
+      const stored = localStorage.getItem('agents_translation_data');
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [isTranslatingContent, setIsTranslatingContent] = useState(false);
+  const [currentLogicTask, setCurrentLogicTask] = useState<LogicTaskState | null>(null);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [upgradeProgress, setUpgradeProgress] = useState(0);
   const [upgradeTimeLeft, setUpgradeTimeLeft] = useState('');
   const [explanationPopup, setExplanationPopup] = useState<{title: string, text: string} | null>(null);
 
+  // Suscripción reactiva al gestor global de tareas de lógica
   useEffect(() => {
-    setPanelTab('content');
-  }, [inspectedAgent?.id]);
+    if (!inspectedAgent) {
+      setCurrentLogicTask(null);
+      return;
+    }
+    const key = `agent_${inspectedAgent.id || makeAgentKey(inspectedAgent)}`;
+    const unsubscribe = logicTaskManager.subscribe(key, (state) => {
+      setCurrentLogicTask({ ...state });
+    });
+    return () => unsubscribe();
+  }, [inspectedAgent?.id, inspectedAgent?.title]);
+
+  // Persistir vista y selección en localStorage
+  useEffect(() => {
+    localStorage.setItem('agents_view', view);
+  }, [view]);
+
+  useEffect(() => {
+    if (selectedCategory) {
+      localStorage.setItem('agents_selected_category', JSON.stringify(selectedCategory));
+    } else {
+      localStorage.removeItem('agents_selected_category');
+    }
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    if (selectedSubCategory) {
+      localStorage.setItem('agents_selected_subcategory', selectedSubCategory);
+    } else {
+      localStorage.removeItem('agents_selected_subcategory');
+    }
+  }, [selectedSubCategory]);
+
+  useEffect(() => {
+    localStorage.setItem('agents_panel_tab', panelTab);
+  }, [panelTab]);
+
+  useEffect(() => {
+    if (inspectedAgent) {
+      localStorage.setItem('agents_inspected_agent', JSON.stringify(inspectedAgent));
+    } else {
+      localStorage.removeItem('agents_inspected_agent');
+    }
+  }, [inspectedAgent]);
+
+  // Restaurar agentes filtrados y agente inspeccionado al cargar allAgents
+  useEffect(() => {
+    if (allAgents.length === 0) return;
+    
+    if (view === 'agentes' && selectedCategory && selectedSubCategory) {
+      const filtered = allAgents.filter((p) => {
+        const parts = (p.category || 'General').split(' > ');
+        const main = parts[0].trim();
+        const sub = parts[1] ? parts[1].trim() : 'General';
+        return main === selectedCategory.id && sub === selectedSubCategory;
+      });
+      setAgentes(filtered);
+    } else if (view === 'agentes' && (!selectedCategory || !selectedSubCategory) && !isSearchMode) {
+      setView('categories');
+    } else if (view === 'subcategories' && !selectedCategory) {
+      setView('categories');
+    }
+
+    if (!inspectedAgent) {
+      const saved = localStorage.getItem('agents_inspected_agent');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          const found = allAgents.find(a => (a.id && a.id === parsed.id) || makeAgentKey(a) === makeAgentKey(parsed));
+          if (found) setInspectedAgent(found);
+          else setInspectedAgent(parsed);
+        } catch (e) {}
+      }
+    }
+  }, [allAgents]);
 
   useEffect(() => {
     fetchCategories();
     setAgentHistory(getAgentHistory());
-    try {
-      setGeneratedVariants(JSON.parse(localStorage.getItem('generated_variants') || '[]'));
-    } catch (err) {
-      console.error(err);
-    }
   }, []);
 
   const fetchCategories = async () => {
@@ -156,14 +260,74 @@ const Agents = () => {
 
   
   
+  const handleTranslate = async () => {
+    if (!inspectedAgent) return;
+    const key = makeAgentKey(inspectedAgent);
+    setPanelTab('translation');
+    if (translationData[key]) return;
+
+    setIsTranslatingContent(true);
+    setTranslationData(prev => ({ ...prev, [key]: '' }));
+
+    try {
+      const res = await fetch('http://127.0.0.1:11434/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'hermes3:8b',
+          prompt: `Traduce el siguiente agente al español manteniendo exactamente el mismo formato, estructura, y variables (como [texto]). No agregues comentarios ni explicaciones adicionales, solo la traducción directa del texto.\n\nAgente:\n${inspectedAgent.instructions || inspectedAgent.content}`,
+          stream: true
+        })
+      });
+      if (!res.ok || !res.body) throw new Error('Error al conectar con Ollama');
+      
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let fullText = '';
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(l => l.trim() !== '');
+        
+        for (const line of lines) {
+          try {
+            const parsed = JSON.parse(line);
+            if (parsed.response) {
+              fullText += parsed.response;
+              setTranslationData(prev => ({ ...prev, [key]: fullText }));
+            }
+          } catch (e) {}
+        }
+      }
+      
+      setTranslationData(prev => {
+        const updated = { ...prev, [key]: fullText };
+        localStorage.setItem('agents_translation_data', JSON.stringify(updated));
+        return updated;
+      });
+      
+    } catch (err) {
+      console.error(err);
+      setTranslationData(prev => ({ ...prev, [key]: 'Error al generar la traducción. Verifica la conexión con Ollama.' }));
+    } finally {
+      setIsTranslatingContent(false);
+    }
+  };
+
   const handleTTS = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!inspectedAgent) return;
     
     // Determine the text to read based on current tab
+    const key = makeAgentKey(inspectedAgent);
     const currentText = panelTab === 'content' 
       ? (inspectedAgent.instructions || inspectedAgent.content)
-      : (logicData[inspectedAgent.id || ''] || '');
+      : panelTab === 'translation'
+      ? (translationData[key] || '')
+      : (currentLogicTask?.result || '');
       
     if (!currentText) return;
 
@@ -216,17 +380,37 @@ const Agents = () => {
     setUpgradeTimeLeft('Calculando...');
     
     try {
-      const promptText = `Eres un Ingeniero de IA hispanohablante. Tu objetivo es mejorar este prompt.
-INSTRUCCIÓN CRÍTICA: Responde EXACTAMENTE con esta estructura (incluyendo los encabezados):
+      const promptText = `Eres un Arquitecto de Agentes de IA de Élite (Staff AI Agent Systems Architect). Tu misión es transformar la descripción o instrucciones de un agente en una DIRECTIVA AUTÓNOMA DE GRADO INDUSTRIAL lista para ser ejecutada en runtime por motores multi-agente modernos (LangGraph, CrewAI, AutoGen o sistemas nativos).
+
+### 1. ARQUITECTURA COGNITIVA Y SELECCIÓN DE PATRÓN
+Analiza el agente original delimitado en <agente_original>. Selecciona OBLIGATORIAMENTE el patrón de agente más robusto:
+- ReAct (Reasoning + Acting): OBLIGATORIO para agentes que requieren análisis continuo, toma de decisiones dinámica y consultas externas secuenciales [Pensamiento -> Acción -> Observación].
+- Plan-and-Solve: OBLIGATORIO para agentes que descomponen problemas de alta complejidad, dividiéndolos en sub-tareas atómicas antes de ejecutar la primera acción.
+- Tool-Orchestrator: OBLIGATORIO para agentes cuya principal responsabilidad es invocar APIs, bases de datos o servicios externos con validación estricta de esquemas.
+- Reflexion (Self-Correction & Evaluation): OBLIGATORIO para agentes de auditoría, revisión de código o control de calidad que evalúan críticamente su propia salida y corrigen desviaciones.
+- Supervisor/Worker: Para agentes que coordinan delegación, control de flujo y sintetización de múltiples fuentes subordinadas.
+
+### 2. REQUISITOS OBLIGATORIOS DE INGENIERÍA PARA AGENTES
+1. Identidad y Misión Crítica (Persona & Directive): Define con claridad quirúrgica el rol profesional, alcance operativo y límites infranqueables (lo que tiene PROHIBIDO hacer).
+2. Ciclo de Ejecución Autónomo: Describe explícitamente cómo procesa la entrada, descompone la meta, ejecuta y sintetiza el resultado.
+3. Contratos de Herramientas y Fallbacks: Define qué herramientas o fuentes de datos consume, validando esquemas y especificando qué hacer si una herramienta externa falla (degradación elegante).
+4. Gestión de Memoria y Estado: Reglas para mantener estado relevante de sesión y descarte de ruido.
+5. Criterios de Parada y Anti-Bucle (Guardrails): Condición estricta de éxito (Success Criteria), límite de iteraciones para evitar bucles infinitos y gatillos para solicitar confirmación humana (Human-in-the-Loop) ante acciones irreversibles.
+
+### 3. FORMATO CRÍTICO DE RESPUESTA
+Responde EXACTAMENTE con esta estructura (manteniendo los encabezados Markdown para procesamiento automatizado):
 
 ### EXPLICACION
-[Escribe aquí tu justificación detallada en ESPAÑOL de por qué es mejor (2 a 3 líneas)]
+[Escribe en 2 a 3 líneas la justificación técnica del patrón de agente elegido (ReAct, Plan-and-Solve, etc.) y las mejoras arquitectónicas aplicadas]
 
-### PROMPT MEJORADO
-[Escribe aquí el prompt mejorado en formato Markdown, estrictamente en español]
+### AGENTE MEJORADO
+**[FRAMEWORK UTILIZADO: <Nombre del Patrón de Agente Elegido>]**
 
-Prompt Original a mejorar:
-${inspectedAgent.instructions || inspectedAgent.content}`;
+[Escribe aquí la directiva de agente autónomo completa de grado industrial, estructurada en secciones Markdown (Identidad, Ciclo de Ejecución, Herramientas, Guardrails y Condición de Parada)]
+
+<agente_original>
+${inspectedAgent.instructions || inspectedAgent.content}
+</agente_original>`;
 
       const res = await fetch('http://127.0.0.1:11434/api/generate', {
         method: 'POST',
@@ -295,8 +479,8 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
       let explanation = "Mejora generada exitosamente.";
       
       try {
-        const expMatch = generatedText.match(/### EXPLICACION\s*([\s\S]*?)(?:### PROMPT MEJORADO|$)/i);
-        const promptMatch = generatedText.match(/### PROMPT MEJORADO\s*([\s\S]*)$/i);
+        const expMatch = generatedText.match(/### EXPLICACION\s*([\s\S]*?)(?:### AGENTE MEJORADO|### PROMPT MEJORADO|$)/i);
+        const promptMatch = generatedText.match(/(?:### AGENTE MEJORADO|### PROMPT MEJORADO)\s*([\s\S]*)$/i);
         
         if (expMatch && expMatch[1]) {
           explanation = expMatch[1].trim();
@@ -313,6 +497,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
         id: (inspectedAgent.id || Date.now().toString()) + '-upgraded',
         title: inspectedAgent.title + ' (Upgrade)',
         instructions: finalPrompt,
+        content: finalPrompt,
         upgradeExplanation: explanation
       };
       
@@ -320,12 +505,31 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
       try {
         upgraded = JSON.parse(localStorage.getItem('upgraded_agents') || '[]');
       } catch (e) {}
+      // Remove previous duplicate if re-upgraded
+      upgraded = upgraded.filter(a => a.id !== newAgent.id && a.title !== newAgent.title);
       upgraded.unshift(newAgent);
       localStorage.setItem('upgraded_agents', JSON.stringify(upgraded));
       
-      setAllAgents(prev => [newAgent, ...prev]);
-      setAgentes(prev => [newAgent, ...prev]);
-      setSearchResults(prev => prev ? [newAgent, ...prev] : null);
+      // Persist also to backend disk storage
+      try {
+        fetch(`${API_URL}/prompts/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: newAgent.title,
+            content: newAgent.instructions,
+            category: newAgent.category || 'Agentes > Master Agents',
+            id: newAgent.id,
+            upgradeExplanation: newAgent.upgradeExplanation
+          })
+        }).catch(err => console.warn('Sync backend agent save error:', err));
+      } catch (err) {
+        console.warn('Silent save failed:', err);
+      }
+
+      setAllAgents(prev => [newAgent, ...prev.filter(a => a.id !== newAgent.id)]);
+      setAgentes(prev => [newAgent, ...prev.filter(a => a.id !== newAgent.id)]);
+      setSearchResults(prev => prev ? [newAgent, ...prev.filter(a => a.id !== newAgent.id)] : null);
       setInspectedAgent(newAgent);
       setExplanationPopup({ title: newAgent.title, text: explanation });
     } catch (err) {
@@ -336,31 +540,12 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
     }
   };
 
-  const handleLogic = async () => {
+  const handleLogic = () => {
     if (!inspectedAgent) return;
     setPanelTab('logic');
-    if (logicData[inspectedAgent.id || '']) return;
-
-    setIsGeneratingLogic(true);
-    try {
-      const res = await fetch('http://127.0.0.1:11434/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'hermes3:8b',
-          prompt: `Analiza el siguiente agente de IA y explica detalladamente cómo funciona, qué hace, su lógica interna y su propósito principal de manera extensa y clara.\n\nAgente:\n${inspectedAgent.instructions || inspectedAgent.content}`,
-          stream: false
-        })
-      });
-      if (!res.ok) throw new Error('Error al conectar con Ollama');
-      const data = await res.json();
-      setLogicData(prev => ({ ...prev, [inspectedAgent.id || '']: data.response }));
-    } catch (err) {
-      console.error(err);
-      setLogicData(prev => ({ ...prev, [inspectedAgent.id || '']: 'No se pudo generar la explicacion. Verifica la conexion con Ollama local.' }));
-    } finally {
-      setIsGeneratingLogic(false);
-    }
+    const key = `agent_${inspectedAgent.id || makeAgentKey(inspectedAgent)}`;
+    const textToAnalyze = inspectedAgent.instructions || inspectedAgent.content;
+    logicTaskManager.startTask(key, textToAnalyze, inspectedAgent.title);
   };
 
   // ─── SEARCH LOGIC ─────────────────────────────────────────────────────────
@@ -544,12 +729,17 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
   const launchChain = () => {
     if (selectedForChain.length === 0) return;
     const chainKey = `chain_${Date.now()}`;
-    navigate('/builder', {
-      state: {
-        agentChain: selectedForChain,
-        agentKey: chainKey,
-        restoreCanvas: false
-      }
+    sendToBuilderBridge(navigate, {
+      agentChain: selectedForChain.map(a => ({
+        title: a.title || 'Agente',
+        content: a.instructions || a.content || a.objective || '',
+        role: a.category || 'Agente Autónomo',
+        framework: 'auto',
+        llm_model: 'hermes3:8b',
+        temperature: 0.7,
+        key: makeAgentKey(a)
+      })),
+      agentKey: chainKey
     });
   };
 
@@ -561,13 +751,17 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
     setAgentHistoryEntry(key, now);
     setAgentHistory(prev => ({ ...prev, [key]: now }));
 
-    const savedNodes = localStorage.getItem(`builder_nodes_${key}`);
-    navigate('/builder', {
-      state: {
-        prompt: { ...agent, content: agent.instructions || agent.content },
-        promptKey: key,
-        restoreCanvas: !!(savedNodes)
-      }
+    sendToBuilderBridge(navigate, {
+      agent: {
+        title: agent.title || 'Agente',
+        content: agent.instructions || agent.content || agent.objective || '',
+        role: agent.category || 'Agente Autónomo',
+        framework: 'auto',
+        llm_model: 'hermes3:8b',
+        temperature: 0.7,
+        key: key
+      },
+      agentKey: key
     });
   };
 
@@ -645,205 +839,230 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
     <div
       key={cat.id || idx}
       onClick={() => handleCategoryClick(cat)}
-      className="bg-gray-900 border border-gray-800 rounded-2xl p-6 cursor-pointer hover:border-blue-500 hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col min-h-[14rem]"
+      className="bg-gray-900 border border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-blue-500 hover:shadow-xl hover:-translate-y-0.5 transition-all flex flex-col justify-between min-h-[10.5rem]"
     >
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex flex-col gap-1">
-          <span className="bg-blue-900/40 text-blue-400 text-sm font-bold px-3 py-1 rounded-full border border-blue-800/50 w-fit">
-            {cat.totalCount.toLocaleString()} Agentes
-          </span>
-          <span className="text-gray-600 text-xs">{cat.subCategories.length} subcategorías</span>
+      <div>
+        <div className="flex justify-between items-start mb-2">
+          <div className="flex items-center gap-2">
+            <span className="bg-blue-900/40 text-blue-400 text-xs font-bold px-2.5 py-0.5 rounded-full border border-blue-800/50 w-fit">
+              {cat.totalCount.toLocaleString()} Agentes
+            </span>
+            <span className="text-gray-600 text-[11px]">{cat.subCategories.length} subcat.</span>
+          </div>
+          <button
+            onClick={(e) => handleSpeak(e, `${cat.title}. Category with ${cat.subCategories.length} subcategories.`)}
+            className="text-gray-400 hover:text-white bg-gray-800 p-1.5 rounded-full transition-colors flex-shrink-0"
+            title="Traducir y Escuchar"
+          >
+            <SpeakerHigh size={15} />
+          </button>
         </div>
-        <button
-          onClick={(e) => handleSpeak(e, `${cat.title}. Category with ${cat.subCategories.length} subcategories.`)}
-          className="text-gray-400 hover:text-white bg-gray-800 p-2.5 rounded-full transition-colors flex-shrink-0"
-          title="Traducir y Escuchar"
-        >
-          <SpeakerHigh size={18} />
-        </button>
+        <h3 className="font-bold text-lg text-gray-100 mb-2 leading-tight truncate">{cat.title}</h3>
       </div>
-      <h3 className="font-bold text-xl text-gray-100 mb-2">{cat.title}</h3>
-      <div className="flex-1 overflow-hidden">
+      
+      <div className="overflow-hidden">
         {cat.subCategories.slice(0, 4).map((sub, i) => (
-          <div key={i} className="text-xs text-gray-500 truncate flex items-center gap-1 mb-0.5">
-            <CaretRight size={10} /> {sub.name}
-            <span className="text-gray-600 ml-auto flex-shrink-0">{sub.count}</span>
+          <div key={i} className="text-xs text-gray-500 truncate flex items-center gap-1 mb-0.5 leading-snug">
+            <CaretRight size={10} className="text-blue-500/70 flex-shrink-0" /> <span className="truncate">{sub.name}</span>
+            <span className="text-gray-600 ml-auto flex-shrink-0 text-[11px]">{sub.count}</span>
           </div>
         ))}
         {cat.subCategories.length > 4 && (
-          <div className="text-xs text-blue-600 mt-1">+{cat.subCategories.length - 4} más...</div>
+          <div className="text-[11px] text-blue-500 mt-0.5 font-medium">+{cat.subCategories.length - 4} más...</div>
         )}
       </div>
     </div>
   );
 
+  const recentAgents = useMemo(() => {
+    if (!allAgents.length) return [];
+    
+    let upgradedList: Agent[] = [];
+    try {
+      upgradedList = JSON.parse(localStorage.getItem('upgraded_agents') || '[]');
+    } catch (e) {}
+
+    const historyEntries = Object.entries(agentHistory).map(([key, ts]) => ({ key, ts: new Date(ts).getTime() }));
+    historyEntries.sort((a, b) => b.ts - a.ts);
+    
+    const recent: Agent[] = [];
+    
+    for (const u of upgradedList) {
+      if (!recent.some(r => r.title === u.title)) {
+        recent.push(u);
+      }
+    }
+
+    for (const entry of historyEntries) {
+      const p = allAgents.find(a => makeAgentKey(a) === entry.key);
+      if (p && !recent.some(rp => rp.title === p.title)) {
+        recent.push(p);
+      }
+      if (recent.length >= 15) break;
+    }
+
+    if (recent.length === 0) {
+      return allAgents.slice(0, 10);
+    }
+
+    return recent;
+  }, [allAgents, agentHistory]);
+
   return (
     <div className="flex h-screen bg-[#0a0c10] text-gray-200 font-sans overflow-hidden">
       
       {/* Left Column: Directory */}
-      <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
 
-      <header className="mb-8 text-center">
-        <h1 className="text-4xl font-bold text-blue-500 tracking-wide">Directorio de Agentes</h1>
-        <p className="text-gray-400 mt-2">Análisis Milimétrico de Skills y Agentes de IA</p>
-      </header>
+        {/* Fixed Top Section: Header, Search & Filters */}
+        <div className="flex-shrink-0 px-8 pt-5 pb-3 bg-[#0a0c10]/95 backdrop-blur-md border-b border-gray-800/80 z-20 shadow-md">
+          <header className="mb-4 text-center">
+            <h1 className="text-3xl font-bold text-blue-500 tracking-wide">Directorio de Agentes</h1>
+            <p className="text-gray-400 mt-1 text-xs">Análisis Milimétrico de Skills y Agentes de IA</p>
+          </header>
 
-      {/* ─── SEARCH BOX ─────────────────────────────────────────────────────── */}
-      <div className="max-w-4xl mx-auto mb-10">
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-col md:flex-row gap-3">
-            <input
-              type="text"
-              placeholder="Describe el resultado que quieres lograr... ej: 'lanzar mi startup con pitch deck y estrategia de ventas'"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="flex-1 bg-gray-900 border border-gray-700 rounded-xl p-4 text-white outline-none focus:border-blue-500 transition-colors shadow-lg text-sm"
-            />
-            <button
-              onClick={handleImprove}
-              className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-4 px-7 rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 whitespace-nowrap"
-            >
-              <MagicWand size={18} /> Mejorar
-            </button>
-            <button
-              onClick={handleSearch}
-              className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-7 rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 whitespace-nowrap"
-            >
-              <MagnifyingGlass size={18} /> Buscar
-            </button>
-            <button
-              onClick={handleSuggestFlows}
-              disabled={isSuggesting}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 px-7 rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-wait"
-              title="La IA mejora tu texto y diseña el flujo de trabajo ideal + 5 alternativas"
-            >
-              <Sparkle size={18} /> {isSuggesting ? 'Diseñando...' : 'Diseñar Flujo'}
-            </button>
-          </div>
-          {isSearchMode && searchResults !== null && (
-            <p className="text-xs text-gray-500 pl-1">
-              <span className="text-blue-400 font-bold">{searchResults.length}</span> agentes relevantes encontrados para: 
-              <span className="text-white"> "{searchQuery}"</span>
-              <span className="text-gray-600"> — Puedes seleccionar varios con </span>
-              <span className="text-purple-400">☑</span>
-              <span className="text-gray-600"> y encadenarlos en el Builder como un flujo de trabajo.</span>
-            </p>
-          )}
+          {/* ─── SEARCH BOX ─────────────────────────────────────────────────────── */}
+          <div className="max-w-4xl mx-auto">
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-col md:flex-row gap-3">
+                <input
+                  type="text"
+                  placeholder="Describe el resultado que quieres lograr... ej: 'lanzar mi startup con pitch deck y estrategia de ventas'"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="flex-1 bg-gray-900 border border-gray-700 rounded-xl p-3.5 text-white outline-none focus:border-blue-500 transition-colors shadow-lg text-sm"
+                />
+                <button
+                  onClick={handleImprove}
+                  className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 whitespace-nowrap text-sm"
+                >
+                  <MagicWand size={18} /> Mejorar
+                </button>
+                <button
+                  onClick={handleSearch}
+                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 whitespace-nowrap text-sm"
+                >
+                  <MagnifyingGlass size={18} /> Buscar
+                </button>
+                <button
+                  onClick={handleSuggestFlows}
+                  disabled={isSuggesting}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-wait text-sm"
+                  title="La IA mejora tu texto y diseña el flujo de trabajo ideal + 5 alternativas"
+                >
+                  <Sparkle size={18} /> {isSuggesting ? 'Diseñando...' : 'Diseñar Flujo'}
+                </button>
+              </div>
+              {isSearchMode && searchResults !== null && (
+                <p className="text-xs text-gray-500 pl-1">
+                  <span className="text-blue-400 font-bold">{searchResults.length}</span> agentes relevantes encontrados para: 
+                  <span className="text-white"> "{searchQuery}"</span>
+                  <span className="text-gray-600"> — Puedes seleccionar varios con </span>
+                  <span className="text-purple-400">☑</span>
+                  <span className="text-gray-600"> y encadenarlos en el Builder como un flujo de trabajo.</span>
+                </p>
+              )}
 
-          {/* ─── FLOW SUGGESTION PANEL ─── */}
-          {(isSuggesting || recommendedFlow || flowAlternatives.length > 0 || suggestError || enhancedQuery) && (
-            <div className="mt-4 bg-gray-900/80 border border-emerald-800/50 rounded-2xl p-5 shadow-2xl">
-              {isSuggesting && (
-                <div className="flex items-center gap-3 text-emerald-300 text-sm">
-                  <span className="animate-spin text-lg">⚙️</span>
-                  <span>La IA está mejorando tu texto y diseñando el flujo de trabajo ideal...</span>
-                </div>
-              )}
-              {enhancedQuery && !isSuggesting && (
-                <div className="mb-4">
-                  <div className="text-[10px] uppercase tracking-widest text-emerald-500 font-bold mb-1">Tu objetivo, mejorado por IA:</div>
-                  <p className="text-sm text-gray-300 italic border-l-2 border-emerald-600 pl-3">{enhancedQuery}</p>
-                </div>
-              )}
-              {suggestError && (
-                <p className="text-sm text-red-400">⚠️ {suggestError}</p>
-              )}
-              {recommendedFlow && (
-                <div className="mb-5 bg-emerald-950/40 border border-emerald-700/60 rounded-xl p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="text-[10px] uppercase tracking-widest text-emerald-400 font-bold mb-1">⭐ Flujo Recomendado por la IA</div>
-                      <h4 className="text-white font-bold text-lg">{recommendedFlow.name}</h4>
-                      <p className="text-sm text-gray-400 mt-1">{recommendedFlow.description}</p>
-                      <div className="flex gap-2 mt-2 text-xs">
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-900/50 text-emerald-300 border border-emerald-700/50">{recommendedFlow.framework}</span>
-                        <span className="px-2 py-0.5 rounded-full bg-gray-800 text-gray-300">{recommendedFlow.nodes.length} agentes</span>
+              {/* ─── FLOW SUGGESTION PANEL ─── */}
+              {(isSuggesting || recommendedFlow || flowAlternatives.length > 0 || suggestError || enhancedQuery) && (
+                <div className="mt-2 bg-gray-900/90 border border-emerald-800/50 rounded-2xl p-4 shadow-2xl max-h-56 overflow-y-auto custom-scrollbar">
+                  {isSuggesting && (
+                    <div className="flex items-center gap-3 text-emerald-300 text-sm">
+                      <span className="animate-spin text-lg">⚙️</span>
+                      <span>La IA está mejorando tu texto y diseñando el flujo de trabajo ideal...</span>
+                    </div>
+                  )}
+
+                  {suggestError && (
+                    <div className="text-red-400 text-sm">{suggestError}</div>
+                  )}
+
+                  {enhancedQuery && !isSuggesting && (
+                    <div className="mb-3 text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 rounded-lg p-2 flex items-start gap-2">
+                      <Sparkle size={14} className="mt-0.5 flex-shrink-0" />
+                      <span><strong>Búsqueda enriquecida:</strong> "{enhancedQuery}"</span>
+                    </div>
+                  )}
+
+                  {recommendedFlow && (
+                    <div className="mb-4 bg-emerald-950/40 border border-emerald-700/60 rounded-xl p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="text-[10px] uppercase tracking-widest text-emerald-400 font-bold mb-1">⭐ Flujo Recomendado por la IA</div>
+                          <h4 className="text-white font-bold text-sm">{recommendedFlow.name}</h4>
+                          <p className="text-xs text-gray-400 mt-1">{recommendedFlow.description}</p>
+                          <div className="flex gap-2 mt-2 text-xs">
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-900/50 text-emerald-300 border border-emerald-700/50">{recommendedFlow.framework}</span>
+                            <span className="px-2 py-0.5 rounded-full bg-gray-800 text-gray-300">{recommendedFlow.nodes.length} agentes</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5 mt-3">
+                            {recommendedFlow.nodes.map((n) => (
+                              <span key={n.id} className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-900/30 text-indigo-300 border border-indigo-800/40" title={n.role}>
+                                {n.title}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2 flex-shrink-0">
+                          <button
+                            onClick={() => launchFlowInBuilder(recommendedFlow)}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                          >
+                            Abrir en Builder →
+                          </button>
+                          <button
+                            onClick={() => saveFlowToNexus(recommendedFlow)}
+                            className="bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                          >
+                            Guardar en Nexus
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-1.5 mt-3">
-                        {recommendedFlow.nodes.map((n) => (
-                          <span key={n.id} className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-900/30 text-indigo-300 border border-indigo-800/40" title={n.role}>
-                            {n.title}
-                          </span>
+                    </div>
+                  )}
+
+                  {flowAlternatives.length > 0 && (
+                    <div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2 block">Flujos alternativos</span>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {flowAlternatives.map((alt) => (
+                          <button
+                            key={alt.id}
+                            onClick={() => navigate('/flows')}
+                            className="text-left bg-gray-800/60 hover:bg-gray-800 border border-gray-700 hover:border-emerald-600/60 rounded-xl p-2.5 transition-all group"
+                          >
+                            <div className="text-xs font-semibold text-gray-200 group-hover:text-emerald-300 flex items-center justify-between">
+                              <span>{alt.name}</span>
+                              <span className="text-[10px] text-emerald-500">Ver flujo ›</span>
+                            </div>
+                            <div className="text-[10px] text-gray-500 mt-0.5">{alt.engine} · {alt.category}</div>
+                          </button>
                         ))}
                       </div>
                     </div>
-                    <div className="flex flex-col gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => launchFlowInBuilder(recommendedFlow)}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
-                      >
-                        Abrir en Builder →
-                      </button>
-                      <button
-                        onClick={() => saveFlowToNexus(recommendedFlow)}
-                        className="bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-bold px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
-                      >
-                        Guardar en Nexus
-                      </button>
-                    </div>
-                  </div>
+                  )}
                 </div>
               )}
-              {flowAlternatives.length > 0 && (
-                <div>
-                  <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">Flujos alternativos:</div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {flowAlternatives.map((alt) => (
-                      <button
-                        key={alt.id}
-                        onClick={() => navigate('/flows')}
-                        className="text-left bg-gray-800/60 hover:bg-gray-800 border border-gray-700 hover:border-emerald-700 rounded-lg p-3 transition-colors"
-                        title={alt.description}
-                      >
-                        <div className="text-sm font-bold text-gray-200">{alt.name}</div>
-                        <div className="text-[10px] text-gray-500 mt-0.5">{alt.engine} · {alt.category}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+            </div>
+          </div>
+
+          {/* ─── BREADCRUMB ─────────────────────────────────────────────────────── */}
+          {(view !== 'categories' || isSearchMode) && (
+            <div className="mt-3">
+              <button
+                onClick={goBack}
+                className="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors px-3 py-1.5 bg-gray-900 rounded-lg w-fit border border-gray-800"
+              >
+                <ArrowLeft size={16} />
+                {view === 'subcategories' ? 'Volver a Categorías' : selectedSubCategory ? `Volver a ${selectedCategory?.title}` : 'Volver a Categorías'}
+              </button>
             </div>
           )}
         </div>
-      </div>
 
-      {/* ─── CHAIN TOOLBAR ──────────────────────────────────────────────────── */}
-      {selectedForChain.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-900 border border-purple-500 rounded-2xl shadow-2xl px-6 py-4 flex items-center gap-4 max-w-3xl w-full mx-4">
-          <div className="flex-1">
-            <p className="text-purple-400 font-bold text-sm">{selectedForChain.length} agentes seleccionados para el flujo</p>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {selectedForChain.map((p, i) => (
-                <span key={i} className="bg-purple-900/40 text-purple-300 text-xs px-2 py-0.5 rounded-full border border-purple-800/50 flex items-center gap-1">
-                  {i + 1}. {p.title.slice(0, 25)}{p.title.length > 25 ? '…' : ''}
-                  <button onClick={(e) => toggleChainSelect(e, p)} className="hover:text-white ml-1"><X size={10} /></button>
-                </span>
-              ))}
-            </div>
-          </div>
-          <button
-            onClick={launchChain}
-            className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-6 rounded-xl flex items-center gap-2 whitespace-nowrap transition-colors"
-          >
-            <Sparkle size={18} /> Lanzar Flujo
-          </button>
-          <button onClick={() => setSelectedForChain([])} className="text-gray-500 hover:text-white p-2">
-            <X size={18} />
-          </button>
-        </div>
-      )}
-
-      {/* ─── BREADCRUMB ─────────────────────────────────────────────────────── */}
-      {(view !== 'categories' || isSearchMode) && (
-        <button
-          onClick={goBack}
-          className="flex items-center gap-2 mb-6 text-gray-400 hover:text-white transition-colors px-4 py-2 bg-gray-900 rounded-lg w-fit"
-        >
-          <ArrowLeft size={20} />
-          {view === 'subcategories' ? 'Volver a Categorías' : selectedSubCategory ? `Volver a ${selectedCategory?.title}` : 'Volver a Categorías'}
-        </button>
-      )}
+        {/* Middle Scrollable Section: Directory Content */}
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar pb-10">
 
       {isLoading ? (
         <div className="flex justify-center items-center py-20">
@@ -853,48 +1072,8 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
 
         /* ─── CATEGORÍAS ──────────────────────────────────────────────────── */
         <div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-            {categories.slice(0, 12).map((cat, idx) => renderCategoryCard(cat, idx))}
-          </div>
-
-          {generatedVariants.length > 0 && (
-            <div className="mb-10 mt-10 overflow-hidden relative w-full border-t border-b border-gray-800/50 py-8 bg-[#0a0c10]">
-              <div className="flex items-center gap-2 mb-6 px-4">
-                <Sparkle weight="light" className="text-blue-500" size={24} />
-                <h3 className="text-xl font-bold text-gray-200 tracking-wide">Variantes IA Generadas</h3>
-              </div>
-              <style>{`
-                @keyframes marquee {
-                  0% { transform: translateX(0); }
-                  100% { transform: translateX(-50%); }
-                }
-                .animate-marquee {
-                  animation: marquee 25s linear infinite;
-                  width: max-content;
-                }
-                .animate-marquee:hover {
-                  animation-play-state: paused;
-                }
-              `}</style>
-              <div className="flex animate-marquee gap-6">
-                {generatedVariants.concat(generatedVariants).map((v, i) => (
-                  <div key={i} className="w-[320px] h-40 bg-gradient-to-br from-blue-900/20 to-purple-900/10 border border-blue-800/40 rounded-2xl p-5 shrink-0 shadow-lg relative cursor-pointer hover:border-blue-400 transition-colors flex flex-col justify-between overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-100 transition-opacity">
-                      <Sparkle weight="light" className="text-blue-400" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-blue-300 text-lg truncate mb-1 pr-6">{v.title}</h4>
-                      <p className="text-xs text-purple-400/80 mb-2 truncate uppercase tracking-widest">{v.role}</p>
-                    </div>
-                    <p className="text-sm text-gray-400 line-clamp-3 opacity-80 leading-snug">{v.content}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {categories.slice(12).map((cat, idx) => renderCategoryCard(cat, idx + 12))}
+            {categories.map((cat, idx) => renderCategoryCard(cat, idx))}
           </div>
         </div>
 
@@ -944,6 +1123,9 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
               const lastOpened = agentHistory[key];
               const inChain = isInChain(agent);
               const chainPos = selectedForChain.findIndex(p => makeAgentKey(p) === key);
+              const isGenerated = isGeneratedAgent(agent);
+              const activeClass = isGenerated ? 'active-card-blue' : 'active-card';
+              const isInspected = (inspectedAgent && makeAgentKey(inspectedAgent) === key) || inspectedAgent === agent;
 
               return (
                 <div
@@ -954,10 +1136,10 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
                   }}
                   className={`border rounded-2xl p-6 flex flex-col h-80 relative cursor-pointer transition-all group ${
                     inChain
-                      ? 'border-[#174A1F] active-card'
-                      : (inspectedAgent && makeAgentKey(inspectedAgent) === key)
-                        ? 'active-card'
-                        : 'bg-[#151515] border-[#2A2A2A] hover:border-[#3a3a3a]'
+                      ? (isGenerated ? 'border-blue-500 active-card-blue' : 'border-[#174A1F] active-card')
+                      : isInspected
+                        ? activeClass
+                        : (isGenerated ? 'bg-[#151515] border-blue-900/40 hover:border-blue-700/60' : 'bg-[#151515] border-[#2A2A2A] hover:border-[#3a3a3a]')
                   }`}
                 >
                   {/* Chain position badge */}
@@ -971,7 +1153,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
                     <div className="flex flex-col gap-1">
                       <span className="text-gray-500 text-xs font-bold bg-gray-800 px-3 py-1 rounded-full w-fit">#{idx + 1}</span>
                       {lastOpened && (
-                        <span className="text-green-500/70 text-[10px] leading-tight">🕐 {formatDate(lastOpened)}</span>
+                        <span className={`${isGenerated ? 'text-blue-400/70' : 'text-green-500/70'} text-[10px] leading-tight`}>🕐 {formatDate(lastOpened)}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
@@ -995,7 +1177,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
                   </div>
 
                   <div className="flex justify-between items-start mb-2 gap-2">
-                    <h3 className="font-bold text-lg text-gray-100 line-clamp-2 leading-snug">{agent.title}</h3>
+                    <h3 className={`font-bold text-lg line-clamp-2 leading-snug flex-1 ${isGenerated ? 'text-blue-300' : 'text-gray-100'}`}>{agent.title}</h3>
                     {agent.upgradeExplanation && (
                       <button
                         onClick={(e) => {
@@ -1025,7 +1207,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-400 line-clamp-4 flex-1 leading-relaxed">{agent.content}</p>
+                    <p className={`text-sm line-clamp-4 flex-1 leading-relaxed ${isGenerated ? 'text-blue-400/80' : 'text-gray-400'}`}>{agent.instructions || agent.content}</p>
                   )}
 
                   <div className="mt-4">
@@ -1033,11 +1215,9 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate('/builder', {
-                            state: {
-                              agentChain: agent.chain,
-                              restoreCanvas: false
-                            }
+                          sendToBuilderBridge(navigate, {
+                            agentChain: agent.chain,
+                            agentKey: `chain_${Date.now()}`
                           });
                         }}
                         className="active-card-exempt text-white font-bold py-2 px-4 rounded-lg transition-colors w-full flex items-center justify-center gap-2"
@@ -1066,6 +1246,99 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
           </div>
         </div>
       )}
+
+        </div> {/* End Middle Scrollable Section */}
+
+        {/* ─── CHAIN TOOLBAR ──────────────────────────────────────────────────── */}
+        {selectedForChain.length > 0 && (
+          <div className="absolute bottom-[230px] left-1/2 -translate-x-1/2 z-50 bg-gray-900 border border-purple-500 rounded-2xl shadow-2xl px-6 py-4 flex items-center gap-4 max-w-3xl w-full mx-4">
+            <div className="flex-1">
+              <p className="text-purple-400 font-bold text-sm">{selectedForChain.length} agentes seleccionados para el flujo</p>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {selectedForChain.map((p, i) => (
+                  <span key={i} className="bg-purple-900/40 text-purple-300 text-xs px-2 py-0.5 rounded-full border border-purple-800/50 flex items-center gap-1">
+                    {i + 1}. {p.title.slice(0, 25)}{p.title.length > 25 ? '…' : ''}
+                    <button onClick={(e) => toggleChainSelect(e, p)} className="hover:text-white ml-1"><X size={10} /></button>
+                  </span>
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={launchChain}
+              className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-6 rounded-xl flex items-center gap-2 whitespace-nowrap transition-colors"
+            >
+              <Sparkle size={18} /> Lanzar Flujo
+            </button>
+            <button onClick={() => setSelectedForChain([])} className="text-gray-500 hover:text-white p-2">
+              <X size={18} />
+            </button>
+          </div>
+        )}
+
+        {/* ─── FIXED BOTTOM TICKER: CINTA DE AGENTES RECIÉN ABIERTOS (IGUAL A ATLAS) ─── */}
+        {recentAgents.length > 0 && (
+          <div className="flex-shrink-0 border-t border-gray-800/80 bg-[#0a0c10]/95 backdrop-blur-md z-20 py-4 px-6 shadow-[0_-10px_30px_rgba(0,0,0,0.6)]">
+            <div className="flex items-center gap-2 mb-3 px-2">
+              <Clock weight="fill" className="text-green-500" size={20} />
+              <h3 className="text-sm font-bold text-gray-200 tracking-wide uppercase">Agentes Recién Abiertos</h3>
+            </div>
+            <style>{`
+              @keyframes marquee-recent-bottom {
+                0% { transform: translateX(0); }
+                100% { transform: translateX(-50%); }
+              }
+              .animate-marquee-recent-bottom {
+                animation: marquee-recent-bottom 30s linear infinite;
+                width: max-content;
+              }
+              .animate-marquee-recent-bottom:hover {
+                animation-play-state: paused;
+              }
+            `}</style>
+            <div className="overflow-hidden relative w-full">
+              <div className="flex animate-marquee-recent-bottom gap-4 py-1">
+                {recentAgents.concat(recentAgents).map((agent, i) => {
+                  const key = makeAgentKey(agent);
+                  const isInspected = inspectedAgent === agent || (inspectedAgent && makeAgentKey(inspectedAgent) === key);
+                  const isGenerated = isGeneratedAgent(agent);
+                  const activeClass = isGenerated ? 'active-card-blue' : 'active-card';
+                  return (
+                    <div 
+                      key={i} 
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        setInspectedAgent(agent); 
+                        const now = new Date().toISOString();
+                        setAgentHistoryEntry(key, now);
+                        setAgentHistory(prev => ({ ...prev, [key]: now }));
+                      }}
+                      className={`w-[320px] h-36 rounded-2xl p-4 shrink-0 shadow-lg relative cursor-pointer transition-colors flex flex-col justify-between overflow-hidden group border ${
+                        isInspected 
+                          ? activeClass 
+                          : (isGenerated ? 'bg-[#151515] border-blue-900/40 hover:border-blue-700/60' : 'bg-[#151515] border-[#2A2A2A] hover:border-gray-500')
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className={`font-bold text-sm line-clamp-1 flex-1 leading-snug ${isGenerated ? 'text-blue-300' : 'text-gray-100'}`}>{agent.title}</h4>
+                          {isGenerated && (
+                            <span className="text-[10px] font-bold bg-blue-900/40 text-blue-400 border border-blue-800/50 px-1.5 py-0.5 rounded-full flex-shrink-0">IA</span>
+                          )}
+                        </div>
+                        <p className={`text-xs mt-1.5 line-clamp-2 leading-relaxed ${isGenerated ? 'text-blue-400/80' : 'text-gray-500'}`}>
+                          {agent.instructions || agent.content}
+                        </p>
+                      </div>
+                      <div className={`text-[10px] uppercase font-bold tracking-widest mt-1 truncate ${isGenerated ? 'text-blue-400' : 'text-blue-500'}`}>
+                        {agent.category?.split(' > ').pop() || 'Agente'}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
       </div> {/* End Left Column */}
 
@@ -1105,6 +1378,27 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
                     >
                       {isTranslating ? '🔊 Traduciendo...' : '🗣️ TTS'}
                     </button>
+                    <button 
+                      onClick={handleLogic}
+                      className={`rounded bg-gray-800 hover:bg-gray-700 border border-transparent hover:border-blue-500 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] ${panelTab === 'logic' ? 'text-blue-400 border-blue-500 bg-blue-950/30' : ''}`}
+                    >
+                      {currentLogicTask?.isRunning ? '🧠 Analizando...' : '🧠 Lógica'}
+                    </button>
+                  </div>
+
+                  <div className="flex gap-2 mt-2 w-full">
+                    <button 
+                      onClick={() => setPanelTab('content')} 
+                      className={`flex-1 text-sm font-bold px-3 py-2 rounded border transition-colors flex items-center justify-center gap-2 shadow-sm ${panelTab === 'content' ? 'bg-gray-800 text-white border-gray-500' : 'bg-transparent text-gray-400 border-gray-700 hover:text-gray-200'}`}
+                    >
+                      💬 Original
+                    </button>
+                    <button 
+                      onClick={handleTranslate} 
+                      className={`flex-1 text-sm font-bold px-3 py-2 rounded border transition-colors flex items-center justify-center gap-2 shadow-sm ${panelTab === 'translation' ? 'bg-green-900/40 text-green-300 border-green-700/50' : 'bg-transparent text-green-500/70 border-green-900/50 hover:text-green-400 hover:border-green-700'}`}
+                    >
+                      🇪🇸 Traducir
+                    </button>
                   </div>
                   
                   {/* Progress Bar for Upgrade */}
@@ -1122,37 +1416,48 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
                       </div>
                     </div>
                   )}
+
+                  {/* Progress Bar for Logic */}
+                  {currentLogicTask?.isRunning && (
+                    <div className="mt-2 flex flex-col gap-1">
+                      <div className="flex justify-between text-xs text-blue-400 font-medium">
+                        <span>Analizando lógica interna...</span>
+                        <span>{currentLogicTask.progress}% ({currentLogicTask.timeLeft})</span>
+                      </div>
+                      <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden border border-[#2A2A2A]">
+                        <div 
+                          className="h-full rounded-full transition-all duration-300 ease-out"
+                          style={{ width: `${currentLogicTask.progress}%`, backgroundColor: '#3b82f6', boxShadow: '0 0 10px rgba(59,130,246,0.5)' }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Titulo y Boton Logica */}
+                {/* Titulo */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="pr-2">
-                    <span className="text-xs font-bold text-blue-400 uppercase tracking-widest">{inspectedAgent.category?.split(' > ').pop() || 'Agente'}</span>
-                    <h3 className="text-2xl font-bold text-white mt-1 leading-tight">{inspectedAgent.title}</h3>
+                    <span className={`text-xs font-bold uppercase tracking-widest ${isGeneratedAgent(inspectedAgent) ? 'text-blue-400' : 'text-emerald-400'}`}>{inspectedAgent.category?.split(' > ').pop() || 'Agente'}</span>
+                    <h3 className={`text-2xl font-bold mt-1 leading-tight ${isGeneratedAgent(inspectedAgent) ? 'text-blue-300' : 'text-white'}`}>{inspectedAgent.title}</h3>
                   </div>
-                  {panelTab === 'content' ? (
-                  <button 
-                    onClick={handleLogic} 
-                    className="text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors flex items-center gap-1 shadow-sm shrink-0 bg-blue-900/40 text-blue-300 border-blue-700/50 hover:bg-blue-800"
-                  >
-                    🧠 Lógica
-                  </button>
-                ) : (
-                  <button 
-                    onClick={() => setPanelTab('content')} 
-                    className="text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors flex items-center gap-1 shadow-sm shrink-0 bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700 hover:text-white"
-                  >
-                    ⬅️ Volver
-                  </button>
-                )}
                 </div>
                 
                 {/* Contenido (Markdown) */}
-                <div className="bg-gray-900/80 p-5 rounded-xl border border-gray-800 text-sm text-gray-300 leading-relaxed prose prose-invert prose-sm max-w-none prose-headings:text-blue-400 prose-a:text-blue-400 shadow-inner">
-                  {panelTab === 'content' ? (
+                <div className={`p-6 rounded-xl border border-gray-800 leading-relaxed prose prose-invert max-w-none shadow-inner bg-gray-900/80 ${
+                  panelTab === 'logic' 
+                    ? 'text-sm text-gray-300 prose-sm prose-headings:text-blue-400 prose-a:text-blue-400' 
+                    : isGeneratedAgent(inspectedAgent)
+                      ? 'prose-p:text-blue-400 prose-headings:text-blue-400 prose-strong:text-blue-400 text-blue-400' 
+                      : 'prose-p:text-[#4ade80] prose-headings:text-[#4ade80] prose-strong:text-[#4ade80] text-[#4ade80]'
+                } prose-p:text-[1.15rem] prose-p:font-bold prose-p:leading-snug prose-headings:text-[1.15rem] prose-headings:font-bold`}>
+                  {panelTab === 'content' && (
                     <ReactMarkdown>{inspectedAgent.instructions || inspectedAgent.content}</ReactMarkdown>
-                  ) : (
-                    <ReactMarkdown>{logicData[inspectedAgent.id || ''] || (isGeneratingLogic ? '🧠 Generando análisis profundo de la lógica del agente... (Esto puede tomar unos segundos)' : 'No hay datos.')}</ReactMarkdown>
+                  )}
+                  {panelTab === 'translation' && (
+                    <ReactMarkdown>{translationData[makeAgentKey(inspectedAgent)] || (isTranslatingContent ? '🇪🇸 Conectando y traduciendo...' : 'No hay datos.')}</ReactMarkdown>
+                  )}
+                  {panelTab === 'logic' && (
+                    <ReactMarkdown>{currentLogicTask?.result || (currentLogicTask?.isRunning ? '🧠 Analizando lógica interna y arquitectura del agente...' : 'Presiona el botón "🧠 Lógica" para analizar la estructura y funcionamiento de este agente.')}</ReactMarkdown>
                   )}
                 </div>
                 
@@ -1196,10 +1501,8 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
 
       {explanationPopup && (
         <div 
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-[#050a0f]/60 backdrop-blur-md"
           style={{ 
-            backgroundColor: 'rgba(5, 10, 15, 0.95)',
-            transform: 'translateZ(0)',
             animation: 'fadeIn 0.2s ease-out' 
           }}
         >

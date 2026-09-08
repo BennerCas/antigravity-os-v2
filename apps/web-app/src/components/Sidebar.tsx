@@ -1,8 +1,19 @@
 import { NavLink } from 'react-router-dom';
-import { Compass, Robot, Hammer, LockKey, Code, Network, TreeStructure } from '@phosphor-icons/react';
+import { Compass, Robot, Hammer, LockKey, Code, Network, TreeStructure, SpeakerHigh, PlayCircle, PauseCircle, StopCircle, FastForward, Rewind } from '@phosphor-icons/react';
 import { EngineIndicator } from './EngineIndicator';
+import { useTTSStore } from '../lib/ttsStore';
+import { useEffect } from 'react';
 
 export function Sidebar() {
+  const { 
+    isActive, isPaused, currentSection, volume, speed, 
+    pause, resume, stop, setVolume, setSpeed, initVoices 
+  } = useTTSStore();
+
+  useEffect(() => {
+    initVoices();
+  }, [initVoices]);
+
   const navItems = [
     { path: '/atlas',         label: 'Atlas',          icon: <Compass       size={20} weight="light" /> },
     { path: '/agents',        label: 'Agentes',        icon: <Robot         size={20} weight="light" /> },
@@ -30,7 +41,7 @@ export function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-5" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+      <nav className="flex-1 px-3 py-5 overflow-y-auto" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
         {navItems.map((item) => (
           <NavLink
             key={item.path}
@@ -56,6 +67,66 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      {/* TTS Global Player */}
+      {(isActive || isPaused) && (
+        <div className="mx-3 mb-3 p-3 rounded-xl bg-[#0A1C0D] border border-[#174A1F] animate-fadeIn">
+          <div className="flex items-center gap-2 mb-2">
+            <SpeakerHigh size={16} weight="duotone" className="text-[#7B9C7F]" />
+            <span className="text-[10px] font-bold text-[#7B9C7F] uppercase tracking-wider truncate">
+              {currentSection || 'Leyendo...'}
+            </span>
+          </div>
+          
+          <div className="flex items-center justify-between mt-3 text-[#A0C0A8]">
+            <button 
+              onClick={() => {
+                const s = speed - 0.25;
+                setSpeed(s < 0.5 ? 0.5 : s);
+              }} 
+              className="p-1 hover:text-white transition-colors" title="Más lento"
+            >
+              <Rewind size={18} weight="fill" />
+            </button>
+
+            {isPaused ? (
+              <button onClick={resume} className="p-1 hover:text-white transition-colors" title="Reanudar">
+                <PlayCircle size={24} weight="fill" className="text-[#7B9C7F]" />
+              </button>
+            ) : (
+              <button onClick={pause} className="p-1 hover:text-white transition-colors" title="Pausar">
+                <PauseCircle size={24} weight="fill" className="text-[#7B9C7F]" />
+              </button>
+            )}
+
+            <button onClick={stop} className="p-1 hover:text-[#FF6B6B] transition-colors" title="Detener">
+              <StopCircle size={24} weight="fill" />
+            </button>
+
+            <button 
+              onClick={() => {
+                const s = speed + 0.25;
+                setSpeed(s > 2 ? 2 : s);
+              }} 
+              className="p-1 hover:text-white transition-colors" title="Más rápido"
+            >
+              <FastForward size={18} weight="fill" />
+            </button>
+          </div>
+          
+          <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-[#174A1F]/50">
+            <span className="text-[9px] font-mono text-[#666]">VOL</span>
+            <input 
+              type="range" 
+              min="0" max="1" step="0.1" 
+              value={volume}
+              onChange={(e) => setVolume(parseFloat(e.target.value))}
+              className="w-full h-1 bg-[#1A1A1A] rounded-lg appearance-none cursor-pointer accent-[#7B9C7F]"
+            />
+            <span className="text-[9px] font-mono text-[#666]">VEL {speed}x</span>
+          </div>
+        </div>
+      )}
 
       {/* User footer */}
       <div

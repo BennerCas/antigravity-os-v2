@@ -3,7 +3,7 @@ import { API_URL } from '../lib/api';
 import { 
   Plus, X, Trash, Lightning, 
   CheckCircle, Clock, PlayCircle,
-  Gear, Robot, Key, Warning, ArrowsClockwise, FileCode
+  Gear, Robot, Key, ArrowsClockwise, FileCode
 } from '@phosphor-icons/react';
 
 export default function Automations() {
@@ -11,7 +11,13 @@ export default function Automations() {
   const [flows, setFlows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSlider, setShowSlider] = useState(false);
-  const [activeTab, setActiveTab] = useState<'LIST' | 'LOGS' | 'TEMPLATES'>('LIST');
+  const [activeTab, setActiveTab] = useState<'LIST' | 'LOGS' | 'TEMPLATES'>(() => {
+    return (localStorage.getItem('automations_active_tab') as any) || 'LIST';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('automations_active_tab', activeTab);
+  }, [activeTab]);
 
   // Templates Data
   const TEMPLATES = [

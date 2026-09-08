@@ -7,11 +7,23 @@ import { flowTemplates } from '../data/flowsTemplates';
 
 export default function Flows() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'my_flows' | 'templates'>('templates');
-  const [activeLevel, setActiveLevel] = useState<string>('Basico');
+  const [activeTab, setActiveTab] = useState<'my_flows' | 'templates'>(() => {
+    return (localStorage.getItem('flows_active_tab') as any) || 'templates';
+  });
+  const [activeLevel, setActiveLevel] = useState<string>(() => {
+    return localStorage.getItem('flows_active_level') || 'Basico';
+  });
   const [playingTTS, setPlayingTTS] = useState<string | null>(null);
   const [savedFlows, setSavedFlows] = useState<SavedFlow[]>([]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem('flows_active_tab', activeTab);
+  }, [activeTab]);
+
+  useEffect(() => {
+    localStorage.setItem('flows_active_level', activeLevel);
+  }, [activeLevel]);
 
   useEffect(() => {
     fetch(`${API_URL}/flows`)

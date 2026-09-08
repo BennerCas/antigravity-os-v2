@@ -145,7 +145,7 @@ export const MainPromptNode = ({ id, data, selected }: BuilderNodeProps) => {
     
   return (
     <div className={`flex flex-col transition-colors duration-300 p-6 rounded-xl w-full h-full min-w-[360px] min-h-[640px] relative cyber-glass-node ${isVariant ? 'variant' : ''}`}>
-      <NodeResizer color="var(--theme-border, #3b82f6)" isVisible={!!selected} minWidth={360} minHeight={640} />
+      <NodeResizer color="#3b82f6" isVisible={!!selected} minWidth={360} minHeight={640} />
       <CardHeaderActions id={id} data={data} customColor={isVariant ? "var(--theme-bg)" : undefined} />
       <UniversalHandles />
       <h3 className="font-bold text-lg mb-4 pr-32 flex-shrink-0">{data.title || "Main Prompt"}</h3>
@@ -170,7 +170,7 @@ export const ActionNode = ({ id, data, selected }: BuilderNodeProps) => {
 
   return (
     <div className={`flex flex-col transition-colors duration-300 p-6 rounded-xl w-full h-full min-w-[360px] min-h-[640px] transform transition-transform hover:scale-105 relative cyber-glass-node ${isVariant ? 'variant' : ''}`}>
-      <NodeResizer color="var(--theme-border, #3b82f6)" isVisible={!!selected} minWidth={360} minHeight={640} />
+      <NodeResizer color="#3b82f6" isVisible={!!selected} minWidth={360} minHeight={640} />
       <CardHeaderActions id={id} data={data} customColor={isVariant ? "var(--theme-bg)" : undefined} />
       <UniversalHandles />
       <h3 className="font-bold text-lg mb-4 pr-32 flex-shrink-0">{String(data.title || data.actionType || "Action Node")}</h3>
@@ -195,7 +195,7 @@ export const LogicaNode = ({ id, data, selected }: BuilderNodeProps) => {
 
   return (
     <div className={`flex flex-col transition-colors duration-300 p-6 rounded-xl w-full h-full min-w-[360px] min-h-[640px] transform transition-transform hover:scale-105 relative cyber-glass-node ${isVariant ? 'variant' : ''}`}>
-      <NodeResizer color="var(--theme-border, #3b82f6)" isVisible={!!selected} minWidth={360} minHeight={640} />
+      <NodeResizer color="#3b82f6" isVisible={!!selected} minWidth={360} minHeight={640} />
       <CardHeaderActions id={id} data={data} customColor={isVariant ? "var(--theme-bg)" : undefined} />
       <UniversalHandles />
       <h3 className="font-bold text-lg mb-4 pr-32 flex items-center gap-2 flex-shrink-0">🧠 Lógica del Prompt</h3>
@@ -219,7 +219,7 @@ export const TraducirNode = ({ id, data, selected }: BuilderNodeProps) => {
 
   return (
     <div className="transition-colors duration-300 p-5 rounded-xl w-full h-full min-w-[288px] min-h-[200px] relative cyber-glass-node">
-      <NodeResizer color="var(--theme-border, #3b82f6)" isVisible={!!selected} minWidth={360} minHeight={220} />
+      <NodeResizer color="#3b82f6" isVisible={!!selected} minWidth={360} minHeight={220} />
       <CardHeaderActions id={id} data={data} />
       <UniversalHandles />
       <h3 className="font-bold mb-4 pr-32">Traducir</h3>
@@ -251,7 +251,7 @@ export const EditarNode = ({ id, data, selected }: BuilderNodeProps) => {
 
   return (
     <div className="transition-colors duration-300 p-5 rounded-xl w-full h-full min-w-[288px] min-h-[200px] relative cyber-glass-node">
-      <NodeResizer color="var(--theme-border, #3b82f6)" isVisible={!!selected} minWidth={360} minHeight={250} />
+      <NodeResizer color="#3b82f6" isVisible={!!selected} minWidth={360} minHeight={250} />
       <CardHeaderActions id={id} data={data} />
       <UniversalHandles />
       <h3 className="font-bold mb-4 pr-32">Editar</h3>
@@ -289,7 +289,7 @@ export const PostItNode = ({ id, data, selected }: BuilderNodeProps) => {
   
   return (
     <div className="p-4 pt-10 rounded-sm shadow-md w-full h-full min-w-[256px] min-h-[200px] border relative transition-colors" style={{ backgroundColor: color, borderColor: 'rgba(0,0,0,0.2)', color: textColor }}>
-      <NodeResizer color="var(--theme-border, #3b82f6)" isVisible={!!selected} minWidth={256} minHeight={640} />
+      <NodeResizer color="#3b82f6" isVisible={!!selected} minWidth={256} minHeight={640} />
       <UniversalHandles />
       <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -mt-2 w-8 h-4 bg-black/10 rounded-full blur-[1px]"></div>
       
@@ -407,11 +407,11 @@ export const RulerNode = ({ id }: { id: string }) => {
   }, [isDragging]);
 
   return (
-    <div ref={nodeRef} className="relative flex items-center justify-center border border-transparent/50 shadow-lg backdrop-blur-md"
+    <div ref={nodeRef} className="relative flex items-center justify-center"
       style={{
-        width: 300,
+        width: 900,
         height: 40,
-        background: 'linear-gradient(90deg, rgba(250,204,21,0.2) 0%, rgba(250,204,21,0.4) 100%)',
+        background: 'transparent',
         transform: `rotate(${rotation}deg)`,
         transformOrigin: 'center center',
       }}
@@ -431,17 +431,17 @@ export const RulerNode = ({ id }: { id: string }) => {
       <div 
         className="absolute top-0 left-0 w-full h-2" 
         style={{
-          background: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.8) 0px, rgba(255,255,255,0.8) 1px, transparent 1px, transparent 10px)'
+          background: 'repeating-linear-gradient(90deg, rgba(59,130,246,0.8) 0px, rgba(59,130,246,0.8) 1px, transparent 1px, transparent 10px)'
         }}
       />
       <div
         onPointerDown={onPointerDown}
-        className="absolute -right-3 w-6 h-6 bg-yellow-400 rounded-full cursor-grab border-2 border-white shadow hover:scale-110 flex items-center justify-center text-xs"
+        className="absolute -right-3 w-6 h-6 bg-blue-500 rounded-full cursor-grab border-2 border-white shadow hover:scale-110 flex items-center justify-center text-xs"
         style={{ touchAction: 'none' }}
       >
         O
       </div>
-      <span className="text-yellow-100/50 text-xs select-none">REGLA</span>
+      <span className="text-blue-300 font-bold tracking-wider text-xs select-none">REGLA</span>
     </div>
   );
 };

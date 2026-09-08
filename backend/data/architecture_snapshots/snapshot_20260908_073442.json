@@ -1,0 +1,14 @@
+{
+  "id": "snapshot_20260908_073442",
+  "timestamp": "2026-09-08T07:34:42.515640Z",
+  "total_prompts": 1,
+  "notes": "Snapshot manual",
+  "author": "Usuario",
+  "version": "3.0.0",
+  "overrides": {
+    "_baseline": {
+      "content": "Baseline snapshot",
+      "rationale": "Snapshot inicial del sistema nativo"
+    }
+  }
+}

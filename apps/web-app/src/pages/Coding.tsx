@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Play, Code } from '@phosphor-icons/react';
 import { API_URL } from '../lib/api';
 import CodingEditor from '../components/coding/CodingEditor';
@@ -10,13 +10,23 @@ import CodingAcademyPanel from '../components/coding/CodingAcademyPanel';
 import CopilotPanel from '../components/coding/CopilotPanel';
 
 export default function Coding() {
-  const [framework, setFramework] = useState('crewai');
+  const [framework, setFramework] = useState(() => localStorage.getItem('coding_framework') || 'crewai');
   const [prompt, setPrompt] = useState('');
   const [compiledCode, setCompiledCode] = useState('');
-  const [activeTab, setActiveTab] = useState<'editor' | 'compiled' | 'nodes' | 'academy'>('academy');
+  const [activeTab, setActiveTab] = useState<'editor' | 'compiled' | 'nodes' | 'academy'>(() => {
+    return (localStorage.getItem('coding_active_tab') as any) || 'academy';
+  });
   const [, setTerminalStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
   const [triggerRun, setTriggerRun] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('coding_framework', framework);
+  }, [framework]);
+
+  useEffect(() => {
+    localStorage.setItem('coding_active_tab', activeTab);
+  }, [activeTab]);
 
   // (No hay estado open: el panel copilot ahora es fijo a la derecha)
 

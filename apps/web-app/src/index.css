@@ -18,8 +18,8 @@
 
 :root {
   --surface-canvas:   #000000;
-  --surface-card:     #151515;
-  --surface-elevated: #1a1a1a;
+  --surface-card:     #000000;
+  --surface-elevated: #050505;
   --stroke-subtle:    #2A2A2A;
   --stroke-default:   #2A2A2A;
 
@@ -53,7 +53,7 @@
   --shadow-lg: none;
 
   /* Glass — solid card */
-  --glass-bg:     #151515;
+  --glass-bg:     #000000;
   --glass-border: #2A2A2A;
   --glass-blur:   none;
 
@@ -159,7 +159,7 @@ button:hover {
 
 /* Inputs, Textareas, Selects */
 input, textarea, select {
-  background-color: #151515 !important;
+  background-color: #000000 !important;
   background-image: none !important;
   border: 1px solid #2A2A2A !important;
   border-radius: var(--radius-md) !important;
@@ -182,7 +182,7 @@ input::placeholder, textarea::placeholder {
 .card,
 [class*="rounded-xl"],
 [class*="rounded-2xl"] {
-  background-color: #151515 !important;
+  background-color: #000000 !important;
   border: 1px solid #2A2A2A !important;
   border-radius: var(--radius-lg) !important;
 }
@@ -223,12 +223,10 @@ p, span, h1, h2, h3, h4, h5, h6, label {
   text-shadow: none !important;
 }
 
-/* Strip all bright text colors */
+/* Strip bright text colors except intentional green/emerald accents */
 [class*="text-red-"],
 [class*="text-blue-"],
-[class*="text-green-"],
 [class*="text-purple-"],
-[class*="text-emerald-"],
 [class*="text-cyan-"],
 [class*="text-violet-"],
 [class*="text-yellow-"] {
@@ -259,7 +257,7 @@ p, span, h1, h2, h3, h4, h5, h6, label {
 [class*="bg-cyan-"],
 [class*="bg-violet-"],
 [class*="bg-yellow-"] {
-  background-color: #151515 !important;
+  background-color: #000000 !important;
   background-image: none !important;
 }
 
@@ -268,7 +266,7 @@ p, span, h1, h2, h3, h4, h5, h6, label {
 [class*="bg-slate-"],
 [class*="bg-neutral-"],
 [class*="bg-black"] {
-  background-color: #151515 !important;
+  background-color: #000000 !important;
   background-image: none !important;
 }
 
@@ -329,6 +327,9 @@ p, span, h1, h2, h3, h4, h5, h6, label {
 .active-card h3,
 .active-card h4,
 .active-card p,
+.active-card strong,
+.active-card b,
+.active-card em,
 .active-card span:not(.active-card-exempt),
 .active-card label {
   color: #7B9C7F !important;
@@ -344,13 +345,14 @@ p, span, h1, h2, h3, h4, h5, h6, label {
 }
 
 /* =====================================================
-   ACTIVE CARD BLUE — dark blue selected state
+   ACTIVE CARD BLUE — dark blue selected state (for generated/upgraded prompts)
    ===================================================== */
 .active-card-blue {
-  background-color: #0b1120 !important; /* Very dark blue */
+  background-color: #08101e !important; /* Very dark blue */
   background-image: none !important;
-  border: 1px solid #1e3a8a !important; /* Blue 900 */
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  border: 1px solid #2563eb !important; /* Vibrant Blue */
+  box-shadow: 0 0 20px rgba(37, 99, 235, 0.15) !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .active-card-blue h1,
@@ -358,6 +360,9 @@ p, span, h1, h2, h3, h4, h5, h6, label {
 .active-card-blue h3,
 .active-card-blue h4,
 .active-card-blue p,
+.active-card-blue strong,
+.active-card-blue b,
+.active-card-blue em,
 .active-card-blue span:not(.active-card-exempt),
 .active-card-blue label {
   color: #93c5fd !important; /* Blue 300 */
@@ -376,11 +381,18 @@ p, span, h1, h2, h3, h4, h5, h6, label {
    BUILDER (ReactFlow) NODE STYLES
    ===================================================== */
 .cyber-glass-node {
-  background: #151515 !important;
+  background: #000000 !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  border: 1px solid #2A2A2A !important;
+  border: 1px solid #2563eb !important;
   color: #FFFFFF !important;
+}
+
+.cyber-glass-node:hover,
+.react-flow__node.selected .cyber-glass-node,
+.cyber-glass-node.selected {
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.5) !important;
 }
 
 .cyber-glass-node textarea,
@@ -480,7 +492,7 @@ p, span, h1, h2, h3, h4, h5, h6, label {
 }
 
 .markdown-body code {
-  background-color: #151515;
+  background-color: #000000;
   color: #FFFFFF;
   border: 1px solid #2A2A2A;
   border-radius: 4px;
@@ -488,7 +500,7 @@ p, span, h1, h2, h3, h4, h5, h6, label {
 }
 
 .markdown-body pre {
-  background-color: #151515;
+  background-color: #000000;
   border: 1px solid #2A2A2A;
   border-radius: var(--radius-lg);
 }
@@ -530,3 +542,36 @@ p, span, h1, h2, h3, h4, h5, h6, label {
 }
 
 @plugin "@tailwindcss/typography";
+
+/* =====================================================
+   UNIVERSAL SELECTION RULES — DARK FOREST GREEN & ACCENTS
+   ===================================================== */
+.selected-green,
+.active-card,
+.nav-item-active,
+button.selected-green,
+div.selected-green,
+div.active-card {
+  background-color: #0A1C0D !important;
+  border-color: #174A1F !important;
+  color: #7B9C7F !important;
+}
+
+.selected-green svg,
+.active-card svg,
+.nav-item-active svg {
+  color: #7B9C7F !important;
+  stroke: #7B9C7F !important;
+}
+
+.selected-green code,
+.active-card code,
+.nav-item-active code {
+  color: #7B9C7F !important;
+}
+
+.tab-active-green {
+  border-bottom: 2px solid #7B9C7F !important;
+  color: #7B9C7F !important;
+  font-weight: 700 !important;
+}

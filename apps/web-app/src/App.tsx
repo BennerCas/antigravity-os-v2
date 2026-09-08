@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Navigate, useLocation } from 'react-router-dom';
 
 function RouteTracker() {
   const location = useLocation();
@@ -29,6 +29,41 @@ const Architecture = lazy(() => import('./pages/Architecture'));
 const Automations = lazy(() => import('./pages/Automations'));
 
 import { applyThemeToDocument } from './lib/themes';
+
+function MainContent() {
+  const location = useLocation();
+  const path = location.pathname;
+
+  return (
+    <>
+      {path === '/' && <InitialRedirect />}
+      <div style={{ display: path === '/atlas' ? 'block' : 'none', height: '100%', width: '100%' }}>
+        <Atlas />
+      </div>
+      <div style={{ display: path === '/agents' ? 'block' : 'none', height: '100%', width: '100%' }}>
+        <Agents />
+      </div>
+      <div style={{ display: path === '/flows' ? 'block' : 'none', height: '100%', width: '100%' }}>
+        <Flows />
+      </div>
+      <div style={{ display: path === '/builder' ? 'block' : 'none', height: '100%', width: '100%' }}>
+        <Builder />
+      </div>
+      <div style={{ display: path === '/vault' ? 'block' : 'none', height: '100%', width: '100%' }}>
+        <Vault />
+      </div>
+      <div style={{ display: path === '/coding' ? 'block' : 'none', height: '100%', width: '100%' }}>
+        <Coding />
+      </div>
+      <div style={{ display: path === '/architecture' ? 'block' : 'none', height: '100%', width: '100%' }}>
+        <Architecture />
+      </div>
+      <div style={{ display: path === '/automations' ? 'block' : 'none', height: '100%', width: '100%' }}>
+        <Automations />
+      </div>
+    </>
+  );
+}
 
 function App(): React.ReactElement {
   React.useEffect(() => {
@@ -60,17 +95,7 @@ function App(): React.ReactElement {
             }
           >
             <ErrorBoundary>
-              <Routes>
-              <Route path="/" element={<InitialRedirect />} />
-              <Route path="/atlas" element={<Atlas />} />
-              <Route path="/agents" element={<Agents />} />
-              <Route path="/flows" element={<Flows />} />
-              <Route path="/builder" element={<Builder />} />
-              <Route path="/vault" element={<Vault />} />
-              <Route path="/coding" element={<Coding />} />
-              <Route path="/architecture" element={<Architecture />} />
-              <Route path="/automations" element={<Automations />} />
-            </Routes>
+              <MainContent />
             </ErrorBoundary>
           </Suspense>
         </main>

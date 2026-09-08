@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { BuilderNodeData } from '../types/builder';
+import { sendToBuilderBridge } from '../lib/builderBridge';
 import { API_URL } from '../lib/api';
 import {
   SpeakerHigh, ArrowLeft, MagnifyingGlass, MagicWand,
   CaretRight, CheckSquare, Square, X, Sparkle, Clock
 } from '@phosphor-icons/react';
 import ReactMarkdown from 'react-markdown';
+import { logicTaskManager, LogicTaskState } from '../lib/logicTaskManager';
 
 interface Prompt {
   id?: string;
@@ -53,6 +55,22 @@ function makePromptKey(p: Prompt): string {
   return `${p.title}_${(p.category || '').replace(/\W/g, '_')}_${contentPreview}`.slice(0, 120);
 }
 
+export function isGeneratedPrompt(p?: Prompt | null): boolean {
+  if (!p) return false;
+  if (p.category === 'Antigravity OS > Master Prompts' && !p.title?.includes('(Upgrade)')) {
+    return false;
+  }
+  if (!p.title?.includes('(Upgrade)') && !(p.id && (p.id.endsWith('-upgraded') || p.id.includes('upgraded') || p.id.startsWith('gen-'))) && !p.upgradeExplanation && !(p as any).isGenerated) {
+    return false;
+  }
+  return Boolean(
+    p.upgradeExplanation ||
+    (p.id && (p.id.endsWith('-upgraded') || p.id.includes('upgraded') || p.id.startsWith('gen-'))) ||
+    p.title?.includes('(Upgrade)') ||
+    (p as any).isGenerated
+  );
+}
+
 // Scoring: simple TF match across title, category, content
 function scorePrompt(p: Prompt, terms: string[]): number {
   let score = 0;
@@ -66,9 +84,20 @@ function scorePrompt(p: Prompt, terms: string[]): number {
 
 const Atlas = () => {
   const navigate = useNavigate();
-  const [view, setView] = useState<'categories' | 'subcategories' | 'prompts'>('categories');
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
+  const [view, setView] = useState<'categories' | 'subcategories' | 'prompts'>(() => {
+    return (localStorage.getItem('atlas_view') as any) || 'categories';
+  });
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(() => {
+    try {
+      const saved = localStorage.getItem('atlas_selected_category');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(() => {
+    return localStorage.getItem('atlas_selected_subcategory') || null;
+  });
   const [categories, setCategories] = useState<Category[]>([]);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [allPrompts, setAllPrompts] = useState<Prompt[]>([]);
@@ -91,8 +120,6 @@ const Atlas = () => {
     setPromptHistory(getPromptHistory());
     try {
       setGeneratedVariants(JSON.parse(localStorage.getItem('generated_variants') || '[]'));
-      const storedLogic = localStorage.getItem('atlas_logic_data');
-      if (storedLogic) setLogicData(JSON.parse(storedLogic));
       const storedTrans = localStorage.getItem('atlas_translation_data');
       if (storedTrans) setTranslationData(JSON.parse(storedTrans));
     } catch (err) {
@@ -103,9 +130,9 @@ const Atlas = () => {
   const fetchCategories = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch((import.meta.env.BASE_URL || '/') + 'prompts_db.json');
+      const res = await fetch((import.meta.env.BASE_URL || '/') + 'prompts_db.json?v=' + Date.now());
       if (!res.ok) throw new Error('Failed to load JSON');
-      const data = (await res.json()) as Prompt[];
+      let data = (await res.json()) as Prompt[];
       
       const mockMultiPrompt: Prompt = {
         id: 'mock-multi-1',
@@ -122,6 +149,20 @@ const Atlas = () => {
       
       data.unshift(mockMultiPrompt);
       
+      // Persistencia de memoria: cargar y fusionar prompts generados/mejorados
+      try {
+        const storedStr = localStorage.getItem('upgraded_prompts');
+        if (storedStr) {
+          const storedPrompts = JSON.parse(storedStr) as Prompt[];
+          if (Array.isArray(storedPrompts) && storedPrompts.length > 0) {
+            const storedKeys = new Set(storedPrompts.map(p => makePromptKey(p)));
+            data = [...storedPrompts, ...data.filter(p => !storedKeys.has(makePromptKey(p)))];
+          }
+        }
+      } catch (e) {
+        console.error('Error al cargar upgraded_prompts desde localStorage:', e);
+      }
+
       setAllPrompts(data);
 
       const catMap: Record<string, Record<string, number>> = {};
@@ -139,6 +180,21 @@ const Atlas = () => {
         subCategories: Object.keys(catMap[cat]).map(sub => ({ name: sub, count: catMap[cat][sub] })),
         totalCount: Object.values(catMap[cat]).reduce((a, b) => a + b, 0)
       })));
+
+      // Si el usuario ya está viendo una subcategoría activa, refrescar prompts visibles
+      if (selectedCategory && selectedSubCategory) {
+        const filtered = data.filter((p) => {
+          const parts = (p.category || 'General').split(' > ');
+          const main = parts[0].trim();
+          const sub = parts[1] ? parts[1].trim() : 'General';
+          return main === selectedCategory.id && sub === selectedSubCategory;
+        });
+        setPrompts(filtered);
+      } else if (view === 'prompts' && !isSearchMode) {
+        setView('categories');
+      } else if (view === 'subcategories' && !selectedCategory) {
+        setView('categories');
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -192,16 +248,76 @@ const Atlas = () => {
 
   // --- NUEVOS ESTADOS DEL PANEL ---
   const [inspectedPrompt, setInspectedPrompt] = useState<Prompt | null>(null);
-  const [panelTab, setPanelTab] = useState<'content' | 'translation' | 'logic'>('content');
+  const [panelTab, setPanelTab] = useState<'content' | 'translation' | 'logic'>(() => {
+    return (localStorage.getItem('atlas_panel_tab') as any) || 'content';
+  });
   const [translationData, setTranslationData] = useState<Record<string, string>>({});
   const [isTranslatingContent, setIsTranslatingContent] = useState(false);
-  const [logicData, setLogicData] = useState<Record<string, string>>({});
   const [isTranslating, setIsTranslating] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [upgradeProgress, setUpgradeProgress] = useState(0);
   const [upgradeTimeLeft, setUpgradeTimeLeft] = useState('');
   const [explanationPopup, setExplanationPopup] = useState<{title: string, text: string} | null>(null);
-  const [isGeneratingLogic, setIsGeneratingLogic] = useState(false);
+  const [currentLogicTask, setCurrentLogicTask] = useState<LogicTaskState | null>(null);
+
+  // Suscribirse reactivamente al gestor de lógica según el prompt inspeccionado
+  useEffect(() => {
+    if (!inspectedPrompt) {
+      setCurrentLogicTask(null);
+      return;
+    }
+    const key = `atlas_${makePromptKey(inspectedPrompt)}`;
+    const unsubscribe = logicTaskManager.subscribe(key, (state) => {
+      setCurrentLogicTask({ ...state });
+    });
+    return () => unsubscribe();
+  }, [inspectedPrompt?.title, inspectedPrompt?.content]);
+
+  // Persistir vista, categorías y pestaña en localStorage
+  useEffect(() => {
+    localStorage.setItem('atlas_view', view);
+  }, [view]);
+
+  useEffect(() => {
+    if (selectedCategory) {
+      localStorage.setItem('atlas_selected_category', JSON.stringify(selectedCategory));
+    } else {
+      localStorage.removeItem('atlas_selected_category');
+    }
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    if (selectedSubCategory) {
+      localStorage.setItem('atlas_selected_subcategory', selectedSubCategory);
+    } else {
+      localStorage.removeItem('atlas_selected_subcategory');
+    }
+  }, [selectedSubCategory]);
+
+  useEffect(() => {
+    localStorage.setItem('atlas_panel_tab', panelTab);
+  }, [panelTab]);
+
+  useEffect(() => {
+    if (inspectedPrompt) {
+      localStorage.setItem('atlas_inspected_prompt', JSON.stringify(inspectedPrompt));
+    } else {
+      localStorage.removeItem('atlas_inspected_prompt');
+    }
+  }, [inspectedPrompt]);
+
+  useEffect(() => {
+    if (allPrompts.length === 0 || inspectedPrompt) return;
+    const saved = localStorage.getItem('atlas_inspected_prompt');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        const match = allPrompts.find(p => (p.id && p.id === parsed.id) || makePromptKey(p) === makePromptKey(parsed));
+        if (match) setInspectedPrompt(match);
+        else setInspectedPrompt(parsed);
+      } catch (e) {}
+    }
+  }, [allPrompts]);
 
 
 
@@ -214,7 +330,7 @@ const Atlas = () => {
       ? inspectedPrompt.content
       : panelTab === 'translation'
       ? (translationData[key] || '')
-      : (logicData[key] || '');
+      : (currentLogicTask?.result || '');
       
     if (!currentText) return;
 
@@ -266,26 +382,35 @@ const Atlas = () => {
     setUpgradeTimeLeft('Calculando...');
     
     try {
-      const promptText = `Eres un Ingeniero de Prompts Experto. Tu objetivo es transformar el prompt del usuario en una plantilla profesional.
-Primero, clasifica la intención del prompt original y selecciona EL MEJOR de estos 5 frameworks para reescribirlo:
-1. RTF (Rol, Tarea, Formato): Para tareas mecánicas y directas.
-2. APE (Acción, Propósito, Expectativa): Para evaluación y decisiones rápidas.
-3. CREATE (Personaje, Petición, Explicación, Ajustes, Tipo de salida, Extras): Para tareas complejas, agentes o sistemas.
-4. CARE (Contexto, Acción, Resultado, Ejemplo): Para auditoría, análisis de datos o consultoría.
-5. Chain of Thought (Paso a paso): Para lógica, matemáticas o debugging crítico.
+      const promptText = `Eres un Ingeniero de Prompts de Élite (Staff Prompt Architect). Tu misión es transformar el prompt provisto en una directiva de grado industrial, maximizando la precisión, coherencia, delimitación contextual y control de fallas en modelos LLM modernos.
 
-INSTRUCCIÓN CRÍTICA: Responde EXACTAMENTE con esta estructura:
+### 1. REGLA ESTRICTA DE SELECCIÓN DE FRAMEWORK
+Analiza la naturaleza del prompt original delimitado en <prompt_original>. Selecciona OBLIGATORIAMENTE el framework más adecuado bajo estos criterios jerárquicos:
+- CREATE (Contexto/Personaje, Rol/Petición, Explicación, Ajustes, Tipo de salida, Extras): OBLIGATORIO para agentes autónomos, sistemas interactivos, flujos complejos o meta-prompts. Queda estrictamente PROHIBIDO degradar un agente o sistema a RTF.
+- Chain of Thought (Paso a paso, Razonamiento interno): OBLIGATORIO para lógica, matemáticas, análisis de causa raíz, toma de decisiones críticas o debugging.
+- CARE (Contexto, Acción, Resultado, Ejemplo): OBLIGATORIO para análisis de negocio, consultoría, auditorías técnicas o evaluación de datos.
+- APE (Acción, Propósito, Expectativa): Para evaluaciones rápidas, decisiones binarias y resúmenes ejecutivos directos.
+- RTF (Rol, Tarea, Formato): EXCLUSIVAMENTE para tareas mecánicas, lineales y directas (ej. formatear texto, clasificaciones simples).
+
+### 2. DIRECTRICES DE INGENIERÍA Y BLINDAJE
+1. Preservación de Variables: Identifica y mantén intactos todos los placeholders y variables dinámicas en formato [VARIABLE] o {{VARIABLE}}. Si faltan parámetros requeridos, defínelos explícitamente entre corchetes.
+2. Contrato Estricto de Salida: Especifica con exactitud la estructura esperada, tono y formato (Markdown/JSON).
+3. Restricciones y Anti-Alucinación: Añade instrucciones de qué NO hacer y fuerza al modelo a declarar incertidumbre si no hay información suficiente en vez de inventar hechos o directivas.
+
+### 3. FORMATO CRÍTICO DE RESPUESTA
+Responde EXACTAMENTE con esta estructura (manteniendo los encabezados Markdown para procesamiento automatizado):
 
 ### EXPLICACION
-[Escribe tu justificación detallada de 2 a 3 líneas sobre por qué elegiste ese framework específico (RTF, APE, CREATE, CARE o CoT) y cómo mejoró el prompt]
+[Escribe en 2 a 3 líneas la justificación técnica del framework elegido y las mejoras estructurales aplicadas]
 
 ### PROMPT MEJORADO
 **[FRAMEWORK UTILIZADO: <Nombre del Framework Elegido>]**
 
-[Escribe aquí el prompt final optimizado aplicando el framework elegido, en formato Markdown]
+[Escribe aquí el prompt optimizado final completo, listo para copiar y pegar, estructurado y autocontenido en Markdown]
 
-Prompt Original a mejorar:
-${inspectedPrompt.content}`;
+<prompt_original>
+${inspectedPrompt.content}
+</prompt_original>`;
 
       const res = await fetch('http://127.0.0.1:11434/api/generate', {
         method: 'POST',
@@ -358,21 +483,59 @@ ${inspectedPrompt.content}`;
         console.warn("Error al extraer secciones del texto generado.");
       }
 
+      const targetCategory = inspectedPrompt.category || (selectedCategory && selectedSubCategory ? `${selectedCategory.title} > ${selectedSubCategory}` : 'Antigravity OS > Master Prompts');
       const newPrompt: Prompt = {
         ...inspectedPrompt,
+        category: targetCategory,
         id: (inspectedPrompt.id || Date.now().toString()) + '-upgraded',
-        title: inspectedPrompt.title + ' (Upgrade)',
+        title: inspectedPrompt.title.includes('(Upgrade)') ? inspectedPrompt.title : inspectedPrompt.title + ' (Upgrade)',
         content: finalPrompt,
         upgradeExplanation: explanation
       };
       
       setPrompts(prev => [newPrompt, ...prev]);
       setAllPrompts(prev => [newPrompt, ...prev]);
+
+      // Actualizar contadores de categorías en memoria
+      setCategories(prev => {
+        return prev.map(cat => {
+          const parts = (newPrompt.category || '').split(' > ');
+          const main = parts[0]?.trim();
+          const sub = parts[1]?.trim();
+          if (cat.id === main) {
+            return {
+              ...cat,
+              totalCount: cat.totalCount + 1,
+              subCategories: cat.subCategories.map(s => s.name === sub ? { ...s, count: s.count + 1 } : s)
+            };
+          }
+          return cat;
+        });
+      });
       
+      // Persistencia de memoria inmediata (localStorage)
       let storedStr = localStorage.getItem('upgraded_prompts');
-      let storedPrompts = storedStr ? JSON.parse(storedStr) : [];
-      storedPrompts.push(newPrompt);
+      let storedPrompts: Prompt[] = [];
+      try {
+        if (storedStr) storedPrompts = JSON.parse(storedStr);
+      } catch (e) {}
+      const newKey = makePromptKey(newPrompt);
+      storedPrompts = [newPrompt, ...storedPrompts.filter(p => makePromptKey(p) !== newKey && p.id !== newPrompt.id)];
       localStorage.setItem('upgraded_prompts', JSON.stringify(storedPrompts));
+
+      // Registrar en historial para que aparezca en el carrusel de recientes inmediatamente
+      const now = new Date().toISOString();
+      setPromptHistoryEntry(newKey, now);
+      setPromptHistory(prev => ({ ...prev, [newKey]: now }));
+
+      // Persistencia en disco a través del backend FastAPI
+      try {
+        fetch(`${API_URL}/prompts/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newPrompt)
+        }).catch(() => { /* backend offline: queda en localStorage */ });
+      } catch (e) {}
 
       setInspectedPrompt(newPrompt);
       setExplanationPopup({ title: newPrompt.title, text: explanation });
@@ -448,32 +611,11 @@ ${inspectedPrompt.content}`;
     }
   };
 
-  const handleLogic = async () => {
+  const handleLogic = () => {
     if (!inspectedPrompt) return;
     setPanelTab('logic');
-    const key = makePromptKey(inspectedPrompt);
-    if (logicData[key]) return;
-
-    setIsGeneratingLogic(true);
-    try {
-      const res = await fetch('http://127.0.0.1:11434/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'hermes3:8b',
-          prompt: `Analiza el siguiente prompt y explica detalladamente cómo funciona, su lógica interna y su propósito principal de manera extensa y clara.\n\nPrompt:\n${inspectedPrompt.content}`,
-          stream: false
-        })
-      });
-      if (!res.ok) throw new Error('Error al conectar con Ollama');
-      const data = await res.json();
-      setLogicData(prev => ({ ...prev, [key]: data.response }));
-    } catch (err) {
-      console.error(err);
-      setLogicData(prev => ({ ...prev, [key]: 'No se pudo generar la explicacion. Verifica la conexion con Ollama local.' }));
-    } finally {
-      setIsGeneratingLogic(false);
-    }
+    const key = `atlas_${makePromptKey(inspectedPrompt)}`;
+    logicTaskManager.startTask(key, inspectedPrompt.content, inspectedPrompt.title);
   };
 
   const handleSuggestFlows = async () => {
@@ -613,12 +755,17 @@ ${inspectedPrompt.content}`;
   const launchChain = () => {
     if (selectedForChain.length === 0) return;
     const chainKey = `chain_${Date.now()}`;
-    navigate('/builder', {
-      state: {
-        promptChain: selectedForChain,
-        promptKey: chainKey,
-        restoreCanvas: false
-      }
+    sendToBuilderBridge(navigate, {
+      promptChain: selectedForChain.map(p => ({
+        title: p.title || 'Paso del Flujo',
+        content: p.content || '',
+        role: p.category || 'General',
+        framework: 'auto',
+        llm_model: 'hermes3:8b',
+        temperature: 0.7,
+        key: makePromptKey(p)
+      })),
+      promptKey: chainKey
     });
   };
 
@@ -630,13 +777,17 @@ ${inspectedPrompt.content}`;
     setPromptHistoryEntry(key, now);
     setPromptHistory(prev => ({ ...prev, [key]: now }));
 
-    const savedNodes = localStorage.getItem(`builder_nodes_${key}`);
-    navigate('/builder', {
-      state: {
-        prompt,
-        promptKey: key,
-        restoreCanvas: !!(savedNodes)
-      }
+    sendToBuilderBridge(navigate, {
+      prompt: {
+        title: prompt.title || 'Prompt',
+        content: prompt.content || '',
+        role: prompt.category || 'General',
+        framework: 'auto',
+        llm_model: 'hermes3:8b',
+        temperature: 0.7,
+        key: key
+      },
+      promptKey: key
     });
   };
 
@@ -672,7 +823,24 @@ ${inspectedPrompt.content}`;
     setSelectedSubCategory(subCat);
     setView('prompts');
     setIsLoading(true);
-    const filtered = allPrompts.filter((p) => {
+    
+    // Garantizar que prompts generados en localStorage estén siempre incluidos en la memoria activa
+    let currentAll = allPrompts;
+    try {
+      const storedStr = localStorage.getItem('upgraded_prompts');
+      if (storedStr) {
+        const storedPrompts = JSON.parse(storedStr) as Prompt[];
+        if (Array.isArray(storedPrompts) && storedPrompts.length > 0) {
+          const storedKeys = new Set(storedPrompts.map(p => makePromptKey(p)));
+          currentAll = [...storedPrompts, ...allPrompts.filter(p => !storedKeys.has(makePromptKey(p)))];
+          if (currentAll.length !== allPrompts.length) {
+            setAllPrompts(currentAll);
+          }
+        }
+      }
+    } catch (e) {}
+
+    const filtered = currentAll.filter((p) => {
       const parts = (p.category || 'General').split(' > ');
       const main = parts[0].trim();
       const sub = parts[1] ? parts[1].trim() : 'General';
@@ -961,19 +1129,25 @@ ${inspectedPrompt.content}`;
               `}</style>
               <div className="flex animate-marquee-recent gap-6 px-4">
                 {recentPrompts.concat(recentPrompts).map((prompt, i) => {
-                  const isInspected = inspectedPrompt === prompt;
+                  const key = makePromptKey(prompt);
+                  const isInspected = inspectedPrompt === prompt || (inspectedPrompt && makePromptKey(inspectedPrompt) === key);
+                  const isGenerated = isGeneratedPrompt(prompt);
+                  const activeClass = isGenerated ? 'active-card-blue' : 'active-card';
                   return (
                     <div 
                       key={i} 
                       onClick={(e) => { 
                       e.stopPropagation(); 
                       setInspectedPrompt(prompt); 
-                      const key = makePromptKey(prompt);
                       const now = new Date().toISOString();
                       setPromptHistoryEntry(key, now);
                       setPromptHistory(prev => ({ ...prev, [key]: now }));
                     }}
-                      className={`w-[320px] h-40 rounded-2xl p-5 shrink-0 shadow-lg relative cursor-pointer transition-colors flex flex-col justify-between overflow-hidden group border ${isInspected ? 'active-card' : 'bg-[#151515] border-[#2A2A2A] hover:border-gray-500'}`}
+                      className={`w-[320px] h-40 rounded-2xl p-5 shrink-0 shadow-lg relative cursor-pointer transition-colors flex flex-col justify-between overflow-hidden group border ${
+                        isInspected 
+                          ? activeClass 
+                          : (isGenerated ? 'bg-[#151515] border-blue-900/40 hover:border-blue-700/60' : 'bg-[#151515] border-[#2A2A2A] hover:border-gray-500')
+                      }`}
                     >
                       <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -1080,8 +1254,10 @@ ${inspectedPrompt.content}`;
               const key = makePromptKey(prompt);
               const lastOpened = promptHistory[key];
               const inChain = isInChain(prompt);
-              const isInspected = inspectedPrompt === prompt;
+              const isInspected = inspectedPrompt === prompt || (inspectedPrompt && makePromptKey(inspectedPrompt) === key);
               const chainPos = selectedForChain.findIndex(p => makePromptKey(p) === key);
+              const isGenerated = isGeneratedPrompt(prompt);
+              const activeClass = isGenerated ? 'active-card-blue' : 'active-card';
 
               return (
                 <div
@@ -1094,7 +1270,13 @@ ${inspectedPrompt.content}`;
                       setPromptHistoryEntry(key, now);
                       setPromptHistory(prev => ({ ...prev, [key]: now }));
                     }}
-                  className={`border rounded-2xl p-6 flex flex-col h-80 relative cursor-pointer transition-all group ${inChain ? 'border-[#174A1F] active-card' : isInspected ? 'active-card' : 'bg-[#151515] border-[#2A2A2A] hover:border-[#3a3a3a]'}`}
+                  className={`border rounded-2xl p-6 flex flex-col h-80 relative cursor-pointer transition-all group ${
+                    inChain 
+                      ? (isGenerated ? 'border-blue-500 active-card-blue' : 'border-[#174A1F] active-card') 
+                      : isInspected 
+                        ? activeClass 
+                        : (isGenerated ? 'bg-[#151515] border-blue-900/40 hover:border-blue-700/60' : 'bg-[#151515] border-[#2A2A2A] hover:border-[#3a3a3a]')
+                  }`}
                 >
                   {/* Chain position badge */}
                   {inChain && (
@@ -1107,7 +1289,7 @@ ${inspectedPrompt.content}`;
                     <div className="flex flex-col gap-1">
                       <span className="text-gray-500 text-xs font-bold bg-gray-800 px-3 py-1 rounded-full w-fit">#{idx + 1}</span>
                       {lastOpened && (
-                        <span className="text-green-500/70 text-[10px] leading-tight">🕐 {formatDate(lastOpened)}</span>
+                        <span className={`${isGenerated ? 'text-blue-400/70' : 'text-green-500/70'} text-[10px] leading-tight`}>🕐 {formatDate(lastOpened)}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
@@ -1163,11 +1345,9 @@ ${inspectedPrompt.content}`;
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate('/builder', {
-                            state: {
-                              promptChain: prompt.chain,
-                              restoreCanvas: false
-                            }
+                          sendToBuilderBridge(navigate, {
+                            promptChain: prompt.chain,
+                            promptKey: `chain_${Date.now()}`
                           });
                         }}
                         className="active-card-exempt text-white font-bold py-2 px-4 rounded-lg transition-colors w-full flex items-center justify-center gap-2" style={{ backgroundColor: '#151515', border: '1px solid #2A2A2A' }}
@@ -1176,15 +1356,8 @@ ${inspectedPrompt.content}`;
                       </button>
                     ) : (
                       <button
-                        onClick={(e) => { 
-                      e.stopPropagation(); 
-                      setInspectedPrompt(prompt); 
-                      const key = makePromptKey(prompt);
-                      const now = new Date().toISOString();
-                      setPromptHistoryEntry(key, now);
-                      setPromptHistory(prev => ({ ...prev, [key]: now }));
-                    }}
-                        className="active-card-exempt text-white font-bold py-2 px-4 rounded-lg transition-colors w-full" style={{ backgroundColor: '#151515', border: '1px solid #2A2A2A' }}
+                        onClick={(e) => handleSetPrompt(e, prompt)}
+                        className="active-card-exempt text-white font-bold py-2 px-4 rounded-lg transition-colors w-full cursor-pointer hover:border-[#3b82f6]" style={{ backgroundColor: '#000000', border: '1px solid #2A2A2A' }}
                       >
                         {lastOpened ? '🔁 Continuar en Builder' : 'Abrir en Builder'}
                       </button>
@@ -1238,23 +1411,22 @@ ${inspectedPrompt.content}`;
                     </button>
                     <button 
                       onClick={handleLogic}
-                      disabled={isGeneratingLogic}
-                      className="rounded bg-gray-800 hover:bg-gray-700 border border-transparent hover:border-blue-500 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] disabled:opacity-50"
+                      className={`rounded bg-gray-800 hover:bg-gray-700 border border-transparent hover:border-blue-500 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] ${panelTab === 'logic' ? 'text-blue-400 border-blue-500 bg-blue-950/30' : ''}`}
                     >
-                      {isGeneratingLogic ? '🧠 Analizando...' : '🧠 Lógica'}
+                      {currentLogicTask?.isRunning ? '🧠 Analizando...' : '🧠 Lógica'}
                     </button>
                   </div>
                   
                   <div className="flex gap-2 mt-2 w-full">
                     <button 
                       onClick={() => setPanelTab('content')} 
-                      className={`flex-1 text-sm font-bold px-4 py-2 rounded border transition-colors flex items-center justify-center gap-2 shadow-sm ${panelTab === 'content' ? 'bg-gray-800 text-white border-gray-500' : 'bg-transparent text-gray-400 border-gray-700 hover:text-gray-200'}`}
+                      className={`flex-1 text-sm font-bold px-3 py-2 rounded border transition-colors flex items-center justify-center gap-2 shadow-sm ${panelTab === 'content' ? 'bg-gray-800 text-white border-gray-500' : 'bg-transparent text-gray-400 border-gray-700 hover:text-gray-200'}`}
                     >
                       💬 Original
                     </button>
                     <button 
                       onClick={handleTranslate} 
-                      className={`flex-1 text-sm font-bold px-4 py-2 rounded border transition-colors flex items-center justify-center gap-2 shadow-sm ${panelTab === 'translation' ? 'bg-green-900/40 text-green-300 border-green-700/50' : 'bg-transparent text-green-500/70 border-green-900/50 hover:text-green-400 hover:border-green-700'}`}
+                      className={`flex-1 text-sm font-bold px-3 py-2 rounded border transition-colors flex items-center justify-center gap-2 shadow-sm ${panelTab === 'translation' ? 'bg-green-900/40 text-green-300 border-green-700/50' : 'bg-transparent text-green-500/70 border-green-900/50 hover:text-green-400 hover:border-green-700'}`}
                     >
                       🇪🇸 Traducir
                     </button>
@@ -1270,6 +1442,21 @@ ${inspectedPrompt.content}`;
                         <div 
                           className="h-full rounded-full transition-all duration-300 ease-out"
                           style={{ width: `${upgradeProgress}%`, backgroundColor: '#4ade80', boxShadow: '0 0 10px rgba(74,222,128,0.5)' }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+
+                  {currentLogicTask?.isRunning && (
+                    <div className="mt-2 flex flex-col gap-1">
+                      <div className="flex justify-between text-xs text-blue-400 font-medium">
+                        <span>Analizando lógica interna...</span>
+                        <span>{currentLogicTask.progress}% ({currentLogicTask.timeLeft})</span>
+                      </div>
+                      <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden border border-[#2A2A2A]">
+                        <div 
+                          className="h-full rounded-full transition-all duration-300 ease-out"
+                          style={{ width: `${currentLogicTask.progress}%`, backgroundColor: '#3b82f6', boxShadow: '0 0 10px rgba(59,130,246,0.5)' }}
                         ></div>
                       </div>
                     </div>
@@ -1296,7 +1483,7 @@ ${inspectedPrompt.content}`;
                     <ReactMarkdown>{translationData[makePromptKey(inspectedPrompt)] || (isTranslatingContent ? '🇪🇸 Conectando y traduciendo...' : 'No hay datos.')}</ReactMarkdown>
                   )}
                   {panelTab === 'logic' && (
-                    <ReactMarkdown>{logicData[makePromptKey(inspectedPrompt)] || (isGeneratingLogic ? '🧠 Conectando y generando análisis...' : 'No hay datos.')}</ReactMarkdown>
+                    <ReactMarkdown>{currentLogicTask?.result || (currentLogicTask?.isRunning ? '🧠 Conectando y analizando lógica...' : 'Presiona el botón "🧠 Lógica" para analizar la estructura y razonamiento de este prompt.')}</ReactMarkdown>
                   )}
                 </div>
                 

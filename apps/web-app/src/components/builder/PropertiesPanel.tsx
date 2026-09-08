@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Node } from '@xyflow/react';
-import { X, Sparkles, Loader2, Brain, Volume2 } from 'lucide-react';
+import { X, Wand2, Loader2, Brain, Volume2 } from 'lucide-react';
 import type { BuilderNodeData } from '../../types/builder';
 import { API_URL } from '../../lib/api';
 
@@ -12,12 +12,7 @@ interface PropertiesPanelProps {
   nodeStyle?: string;
 }
 
-const frameworkDescriptions: Record<string, string> = {
-  auto: 'El Meta-Orquestador analizará el grafo completo y decidirá el mejor motor. También lleva TTS.',
-  crewai: 'Ideal para agentes creativos y analistas. Funciona como un equipo conversacional.',
-  autogen: 'Ideal para programación, matemáticas y ejecución multi-agente de código.',
-  langgraph: 'Ideal para flujos estrictos, máquinas de estado y condicionales lógicos.'
-};
+
 
 export default function PropertiesPanel({ selectedNode, onUpdateNode, onAddVariantNode, onClose, nodeStyle = 'default' }: PropertiesPanelProps) {
   const [isSuggesting, setIsSuggesting] = useState(false);
@@ -34,6 +29,7 @@ export default function PropertiesPanel({ selectedNode, onUpdateNode, onAddVaria
 
   const data = (selectedNode.data || {}) as BuilderNodeData;
   const isAgentConfigurable = ['mainPrompt', 'logicaNode', 'editar', 'traducir', 'ai-node'].includes(selectedNode.type || 'mainPrompt');
+  const isGroupNode = selectedNode.type === 'group' || selectedNode.type === 'groupNode';
 
   const handleChange = (key: string, value: string) => {
     onUpdateNode(selectedNode.id, { ...data, [key]: value });
@@ -89,14 +85,14 @@ export default function PropertiesPanel({ selectedNode, onUpdateNode, onAddVaria
   // Determinar clases extra de estilo según el nodeStyle para que la columna combine con la card
   const customPanelStyle: React.CSSProperties = {
     backgroundColor: "var(--theme-card)",
-    borderColor: "var(--theme-border)",
+    borderColor: "#2563eb",
     color: "var(--theme-text)"
   };
   
   let extraClasses = "";
   
   if (nodeStyle === 'neon') {
-    customPanelStyle.boxShadow = "0 0 25px var(--theme-border), inset 0 0 10px var(--theme-border)";
+    customPanelStyle.boxShadow = "0 0 25px rgba(37, 99, 235, 0.4), inset 0 0 10px rgba(37, 99, 235, 0.2)";
     extraClasses = "border-2 rounded-2xl";
   } else if (nodeStyle === 'brutalist') {
     customPanelStyle.boxShadow = "8px 8px 0 var(--theme-text)";
@@ -120,7 +116,7 @@ export default function PropertiesPanel({ selectedNode, onUpdateNode, onAddVaria
       style={customPanelStyle}
     >
       <div className="flex justify-between items-center mb-6 shrink-0">
-        <h3 className="font-bold text-sm tracking-wide flex items-center gap-2" style={{ color: "var(--theme-text)" }}>
+        <h3 className="font-bold text-base tracking-wide flex items-center gap-2" style={{ color: "var(--theme-text)" }}>
           ⚙️ Propiedades del Nodo
         </h3>
         <button onClick={onClose} className="opacity-70 hover:opacity-100 transition-opacity" style={{ color: "var(--theme-text)" }}>
@@ -129,41 +125,73 @@ export default function PropertiesPanel({ selectedNode, onUpdateNode, onAddVaria
       </div>
 
         <div className="space-y-4 flex-1 flex flex-col min-h-0">
-          <div className="shrink-0">
-            <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider opacity-70">Título del Paso</label>
-            <input
-              type="text"
-              value={data.title || ''}
-              onChange={(e) => handleChange('title', e.target.value)}
-              className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none transition-colors"
-              style={{ backgroundColor: "var(--theme-bg)", border: "1px solid var(--theme-border)", color: "var(--theme-text)" }}
-              placeholder="Ej. Redactor Publicitario"
-            />
-          </div>
-  
-          <div className="flex-1 flex flex-col min-h-[220px]">
-            <div className="flex items-center justify-between mb-1.5 shrink-0">
-               <div className="flex items-center gap-2"><label className="block text-xs font-semibold uppercase tracking-wider opacity-70">Instrucción / Prompt</label><button onClick={() => playTTS(data.content as string)} className="opacity-50 hover:opacity-100 transition-opacity"><Volume2 size={14} className="text-emerald-400"/></button></div>
-               {isAgentConfigurable && (
-                 <button 
-                   onClick={handleAutoSuggest} 
-                   disabled={isSuggesting || !data.content}
-                   title="Generar configuración con IA"
-                   className="text-[10px] px-2 py-1 rounded flex items-center gap-1 transition-colors disabled:opacity-50"
-                   style={{ backgroundColor: "var(--theme-border)", color: "var(--theme-text)" }}
-                 >
-                   {isSuggesting ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
-                   <span>Autocompletar</span>
-                 </button>
-               )}
+          {!isGroupNode && (
+            <>
+              <div className="shrink-0">
+                <label className="block text-sm font-semibold mb-1.5 uppercase tracking-wider opacity-70">Título del Paso</label>
+                <input
+                  type="text"
+                  value={data.title || ''}
+                  onChange={(e) => handleChange('title', e.target.value)}
+                  className="w-full rounded-lg px-3 py-2 text-base focus:outline-none transition-colors"
+                  style={{ backgroundColor: "var(--theme-bg)", border: "1px solid #2563eb", color: "var(--theme-text)" }}
+                  placeholder="Ej. Redactor Publicitario"
+                />
+              </div>
+      
+              <div className="flex-1 flex flex-col min-h-[220px]">
+                <div className="flex items-center justify-between mb-1.5 shrink-0">
+                   <div className="flex items-center gap-2"><label className="block text-sm font-semibold uppercase tracking-wider opacity-70">Instrucción / Prompt</label><button onClick={() => playTTS(data.content as string)} className="opacity-50 hover:opacity-100 transition-opacity"><Volume2 size={14} className="text-emerald-400"/></button></div>
+                   {isAgentConfigurable && (
+                     <button 
+                       onClick={handleAutoSuggest} 
+                       disabled={isSuggesting || !data.content}
+                       title="Mejorar configuración con IA"
+                       className="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50 font-medium text-white shadow-md bg-purple-600 hover:bg-purple-500"
+                     >
+                       {isSuggesting ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
+                       <span>Mejorar</span>
+                     </button>
+                   )}
+                </div>
+                <textarea
+                  value={data.content || ''}
+                  onChange={(e) => handleChange('content', e.target.value)}
+                  className="w-full flex-1 rounded-lg px-3 py-2 text-base focus:outline-none transition-colors resize-y theme-input"
+                  placeholder="Describe la tarea que debe realizar este nodo..."
+                />
+              </div>
+            </>
+          )}
+
+          {isGroupNode && (
+            <div className="flex-1 flex flex-col min-h-[220px] space-y-4">
+              <div>
+                <label className="block text-sm font-semibold mb-1.5 uppercase tracking-wider opacity-70">Contexto Global (System Prompt)</label>
+                <textarea
+                  value={(data.system_prompt as string) || ''}
+                  onChange={(e) => handleChange('system_prompt', e.target.value)}
+                  className="w-full flex-1 min-h-[150px] rounded-lg px-3 py-2 text-base focus:outline-none transition-colors resize-y theme-input"
+                  placeholder="Instrucciones globales para este grupo..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1.5 uppercase tracking-wider opacity-70">Modelo Global</label>
+                <select
+                  value={(data.global_model as string) || 'hermes3:8b'}
+                  onChange={(e) => handleChange('global_model', e.target.value)}
+                  className="w-full rounded-lg px-3 py-2 text-base focus:outline-none transition-colors cursor-pointer theme-input"
+                >
+                  <option value="hermes3:8b">Ollama: Hermes 3 (8B)</option>
+                  <option value="qwen2.5-coder:latest">Ollama: Qwen 2.5 Coder</option>
+                  <option value="llama3.2">Ollama: Llama 3.2</option>
+                  <option value="gpt-4o-mini">OpenAI: GPT-4o Mini</option>
+                  <option value="gpt-4o">OpenAI: GPT-4o</option>
+                  <option value="claude-3-5-sonnet">Anthropic: Claude 3.5 Sonnet</option>
+                </select>
+              </div>
             </div>
-            <textarea
-              value={data.content || ''}
-              onChange={(e) => handleChange('content', e.target.value)}
-              className="w-full flex-1 rounded-lg px-3 py-2 text-sm focus:outline-none transition-colors resize-y theme-input"
-              placeholder="Describe la tarea que debe realizar este nodo..."
-            />
-          </div>
+          )}
 
         {isAgentConfigurable && (
           <>
@@ -177,40 +205,37 @@ export default function PropertiesPanel({ selectedNode, onUpdateNode, onAddVaria
             <div className="h-px w-full my-2 shrink-0 opacity-20" style={{ backgroundColor: "var(--theme-text)" }} />
             
             <div>
-              <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider opacity-70">Framework Objetivo</label>
-              <select
-                value={data.framework || 'auto'}
-                onChange={(e) => handleChange('framework', e.target.value)}
-                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none transition-colors cursor-pointer theme-input"
-              >
-                <option value="auto">Automático</option>
-                <option value="crewai">CrewAI</option>
-                <option value="autogen">AutoGen</option>
-                <option value="langgraph">LangGraph</option>
-              </select>
+              <label className="block text-sm font-semibold mb-1.5 uppercase tracking-wider opacity-70">Herramientas (Tools)</label>
+              <input
+                type="text"
+                value={(data.tools as string) || ''}
+                onChange={(e) => handleChange('tools', e.target.value)}
+                className="w-full rounded-lg px-3 py-2 text-base focus:outline-none transition-colors theme-input"
+                placeholder="Ej. tavily_search, python_repl, calculator"
+              />
               <p className="text-[10px] mt-2 p-2 rounded border leading-relaxed opacity-80 theme-input">
-                 {frameworkDescriptions[data.framework || 'auto']}
+                 Herramientas separadas por comas que este nodo puede usar.
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider opacity-70">Rol Específico</label>
+              <label className="block text-sm font-semibold mb-1.5 uppercase tracking-wider opacity-70">Rol Específico</label>
               <input
                 type="text"
                 value={data.role || ''}
                 onChange={(e) => handleChange('role', e.target.value)}
-                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none transition-colors theme-input"
+                className="w-full rounded-lg px-3 py-2 text-base focus:outline-none transition-colors theme-input"
                 placeholder="Ej. Senior Python Developer"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider opacity-70">Variables de Entrada</label>
+              <label className="block text-sm font-semibold mb-1.5 uppercase tracking-wider opacity-70">Variables de Entrada</label>
               <input
                 type="text"
                 value={data.variables || ''}
                 onChange={(e) => handleChange('variables', e.target.value)}
-                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none transition-colors theme-input"
+                className="w-full rounded-lg px-3 py-2 text-base focus:outline-none transition-colors theme-input"
                 placeholder="Ej. topic, audience_size"
               />
             </div>
@@ -218,11 +243,11 @@ export default function PropertiesPanel({ selectedNode, onUpdateNode, onAddVaria
             <div className="h-px w-full my-2 shrink-0 opacity-20" style={{ backgroundColor: "var(--theme-text)" }} />
             
             <div>
-              <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider opacity-70">Modelo LLM</label>
+              <label className="block text-sm font-semibold mb-1.5 uppercase tracking-wider opacity-70">Modelo LLM</label>
               <select
                 value={data.llm_model || 'hermes3:8b'}
                 onChange={(e) => handleChange('llm_model', e.target.value)}
-                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none transition-colors cursor-pointer theme-input"
+                className="w-full rounded-lg px-3 py-2 text-base focus:outline-none transition-colors cursor-pointer theme-input"
               >
                 <option value="hermes3:8b">Ollama: Hermes 3 (8B)</option>
                 <option value="qwen2.5-coder:latest">Ollama: Qwen 2.5 Coder</option>
@@ -235,8 +260,8 @@ export default function PropertiesPanel({ selectedNode, onUpdateNode, onAddVaria
 
             <div>
               <div className="flex justify-between items-center mb-1.5">
-                <label className="block text-xs font-semibold uppercase tracking-wider opacity-70">Temperatura</label>
-                <span className="text-xs opacity-70 font-mono">{data.temperature || '0.7'}</span>
+                <label className="block text-sm font-semibold uppercase tracking-wider opacity-70">Temperatura</label>
+                <span className="text-sm opacity-70 font-mono">{data.temperature || '0.7'}</span>
               </div>
               <input
                 type="range"
@@ -254,12 +279,12 @@ export default function PropertiesPanel({ selectedNode, onUpdateNode, onAddVaria
             </div>
 
             <div>
-              <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider opacity-70">Output Schema (JSON)</label>
+              <label className="block text-sm font-semibold mb-1.5 uppercase tracking-wider opacity-70">Output Schema (JSON)</label>
               <textarea
                 value={data.output_schema || ''}
                 onChange={(e) => handleChange('output_schema', e.target.value)}
-                className="w-full min-h-[100px] rounded-lg px-3 py-2 text-xs font-mono focus:outline-none transition-colors resize-y"
-                style={{ backgroundColor: "var(--theme-bg)", border: "1px solid var(--theme-border)", color: "var(--theme-text)" }}
+                className="w-full min-h-[100px] rounded-lg px-3 py-2 text-sm font-mono focus:outline-none transition-colors resize-y"
+                style={{ backgroundColor: "var(--theme-bg)", border: "1px solid #2563eb", color: "var(--theme-text)" }}
                 placeholder='{
   "key": "value"
 }'
@@ -269,7 +294,7 @@ export default function PropertiesPanel({ selectedNode, onUpdateNode, onAddVaria
         )}
       </div>
       
-      <div className="pt-3 mt-3 border-t shrink-0 opacity-50" style={{ borderColor: "var(--theme-border)" }}>
+      <div className="pt-3 mt-3 border-t shrink-0 opacity-50" style={{ borderColor: "#2563eb" }}>
          <div className="text-[10px] text-center">ID: {selectedNode.id}</div>
       </div>
     </div>
