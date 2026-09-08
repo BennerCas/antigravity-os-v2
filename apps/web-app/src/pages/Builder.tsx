@@ -1427,30 +1427,30 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
           onClick={() => setBuilderTab('flowarchitect')}
           className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold text-sm transition-all duration-300 cursor-pointer border ${
             builderTab === 'flowarchitect'
-              ? 'bg-[#0D1A3B] border-[#1D3A8A] text-[#93C5FD] shadow-[0_0_15px_rgba(37,99,235,0.4)]'
-              : 'bg-transparent border-transparent text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-[#111111] hover:border-[#2A2A2A]'
+              ? 'bg-blue-900/30 border-blue-500 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.5)]'
+              : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5 hover:border-gray-800'
           }`}
         >
           Flow Architect
         </button>
-        <div className="w-[1px] h-6 bg-[#2A2A2A] mx-1"></div>
+        <div className="w-[1px] h-6 bg-gray-800 mx-1"></div>
         <button
           onClick={() => setBuilderTab('runinspector')}
           className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold text-sm transition-all duration-300 cursor-pointer border ${
             builderTab === 'runinspector'
-              ? 'bg-[#0D1A3B] border-[#1D3A8A] text-[#93C5FD] shadow-[0_0_15px_rgba(37,99,235,0.4)]'
-              : 'bg-transparent border-transparent text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-[#111111] hover:border-[#2A2A2A]'
+              ? 'bg-blue-900/30 border-blue-500 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.5)]'
+              : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5 hover:border-gray-800'
           }`}
         >
           Run Inspector
         </button>
-        <div className="w-[1px] h-6 bg-[#2A2A2A] mx-1"></div>
+        <div className="w-[1px] h-6 bg-gray-800 mx-1"></div>
         <button
           onClick={() => setBuilderTab('flowboard')}
           className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold text-sm transition-all duration-300 cursor-pointer border ${
             builderTab === 'flowboard'
-              ? 'bg-[#0D1A3B] border-[#1D3A8A] text-[#93C5FD] shadow-[0_0_15px_rgba(37,99,235,0.4)]'
-              : 'bg-transparent border-transparent text-[#8A8A8A] hover:text-[#FFFFFF] hover:bg-[#111111] hover:border-[#2A2A2A]'
+              ? 'bg-blue-900/30 border-blue-500 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.5)]'
+              : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5 hover:border-gray-800'
           }`}
         >
           FlowBoard

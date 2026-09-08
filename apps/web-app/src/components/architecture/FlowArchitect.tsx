@@ -75,7 +75,7 @@ export const FlowArchitect: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-900 text-white">
+    <div className="flex h-full w-full bg-gray-900 text-white">
       {/* Left panel: Discovery Chat */}
       <div className="w-1/3 flex flex-col border-r border-gray-700">
         <div className="p-4 bg-gray-800 font-bold border-b border-gray-700">

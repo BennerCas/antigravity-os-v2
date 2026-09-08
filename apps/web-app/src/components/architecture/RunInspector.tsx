@@ -37,7 +37,7 @@ export const RunInspector: React.FC<{ runId: string }> = ({ runId }) => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-950 text-white">
+    <div className="flex h-full w-full bg-gray-950 text-white">
       {/* Event Timeline */}
       <div className="w-1/2 border-r border-gray-800 p-6 overflow-y-auto">
         <h2 className="text-xl font-bold mb-6 text-gray-200 border-b border-gray-800 pb-2">
