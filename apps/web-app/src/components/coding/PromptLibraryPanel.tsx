@@ -25,7 +25,7 @@ export default function PromptLibraryPanel({ onSelectPrompt }: PromptLibraryPane
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/v1/prompts/categories`);
+      const res = await fetch(`${API_URL}/prompts/categories`);
       if (res.ok) {
         const data = await res.json();
         const cats = Array.isArray(data) ? data.map((d: any) => d.category || d) : (data.categories || []);
@@ -45,7 +45,7 @@ export default function PromptLibraryPanel({ onSelectPrompt }: PromptLibraryPane
     setActiveCategory(category);
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/v1/prompts/prompts/${category}`);
+      const res = await fetch(`${API_URL}/prompts/prompts/${category}`);
       if (res.ok) {
         const data = await res.json();
         const mappedPrompts = Array.isArray(data) ? data.map((p: any, idx: number) => ({
