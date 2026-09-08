@@ -137,18 +137,18 @@ export const RunResults: React.FC = () => {
                 <button
                   onClick={() => handlePlayTTS(item.id, item.result_text)}
                   className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    isActive && currentSection === \`result-\${item.id}\` && !isPaused
+                    isActive && currentSection === `result-${item.id}` && !isPaused
                       ? 'bg-blue-900/30 text-blue-400 border border-blue-800'
                       : 'bg-[#1A1A1A] hover:bg-[#252525] text-gray-300 border border-[#2A2A2A]'
                   }`}
                 >
-                  {isActive && currentSection === \`result-\${item.id}\` && !isPaused ? (
+                  {isActive && currentSection === `result-${item.id}` && !isPaused ? (
                     <><Pause weight="fill" /> Pausar</>
                   ) : (
                     <><Play weight="fill" /> Escuchar TTS</>
                   )}
                 </button>
-                {isActive && currentSection === \`result-\${item.id}\` && (
+                {isActive && currentSection === `result-${item.id}` && (
                   <button
                     onClick={stop}
                     className="flex items-center justify-center p-1.5 bg-red-900/20 text-red-400 hover:bg-red-900/40 rounded-lg border border-red-900/30"
