@@ -1,5 +1,5 @@
 import React from 'react';
-import { BuilderNode, DataContract, NodeExecutionPolicy } from '../../types/builder-flow';
+import { BuilderNode, NodeExecutionPolicy } from '../../types/builder-flow';
 
 interface ContractInspectorProps {
   node: BuilderNode;

@@ -27,26 +27,13 @@ export const RunResults: React.FC = () => {
     try {
       setLoading(true);
       // In a real scenario this fetches from the backend DB of executions
-      // For now we mock the data to show the UI
-      setTimeout(() => {
-        setResults([
-          {
-            id: 'exec-1',
-            run_id: 'run-xyz-123',
-            status: 'completed',
-            result_text: 'El motor LangGraph ha concluido el proceso exitosamente. Los nodos han interactuado sin interrupciones y el documento final está listo para revisión.',
-            created_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-          },
-          {
-            id: 'exec-2',
-            run_id: 'run-abc-456',
-            status: 'completed',
-            result_text: 'The code refactoring agent has successfully optimized the module, resulting in a 30% reduction in execution time and lower memory consumption.',
-            created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-          }
-        ]);
-        setLoading(false);
-      }, 500);
+      const stored = localStorage.getItem('builder_run_results');
+      if (stored) {
+        setResults(JSON.parse(stored));
+      } else {
+        setResults([]);
+      }
+      setLoading(false);
     } catch (e) {
       console.error(e);
       setLoading(false);

@@ -17,7 +17,7 @@ interface ApprovalTask {
 }
 
 export const RunInspector: React.FC<{ runId: string }> = ({ runId }) => {
-  const [events, setEvents] = useState<RunEvent[]>([]);
+  const [events, _setEvents] = useState<RunEvent[]>([]);
   const [activeTask, setActiveTask] = useState<ApprovalTask | null>(null);
 
   // MOCK FETCH - In a real app, this would poll or use WebSockets from backend/routers/runs.py

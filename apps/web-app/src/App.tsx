@@ -23,6 +23,7 @@ const Atlas = lazy(() => import('./pages/Atlas'));
 const Agents = lazy(() => import('./pages/Agents'));
 const Flows = lazy(() => import('./pages/Flows'));
 const Builder = lazy(() => import('./pages/Builder'));
+const Academy = lazy(() => import('./pages/Academy'));
 const Vault = lazy(() => import('./pages/Vault'));
 const Coding = lazy(() => import('./pages/Coding'));
 const Architecture = lazy(() => import('./pages/Architecture'));
@@ -48,6 +49,9 @@ function MainContent() {
       </div>
       <div style={{ display: path === '/builder' ? 'block' : 'none', height: '100%', width: '100%' }}>
         <Builder />
+      </div>
+      <div style={{ display: path === '/academy' ? 'block' : 'none', height: '100%', width: '100%' }}>
+        <Academy />
       </div>
       <div style={{ display: path === '/vault' ? 'block' : 'none', height: '100%', width: '100%' }}>
         <Vault />

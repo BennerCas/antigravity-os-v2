@@ -20,7 +20,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { v4 as uuidv4 } from 'uuid';
-import type { BuilderNodeData, PromptChainItem, ExecutionResult, UpdatedNode } from '../types/builder';
+import type { BuilderNodeData, PromptChainItem, ExecutionResult } from '../types/builder';
 import { BuilderInjectionPayload, drainPendingBuilderInjections } from '../lib/builderBridge';
 import { API_URL } from '../lib/api';
 import { getStroke } from 'perfect-freehand';
@@ -731,7 +731,21 @@ function BuilderContent() {
       ];
       setTerminalLogs(terminalLogsRef.current);
       
-      setFinalOutputContent(`### Resultado Final\n\n${finalMsg}`);
+      const outputText = `### Resultado Final\n\n${finalMsg}`;
+      setFinalOutputContent(outputText);
+      try {
+        const stored = JSON.parse(localStorage.getItem('builder_run_results') || '[]');
+        const newRecord = {
+          id: Math.random().toString(36).substring(7),
+          run_id: responseJson.thread_id || 'run-' + Math.random().toString(36).substring(7),
+          status: 'completed',
+          result_text: finalMsg,
+          created_at: new Date().toISOString()
+        };
+        localStorage.setItem('builder_run_results', JSON.stringify([newRecord, ...stored]));
+      } catch (e) {
+        console.error("Failed to save run result", e);
+      }
       setShowArtifactModal(true);
       setIsExecuting(false);
 
@@ -784,7 +798,21 @@ function BuilderContent() {
       ];
       setTerminalLogs(terminalLogsRef.current);
       
-      setFinalOutputContent(`### Resultado Final\n\n${finalMsg}`);
+      const outputText = `### Resultado Final\n\n${finalMsg}`;
+      setFinalOutputContent(outputText);
+      try {
+        const stored = JSON.parse(localStorage.getItem('builder_run_results') || '[]');
+        const newRecord = {
+          id: Math.random().toString(36).substring(7),
+          run_id: responseJson.thread_id || 'run-' + Math.random().toString(36).substring(7),
+          status: 'completed',
+          result_text: finalMsg,
+          created_at: new Date().toISOString()
+        };
+        localStorage.setItem('builder_run_results', JSON.stringify([newRecord, ...stored]));
+      } catch (e) {
+        console.error("Failed to save run result", e);
+      }
       setShowArtifactModal(true);
       setIsExecuting(false);
       setHumanInput("");
@@ -1742,6 +1770,15 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
           title="Iniciar Guía Interactiva"
         >
           🎓 Guía
+        </button>
+
+        {/* Academy LOS */}
+        <button
+          onClick={() => navigate('/academy')}
+          className="px-5 py-2 rounded-full font-bold flex items-center gap-2 transition-all bottom-dock-btn text-[var(--theme-text)] hover:text-[#86EFAC]"
+          title="Antigravity Academy — Misiones de Arquitectura y Verificación"
+        >
+          🏛️ Academy
         </button>
 
         {/* 2. AI Flow */}

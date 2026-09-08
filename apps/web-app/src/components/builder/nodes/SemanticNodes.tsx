@@ -1,5 +1,5 @@
 import React from 'react';
-import { Handle, Position } from 'reactflow';
+import { Handle, Position } from '@xyflow/react';
 import { BuilderNode } from '../../../types/builder-flow';
 
 interface SemanticNodeProps {

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import config  # carga .env local (o fallback legacy) antes que todo
-from routers import execute, search, prompts, builder_actions, vault, compiler, runtime, flows, architecture, automations, coding, native_engine, semantic_search, builder_v1, architect_v1
+from routers import execute, search, prompts, builder_actions, vault, compiler, runtime, flows, architecture, automations, coding, native_engine, semantic_search, builder_v1, architect_v1, academy
 
 app = FastAPI(
     title="Antigravity_OS Backend API",
@@ -33,11 +33,14 @@ app.include_router(native_engine.router, prefix="/api/v1")
 app.include_router(semantic_search.router, prefix="/api/v1")
 app.include_router(builder_v1.router, prefix="/api/v1")
 app.include_router(architect_v1.router, prefix="/api/v1")
+app.include_router(academy.router, prefix="/api/v1/learning")
 
 @app.on_event("startup")
 async def startup_event():
     import db
     db.init_db()
+    from services.academy.catalog_service import CatalogService
+    CatalogService.seed_catalog()
     automations.init_scheduler()
     # Inicializar ChromaDB y disparar indexación semántica en background
     await semantic_search.startup_semantic()
