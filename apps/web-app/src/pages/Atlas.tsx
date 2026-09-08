@@ -1236,6 +1236,21 @@ ${inspectedPrompt.content}`;
                     </button>
                   </div>
                   
+                  <div className="flex gap-2 mt-2 w-full">
+                    <button 
+                      onClick={() => setPanelTab('content')} 
+                      className={`flex-1 text-sm font-bold px-4 py-2 rounded border transition-colors flex items-center justify-center gap-2 shadow-sm ${panelTab === 'content' ? 'bg-gray-800 text-white border-gray-500' : 'bg-transparent text-gray-400 border-gray-700 hover:text-gray-200'}`}
+                    >
+                      💬 Original
+                    </button>
+                    <button 
+                      onClick={handleTranslate} 
+                      className={`flex-1 text-sm font-bold px-4 py-2 rounded border transition-colors flex items-center justify-center gap-2 shadow-sm ${panelTab === 'translation' ? 'bg-green-900/40 text-green-300 border-green-700/50' : 'bg-transparent text-green-500/70 border-green-900/50 hover:text-green-400 hover:border-green-700'}`}
+                    >
+                      🇪🇸 Traducir
+                    </button>
+                  </div>
+                  
                   {isUpgrading && (
                     <div className="mt-2 flex flex-col gap-1">
                       <div className="flex justify-between text-xs text-[#7B9C7F] font-medium">
@@ -1257,21 +1272,7 @@ ${inspectedPrompt.content}`;
                     <span className="text-xs font-bold text-blue-400 uppercase tracking-widest">{inspectedPrompt.category?.split(' > ').pop() || 'Prompt'}</span>
                     <h3 className="text-2xl font-bold text-white mt-1 leading-tight">{inspectedPrompt.title}</h3>
                   </div>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => setPanelTab('content')} 
-                      className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors flex items-center gap-1 shadow-sm shrink-0 ${panelTab === 'content' ? 'bg-gray-800 text-white border-gray-500' : 'bg-transparent text-gray-400 border-gray-700 hover:text-gray-200'}`}
-                    >
-                      💬 Original
-                    </button>
-                    <button 
-                      onClick={handleTranslate} 
-                      className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors flex items-center gap-1 shadow-sm shrink-0 ${panelTab === 'translation' ? 'bg-green-900/40 text-green-300 border-green-700/50' : 'bg-transparent text-green-500/70 border-green-900/50 hover:text-green-400 hover:border-green-700'}`}
-                    >
-                      🇪🇸 Traducir
-                    </button>
 
-                  </div>
                 </div>
                 
                 <div className="bg-gray-900/80 p-5 rounded-xl border border-gray-800 text-sm text-gray-300 leading-relaxed prose prose-invert prose-sm max-w-none prose-headings:text-blue-400 prose-a:text-blue-400 shadow-inner">
