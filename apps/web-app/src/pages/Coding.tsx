@@ -108,11 +108,16 @@ export default function Coding() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 border ${
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
                   activeTab === tab.id
-                    ? 'bg-[#0A1C0D] border-[#174A1F] text-[#7B9C7F] shadow-[0_0_10px_rgba(23,74,31,0.5)]'
-                    : 'border-transparent text-[#8A8A8A] bg-transparent hover:text-[#d0d0d0] hover:bg-[#1A1A1A]'
+                    ? 'shadow-[0_0_10px_rgba(23,74,31,0.5)]'
+                    : 'hover:text-[#d0d0d0] hover:bg-[#1A1A1A]'
                 }`}
+                style={{
+                  backgroundColor: activeTab === tab.id ? '#0A1C0D' : 'transparent',
+                  border: `1px solid ${activeTab === tab.id ? '#174A1F' : 'transparent'}`,
+                  color: activeTab === tab.id ? '#7B9C7F' : '#8A8A8A'
+                }}
               >
                 {tab.label}
               </button>
