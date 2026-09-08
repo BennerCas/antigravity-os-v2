@@ -1170,7 +1170,14 @@ ${inspectedPrompt.content}`;
                       disabled={isTranslating}
                       className="rounded bg-gray-800 hover:bg-gray-700 border border-transparent hover:border-blue-500 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] disabled:opacity-50"
                     >
-                      {isTranslating ? '🔊 Traduciendo...' : '🗣️ TTS'}
+                      {isTranslating ? '🔊 TTS...' : '🗣️ TTS'}
+                    </button>
+                    <button 
+                      onClick={handleLogic}
+                      disabled={isGeneratingLogic}
+                      className="rounded bg-gray-800 hover:bg-gray-700 border border-transparent hover:border-blue-500 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] disabled:opacity-50"
+                    >
+                      {isGeneratingLogic ? '🧠 Analizando...' : '🧠 Lógica'}
                     </button>
                   </div>
                   
@@ -1208,12 +1215,11 @@ ${inspectedPrompt.content}`;
                     >
                       🇪🇸 Traducir
                     </button>
-                    <button 
-                      onClick={handleLogic} 
-                      className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors flex items-center gap-1 shadow-sm shrink-0 ${panelTab === 'logic' ? 'bg-blue-900/40 text-blue-300 border-blue-700/50' : 'bg-transparent text-blue-500/70 border-blue-900/50 hover:text-blue-400 hover:border-blue-700'}`}
-                    >
-                      🧠 Lógica
-                    </button>
+                    {panelTab === 'logic' && (
+                      <div className="text-xs font-bold px-3 py-1.5 rounded-lg border flex items-center gap-1 shadow-sm shrink-0 bg-blue-900/40 text-blue-300 border-blue-700/50">
+                        🧠 Vista de Lógica
+                      </div>
+                    )}
                   </div>
                 </div>
                 
