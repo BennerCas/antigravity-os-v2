@@ -89,6 +89,8 @@ const Agents = () => {
   const [isGeneratingLogic, setIsGeneratingLogic] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [upgradeProgress, setUpgradeProgress] = useState(0);
+  const [upgradeTimeLeft, setUpgradeTimeLeft] = useState('');
 
   useEffect(() => {
     setPanelTab('content');
@@ -200,6 +202,9 @@ const Agents = () => {
   const handleUpgrade = async () => {
     if (!inspectedAgent) return;
     setIsUpgrading(true);
+    setUpgradeProgress(0);
+    setUpgradeTimeLeft('Calculando...');
+    
     try {
       const res = await fetch('http://127.0.0.1:11434/api/generate', {
         method: 'POST',
@@ -207,17 +212,67 @@ const Agents = () => {
         body: JSON.stringify({
           model: 'hermes3:8b',
           prompt: `Mejora y haz mas profesional este prompt de sistema/agente. Añade secciones de contexto y reglas claras. Devuelve solo el resultado mejorado en Markdown.\n\nPrompt Original:\n${inspectedAgent.instructions || inspectedAgent.content}`,
-          stream: false
+          stream: true
         })
       });
-      if (!res.ok) throw new Error('Error de conexión con Ollama local');
-      const data = await res.json();
+      
+      if (!res.ok || !res.body) throw new Error('Error de conexión con Ollama local');
+      
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      
+      let generatedText = '';
+      let tokens = 0;
+      const startTime = Date.now();
+      const estimatedTotalTokens = 350; // Average estimate for a prompt upgrade
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(l => l.trim() !== '');
+        
+        for (const line of lines) {
+          try {
+            const parsed = JSON.parse(line);
+            if (parsed.response) {
+              generatedText += parsed.response;
+              tokens++;
+              
+              // Calculate progress %
+              let progress = Math.min(95, Math.floor((tokens / estimatedTotalTokens) * 100));
+              setUpgradeProgress(progress);
+              
+              // Calculate ETA based on tokens/sec
+              const elapsedMs = Date.now() - startTime;
+              if (elapsedMs > 1000) {
+                const tokensPerMs = tokens / elapsedMs;
+                const remainingTokens = Math.max(0, estimatedTotalTokens - tokens);
+                const remainingMs = remainingTokens / tokensPerMs;
+                const remainingSecs = Math.ceil(remainingMs / 1000);
+                
+                if (remainingSecs > 60) {
+                  setUpgradeTimeLeft(`${Math.floor(remainingSecs / 60)}m ${remainingSecs % 60}s`);
+                } else {
+                  setUpgradeTimeLeft(`${remainingSecs}s`);
+                }
+              }
+            }
+          } catch (e) {
+            // ignore JSON parse errors for incomplete chunks
+          }
+        }
+      }
+      
+      setUpgradeProgress(100);
+      setUpgradeTimeLeft('¡Listo!');
       
       const newAgent = {
         ...inspectedAgent,
         id: (inspectedAgent.id || Date.now().toString()) + '-upgraded',
         title: inspectedAgent.title + ' (Upgrade)',
-        instructions: data.response
+        instructions: generatedText
       };
       
       setAllAgents(prev => [newAgent, ...prev]);
@@ -976,16 +1031,32 @@ const Agents = () => {
                       disabled={isUpgrading}
                       className="rounded bg-gray-800 hover:bg-gray-700 border border-transparent hover:border-blue-500 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] disabled:opacity-50"
                     >
-                      {isUpgrading ? '⌛ Upgrade...' : '⬆️ Upgrade'}
+                      {isUpgrading ? '⚡ Upgrade...' : '✨ Upgrade'}
                     </button>
                     <button 
                       onClick={handleTTS}
                       disabled={isTranslating}
                       className="rounded bg-gray-800 hover:bg-gray-700 border border-transparent hover:border-blue-500 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] disabled:opacity-50"
                     >
-                      {isTranslating ? '⏳ Traduciendo...' : '🔊 TTS'}
+                      {isTranslating ? '🔊 Traduciendo...' : '🗣️ TTS'}
                     </button>
                   </div>
+                  
+                  {/* Progress Bar for Upgrade */}
+                  {isUpgrading && (
+                    <div className="mt-2 flex flex-col gap-1">
+                      <div className="flex justify-between text-xs text-gray-400 font-medium">
+                        <span>Generando mejora...</span>
+                        <span>{upgradeProgress}% ({upgradeTimeLeft})</span>
+                      </div>
+                      <div className="w-full bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                        <div 
+                          className="bg-blue-500 h-1.5 rounded-full transition-all duration-300 ease-out"
+                          style={{ width: `${upgradeProgress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Titulo y Boton Logica */}
