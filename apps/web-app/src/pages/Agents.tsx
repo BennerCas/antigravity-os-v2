@@ -217,11 +217,11 @@ const Agents = () => {
     
     try {
       const promptText = `Eres un Ingeniero de IA hispanohablante. Tu objetivo es mejorar este prompt.
-INSTRUCCIÓN CRÍTICA: Tu respuesta debe ser estrictamente un objeto JSON. La clave "explanation" TIENE QUE ESTAR ESCRITA EN ESPAÑOL (SPANISH). Si escribes la explicación en inglés, el sistema fallará.
+INSTRUCCIÓN CRÍTICA: Tu respuesta debe ser estrictamente un objeto JSON. Todos los textos y explicaciones deben redactarse obligatoriamente en idioma ESPAÑOL.
 
 {
-  "improved_prompt": "<el prompt mejorado aquí en formato Markdown>",
-  "explanation": "<tu explicación detallada en ESPAÑOL de por qué es mejor (2 a 3 líneas)>"
+  "prompt_mejorado": "<el prompt mejorado aquí en formato Markdown, escrito en español>",
+  "explicacion": "<tu justificación detallada en idioma ESPAÑOL de por qué es mejor (2 a 3 líneas)>"
 }
 
 Prompt Original a mejorar:
@@ -233,6 +233,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
         body: JSON.stringify({
           model: 'hermes3:8b',
           format: 'json',
+          system: 'Eres un sistema nativo en idioma ESPAÑOL. Absolutamente TODO el contenido que generes (explicaciones, respuestas, código, notas) DEBE estar única y exclusivamente en ESPAÑOL. NUNCA respondas en inglés.',
           prompt: promptText,
           stream: true
         })
@@ -294,8 +295,8 @@ ${inspectedAgent.instructions || inspectedAgent.content}`;
       let explanation = "Mejora generada exitosamente.";
       try {
         const parsedJson = JSON.parse(generatedText);
-        finalPrompt = parsedJson.improved_prompt || generatedText;
-        explanation = parsedJson.explanation || explanation;
+        finalPrompt = parsedJson.prompt_mejorado || parsedJson.improved_prompt || generatedText;
+        explanation = parsedJson.explicacion || parsedJson.explanation || explanation;
       } catch (e) {
         console.warn("No se pudo parsear el JSON de la mejora, usando texto crudo.");
       }
