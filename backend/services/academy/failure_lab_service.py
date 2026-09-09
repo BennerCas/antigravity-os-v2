@@ -112,19 +112,101 @@ class FailureLabService:
 
     @classmethod
     def inject_scenario(cls, session_id: str, scenario_id: str) -> Dict[str, Any]:
+        import copy
+        import db
+
         scenario = cls.get_scenario(scenario_id)
         if not scenario:
             raise ValueError(f"Scenario '{scenario_id}' not found.")
 
-        # Update session with the broken flow
-        import db
-        db.mission_session_update(session_id, {"sandbox_flow": scenario.flow_patch, "status": "blocked"})
+        session = db.mission_session_get(session_id)
+        if not session:
+            raise ValueError(f"Session '{session_id}' not found.")
+
+        current_flow = copy.deepcopy(session.get("sandbox_flow", {}))
+        nodes = current_flow.get("nodes", [])
+        edges = current_flow.get("edges", [])
+
+        # In-place chaos injection if learner has an active flow
+        mutation_applied = False
+        if nodes:
+            if scenario_id == "fail_schema_mismatch":
+                for n in nodes:
+                    ndata = n.setdefault("data", {})
+                    role = ndata.get("role", n.get("type", ""))
+                    if role in ["agent", "action", "transform"]:
+                        ndata["chaos_fault"] = "schema_mismatch"
+                        ndata["output_type"] = "string"
+                        ndata["output_schema"] = "invalid_string_format"
+                        mutation_applied = True
+                        break
+
+            elif scenario_id == "fail_rate_limit":
+                for n in nodes:
+                    ndata = n.setdefault("data", {})
+                    role = ndata.get("role", n.get("type", ""))
+                    if role in ["agent", "action"]:
+                        ndata["chaos_fault"] = "rate_limit_429"
+                        ndata["retries"] = 0
+                        ndata["backoff_multiplier"] = 1.0
+                        mutation_applied = True
+                        break
+
+            elif scenario_id == "fail_duplicate_side_effect":
+                for n in nodes:
+                    ndata = n.setdefault("data", {})
+                    if "slack" in ndata.get("title", "").lower() or "erp" in ndata.get("title", "").lower() or ndata.get("role") in ["tool", "action"]:
+                        ndata.pop("idempotency_key", None)
+                        ndata.pop("idempotency_scope", None)
+                        ndata.pop("business_key", None)
+                        ndata["side_effect"] = True
+                        ndata["chaos_fault"] = "duplicate_side_effect"
+                        mutation_applied = True
+                        break
+
+            elif scenario_id == "fail_unhandled_branch":
+                # Find condition/decision node and strip false edge
+                decision_nids = {n.get("id") for n in nodes if n.get("type") in ["condition", "decision"] or n.get("data", {}).get("role") == "decision"}
+                if decision_nids:
+                    # Filter out edges where source is in decision_nids and label/branch is 'false'
+                    edges = [
+                        e for e in edges
+                        if not (e.get("source") in decision_nids and str(e.get("label", "")).lower() == "false")
+                    ]
+                    current_flow["edges"] = edges
+                    mutation_applied = True
+
+            elif scenario_id == "fail_expired_gate":
+                for n in nodes:
+                    ndata = n.setdefault("data", {})
+                    if n.get("type") == "human" or ndata.get("role") == "human":
+                        ndata["timeout_seconds"] = 1
+                        ndata["chaos_fault"] = "expired_gate"
+                        ndata.pop("timeout_action", None)
+                        mutation_applied = True
+                        break
+
+        # If no matching node was mutated or flow was empty, inject scenario template
+        if not mutation_applied:
+            injected_flow = copy.deepcopy(scenario.flow_patch)
+        else:
+            injected_flow = current_flow
+
+        # Update session with mutated flow and blocked status
+        db.mission_session_update(
+            session_id,
+            {
+                "sandbox_flow": injected_flow,
+                "status": "blocked"
+            }
+        )
 
         return {
             "status": "injected",
             "scenario_id": scenario.id,
             "title": scenario.title,
             "symptom": scenario.symptom,
+            "in_place_mutation": mutation_applied,
             "error_log_sample": scenario.error_log_sample,
-            "message": "Escenario de fallo inyectado en el sandbox. Inspecciona el canvas y los logs para formular tu hipótesis de reparación."
+            "message": "Escenario de fallo inyectado in-situ en tu flujo. Inspecciona el canvas y la traza de ejecución para formular tu hipótesis de reparación."
         }

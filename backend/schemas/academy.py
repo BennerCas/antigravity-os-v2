@@ -29,6 +29,7 @@ EvidenceType = Literal[
     "architecture",
     "security",
     "reliability",
+    "defense",
 ]
 
 
@@ -212,6 +213,7 @@ class EvidenceRecord(BaseModel):
     evidence_type: EvidenceType
     source: str
     validation_hash: str
+    prev_hash: str = "GENESIS_ROOT"
     payload: Dict[str, Any] = Field(default_factory=dict)
     confidence: float = 1.0
     created_at: str

@@ -128,6 +128,7 @@ def init_db() -> None:
                 evidence_type TEXT NOT NULL,
                 source TEXT NOT NULL,
                 validation_hash TEXT NOT NULL,
+                prev_hash TEXT DEFAULT 'GENESIS_ROOT',
                 payload TEXT NOT NULL,
                 confidence REAL DEFAULT 1.0,
                 created_at TEXT NOT NULL
@@ -205,6 +206,10 @@ def init_db() -> None:
             pass
         try:
             conn.execute("ALTER TABLE automations ADD COLUMN timeout INTEGER DEFAULT 30")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE evidence_ledger ADD COLUMN prev_hash TEXT DEFAULT 'GENESIS_ROOT'")
         except sqlite3.OperationalError:
             pass
 
@@ -590,10 +595,11 @@ def skill_mastery_upsert(user_id: str, skill_id: str, score: float, state: str, 
 
 def evidence_insert(evidence: dict) -> None:
     now = _now()
+    prev_hash = evidence.get("prev_hash", "GENESIS_ROOT")
     with _lock, _conn() as conn:
         conn.execute(
-            """INSERT INTO evidence_ledger (id, user_id, skill_id, mission_id, session_id, evidence_type, source, validation_hash, payload, confidence, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            """INSERT INTO evidence_ledger (id, user_id, skill_id, mission_id, session_id, evidence_type, source, validation_hash, prev_hash, payload, confidence, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 evidence["id"],
                 evidence["user_id"],
@@ -603,6 +609,7 @@ def evidence_insert(evidence: dict) -> None:
                 evidence["evidence_type"],
                 evidence["source"],
                 evidence["validation_hash"],
+                prev_hash,
                 json.dumps(evidence.get("payload", {}), ensure_ascii=False),
                 evidence.get("confidence", 1.0),
                 evidence.get("created_at", now),
@@ -614,12 +621,12 @@ def evidence_user(user_id: str, skill_id: Optional[str] = None) -> list[dict]:
     with _lock, _conn() as conn:
         if skill_id:
             rows = conn.execute(
-                "SELECT * FROM evidence_ledger WHERE user_id = ? AND skill_id = ? ORDER BY created_at DESC",
+                "SELECT * FROM evidence_ledger WHERE user_id = ? AND skill_id = ? ORDER BY created_at ASC, rowid ASC",
                 (user_id, skill_id),
             ).fetchall()
         else:
             rows = conn.execute(
-                "SELECT * FROM evidence_ledger WHERE user_id = ? ORDER BY created_at DESC",
+                "SELECT * FROM evidence_ledger WHERE user_id = ? ORDER BY created_at ASC, rowid ASC",
                 (user_id,),
             ).fetchall()
     return [
@@ -632,12 +639,61 @@ def evidence_user(user_id: str, skill_id: Optional[str] = None) -> list[dict]:
             "evidence_type": r["evidence_type"],
             "source": r["source"],
             "validation_hash": r["validation_hash"],
+            "prev_hash": r["prev_hash"] if "prev_hash" in r.keys() and r["prev_hash"] else "GENESIS_ROOT",
             "payload": json.loads(r["payload"]),
             "confidence": r["confidence"],
             "created_at": r["created_at"],
         }
         for r in rows
     ]
+
+
+def evidence_latest(user_id: str) -> Optional[dict]:
+    with _lock, _conn() as conn:
+        row = conn.execute(
+            "SELECT * FROM evidence_ledger WHERE user_id = ? ORDER BY rowid DESC LIMIT 1",
+            (user_id,),
+        ).fetchone()
+    if not row:
+        return None
+    return {
+        "id": row["id"],
+        "user_id": row["user_id"],
+        "skill_id": row["skill_id"],
+        "mission_id": row["mission_id"],
+        "session_id": row["session_id"],
+        "evidence_type": row["evidence_type"],
+        "source": row["source"],
+        "validation_hash": row["validation_hash"],
+        "prev_hash": row["prev_hash"] if "prev_hash" in row.keys() and row["prev_hash"] else "GENESIS_ROOT",
+        "payload": json.loads(row["payload"]),
+        "confidence": row["confidence"],
+        "created_at": row["created_at"],
+    }
+
+
+def evidence_by_id(evidence_id: str) -> Optional[dict]:
+    with _lock, _conn() as conn:
+        row = conn.execute(
+            "SELECT * FROM evidence_ledger WHERE id = ?",
+            (evidence_id,),
+        ).fetchone()
+    if not row:
+        return None
+    return {
+        "id": row["id"],
+        "user_id": row["user_id"],
+        "skill_id": row["skill_id"],
+        "mission_id": row["mission_id"],
+        "session_id": row["session_id"],
+        "evidence_type": row["evidence_type"],
+        "source": row["source"],
+        "validation_hash": row["validation_hash"],
+        "prev_hash": row["prev_hash"] if "prev_hash" in row.keys() and row["prev_hash"] else "GENESIS_ROOT",
+        "payload": json.loads(row["payload"]),
+        "confidence": row["confidence"],
+        "created_at": row["created_at"],
+    }
 
 
 # ─── Academy: Projects & Capstone ────────────────────────────────────────────
@@ -659,6 +715,24 @@ def projects_user(user_id: str) -> list[dict]:
         }
         for r in rows
     ]
+
+
+def project_get(project_id: str) -> Optional[dict]:
+    with _lock, _conn() as conn:
+        r = conn.execute("SELECT * FROM learning_projects WHERE id = ?", (project_id,)).fetchone()
+    if not r:
+        return None
+    return {
+        "id": r["id"],
+        "user_id": r["user_id"],
+        "title": r["title"],
+        "status": r["status"],
+        "spec": json.loads(r["spec_json"]),
+        "artifacts": json.loads(r["artifacts_json"]),
+        "milestones": json.loads(r["milestones_json"]),
+        "reviews": json.loads(r["reviews_json"]),
+        "updated_at": r["updated_at"],
+    }
 
 
 def project_upsert(project: dict) -> None:
@@ -720,6 +794,25 @@ def capstones_user(user_id: str) -> list[dict]:
         }
         for r in rows
     ]
+
+
+def capstone_get(submission_id: str) -> Optional[dict]:
+    with _lock, _conn() as conn:
+        r = conn.execute("SELECT * FROM capstone_submissions WHERE id = ?", (submission_id,)).fetchone()
+    if not r:
+        return None
+    return {
+        "id": r["id"],
+        "user_id": r["user_id"],
+        "capstone_id": r["capstone_id"],
+        "flow": json.loads(r["flow_json"]),
+        "spec": json.loads(r["spec_json"]),
+        "defense": json.loads(r["defense_json"]),
+        "rubric_evaluation": json.loads(r["rubric_evaluation"]),
+        "status": r["status"],
+        "submitted_at": r["submitted_at"],
+        "evaluated_at": r["evaluated_at"],
+    }
 
 
 # ─── Academy: Certifications & Portfolio ─────────────────────────────────────

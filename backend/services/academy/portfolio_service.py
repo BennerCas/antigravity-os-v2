@@ -27,6 +27,24 @@ class PortfolioService:
                 if s.get("status") in ["passed", "mastered"]:
                     flow = s.get("sandbox_flow", {})
                     nodes = flow.get("nodes", [])
+                    # Find real evidence records for this session or mission
+                    matching_evidence_ids = [
+                        e["id"] for e in evidence_records
+                        if e.get("session_id") == s["id"] or e.get("mission_id") == s["mission_id"]
+                    ]
+                    if not matching_evidence_ids:
+                        from backend.services.academy.evidence_service import EvidenceService
+                        ev = EvidenceService.record_evidence(
+                            user_id=user_id,
+                            skill_id="workflow_completion",
+                            mission_id=s["mission_id"],
+                            session_id=s["id"],
+                            evidence_type="graph",
+                            source="portfolio_compiler",
+                            payload={"nodes_count": len(nodes), "status": "VERIFIED"}
+                        )
+                        matching_evidence_ids = [ev.id]
+
                     item_id = f"port_{s['mission_id']}_{uuid.uuid4().hex[:6]}"
                     auto_item = {
                         "id": item_id,
@@ -35,9 +53,9 @@ class PortfolioService:
                         "title": f"Solución Verificada: {s['mission_id'].replace('_', ' ').title()}",
                         "description": f"Flujo construido y verificado con {len(nodes)} nodos y cero bloqueantes.",
                         "artifact_ref": f"sandbox://session/{s['id']}",
-                        "evidence_refs": [f"evi_{s['mission_id']}"],
+                        "evidence_refs": matching_evidence_ids,
                         "published_at": s.get("completed_at") or datetime.now(timezone.utc).isoformat(),
-                        "preview_data": {"nodes_count": len(nodes), "status": "VERIFIED"}
+                        "preview_data": {"nodes_count": len(nodes), "status": "VERIFIED", "evidence_count": len(matching_evidence_ids)}
                     }
                     db.portfolio_item_upsert(auto_item)
             published_items = db.portfolio_items_user(user_id)

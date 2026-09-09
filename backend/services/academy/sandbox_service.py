@@ -6,6 +6,7 @@ import db
 from backend.schemas.academy import MissionSession, ValidationFinding
 from backend.services.academy.catalog_service import CatalogService
 from backend.services.academy.validator_service import ValidatorService
+from backend.services.academy.runtime_engine import RuntimeLearningEngine
 
 
 class SandboxService:
@@ -126,64 +127,27 @@ class SandboxService:
                 "execution_trace": []
             }
 
-        # Simulate execution path
-        trace: List[Dict[str, Any]] = []
-        now_str = datetime.now(timezone.utc).isoformat()
-        current_data = input_payload or {"message": "Solicitud de prueba del alumno", "amount": "USD 1,250.00"}
+        # Execute through the real graph runtime engine
+        sim_payload = input_payload or {"message": "Solicitud de prueba del alumno", "amount": "USD 1,250.00"}
+        sim_result = RuntimeLearningEngine.execute_flow(
+            flow=flow,
+            input_payload=sim_payload,
+            session_id=session_id
+        )
 
-        trace.append({
-            "step": 0,
-            "event": "run_started",
-            "timestamp": now_str,
-            "payload": current_data
-        })
-
-        for i, node in enumerate(nodes):
-            nid = node.get("id")
-            ndata = node.get("data", {})
-            title = ndata.get("title", nid)
-            role = ndata.get("role", node.get("type", "node"))
-
-            step_trace = {
-                "step": i + 1,
-                "node_id": nid,
-                "title": title,
-                "role": role,
-                "status": "success",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "inputs": current_data
-            }
-
-            # Check if it's a capability call
-            cap_id = ndata.get("capability_id")
-            if cap_id and cap_id in cls.FAKE_CAPABILITIES:
-                step_trace["capability_executed"] = cap_id
-                step_trace["capability_receipt"] = cls.FAKE_CAPABILITIES[cap_id]["mock_response"]
-            
-            # Check transform
-            if "transform" in role.lower() or "parse" in title.lower():
-                current_data = {"parsed_number": 1250.0, "amount": 1250.0, "currency": "USD"}
-                step_trace["outputs"] = current_data
-            elif "classifier" in role.lower():
-                current_data = {"category": "tecnico", "confidence": 0.94}
-                step_trace["outputs"] = current_data
-            else:
-                step_trace["outputs"] = {"processed": True, **current_data}
-
-            trace.append(step_trace)
-
-        trace.append({
-            "step": len(nodes) + 1,
-            "event": "run_completed",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "final_outputs": current_data
-        })
+        trace = sim_result.get("execution_trace", [])
+        final_data = sim_result.get("state", {})
+        status = sim_result.get("status", "success")
 
         return {
-            "status": "success",
-            "message": "Simulación de sandbox completada con éxito.",
+            "status": status,
+            "message": "Simulación de sandbox completada con éxito." if status == "success" else f"Simulación finalizada con estado: {status}",
             "execution_trace": trace,
-            "final_data": current_data,
+            "final_data": final_data,
+            "side_effects_count": sim_result.get("side_effects_count", 0),
+            "side_effects": sim_result.get("side_effects", []),
+            "nodes_executed_count": sim_result.get("nodes_executed_count", 0),
+            "duration_ms": sim_result.get("duration_ms", 0),
             "findings": [f.model_dump() for f in findings]
         }
 

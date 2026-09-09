@@ -167,15 +167,20 @@ class AssessmentService:
         # 3. Update Mastery across all mission skills
         hints_used = session.get("hints_revealed", [])
         has_reflection = len(session.get("reflections", [])) > 0
+        user_evidence = db.evidence_user(user_id)
 
         mastery_results = []
         for s_id in (mission.skills if mission else [primary_skill]):
+            has_transfer = any(
+                e.get("evidence_type") == "transfer" and (e.get("skill_id") == s_id or e.get("mission_id") == mission_id)
+                for e in user_evidence
+            )
             m_record = MasteryEngine.update_skill_mastery(
                 user_id=user_id,
                 skill_id=s_id,
                 passed_cleanly=eval_result["is_valid"],
                 hints_used=hints_used,
-                has_transfer=False,
+                has_transfer=has_transfer,
                 has_reflection=has_reflection
             )
             mastery_results.append(m_record.model_dump())

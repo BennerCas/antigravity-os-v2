@@ -15,6 +15,9 @@ from backend.services.academy.assessment_service import AssessmentService
 from backend.services.academy.certification_service import CertificationService
 from backend.services.academy.portfolio_service import PortfolioService
 from backend.services.academy.event_bridge import LearningEventBridge
+from backend.services.academy.project_service import ProjectService
+from backend.services.academy.capstone_service import CapstoneService
+from backend.services.academy.transfer_service import TransferService
 
 router = APIRouter(tags=["Academy LOS"])
 
@@ -581,4 +584,119 @@ def get_portfolio_by_user_id_alias(user_id: str):
 @router.post("/portfolio/{user_id}/compile")
 def post_portfolio_compile_alias(user_id: str):
     return PortfolioService.get_learner_portfolio(user_id)
+
+
+# ─── Projects Subsystem ──────────────────────────────────────────────────────
+
+@router.get("/projects")
+def list_projects(user_id: str = Query(default="default_learner")):
+    projects = ProjectService.list_user_projects(user_id)
+    return {"status": "success", "projects": [p.model_dump() for p in projects]}
+
+
+@router.post("/projects")
+def create_project(
+    user_id: str = Query(default="default_learner"),
+    body: Dict[str, Any] = Body(...)
+):
+    title = body.get("title", "Nuevo Proyecto de Aprendizaje")
+    spec = body.get("spec", {})
+    proj = ProjectService.create_project(user_id, title, spec)
+    return {"status": "success", "project": proj.model_dump()}
+
+
+@router.get("/projects/{project_id}")
+def get_project_details(project_id: str):
+    proj = ProjectService.get_project(project_id)
+    if not proj:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return {"status": "success", "project": proj.model_dump()}
+
+
+@router.post("/projects/{project_id}/milestones/{milestone_id}/complete")
+def complete_project_milestone(project_id: str, milestone_id: str):
+    try:
+        proj = ProjectService.complete_milestone(project_id, milestone_id)
+        return {"status": "success", "project": proj.model_dump()}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# ─── Capstone Subsystem ──────────────────────────────────────────────────────
+
+@router.get("/capstone/gap")
+def get_capstone_gap_report():
+    """Formally documents CURRICULUM_SOURCE_GAP-CAPSTONE-02 per industrial contract."""
+    return CapstoneService.get_curriculum_gap_info()
+
+
+@router.post("/capstone/submit")
+def submit_capstone(
+    user_id: str = Query(default="default_learner"),
+    body: Dict[str, Any] = Body(...)
+):
+    capstone_id = body.get("capstone_id", "mission_18")
+    flow = body.get("flow", {})
+    spec = body.get("spec", {})
+    defense_answers = body.get("defense_answers")
+    res = CapstoneService.submit_and_evaluate(user_id, capstone_id, flow, spec, defense_answers)
+    return {"status": "success", "evaluation": res}
+
+
+@router.get("/capstone/{submission_id}/defense")
+def get_capstone_defense(submission_id: str):
+    try:
+        inquiry = CapstoneService.generate_defense_inquiry(submission_id)
+        return {"status": "success", "inquiry": inquiry}
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/capstone/{submission_id}/defense")
+def submit_capstone_defense(
+    submission_id: str,
+    body: Dict[str, Any] = Body(...)
+):
+    data = db.capstone_get(submission_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    answers = body.get("answers", {})
+    res = CapstoneService.submit_and_evaluate(
+        user_id=data["user_id"],
+        capstone_id=data["capstone_id"],
+        flow=data["flow"],
+        spec=data["spec"],
+        defense_answers=answers
+    )
+    return {"status": "success", "evaluation": res}
+
+
+# ─── Transfer Challenges Subsystem ───────────────────────────────────────────
+
+@router.get("/transfer/challenges")
+def list_transfer_challenges():
+    return {"status": "success", "challenges": TransferService.list_challenges()}
+
+
+@router.post("/transfer/{challenge_id}/evaluate")
+def evaluate_transfer_challenge(
+    challenge_id: str,
+    user_id: str = Query(default="default_learner"),
+    body: Dict[str, Any] = Body(...)
+):
+    flow = body.get("flow", {})
+    try:
+        res = TransferService.evaluate_transfer(user_id, challenge_id, flow)
+        return {"status": "success", "transfer_result": res}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# ─── Cryptographic Evidence Chain Audit ──────────────────────────────────────
+
+@router.get("/evidence/chain/verify")
+def verify_learner_evidence_chain(user_id: str = Query(default="default_learner")):
+    audit = EvidenceService.verify_learner_chain(user_id)
+    return {"status": "success", "audit": audit}
+
 
