@@ -373,3 +373,212 @@ async def copilot_chat(req: CopilotChatRequest):
         preferred_role=req.role or "mission_coach"
     )
     return {"status": "success", **res}
+
+
+# ─── High-Level REST API Aliases for Frontend Client (academyApi.ts) ──────────
+
+@router.get("/tracks")
+def get_tracks_list():
+    CatalogService.seed_catalog()
+    raw_tracks = CatalogService.get_tracks()
+    formatted = []
+    for i, t in enumerate(raw_tracks):
+        formatted.append({
+            "id": t["id"],
+            "title": t.get("name", t.get("title", t["id"])),
+            "name": t.get("name", t.get("title", t["id"])),
+            "description": t.get("description", ""),
+            "category": t.get("target_level", "general"),
+            "order": i + 1,
+            "color": "#22C55E",
+            "mission_count": len(t.get("mission_ids", [])),
+            "mission_ids": t.get("mission_ids", [])
+        })
+    return formatted
+
+
+@router.get("/missions")
+def get_missions_list(track_id: Optional[str] = None):
+    CatalogService.seed_catalog()
+    all_m = CatalogService.get_all_missions()
+    res = []
+    for m in all_m:
+        m_dict = m.model_dump()
+        m_dict["track_id"] = m_dict.get("track", m_dict.get("track_id", ""))
+        m_dict["problem_statement"] = m_dict.get("brief") or m_dict.get("problem_statement", "")
+        m_dict["skills_trained"] = m_dict.get("skills") or m_dict.get("skills_developed") or []
+        m_dict["estimated_minutes"] = 10 + (m_dict.get("stage", 1) * 5)
+        m_dict["success_criteria"] = [r.get("description") for r in m_dict.get("rubric", [])] if m_dict.get("rubric") else ["Completar topología requerida"]
+        if track_id:
+            if m_dict.get("track_id") == track_id or m_dict.get("track") == track_id:
+                res.append(m_dict)
+        else:
+            res.append(m_dict)
+    return res
+
+
+@router.get("/missions/{mission_id}")
+def get_mission_detail(mission_id: str):
+    CatalogService.seed_catalog()
+    m = CatalogService.get_mission(mission_id)
+    if not m:
+        raise HTTPException(status_code=404, detail="Mission not found")
+    m_dict = m.model_dump()
+    m_dict["track_id"] = m_dict.get("track", m_dict.get("track_id", ""))
+    m_dict["problem_statement"] = m_dict.get("brief") or m_dict.get("problem_statement", "")
+    m_dict["skills_trained"] = m_dict.get("skills") or m_dict.get("skills_developed") or []
+    m_dict["estimated_minutes"] = 10 + (m_dict.get("stage", 1) * 5)
+    return m_dict
+
+
+@router.get("/skills/graph")
+def get_skills_graph_api():
+    CatalogService.seed_catalog()
+    skills = CatalogService.get_skills()
+    nodes = []
+    links = []
+    for sid, s in skills.items():
+        nodes.append({
+            "id": s.id,
+            "name": s.name,
+            "category": s.category,
+            "prerequisites": s.prerequisites,
+            "depth": getattr(s, "depth", 0)
+        })
+        for pre in s.prerequisites:
+            links.append({"source": pre, "target": s.id})
+    return {"nodes": nodes, "links": links}
+
+
+@router.get("/profile/{user_id}")
+def get_profile_by_user_id(user_id: str):
+    return db.learning_profile_get_or_create(user_id)
+
+
+@router.put("/profile/{user_id}")
+def update_profile_by_user_id(user_id: str, data: Dict[str, Any] = Body(...)):
+    return db.learning_profile_update(user_id, data)
+
+
+class SandboxStartPayload(BaseModel):
+    user_id: str
+    mission_id: str
+
+
+@router.post("/sandbox/start")
+def start_sandbox_session_alias(payload: SandboxStartPayload):
+    CatalogService.seed_catalog()
+    session = SandboxService.start_session(payload.user_id, payload.mission_id)
+    return session.model_dump()
+
+
+@router.get("/sandbox/{session_id}")
+def get_sandbox_session_alias(session_id: str):
+    s = SandboxService.get_session(session_id)
+    if not s:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return s.model_dump()
+
+
+@router.put("/sandbox/{session_id}/flow")
+def put_sandbox_flow_alias(session_id: str, flow: Dict[str, Any] = Body(...)):
+    s = SandboxService.update_flow(session_id, flow)
+    return s.model_dump()
+
+
+@router.post("/sandbox/{session_id}/validate")
+def post_sandbox_validate_alias(session_id: str):
+    return AssessmentService.evaluate_session(session_id)
+
+
+@router.post("/sandbox/{session_id}/simulate")
+def post_sandbox_simulate_alias(session_id: str, body: Dict[str, Any] = Body(...)):
+    payload = body.get("input_payload", {})
+    return SandboxService.run_simulation(session_id, payload)
+
+
+@router.post("/sandbox/{session_id}/hint")
+def post_sandbox_hint_alias(session_id: str, body: Dict[str, Any] = Body(...)):
+    lvl = body.get("level", 1)
+    hint = CopilotService.get_next_hint(session_id)
+    return {
+        "level": lvl,
+        "hint_text": hint.get("text", "Revisa tus conexiones hacia el nodo End."),
+        "penalty_warning": "Pistas de nivel 3 o superior reducen la puntuación de independencia."
+    }
+
+
+@router.post("/sandbox/{session_id}/copilot")
+async def post_sandbox_copilot_alias(session_id: str, body: Dict[str, Any] = Body(...)):
+    query = body.get("user_query", "")
+    role = body.get("pedagogical_role", "mission_coach")
+    res = await CopilotService.mentor_chat(session_id, query, role)
+    return {
+        "role": role,
+        "message": res.get("reply", ""),
+        "hint_level": 1,
+        "pedagogical_mode": "socratic",
+        "actionable_step": "Inspecciona los hallazgos en el panel de validación."
+    }
+
+
+@router.post("/sandbox/{session_id}/chaos/inject")
+def post_sandbox_chaos_alias(session_id: str, body: Dict[str, Any] = Body(...)):
+    sc_id = body.get("scenario_id", "fail_schema_mismatch")
+    return FailureLabService.inject_scenario(session_id, sc_id)
+
+
+@router.post("/sandbox/{session_id}/reflection")
+def post_sandbox_reflection_alias(session_id: str, body: Dict[str, Any] = Body(...)):
+    text = body.get("reflection_text", "")
+    prompt = body.get("prompt", "¿Por qué diseñaste esta arquitectura?")
+    return AssessmentService.submit_reflection(session_id, text, prompt)
+
+
+@router.post("/sandbox/{session_id}/complete")
+def post_sandbox_complete_alias(session_id: str):
+    return AssessmentService.complete_mission(session_id)
+
+
+@router.post("/sandbox/{session_id}/clone-to-workspace")
+def post_sandbox_clone_alias(session_id: str):
+    return SandboxService.clone_to_workspace(session_id)
+
+
+@router.post("/drift/compare")
+def post_drift_compare_alias(body: Dict[str, Any] = Body(...)):
+    spec = body.get("spec", {})
+    builder = body.get("builder_flow", {})
+    findings = DriftEngine.analyze_drift(spec, builder)
+    blockers = [f for f in findings if f.severity == "blocker"]
+    return {
+        "is_compliant": len(blockers) == 0,
+        "total_drifts": len(findings),
+        "drifts": [f.model_dump() for f in findings]
+    }
+
+
+@router.get("/mastery/{user_id}")
+def get_mastery_by_user_id(user_id: str):
+    return db.skill_mastery_all(user_id)
+
+
+@router.get("/evidence/{user_id}")
+def get_evidence_by_user_id(user_id: str):
+    return db.evidence_user(user_id)
+
+
+@router.get("/certification/audit/{user_id}/{level}")
+def get_cert_audit_alias(user_id: str, level: str):
+    return CertificationService.audit_eligibility(user_id, level)
+
+
+@router.get("/portfolio/{user_id}")
+def get_portfolio_by_user_id_alias(user_id: str):
+    return PortfolioService.get_learner_portfolio(user_id)
+
+
+@router.post("/portfolio/{user_id}/compile")
+def post_portfolio_compile_alias(user_id: str):
+    return PortfolioService.get_learner_portfolio(user_id)
+
