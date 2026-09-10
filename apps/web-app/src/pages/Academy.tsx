@@ -56,6 +56,9 @@ import type {
 import { MainPromptNode, ActionNode, PostItNode } from '../components/BuilderNodes';
 import { ConditionNode } from '../components/builder/nodes/ConditionNode';
 import { HumanNode } from '../components/builder/nodes/HumanNode';
+import { EngineIndicator } from '../components/EngineIndicator';
+import { KnowledgeGraph3D } from '../components/academy/KnowledgeGraph3D';
+
 
 const nodeTypes = {
   mainPrompt: MainPromptNode,
@@ -86,6 +89,8 @@ export default function Academy() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedTrackFilter, setSelectedTrackFilter] = useState<string>('all');
   const [selectedSkillForDetail, setSelectedSkillForDetail] = useState<SkillMasteryRecord | null>(null);
+  const [graphViewMode, setGraphViewMode] = useState<'3d' | 'grid'>('3d');
+
   
   // Sandbox State
   const [rfNodes, setRfNodes] = useState<Node[]>([]);
@@ -410,16 +415,19 @@ export default function Academy() {
           <span>[Contexto Cargado: Arquitecto_Sistemas + Ingeniero_Fullstack + Auditor_Industrial]</span>
         </div>
 
-        {/* Learner Pill */}
-        <div className="flex items-center gap-3 bg-[#111111] border border-[#262626] rounded-full px-4 py-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#22C55E] animate-pulse" />
-          <div className="text-xs">
-            <span className="text-[#71717A]">Learner: </span>
-            <span className="text-white font-semibold font-mono">{currentUserId}</span>
+        {/* Engine & Learner Controls */}
+        <div className="flex items-center gap-3">
+          <EngineIndicator />
+          <div className="flex items-center gap-3 bg-[#111111] border border-[#262626] rounded-full px-4 py-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#22C55E] animate-pulse" />
+            <div className="text-xs">
+              <span className="text-[#71717A]">Learner: </span>
+              <span className="text-white font-semibold font-mono">{currentUserId}</span>
+            </div>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-[#1A1A1A] text-[#86EFAC] font-mono uppercase font-bold border border-[#333333]">
+              {profile?.level || 'Foundation'}
+            </span>
           </div>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-[#1A1A1A] text-[#86EFAC] font-mono uppercase font-bold border border-[#333333]">
-            {profile?.level || 'Foundation'}
-          </span>
         </div>
       </header>
 
@@ -466,7 +474,7 @@ export default function Academy() {
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 p-6 overflow-y-auto">
+      <main className={`flex-1 overflow-y-auto ${activeTab === 'graph' && graphViewMode === '3d' ? 'p-3 flex flex-col' : 'p-6'}`}>
         {loading ? (
           <div className="flex flex-col items-center justify-center min-h-[400px] gap-3 text-[#71717A]">
             <ArrowsClockwise size={32} className="animate-spin text-[#22C55E]" />
@@ -972,22 +980,96 @@ export default function Academy() {
 
             {/* 4. SKILL GRAPH & MASTERY TAB */}
             {activeTab === 'graph' && (
-              <div className="space-y-6 max-w-7xl mx-auto">
-                <div className="border-b border-[#1A1A1A] pb-4">
-                  <h2 className="text-lg font-bold text-white">Grafo de Habilidades & Maestría Multidimensional</h2>
-                  <p className="text-xs text-[#71717A]">
+              <div className={`w-full flex-1 flex flex-col ${graphViewMode === '3d' ? 'h-full space-y-3' : 'max-w-7xl mx-auto space-y-6'}`}>
+                <div className="border-b border-[#1A1A1A] pb-4 flex flex-col gap-2">
+                  <div className="flex flex-wrap items-center justify-start gap-6">
+                    <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                      <Graph size={20} className="text-[#22C55E]" />
+                      Grafo de Habilidades & Maestría Multidimensional
+                    </h2>
+                    
+                    {/* View Mode Switcher: 3D Holographic Sphere vs 2D Grid */}
+                    <div className="flex items-center gap-1 bg-[#111111] p-1 rounded-xl border border-[#222222] font-mono text-xs">
+                      <button
+                        onClick={() => setGraphViewMode('3d')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all ${
+                          graphViewMode === '3d'
+                            ? 'bg-[#174A1F] text-[#86EFAC] shadow-md border border-[#2B7836]'
+                            : 'text-[#71717A] hover:text-white'
+                        }`}
+                      >
+                        <Sparkle size={14} weight="bold" />
+                        <span>Esfera 3D Interactiva</span>
+                      </button>
+                      <button
+                        onClick={() => setGraphViewMode('grid')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all ${
+                          graphViewMode === 'grid'
+                            ? 'bg-[#174A1F] text-[#86EFAC] shadow-md border border-[#2B7836]'
+                            : 'text-[#71717A] hover:text-white'
+                        }`}
+                      >
+                        <BookOpen size={14} />
+                        <span>Cuadrícula 2D</span>
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-[#71717A] mt-0.5">
                     Evaluación en 8 dimensiones: Corrección, Independencia, Transferencia, Confiabilidad, Comprensión, Consistencia, Complejidad y Seguridad.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Left: Skills list categorized */}
-                  <div className="lg:col-span-2 space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {skillGraph.nodes.map((skill) => {
-                        const rec = masteryRecords.find(m => m.skill_id === skill.id);
-                        const state = rec?.state || 'UNKNOWN';
-                        const score = rec ? Math.round(rec.mastery_score * 100) : 0;
+                {/* 3D Knowledge Graph vs 2D Grid */}
+                {graphViewMode === '3d' ? (
+                  <KnowledgeGraph3D
+                    skills={skillGraph.nodes}
+                    links={skillGraph.links}
+                    masteryRecords={masteryRecords}
+                    missions={missions}
+                    currentUserId={currentUserId}
+                    selectedSkillId={selectedSkillForDetail?.skill_id}
+                    onSelectSkill={(skill, rec) => {
+                      setSelectedSkillForDetail(
+                        rec || {
+                          user_id: currentUserId,
+                          skill_id: skill.id,
+                          mastery_score: 0.0,
+                          state: 'UNKNOWN',
+                          attempts: 0,
+                          successes: 0,
+                          hints_taken: 0,
+                          last_evaluated_at: new Date().toISOString(),
+                          dimensions: {
+                            correctness: 0,
+                            independence: 0,
+                            transfer: 0,
+                            reliability: 0,
+                            comprehension: 0,
+                            consistency: 0,
+                            complexity: 0,
+                            safety: 0,
+                          },
+                        }
+                      );
+                    }}
+                    onLaunchMission={(missionId) => {
+                      const m = missions.find((x) => x.id === missionId);
+                      if (m) {
+                        handleLaunchMission(m);
+                        setActiveTab('sandbox');
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Left: Skills list categorized */}
+                    <div className="lg:col-span-2 space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {skillGraph.nodes.map((skill) => {
+                          const rec = masteryRecords.find((m) => m.skill_id === skill.id);
+                          const state = rec?.state || 'UNKNOWN';
+                          const score = rec ? Math.round(rec.mastery_score * 100) : 0;
+
 
                         return (
                           <div
@@ -1077,8 +1159,11 @@ export default function Academy() {
                     )}
                   </div>
                 </div>
+                )}
               </div>
             )}
+
+
 
             {/* 5. DRIFT STUDIO TAB */}
             {activeTab === 'drift' && (

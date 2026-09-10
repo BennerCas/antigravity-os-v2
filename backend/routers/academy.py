@@ -700,3 +700,68 @@ def verify_learner_evidence_chain(user_id: str = Query(default="default_learner"
     return {"status": "success", "audit": audit}
 
 
+# ─── TTS & Voice Models Integration ──────────────────────────────────────────
+
+@router.get("/tts/status")
+def get_tts_status():
+    """Reporta disponibilidad del motor de voz local Kokoro-TTS / Piper ES."""
+    import os
+    kokoro_dir = r"C:\antigravityAS\Modelos -ai-brains\kokoro-multi-lang-v1_1"
+    has_kokoro = os.path.exists(kokoro_dir)
+    piper_dir = r"C:\antigravityAS\Modelos -ai-brains\vits-piper-es_ES-davefx-medium"
+    has_piper = os.path.exists(piper_dir)
+    
+    return {
+        "status": "ready",
+        "provider": "kokoro-onnx" if has_kokoro else ("piper-onnx" if has_piper else "web-speech-api"),
+        "languages": ["es-ES", "es-MX", "es-AR"],
+        "default_language": "es-ES",
+        "kokoro_available": has_kokoro,
+        "piper_available": has_piper,
+        "model_path": kokoro_dir if has_kokoro else (piper_dir if has_piper else None),
+        "voices": [
+            {"id": "es_ES_neural", "name": "Español España (Neural)", "lang": "es-ES"},
+            {"id": "es_MX_natural", "name": "Español México (Natural)", "lang": "es-MX"},
+            {"id": "es_AR_clear", "name": "Español Argentina (Clara)", "lang": "es-AR"}
+        ]
+    }
+
+
+@router.post("/tts/script")
+def generate_tts_skill_script(body: Dict[str, Any] = Body(...)):
+    """Genera guion pedagógico en español estructurado para locución de habilidades."""
+    skill_id = body.get("skill_id", "")
+    skills = CatalogService.get_skills()
+    skill = skills.get(skill_id)
+    if not skill:
+        raise HTTPException(status_code=404, detail=f"Skill '{skill_id}' no encontrada.")
+    
+    score = body.get("score", 0)
+    state = body.get("state", "UNKNOWN")
+    
+    track_names = {
+        "foundation": "Fundamentos del Grafo",
+        "builder": "Constructor de Agentes y Lógica",
+        "operator": "Operador de Fiabilidad e Idempotencia",
+        "architect": "Arquitectura y Composición Modular",
+        "expert": "Orquestación Experta Multiagente",
+    }
+    track_label = track_names.get(skill.category.lower(), skill.category)
+    
+    script = (
+        f"Habilidad: {skill.name}. Ruta formativa: {track_label}. {skill.description} "
+        + (f"Prerrequisitos requeridos: {', '.join(skill.prerequisites)}. " if skill.prerequisites else "Habilidad fundacional sin prerrequisitos previos. ")
+        + f"Tu estado de maestría actual es {state}, con un {score} por ciento evaluado en 8 dimensiones."
+    )
+    
+    return {
+        "status": "success",
+        "skill_id": skill_id,
+        "skill_name": skill.name,
+        "track": track_label,
+        "script": script,
+        "prerequisites": skill.prerequisites
+    }
+
+
+

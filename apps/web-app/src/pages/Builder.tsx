@@ -30,7 +30,7 @@ import jsPDF from 'jspdf';
 import { FlowArchitect } from '../components/architecture/FlowArchitect';
 import { RunInspector } from '../components/architecture/RunInspector';
 import { RunResults } from '../components/architecture/RunResults';
-import { ArrowUUpLeft, ArrowUUpRight, FloppyDisk, DownloadSimple, Trash, X, Play, StopCircle, Translate, CheckCircle } from '@phosphor-icons/react';
+import { ArrowUUpLeft, ArrowUUpRight, FloppyDisk, DownloadSimple, Trash, X, Play, StopCircle, Translate } from '@phosphor-icons/react';
 import { useTTSStore } from '../lib/ttsStore';
 import { Joyride, STATUS } from 'react-joyride';
 import { tourSteps } from '../data/tourSteps';
@@ -108,7 +108,7 @@ function BuilderContent() {
   const navigate = useNavigate();
   const { screenToFlowPosition } = useReactFlow();
   const [translatingModal, setTranslatingModal] = useState(false);
-  const { play, pause, stop, isActive, isPaused, currentSection } = useTTSStore();
+  const { play, pause, resume, stop, isActive, isPaused, currentSection } = useTTSStore();
 
   const handleTranslateModal = async (text: string) => {
     setTranslatingModal(true);
@@ -2007,7 +2007,7 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
                   {isActive && currentSection === 'modal' ? (
                     <>
                       {isPaused ? (
-                        <button onClick={play} className="flex items-center gap-1 text-[10px] bg-amber-900/40 text-amber-400 px-2 py-1 rounded border border-amber-800/50 hover:bg-amber-900/60 transition-colors">
+                        <button onClick={resume} className="flex items-center gap-1 text-[10px] bg-amber-900/40 text-amber-400 px-2 py-1 rounded border border-amber-800/50 hover:bg-amber-900/60 transition-colors">
                           <Play weight="fill" size={12} /> Continuar
                         </button>
                       ) : (

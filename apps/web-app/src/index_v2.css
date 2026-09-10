@@ -575,3 +575,34 @@ div.active-card {
   color: #7B9C7F !important;
   font-weight: 700 !important;
 }
+
+
+/* =====================================================
+   BLUE PILL TABS
+   ===================================================== */
+button.blue-pill-tab-active {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border: none !important;
+  outline: none !important;
+  border-radius: 9999px !important;
+}
+
+button.blue-pill-tab-inactive {
+  background-color: transparent !important;
+  color: #6b7280 !important;
+  border: none !important;
+  outline: none !important;
+  border-radius: 9999px !important;
+}
+
+button.blue-pill-tab-inactive:hover {
+  color: #d1d5db !important;
+  background-color: rgba(31, 41, 55, 0.5) !important;
+}
+
+span.green-text-active {
+  color: #22c55e !important;
+  font-weight: bold !important;
+  border-bottom: 2px solid #22c55e !important;
+}
