@@ -270,48 +270,29 @@ const Agents = () => {
     setTranslationData(prev => ({ ...prev, [key]: '' }));
 
     try {
-      const res = await fetch('http://127.0.0.1:11434/api/generate', {
+      const promptTranslate = `Traduce el siguiente agente al español manteniendo exactamente el mismo formato, estructura, y variables (como [texto]). No agregues comentarios ni explicaciones adicionales, solo la traducción directa del texto.\n\nAgente:\n${inspectedAgent.instructions || inspectedAgent.content}`;
+      const res = await fetch(`${API_URL}/agents/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'hermes3:8b',
-          prompt: `Traduce el siguiente agente al español manteniendo exactamente el mismo formato, estructura, y variables (como [texto]). No agregues comentarios ni explicaciones adicionales, solo la traducción directa del texto.\n\nAgente:\n${inspectedAgent.instructions || inspectedAgent.content}`,
-          stream: true
+          agent_id: 'agents_module_assistant',
+          message: promptTranslate,
         })
       });
-      if (!res.ok || !res.body) throw new Error('Error al conectar con Ollama');
-      
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let fullText = '';
-      
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(l => l.trim() !== '');
-        
-        for (const line of lines) {
-          try {
-            const parsed = JSON.parse(line);
-            if (parsed.response) {
-              fullText += parsed.response;
-              setTranslationData(prev => ({ ...prev, [key]: fullText }));
-            }
-          } catch (e) {}
-        }
-      }
-      
+      if (!res.ok) throw new Error('Error al conectar con AgentFactory');
+
+      const data = await res.json();
+      const fullText = data.response ?? '';
+
       setTranslationData(prev => {
         const updated = { ...prev, [key]: fullText };
         localStorage.setItem('agents_translation_data', JSON.stringify(updated));
         return updated;
       });
-      
+
     } catch (err) {
       console.error(err);
-      setTranslationData(prev => ({ ...prev, [key]: 'Error al generar la traducción. Verifica la conexión con Ollama.' }));
+      setTranslationData(prev => ({ ...prev, [key]: 'Error al generar la traducción. Verifica la conexión con AgentFactory.' }));
     } finally {
       setIsTranslatingContent(false);
     }
@@ -333,17 +314,17 @@ const Agents = () => {
 
     setIsTranslating(true);
     try {
-      // Background translation to Spanish using local LLM
-      const res = await fetch('http://127.0.0.1:11434/api/generate', {
+      // Background translation to Spanish using AgentFactory
+      const promptTTS = `Traduce el siguiente texto al español de forma natural. Si ya esta en español, devuelve el texto original sin modificaciones. No agregues saludos, explicaciones, ni notas adicionales, SOLO el texto traducido. Texto:\n\n${currentText}`;
+      const res = await fetch(`${API_URL}/agents/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'hermes3:8b',
-          prompt: `Traduce el siguiente texto al español de forma natural. Si ya esta en español, devuelve el texto original sin modificaciones. No agregues saludos, explicaciones, ni notas adicionales, SOLO el texto traducido. Texto:\n\n${currentText}`,
-          stream: false
+          agent_id: 'agents_module_assistant',
+          message: promptTTS,
         })
       });
-      
+
       let textToSpeak = currentText;
       if (res.ok) {
         const data = await res.json();
@@ -412,66 +393,24 @@ Responde EXACTAMENTE con esta estructura (manteniendo los encabezados Markdown p
 ${inspectedAgent.instructions || inspectedAgent.content}
 </agente_original>`;
 
-      const res = await fetch('http://127.0.0.1:11434/api/generate', {
+      const res = await fetch(`${API_URL}/agents/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'hermes3:8b',
-          system: 'Eres un sistema nativo en idioma ESPAÑOL. Absolutamente TODO el contenido que generes (explicaciones, respuestas, código, notas) DEBE estar única y exclusivamente en ESPAÑOL. NUNCA respondas en inglés.',
-          prompt: promptText,
-          stream: true
+          agent_id: 'agents_module_assistant',
+          message: promptText,
         })
       });
-      
-      if (!res.ok || !res.body) throw new Error('Error de conexión con Ollama local');
-      
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      
-      let generatedText = '';
-      let tokens = 0;
-      const startTime = Date.now();
-      const estimatedTotalTokens = 350; // Average estimate for a prompt upgrade
-      
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(l => l.trim() !== '');
-        
-        for (const line of lines) {
-          try {
-            const parsed = JSON.parse(line);
-            if (parsed.response) {
-              generatedText += parsed.response;
-              tokens++;
-              
-              // Calculate progress %
-              let progress = Math.min(95, Math.floor((tokens / estimatedTotalTokens) * 100));
-              setUpgradeProgress(progress);
-              
-              // Calculate ETA based on tokens/sec
-              const elapsedMs = Date.now() - startTime;
-              if (elapsedMs > 1000) {
-                const tokensPerMs = tokens / elapsedMs;
-                const remainingTokens = Math.max(0, estimatedTotalTokens - tokens);
-                const remainingMs = remainingTokens / tokensPerMs;
-                const remainingSecs = Math.ceil(remainingMs / 1000);
-                
-                if (remainingSecs > 60) {
-                  setUpgradeTimeLeft(`${Math.floor(remainingSecs / 60)}m ${remainingSecs % 60}s`);
-                } else {
-                  setUpgradeTimeLeft(`${remainingSecs}s`);
-                }
-              }
-            }
-          } catch (e) {
-            // ignore JSON parse errors for incomplete chunks
-          }
-        }
-      }
-      
+
+      if (!res.ok) throw new Error('Error de conexión con AgentFactory');
+
+      // Simulate progress while waiting for response
+      setUpgradeProgress(50);
+      setUpgradeTimeLeft('Procesando...');
+
+      const data = await res.json();
+      const generatedText = data.response ?? '';
+
       setUpgradeProgress(100);
       setUpgradeTimeLeft('¡Listo!');
       
