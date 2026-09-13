@@ -258,6 +258,10 @@ export default function Architecture() {
   const handleBatchOptimize = async () => {
     if (selectedForBatch.length === 0) return;
     setIsBatchOptimizing(true);
+    setIsOptimizing(true);
+    setOptProgress(0);
+    setOptTimeLeft('Iniciando...');
+    
     const promptsToOptimize: any[] = [];
     const allModules = [...(data?.flow || []), ...(data?.apps || [])];
     for (const mod of allModules) {
@@ -274,45 +278,64 @@ export default function Architecture() {
        }
     }
     
+    const CHUNK_SIZE = 2;
+    const totalItems = promptsToOptimize.length;
+    const totalBatches = Math.ceil(totalItems / CHUNK_SIZE);
+    
     try {
-        const res = await fetch(`${API_URL}/architecture/evolve-batch`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                prompts: promptsToOptimize,
-                batch_index: 0,
-                total_batches: 1
-            })
-        });
-        if (res.ok) {
-            const json = await res.json();
-            if (json.results && json.results.length > 0) {
-               const newOptimized = {...optimizedPrompts};
-               const existing = JSON.parse(localStorage.getItem('system_evolution_overrides') || '{}');
-               
-               for (const result of json.results) {
-                   newOptimized[result.prompt_key] = result.content;
-                   existing[result.prompt_key] = { content: result.content, rationale: result.rationale || 'Optimización por lote' };
-               }
-               setOptimizedPrompts(newOptimized);
-               localStorage.setItem('system_evolution_overrides', JSON.stringify(existing));
-               
-               await fetch(`${API_URL}/architecture/consolidate`, {
-                   method: 'POST',
-                   headers: { 'Content-Type': 'application/json' },
-                   body: JSON.stringify({
-                       overrides: existing,
-                       notes: `Optimización por lote de ${json.results.length} prompts`,
-                       author: 'Usuario',
-                       version: '3.0.0'
-                   })
-               });
+        let currentOptimized = { ...optimizedPrompts };
+        let currentExisting = JSON.parse(localStorage.getItem('system_evolution_overrides') || '{}');
+
+        for (let i = 0; i < totalBatches; i++) {
+            const chunk = promptsToOptimize.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+            const progressPct = Math.round((i / totalBatches) * 100);
+            setOptProgress(progressPct);
+            setOptTimeLeft(`Procesando lote ${i + 1} de ${totalBatches}...`);
+
+            const res = await fetch(`${API_URL}/architecture/evolve-batch`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompts: chunk,
+                    batch_index: i,
+                    total_batches: totalBatches
+                })
+            });
+            
+            if (res.ok) {
+                const json = await res.json();
+                if (json.results && json.results.length > 0) {
+                   for (const result of json.results) {
+                       currentOptimized[result.prompt_key] = result.content;
+                       currentExisting[result.prompt_key] = { content: result.content, rationale: result.rationale || 'Optimización por lote' };
+                   }
+                   setOptimizedPrompts({ ...currentOptimized });
+                   localStorage.setItem('system_evolution_overrides', JSON.stringify(currentExisting));
+                }
             }
         }
+        
+        // Al final consolidar todo
+        setOptProgress(100);
+        setOptTimeLeft('Consolidando resultados...');
+        
+        await fetch(`${API_URL}/architecture/consolidate`, {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({
+               overrides: currentExisting,
+               notes: `Optimización por lote de ${totalItems} prompts`,
+               author: 'Usuario',
+               version: '3.0.0'
+           })
+        });
+
     } catch (e) {
         console.error(e);
     } finally {
         setIsBatchOptimizing(false);
+        setIsOptimizing(false);
+        setOptProgress(0);
         setSelectedForBatch([]);
     }
   };
@@ -518,6 +541,22 @@ export default function Architecture() {
                          </div>
                        )}
 
+                       {/* Barra de progreso de optimización si está corriendo */}
+                       {isOptimizing && (
+                         <div className="mb-4 p-3 bg-emerald-950/80 border border-emerald-800 rounded-lg flex flex-col gap-1.5">
+                           <div className="flex justify-between text-xs text-emerald-400 font-medium">
+                             <span className="flex items-center gap-1.5 animate-pulse">✨ Evolucionando con el motor AI...</span>
+                             <span>{optProgress}% ({optTimeLeft})</span>
+                           </div>
+                           <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden border border-[#2A2A2A]">
+                             <div 
+                               className="h-full rounded-full transition-all duration-300 ease-out"
+                               style={{ width: `${optProgress}%`, backgroundColor: '#10b981', boxShadow: '0 0 10px rgba(16,185,129,0.5)' }}
+                             ></div>
+                           </div>
+                         </div>
+                       )}
+
                        <div className="flex flex-col gap-2">
                           {activeModule.prompts.filter(p => p.key.toLowerCase().includes(promptSearchTerm.toLowerCase()) || (p.used_at && p.used_at.toLowerCase().includes(promptSearchTerm.toLowerCase()))).map(p => {
                              const isSelected = selectedPrompt?.key === p.key;
@@ -634,21 +673,7 @@ export default function Architecture() {
                      </div>
                   </div>
                   
-                  {/* Barra de progreso de optimización si está corriendo */}
-                  {isOptimizing && (
-                    <div className="px-6 pt-3 pb-1 bg-emerald-950/80 border-b border-emerald-800 flex flex-col gap-1.5">
-                      <div className="flex justify-between text-xs text-emerald-400 font-medium">
-                        <span className="flex items-center gap-1.5 animate-pulse">✨ Evolucionando con el motor AI...</span>
-                        <span>{optProgress}% ({optTimeLeft})</span>
-                      </div>
-                      <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden border border-[#2A2A2A]">
-                        <div 
-                          className="h-full rounded-full transition-all duration-300 ease-out"
-                          style={{ width: `${optProgress}%`, backgroundColor: '#10b981', boxShadow: '0 0 10px rgba(16,185,129,0.5)' }}
-                        ></div>
-                      </div>
-                    </div>
-                  )}
+
 
                   {/* Barra de progreso interactiva si está corriendo */}
                   {currentLogicTask?.isRunning && (

@@ -462,7 +462,7 @@ def get_architecture():
     arch["apps"].insert(0, {
         "id": "master_prompts",
         "name": "🌟 Master Prompts (Nuevos)",
-        "what": "Colección completa de los 23 nuevos Master Prompts integrados en las pestañas del Builder.",
+        "what": "Colección completa de los 22 nuevos Master Prompts integrados en las pestañas del Builder.",
         "prompts": [
             {"key": "requirements_gatekeeper", "used_at": "Flow Architect Tab", "text": REQUIREMENTS_GATEKEEPER_SYSTEM, "explanation": "Filtro estricto que no deja avanzar si tu idea es ambigua."},
             {"key": "architecture_alternatives", "used_at": "Flow Architect Tab", "text": ARCHITECTURE_ALTERNATIVES_SYSTEM, "explanation": "Te propone 3 caminos (Rápido, Preciso, Local) antes de generar."},
