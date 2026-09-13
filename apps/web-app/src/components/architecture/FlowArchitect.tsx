@@ -167,7 +167,7 @@ export const FlowArchitect: React.FC = () => {
       )}
 
       {/* Left panel: Discovery Chat */}
-      <div className="w-1/3 flex flex-col border-r border-gray-700">
+      <div className="w-1/3 min-w-0 flex-shrink-0 flex flex-col border-r border-gray-700">
         <div className="p-4 bg-gray-800 font-bold border-b border-gray-700 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-blue-400">🏗️</span> FlowArchitect Discovery
@@ -182,8 +182,12 @@ export const FlowArchitect: React.FC = () => {
             </button>
           )}
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <style>{`
+            div::-webkit-scrollbar { display: none; }
+          `}</style>
           {chatHistory.length === 0 && (
+
             <div className="text-gray-500 text-sm text-center mt-8">
               <div className="text-3xl mb-3">💬</div>
               <p>Describe la aplicación o flujo que quieres construir.</p>
@@ -224,7 +228,7 @@ export const FlowArchitect: React.FC = () => {
       </div>
 
       {/* Right panel: Analysis and Blueprint */}
-      <div className="w-2/3 flex flex-col">
+      <div className="w-2/3 min-w-0 flex-shrink-0 flex flex-col">
         <div className="p-4 bg-gray-800 font-bold border-b border-gray-700 flex justify-between items-center">
           <span className="flex items-center gap-2">
             <span className="text-green-400">🗺️</span> Architecture Blueprint
@@ -250,33 +254,46 @@ export const FlowArchitect: React.FC = () => {
             )}
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-6 flex space-x-6">
-          <div className="flex-1 bg-gray-800 p-4 rounded-lg shadow border border-gray-700">
-            <h3 className="font-bold text-gray-300 mb-2 border-b border-gray-700 pb-2 flex items-center gap-2">
+        <div className="flex-1 overflow-hidden p-6 flex space-x-6">
+          
+          {/* Column 2: Intent & Requirements */}
+          <div className="flex-1 min-w-0 flex flex-col bg-gray-800 p-4 rounded-lg shadow border border-gray-700">
+            <h3 className="font-bold text-gray-300 mb-2 border-b border-gray-700 pb-2 flex items-center gap-2 flex-shrink-0">
               <span className="text-yellow-400">🎯</span> Intent & Requirements
             </h3>
-            {analysis ? (
-              <pre className="text-xs text-green-400 overflow-x-auto leading-relaxed">
-                {JSON.stringify(analysis, null, 2)}
-              </pre>
-            ) : (
-              <div className="text-gray-500 text-sm mt-4">El análisis aparecerá aquí luego de chatear.</div>
-            )}
+            <div className="flex-1 overflow-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              <style>{`
+                div::-webkit-scrollbar { display: none; }
+              `}</style>
+              {analysis ? (
+                <pre className="text-xs text-green-400 leading-relaxed whitespace-pre-wrap break-words">
+                  {JSON.stringify(analysis, null, 2)}
+                </pre>
+              ) : (
+                <div className="text-gray-500 text-sm mt-4">El análisis aparecerá aquí luego de chatear.</div>
+              )}
+            </div>
           </div>
-          <div className="flex-1 bg-gray-800 p-4 rounded-lg shadow border border-gray-700">
-            <h3 className="font-bold text-gray-300 mb-2 border-b border-gray-700 pb-2 flex items-center gap-2">
+
+          {/* Column 3: ArchitectureSpec v1 */}
+          <div className="flex-1 min-w-0 flex flex-col bg-gray-800 p-4 rounded-lg shadow border border-gray-700">
+            <h3 className="font-bold text-gray-300 mb-2 border-b border-gray-700 pb-2 flex items-center gap-2 flex-shrink-0">
               <span className="text-blue-400">📐</span> ArchitectureSpec v1
             </h3>
-            {blueprint ? (
-              <pre className="text-xs text-blue-400 overflow-x-auto leading-relaxed">
-                {JSON.stringify(blueprint, null, 2)}
-              </pre>
-            ) : (
-              <div className="text-gray-500 text-sm mt-4">El blueprint generado aparecerá aquí.</div>
-            )}
+            <div className="flex-1 overflow-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              {blueprint ? (
+                <pre className="text-xs text-blue-400 leading-relaxed whitespace-pre-wrap break-words">
+                  {JSON.stringify(blueprint, null, 2)}
+                </pre>
+              ) : (
+                <div className="text-gray-500 text-sm mt-4">El blueprint generado aparecerá aquí.</div>
+              )}
+            </div>
           </div>
+
         </div>
       </div>
     </div>
   );
 };
+
