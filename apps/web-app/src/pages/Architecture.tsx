@@ -88,6 +88,8 @@ export default function Architecture() {
   const [libTranslating, setLibTranslating] = useState<string|null>(null);
   const [libTranslated, setLibTranslated] = useState<Record<string,string>>({});
   const [libUpgrading, setLibUpgrading] = useState<string|null>(null);
+  const [libExplaining, setLibExplaining] = useState<string|null>(null);
+  const [libExplanations, setLibExplanations] = useState<Record<string,string>>({});
 
   const [selectedForBatch, setSelectedForBatch] = useState<string[]>(() => {
     try {
@@ -446,6 +448,35 @@ export default function Architecture() {
     finally { setLibTranslating(null); }
   };
 
+  const handleLibExplain = async (type: 'agent'|'kb', id: string, content: string, name: string) => {
+    if (libExplanations[id]) {
+      setLibExplanations(prev => { const n = {...prev}; delete n[id]; return n; });
+      return;
+    }
+    setLibExplaining(id);
+    try {
+      const prompt = type === 'agent'
+        ? `Explica de forma simple y concisa (3-4 oraciones) cómo funciona este agente IA llamado "${name}" y para qué sirve.\n\nInstrucciones del agente:\n${content.slice(0, 500)}`
+        : `Explica de forma simple (3-4 oraciones) para qué sirve este conocimiento/prompt llamado "${name}" y cómo ayuda a un agente IA.\n\nContenido:\n${content.slice(0, 500)}`;
+      
+      const res = await fetch(`${API_URL}/agents/chat`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          agent_id: 'system_optimizer',
+          message: prompt,
+          override_instructions: 'Eres un experto en IA que explica de forma simple y en español cómo funcionan los agentes y prompts. Responde en 3-4 oraciones claras, sin tecnicismos.'
+        })
+      });
+      const d = await res.json();
+      setLibExplanations(prev => ({...prev, [id]: d.response || 'No disponible'}));
+    } catch {
+      setLibExplanations(prev => ({...prev, [id]: 'No se pudo generar la explicación.'}))
+    } finally {
+      setLibExplaining(null);
+    }
+  };
+
   const handleLibUpgrade = async (type: 'agent'|'kb', id: string, content: string, title: string) => {
     setLibUpgrading(id);
     try {
@@ -613,6 +644,10 @@ export default function Architecture() {
                           style={{fontSize:'10px', padding:'3px 8px', borderRadius:'6px', backgroundColor:'#1a0d0d', border:'1px solid #3a1a1a', color:'#cc8060', cursor:'pointer'}}>
                           {libUpgrading===agent.id?'⏳ Optimizando...':'⚡ Upgrade'}
                         </button>
+                        <button onClick={(e) => { e.stopPropagation(); handleLibExplain('agent', agent.id, agent.instructions || agent.description || '', agent.name || agent.id); }}
+                          style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '6px', backgroundColor: '#0d150d', border: '1px solid #1a2a1a', color: '#6a9a6a', cursor: 'pointer', marginLeft: '4px' }}>
+                          {libExplaining === agent.id ? '⏳ Analizando...' : libExplanations[agent.id] ? '💡 Ocultar' : '💡 Cómo funciona'}
+                        </button>
                       </div>
                     </div>
                   )}
@@ -652,6 +687,10 @@ export default function Architecture() {
                         <button onClick={e=>{e.stopPropagation();handleLibUpgrade('kb',prompt.id||prompt.title,prompt.content||'',prompt.title);}}
                           style={{fontSize:'10px', padding:'3px 8px', borderRadius:'6px', backgroundColor:'#1a0d0d', border:'1px solid #3a1a1a', color:'#cc8060', cursor:'pointer'}}>
                           {libUpgrading===(prompt.id||prompt.title)?'⏳ Optimizando...':'⚡ Upgrade'}
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); handleLibExplain('kb', prompt.id || prompt.title, prompt.content || '', prompt.title); }}
+                          style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '6px', backgroundColor: '#0d150d', border: '1px solid #1a2a1a', color: '#6a9a6a', cursor: 'pointer', marginLeft: '4px' }}>
+                          {libExplaining === (prompt.id || prompt.title) ? '⏳ Analizando...' : libExplanations[prompt.id || prompt.title] ? '💡 Ocultar' : '💡 Cómo funciona'}
                         </button>
                       </div>
                     </div>

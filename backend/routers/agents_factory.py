@@ -207,20 +207,22 @@ async def search_assist(req: SearchAssistRequest):
 
         context_info = req.context or 'todos'
 
-        search_prompt = f"""El usuario busca: "{req.query}"
-        
-Tienes acceso a este catalogo:
+        search_prompt = f"""El usuario busca: \"{req.query}\"
+Contexto: {context_info}
 
-AGENTES DISPONIBLES (primeros 100):
-{json.dumps(agents_catalog[:50], ensure_ascii=False, indent=1)}
+CATÁLOGO DISPONIBLE:
 
-KNOWLEDGE BASE DISPONIBLES (primeros 100):
-{json.dumps(prompts_catalog[:50], ensure_ascii=False, indent=1)}
+AGENTES:
+{json.dumps([{"nombre": a['name'] or a.get('id',''), "categoria": a['category'], "descripcion": a['description'][:60] if a.get('description') else ''} for a in skills[:60] if isinstance(a, dict)], ensure_ascii=False, indent=1)}
 
-Contexto de busqueda: {context_info}
+KNOWLEDGE BASE:
+{json.dumps([{"titulo": p['title'], "categoria": p.get('category','')} for p in prompts[:60] if isinstance(p, dict)], ensure_ascii=False, indent=1)}
 
-Responde en español sugiriendo los 3-5 agentes o KB mas relevantes para la consulta del usuario. 
-Se conciso. Menciona los nombres exactos de los agentes/KB. Explica brevemente por que cada uno es relevante."""
+INSTRUCCION: Basandote en la consulta del usuario, responde en espanol con:
+1. Una breve explicacion de lo que necesita el usuario (1 oracion)
+2. Lista de 3-5 agentes MAS relevantes con sus nombres EXACTOS del catalogo
+3. Lista de 2-3 KB MAS relevantes con sus titulos EXACTOS del catalogo
+Se conciso. Usa exactamente los nombres/titulos del catalogo."""
 
         response = await AgentFactory.chat_one_shot(
             agent_id="agentos_assistant",
