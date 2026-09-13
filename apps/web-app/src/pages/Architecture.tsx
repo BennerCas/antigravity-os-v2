@@ -192,13 +192,25 @@ export default function Architecture() {
         if (json.results && json.results[0]) {
            const result = json.results[0];
            setOptimizedPrompts(prev => ({ ...prev, [selectedPrompt.key]: result.content }));
-           // Sync with Evolution tab
+           // Sync with Evolution tab AND Consolidate permanently
            try {
              const existing = JSON.parse(localStorage.getItem('system_evolution_overrides') || '{}');
              existing[selectedPrompt.key] = { content: result.content, rationale: result.rationale || 'Optimización singular manual' };
              localStorage.setItem('system_evolution_overrides', JSON.stringify(existing));
+             
+             // Consolidate in backend instantly
+             await fetch(`${API_URL}/architecture/consolidate`, {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({
+                 overrides: existing,
+                 notes: `Optimización singular automática para: ${selectedPrompt.key}`,
+                 author: 'Usuario',
+                 version: '3.0.0'
+               })
+             });
            } catch (e) {
-             console.error("Error guardando en system_evolution_overrides", e);
+             console.error("Error consolidando en backend", e);
            }
         }
       } else {
@@ -475,13 +487,24 @@ export default function Architecture() {
 
                   {optimizedPrompts[selectedPrompt.key] && (
                     <div className="px-6 py-2 bg-emerald-950/30 border-b border-emerald-900/50 flex justify-between items-center text-xs text-emerald-400">
-                      <span>✨ Viendo versión temporalmente optimizada. (Ve a Evolución para consolidar permanentemente).</span>
-                      <button onClick={() => {
+                      <span>✨ Versión optimizada (Guardada y consolidada automáticamente en el sistema).</span>
+                      <button onClick={async () => {
                         setOptimizedPrompts(p => { const newP = {...p}; delete newP[selectedPrompt.key]; return newP; });
                         try {
                           const existing = JSON.parse(localStorage.getItem('system_evolution_overrides') || '{}');
                           delete existing[selectedPrompt.key];
                           localStorage.setItem('system_evolution_overrides', JSON.stringify(existing));
+                          
+                          await fetch(`${API_URL}/architecture/consolidate`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              overrides: existing,
+                              notes: `Restauración de prompt original para: ${selectedPrompt.key}`,
+                              author: 'Usuario',
+                              version: '3.0.0'
+                            })
+                          });
                         } catch (e) {}
                       }} className="underline hover:text-emerald-300">Restaurar Original</button>
                     </div>
