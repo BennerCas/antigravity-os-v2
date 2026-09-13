@@ -59,6 +59,19 @@ export default function Architecture() {
     return (localStorage.getItem('arch_main_view') as 'map' | 'evolution') || 'map';
   });
   const [currentLogicTask, setCurrentLogicTask] = useState<LogicTaskState | null>(null);
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [optimizedPrompts, setOptimizedPrompts] = useState<Record<string, string>>(() => {
+    try {
+      const saved = localStorage.getItem('arch_single_optimized');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('arch_single_optimized', JSON.stringify(optimizedPrompts));
+  }, [optimizedPrompts]);
 
   useEffect(() => {
     localStorage.setItem('arch_main_view', mainTab);
@@ -135,6 +148,67 @@ export default function Architecture() {
     setPanelTab('logic');
     const key = `arch_${selectedPrompt.key}`;
     logicTaskManager.startTask(key, selectedPrompt.text, selectedPrompt.key);
+  };
+
+  const handleOptimizeSingle = async () => {
+    if (!selectedPrompt || isOptimizing) return;
+    setIsOptimizing(true);
+    
+    // Buscar si es agent o prompt
+    let category = 'prompt';
+    let moduleName = 'Core';
+    if (data) {
+      const allModules = [...data.flow, ...(data.apps || [])];
+      for (const mod of allModules) {
+        if (mod.prompts.find(p => p.key === selectedPrompt.key)) {
+          moduleName = mod.name;
+          const k = selectedPrompt.key;
+          if (k.includes('agent') || k.includes('executor') || k.includes('engine') || k.includes('architect') || ['builder', 'orchestrator', 'runtime'].includes(mod.id)) {
+            category = 'agent';
+          }
+          break;
+        }
+      }
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/architecture/evolve-batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompts: [{
+            key: selectedPrompt.key,
+            moduleName,
+            category,
+            text: selectedPrompt.text,
+            explanation: selectedPrompt.explanation || ''
+          }],
+          batch_index: 0,
+          total_batches: 1
+        })
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.results && json.results[0]) {
+           const result = json.results[0];
+           setOptimizedPrompts(prev => ({ ...prev, [selectedPrompt.key]: result.content }));
+           // Sync with Evolution tab
+           try {
+             const existing = JSON.parse(localStorage.getItem('system_evolution_overrides') || '{}');
+             existing[selectedPrompt.key] = { content: result.content, rationale: result.rationale || 'Optimización singular manual' };
+             localStorage.setItem('system_evolution_overrides', JSON.stringify(existing));
+           } catch (e) {
+             console.error("Error guardando en system_evolution_overrides", e);
+           }
+        }
+      } else {
+        alert("Error optimizando el prompt.");
+      }
+    } catch (e) {
+      alert("Error de conexión al optimizar.");
+    } finally {
+      setIsOptimizing(false);
+    }
   };
 
   if (error) {
@@ -345,6 +419,16 @@ export default function Architecture() {
                           🛠️ Builder
                         </button>
 
+                        {/* Botón Optimizar */}
+                        <button 
+                          onClick={handleOptimizeSingle} 
+                          disabled={isOptimizing}
+                          className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg bg-emerald-900/40 hover:bg-emerald-800 text-emerald-300 border border-emerald-700/50 transition-colors shadow-sm disabled:opacity-50"
+                          title="Optimizar estructuralmente con el mismo motor de Evolución"
+                        >
+                          {isOptimizing ? '✨ Optimizando...' : '✨ Optimizar'}
+                        </button>
+
                         {/* Botón Lógica al costado de Copiar */}
                         {panelTab === 'content' ? (
                           <button 
@@ -364,7 +448,7 @@ export default function Architecture() {
                         )}
 
                         <button
-                           onClick={() => handleCopy(panelTab === 'logic' && currentLogicTask?.result ? currentLogicTask.result : selectedPrompt.text)}
+                           onClick={() => handleCopy(panelTab === 'logic' && currentLogicTask?.result ? currentLogicTask.result : (optimizedPrompts[selectedPrompt.key] || selectedPrompt.text))}
                            className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg bg-zinc-100 hover:bg-white text-zinc-900 transition-colors"
                         >
                            {copied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
@@ -389,11 +473,25 @@ export default function Architecture() {
                     </div>
                   )}
 
+                  {optimizedPrompts[selectedPrompt.key] && (
+                    <div className="px-6 py-2 bg-emerald-950/30 border-b border-emerald-900/50 flex justify-between items-center text-xs text-emerald-400">
+                      <span>✨ Viendo versión temporalmente optimizada. (Ve a Evolución para consolidar permanentemente).</span>
+                      <button onClick={() => {
+                        setOptimizedPrompts(p => { const newP = {...p}; delete newP[selectedPrompt.key]; return newP; });
+                        try {
+                          const existing = JSON.parse(localStorage.getItem('system_evolution_overrides') || '{}');
+                          delete existing[selectedPrompt.key];
+                          localStorage.setItem('system_evolution_overrides', JSON.stringify(existing));
+                        } catch (e) {}
+                      }} className="underline hover:text-emerald-300">Restaurar Original</button>
+                    </div>
+                  )}
+
                   <div className="flex-1 overflow-y-auto custom-scrollbar relative flex flex-col">
                      <div className="flex-1 p-6">
                         {panelTab === 'content' ? (
                            <pre className="text-base md:text-lg text-[#FFFFFF] whitespace-pre-wrap font-mono leading-relaxed drop-shadow-sm">
-                              {selectedPrompt.text}
+                              {optimizedPrompts[selectedPrompt.key] || selectedPrompt.text}
                            </pre>
                         ) : (
                            <div className="p-6 rounded-xl border border-gray-800 leading-relaxed prose prose-invert max-w-none shadow-inner bg-gray-900/80 text-sm text-gray-300 prose-sm prose-headings:text-blue-400 prose-a:text-blue-400">
