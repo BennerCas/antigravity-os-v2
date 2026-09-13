@@ -1,14 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArchitectureSpec } from '../../types/architecture';
 import { API_URL } from '../../lib/api';
 
 export const FlowArchitect: React.FC = () => {
-  const [chatHistory, setChatHistory] = useState<{role: string, content: string}[]>([]);
+  const [chatHistory, setChatHistory] = useState<{role: string, content: string}[]>(() => {
+    try { return JSON.parse(localStorage.getItem('fa_chat_history') || '[]'); } catch { return []; }
+  });
   const [input, setInput] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState<any>(null);
-  const [blueprint, setBlueprint] = useState<ArchitectureSpec | null>(null);
+  const [analysis, setAnalysis] = useState<any>(() => {
+    try { const s = localStorage.getItem('fa_analysis'); return s ? JSON.parse(s) : null; } catch { return null; }
+  });
+  const [blueprint, setBlueprint] = useState<ArchitectureSpec | null>(() => {
+    try { const s = localStorage.getItem('fa_blueprint'); return s ? JSON.parse(s) : null; } catch { return null; }
+  });
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    try { localStorage.setItem('fa_chat_history', JSON.stringify(chatHistory)); } catch {}
+  }, [chatHistory]);
+
+  useEffect(() => {
+    if (analysis) { try { localStorage.setItem('fa_analysis', JSON.stringify(analysis)); } catch {} }
+  }, [analysis]);
+
+  useEffect(() => {
+    if (blueprint) { try { localStorage.setItem('fa_blueprint', JSON.stringify(blueprint)); } catch {} }
+  }, [blueprint]);
+
+  const handleClear = () => {
+    ['fa_chat_history', 'fa_analysis', 'fa_blueprint'].forEach(k => localStorage.removeItem(k));
+    setChatHistory([]);
+    setAnalysis(null);
+    setBlueprint(null);
+  };
 
   const showError = (msg: string) => {
     setError(msg);
@@ -143,8 +168,19 @@ export const FlowArchitect: React.FC = () => {
 
       {/* Left panel: Discovery Chat */}
       <div className="w-1/3 flex flex-col border-r border-gray-700">
-        <div className="p-4 bg-gray-800 font-bold border-b border-gray-700 flex items-center gap-2">
-          <span className="text-blue-400">🏗️</span> FlowArchitect Discovery
+        <div className="p-4 bg-gray-800 font-bold border-b border-gray-700 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-blue-400">🏗️</span> FlowArchitect Discovery
+          </div>
+          {(chatHistory.length > 0 || analysis || blueprint) && (
+            <button
+              onClick={handleClear}
+              className="text-xs text-gray-500 hover:text-red-400 transition-colors px-2 py-1 rounded hover:bg-red-900/20"
+              title="Limpiar sesión"
+            >
+              🗑️ Limpiar
+            </button>
+          )}
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {chatHistory.length === 0 && (

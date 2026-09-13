@@ -191,6 +191,7 @@ function BuilderContent() {
   const canvasEdgesKey = promptKey ? `builder_edges_${promptKey}` : 'builderEdges';
 
   const [builderTab, setBuilderTab] = useState<'flowarchitect' | 'runinspector' | 'flowboard' | 'runresults'>('flowarchitect');
+  const [runResultsKey, setRunResultsKey] = useState(0);
   const [nodes, setNodes] = useState<Node[]>(() => {
     if (restoreCanvas && promptKey) {
       const saved = localStorage.getItem(canvasNodesKey);
@@ -1532,7 +1533,10 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
               <button
                 data-tab={tab.id}
                 data-active={active ? 'true' : 'false'}
-                onClick={() => setBuilderTab(tab.id)}
+                onClick={() => {
+                  setBuilderTab(tab.id);
+                  if (tab.id === 'runresults') setRunResultsKey(k => k + 1);
+                }}
                 style={active ? activeStyle : inactiveStyle}
                 onMouseEnter={e => {
                   if (!active) {
@@ -1558,9 +1562,15 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
         })}
       </div>
 
-      {builderTab === 'flowarchitect' && <div className="flex-1 overflow-hidden relative"><FlowArchitect /></div>}
-      {builderTab === 'runinspector' && <div className="flex-1 overflow-hidden relative"><RunInspector runId={(() => { try { const r = JSON.parse(localStorage.getItem('builder_run_results') || '[]'); return r[0]?.run_id || 'no-run'; } catch { return 'no-run'; } })()} /></div>}
-      {builderTab === 'runresults' && <div className="flex-1 overflow-hidden relative"><RunResults /></div>}
+      <div className="flex-1 overflow-hidden relative" style={{ display: builderTab === 'flowarchitect' ? 'flex' : 'none' }}>
+        <FlowArchitect />
+      </div>
+      <div className="flex-1 overflow-hidden relative" style={{ display: builderTab === 'runinspector' ? 'flex' : 'none' }}>
+        <RunInspector runId={(() => { try { const r = JSON.parse(localStorage.getItem('builder_run_results') || '[]'); return r[0]?.run_id || 'no-run'; } catch { return 'no-run'; } })()} />
+      </div>
+      <div className="flex-1 overflow-hidden relative" style={{ display: builderTab === 'runresults' ? 'flex' : 'none' }}>
+        <RunResults key={runResultsKey} />
+      </div>
       
       {builderTab === 'flowboard' && (
         <>
