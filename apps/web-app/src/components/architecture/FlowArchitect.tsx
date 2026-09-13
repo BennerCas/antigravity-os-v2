@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArchitectureSpec } from '../../types/architecture';
 import { API_URL } from '../../lib/api';
 import { useTTSStore } from '../../lib/ttsStore';
+import { SpeakerHigh } from '@phosphor-icons/react';
 
 
 
@@ -28,7 +29,19 @@ export const FlowArchitect: React.FC = () => {
       .then(res => res.json())
       .then(data => {
         if (data.models && data.models.length > 0) {
-          setModels(data.models);
+          const chatOptimized = ["anthropic/claude-3.5-sonnet", "openai/gpt-4o", "meta-llama/llama-3.1-70b-instruct", "qwen/qwen-2.5-72b-instruct", "hermes3:8b", "hermes3:latest"];
+          // Sort so that chatOptimized are at the top
+          const sorted = [...data.models].sort((a, b) => {
+            const aName = a.name.replace('free.ai/', '');
+            const bName = b.name.replace('free.ai/', '');
+            const aIdx = chatOptimized.indexOf(aName);
+            const bIdx = chatOptimized.indexOf(bName);
+            if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+            if (aIdx !== -1) return -1;
+            if (bIdx !== -1) return 1;
+            return 0;
+          });
+          setModels(sorted);
         }
       })
       .catch(err => console.error('[FlowArchitect] error loading models:', err));
@@ -151,15 +164,14 @@ export const FlowArchitect: React.FC = () => {
 
       const rfNodes = (builderFlow.nodes || []).map((n: any, idx: number) => {
         // Build readable content from config
-        const cfg = n.config || {};
-        const parts = [];
-        if (cfg.role) parts.push(`🎭 Rol:\n${cfg.role}`);
-        if (cfg.goal) parts.push(`🎯 Meta:\n${cfg.goal}`);
-        if (cfg.instructions) parts.push(`📋 Instrucciones:\n${cfg.instructions}`);
-        if (cfg.prompt) parts.push(`💬 Prompt:\n${cfg.prompt}`);
-        
-        let nodeContent = parts.length > 0 ? parts.join('\n\n') : JSON.stringify(cfg, null, 2);
-        if (!nodeContent || nodeContent === '{}') {
+        let nodeContent = '';
+        if (n.config) {
+          Object.entries(n.config).forEach(([k, v]) => {
+            if (!v || v === '') nodeContent += `${k}: [COMPLETAR ${k}]\n`;
+            else nodeContent += `${k}: ${v}\n`;
+          });
+        }
+        if (!nodeContent) {
            nodeContent = `Instrucciones para ${n.name || n.kind}`;
         }
 
@@ -253,24 +265,40 @@ export const FlowArchitect: React.FC = () => {
           <div className="text-xs uppercase text-gray-500 font-bold mb-3 tracking-wider">🛠️ AI Tools (Master Prompts)</div>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { id: 'gatekeeper', label: 'Requirements Gatekeeper', icon: '🛡️', desc: 'Filtro estricto que no deja avanzar si tu idea es ambigua.' },
-              { id: 'alternatives', label: 'Architecture Alternatives', icon: '🔀', desc: 'Sugiere alternativas de arquitectura técnica y estructurales.' },
-              { id: 'feasibility', label: 'Cost/Feasibility Analyzer', icon: '💰', desc: 'Analiza la viabilidad económica y técnica del proyecto sugerido.' },
-              { id: 'schema', label: 'State Schema Designer', icon: '🗂️', desc: 'Ayuda a diseñar el esquema de estado y datos para la aplicación.' }
+              { id: 'gatekeeper', label: 'Requirements Gatekeeper', icon: '🛡️', desc: 'Filtro estricto de validación. Evalúa tu idea buscando ambigüedades y exige claridad absoluta antes de permitir el diseño.' },
+              { id: 'alternatives', label: 'Architecture Alternatives', icon: '🔀', desc: 'Explora y compara enfoques arquitectónicos (microservicios, monolitos, serverless) para recomendar la estructura óptima.' },
+              { id: 'feasibility', label: 'Cost/Feasibility Analyzer', icon: '💰', desc: 'Auditoría integral técnica y financiera. Proyecta viabilidad, detecta cuellos de botella y estima costos de infraestructura.' },
+              { id: 'schema', label: 'State Schema Designer', icon: '🗂️', desc: 'Ingeniero de datos. Modela esquemas de estado, entidades y relaciones garantizando normalización y rendimiento.' }
             ].map(p => (
-              <button 
+              <div 
                 key={p.id} 
                 onClick={() => setInput(`Activa la herramienta ${p.label}: `)} 
-                className="flex flex-col items-start text-left p-3 bg-[#0a0a0a] border border-gray-800 border-l-4 border-l-gray-700 rounded-sm hover:bg-blue-950/30 hover:border-gray-700 hover:border-l-blue-500 transition-all group"
+                role="button"
+                className="flex flex-col items-start text-left p-3 bg-[#0a0a0a] border border-gray-800 border-l-4 border-l-gray-700 rounded-none hover:bg-blue-950/30 hover:border-gray-700 hover:border-l-blue-500 transition-all group cursor-pointer relative"
               >
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-base">{p.icon}</span>
+                <div className="flex items-center w-full mb-1.5">
+                  <span className="text-base mr-2">{p.icon}</span>
                   <span className="text-sm font-bold text-gray-300 group-hover:text-blue-400 transition-colors">{p.label}</span>
+                  
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isActive && currentSection === p.id) {
+                        stop();
+                      } else {
+                        play(`Herramienta maestra: ${p.label}. ${p.desc}`, p.id);
+                      }
+                    }}
+                    className={`ml-auto p-1.5 rounded-full transition-colors ${isActive && currentSection === p.id ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'}`}
+                    title={isActive && currentSection === p.id ? "Detener" : "Escuchar descripción"}
+                  >
+                    <SpeakerHigh size={14} weight={isActive && currentSection === p.id ? "fill" : "regular"} />
+                  </button>
                 </div>
-                <div className="text-xs text-gray-500 group-hover:text-gray-400 leading-relaxed">
+                <div className="text-xs text-gray-500 group-hover:text-gray-400 leading-relaxed pr-6">
                   {p.desc}
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         </div>
@@ -284,9 +312,12 @@ export const FlowArchitect: React.FC = () => {
             title="Elige el modelo de IA para chatear"
           >
             {models.length === 0 && <option value="gpt-4o">gpt-4o</option>}
-            {models.map(m => (
-              <option key={m.name} value={m.name}>{m.name} ({m.source})</option>
-            ))}
+            {models.map(m => {
+              const isRecommended = ["anthropic/claude-3.5-sonnet", "openai/gpt-4o", "meta-llama/llama-3.1-70b-instruct", "qwen/qwen-2.5-72b-instruct", "hermes3:8b", "hermes3:latest"].includes(m.name.replace('free.ai/', ''));
+              return (
+                <option key={m.name} value={m.name}>{m.name} ({m.source}) {isRecommended ? '⭐ Recomendado' : ''}</option>
+              );
+            })}
           </select>
         </div>
 
