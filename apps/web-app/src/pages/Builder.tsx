@@ -265,13 +265,19 @@ function BuilderContent() {
           }));
 
           if (flowData.edges) {
-            const mappedEdges: Edge[] = flowData.edges.map((e: Edge, idx: number) => ({
-              ...e,
-              id: `e_flow_${e.id}_${timestamp}_${idx}`,
-              source: `flow_${e.source}_${timestamp}_0`,
-              target: `flow_${e.target}_${timestamp}_1`,
-              style: { stroke: '#3b82f6', strokeWidth: 3 }
-            }));
+            const mappedEdges: Edge[] = flowData.edges.map((e: Edge, idx: number) => {
+              // Find the indices of source and target nodes in the original flowData
+              const sourceIdx = flowData.nodes.findIndex((n: Node) => n.id === e.source);
+              const targetIdx = flowData.nodes.findIndex((n: Node) => n.id === e.target);
+              
+              return {
+                ...e,
+                id: `e_flow_${e.id}_${timestamp}_${idx}`,
+                source: sourceIdx >= 0 ? `flow_${e.source}_${timestamp}_${sourceIdx}` : e.source,
+                target: targetIdx >= 0 ? `flow_${e.target}_${timestamp}_${targetIdx}` : e.target,
+                style: { stroke: '#3b82f6', strokeWidth: 3 }
+              };
+            });
             setEdges(prevEdges => [...prevEdges, ...mappedEdges]);
           }
 

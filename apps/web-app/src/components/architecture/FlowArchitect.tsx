@@ -162,6 +162,13 @@ export const FlowArchitect: React.FC = () => {
            nodeContent = `Instrucciones para ${n.name || n.kind}`;
         }
 
+        let nodeType = 'mainPrompt';
+        if (n.kind === 'transform' || n.kind === 'decision') {
+          nodeType = 'logicaNode';
+        } else if (n.kind === 'start' || n.kind === 'end') {
+          nodeType = 'actionNode';
+        }
+
         // Distributed Layout: 3 nodes per row
         const row = Math.floor(idx / 3);
         const col = idx % 3;
@@ -170,7 +177,7 @@ export const FlowArchitect: React.FC = () => {
 
         return {
           id: n.id,
-          type: 'mainPrompt',
+          type: nodeType,
           position: { x: xPos, y: yPos },
           data: {
             title: n.name || n.kind || 'Nodo',
@@ -187,6 +194,8 @@ export const FlowArchitect: React.FC = () => {
         id: e.id || `e-${idx}`,
         source: e.from,
         target: e.to,
+        sourceHandle: 'sb', // Source Bottom
+        targetHandle: 'tt', // Target Top
         animated: true,
         label: e.label || undefined,
         style: { stroke: '#3b82f6', strokeWidth: 2 }
