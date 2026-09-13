@@ -60,6 +60,8 @@ export default function Architecture() {
   });
   const [currentLogicTask, setCurrentLogicTask] = useState<LogicTaskState | null>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [optProgress, setOptProgress] = useState(0);
+  const [optTimeLeft, setOptTimeLeft] = useState('');
   const [optimizedPrompts, setOptimizedPrompts] = useState<Record<string, string>>(() => {
     try {
       const saved = localStorage.getItem('arch_single_optimized');
@@ -153,7 +155,21 @@ export default function Architecture() {
   const handleOptimizeSingle = async () => {
     if (!selectedPrompt || isOptimizing) return;
     setIsOptimizing(true);
+    setOptProgress(0);
+    setOptTimeLeft('12s restantes...');
     
+    // Simular progreso para UX
+    const totalMs = 12000;
+    const intervalMs = 200;
+    let elapsed = 0;
+    const progressTimer = setInterval(() => {
+      elapsed += intervalMs;
+      const pct = Math.min(99, Math.round((elapsed / totalMs) * 100));
+      setOptProgress(pct);
+      const left = Math.max(0, Math.ceil((totalMs - elapsed) / 1000));
+      setOptTimeLeft(`${left}s restantes...`);
+    }, intervalMs);
+
     // Buscar si es agent o prompt
     let category = 'prompt';
     let moduleName = 'Core';
@@ -219,7 +235,11 @@ export default function Architecture() {
     } catch (e) {
       alert("Error de conexión al optimizar.");
     } finally {
-      setIsOptimizing(false);
+      clearInterval(progressTimer);
+      setOptProgress(100);
+      setTimeout(() => {
+        setIsOptimizing(false);
+      }, 500);
     }
   };
 
@@ -469,6 +489,22 @@ export default function Architecture() {
                      </div>
                   </div>
                   
+                  {/* Barra de progreso de optimización si está corriendo */}
+                  {isOptimizing && (
+                    <div className="px-6 pt-3 pb-1 bg-emerald-950/80 border-b border-emerald-800 flex flex-col gap-1.5">
+                      <div className="flex justify-between text-xs text-emerald-400 font-medium">
+                        <span className="flex items-center gap-1.5 animate-pulse">✨ Evolucionando con el motor AI...</span>
+                        <span>{optProgress}% ({optTimeLeft})</span>
+                      </div>
+                      <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden border border-[#2A2A2A]">
+                        <div 
+                          className="h-full rounded-full transition-all duration-300 ease-out"
+                          style={{ width: `${optProgress}%`, backgroundColor: '#10b981', boxShadow: '0 0 10px rgba(16,185,129,0.5)' }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Barra de progreso interactiva si está corriendo */}
                   {currentLogicTask?.isRunning && (
                     <div className="px-6 pt-3 pb-1 bg-gray-950/80 border-b border-gray-800 flex flex-col gap-1.5">
