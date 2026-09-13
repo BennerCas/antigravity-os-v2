@@ -26,16 +26,17 @@ export const RunResults: React.FC = () => {
   const fetchResults = async () => {
     try {
       setLoading(true);
-      // In a real scenario this fetches from the backend DB of executions
+      // Fuente primaria: localStorage donde Builder guarda cada ejecución completada
       const stored = localStorage.getItem('builder_run_results');
       if (stored) {
         setResults(JSON.parse(stored));
       } else {
         setResults([]);
       }
-      setLoading(false);
     } catch (e) {
-      console.error(e);
+      console.error('[RunResults] Error leyendo resultados:', e);
+      setResults([]);
+    } finally {
       setLoading(false);
     }
   };

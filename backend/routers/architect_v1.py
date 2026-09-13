@@ -7,7 +7,7 @@ from backend.services.architect_engine import ArchitectEngine
 from backend.services.flow_normalizer import LegacyFlowAdapter
 from backend.schemas.builder_flow import BuilderFlow
 
-router = APIRouter(prefix="/v1/architect", tags=["FlowArchitect V1"])
+router = APIRouter(prefix="/architect", tags=["FlowArchitect V1"])
 
 class DiscoveryRequest(BaseModel):
     conversation_history: List[Dict[str, Any]]
