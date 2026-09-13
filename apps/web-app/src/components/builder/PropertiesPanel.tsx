@@ -3,6 +3,7 @@ import { Node } from '@xyflow/react';
 import { X, Wand2, Loader2, Brain, Volume2 } from 'lucide-react';
 import type { BuilderNodeData } from '../../types/builder';
 import { API_URL } from '../../lib/api';
+import { TooltipButton } from './TooltipButton';
 
 interface PropertiesPanelProps {
   selectedNode: Node | null;
@@ -142,7 +143,7 @@ export default function PropertiesPanel({ selectedNode, onUpdateNode, onAddVaria
               <div className="flex-1 flex flex-col min-h-[220px]">
                 <div className="flex items-center justify-between mb-1.5 shrink-0">
                   <div className="flex items-center gap-2">
-                    <label className="block text-sm font-semibold uppercase tracking-wider opacity-70">
+                     <label className="block text-sm font-semibold uppercase tracking-wider opacity-70">
                       {selectedNode.type === 'supervisor' ? 'Instrucciones del Supervisor' : 'Prompt / Instrucciones del Agente'}
                     </label>
                     <button onClick={() => playTTS(data.content as string)} className="opacity-50 hover:opacity-100 transition-opacity" title="Escuchar texto">
@@ -166,26 +167,26 @@ export default function PropertiesPanel({ selectedNode, onUpdateNode, onAddVaria
                 {isAgentConfigurable && (
                   <div className="flex flex-wrap gap-1.5 mb-2">
                     {[
-                      { id: 'validator', label: 'Canvas Validator', icon: '✅' },
-                      { id: 'edge', label: 'Edge Contract Generator', icon: '🔗' },
-                      { id: 'router', label: 'Dynamic Router', icon: '🔀' },
-                      { id: 'tools', label: 'Tool Discovery', icon: '🛠️' },
-                      { id: 'skill', label: 'Skill Synthesizer', icon: '🎭' },
-                      { id: 'cost', label: 'Cost/Token Optimizer', icon: '🪙' },
-                      { id: 'security', label: 'Security Guardrail', icon: '🛡️' },
-                      { id: 'hitl', label: 'HITL Manager', icon: '👨‍💻' },
-                      { id: 'context', label: 'Context Memory', icon: '🧠' },
-                      { id: 'debate', label: 'Debate Moderator', icon: '⚖️' },
-                      { id: 'meta', label: 'Meta Prompt Optimizer', icon: '✨' }
+                      { id: 'validator', label: 'Canvas Validator', icon: '✅', desc: 'Añade instrucciones para que el agente valide el canvas y evite errores estructurales.' },
+                      { id: 'edge', label: 'Edge Contract Generator', icon: '🔗', desc: 'Genera el esquema de variables de entrada y salida para conectar nodos.' },
+                      { id: 'router', label: 'Dynamic Router', icon: '🔀', desc: 'Instruye al agente para decidir el siguiente paso dinámicamente según el contexto.' },
+                      { id: 'tools', label: 'Tool Discovery', icon: '🛠️', desc: 'Habilita al agente para descubrir y proponer herramientas necesarias para la tarea.' },
+                      { id: 'skill', label: 'Skill Synthesizer', icon: '🎭', desc: 'Sintetiza un rol experto específico y habilidades clave para el agente.' },
+                      { id: 'cost', label: 'Cost/Token Optimizer', icon: '🪙', desc: 'Fuerza al agente a ser conciso y reducir el uso de tokens sin perder calidad.' },
+                      { id: 'security', label: 'Security Guardrail', icon: '🛡️', desc: 'Aplica reglas estrictas de seguridad para prevenir inyecciones de prompt.' },
+                      { id: 'hitl', label: 'HITL Manager', icon: '👨‍💻', desc: 'Configura el nodo para solicitar aprobación humana antes de acciones críticas.' },
+                      { id: 'context', label: 'Context Memory', icon: '🧠', desc: 'Habilita la capacidad de resumir y almacenar el contexto importante de la conversación.' },
+                      { id: 'debate', label: 'Debate Moderator', icon: '⚖️', desc: 'Instruye al agente a moderar un debate entre diferentes perspectivas internas.' },
+                      { id: 'meta', label: 'Meta Prompt Optimizer', icon: '✨', desc: 'Optimiza las instrucciones del propio nodo para maximizar el rendimiento del LLM.' }
                     ].map(p => (
-                      <button 
+                      <TooltipButton 
                         key={p.id} 
                         onClick={() => handleChange('content', (data.content || '') + `\n\n[Usando ${p.label}]: `)}
                         className="text-[9px] px-1.5 py-0.5 border border-purple-500/30 rounded text-purple-400 hover:bg-purple-500/20 transition-colors"
-                        title={p.label}
-                      >
-                        {p.icon} {p.label}
-                      </button>
+                        icon={p.icon}
+                        label={p.label}
+                        description={p.desc}
+                      />
                     ))}
                   </div>
                 )}

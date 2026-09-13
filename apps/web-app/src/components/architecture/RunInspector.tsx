@@ -7,7 +7,15 @@ interface RunEvent {
   payload: any;
 }
 
-// ... skipped code in mind, writing properly
+interface ApprovalTask {
+  id: string;
+  run_id: string;
+  pending_node_id: string;
+  status: string;
+  title: string;
+  objective: string;
+}
+
 import React, { useState, useEffect, useRef } from 'react';
 import { API_URL } from '../../lib/api';
 
