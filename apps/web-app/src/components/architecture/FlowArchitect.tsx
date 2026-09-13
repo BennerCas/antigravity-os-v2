@@ -234,17 +234,6 @@ export const FlowArchitect: React.FC = () => {
             <span className="text-blue-400">🏗️</span> FlowArchitect Discovery
           </div>
           <div className="flex items-center gap-3">
-            <select
-              value={selectedModel}
-              onChange={e => setSelectedModel(e.target.value)}
-              className="bg-gray-900 text-xs text-gray-300 border border-gray-700 rounded px-2 py-1 outline-none focus:border-blue-500 cursor-pointer"
-              title="Elige el modelo de IA para chatear y generar"
-            >
-              {models.length === 0 && <option value="gpt-4o">gpt-4o</option>}
-              {models.map(m => (
-                <option key={m.name} value={m.name}>{m.name} ({m.source})</option>
-              ))}
-            </select>
             {(chatHistory.length > 0 || analysis || blueprint) && (
               <button
                 onClick={handleClear}
@@ -256,6 +245,22 @@ export const FlowArchitect: React.FC = () => {
             )}
           </div>
         </div>
+
+        <div className="px-4 py-2 bg-gray-800/50 border-b border-gray-700 flex items-center">
+          <span className="text-xs text-gray-400 mr-3">Modelo de Chat:</span>
+          <select
+            value={selectedModel}
+            onChange={e => setSelectedModel(e.target.value)}
+            className="flex-1 bg-gray-900 text-xs text-gray-300 border border-gray-700 rounded px-2 py-1.5 outline-none focus:border-blue-500 cursor-pointer"
+            title="Elige el modelo de IA para chatear"
+          >
+            {models.length === 0 && <option value="gpt-4o">gpt-4o</option>}
+            {models.map(m => (
+              <option key={m.name} value={m.name}>{m.name} ({m.source})</option>
+            ))}
+          </select>
+        </div>
+
         <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           <style>{`
             div::-webkit-scrollbar { display: none; }
