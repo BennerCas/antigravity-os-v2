@@ -158,17 +158,21 @@ export default function Architecture() {
     setOptProgress(0);
     setOptTimeLeft('12s restantes...');
     
-    // Simular progreso para UX
+    // Simular progreso para UX usando Date.now() para evitar problemas de throttling o closure
     const totalMs = 12000;
-    const intervalMs = 200;
-    let elapsed = 0;
-    const progressTimer = setInterval(() => {
-      elapsed += intervalMs;
-      const pct = Math.min(99, Math.round((elapsed / totalMs) * 100));
-      setOptProgress(pct);
-      const left = Math.max(0, Math.ceil((totalMs - elapsed) / 1000));
+    const startTime = Date.now();
+    const progressTimer = window.setInterval(() => {
+      const currentElapsed = Date.now() - startTime;
+      const pct = Math.min(99, Math.round((currentElapsed / totalMs) * 100));
+      
+      setOptProgress(prev => {
+        // Asegurar que siempre suba y no se quede pegado
+        return Math.max(prev, pct);
+      });
+      
+      const left = Math.max(0, Math.ceil((totalMs - currentElapsed) / 1000));
       setOptTimeLeft(`${left}s restantes...`);
-    }, intervalMs);
+    }, 150);
 
     // Buscar si es agent o prompt
     let category = 'prompt';
@@ -235,7 +239,7 @@ export default function Architecture() {
     } catch (e) {
       alert("Error de conexión al optimizar.");
     } finally {
-      clearInterval(progressTimer);
+      window.clearInterval(progressTimer);
       setOptProgress(100);
       setTimeout(() => {
         setIsOptimizing(false);
