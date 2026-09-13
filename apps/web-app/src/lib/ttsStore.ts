@@ -10,9 +10,9 @@ interface TTSState {
   voices: SpeechSynthesisVoice[];
   selectedVoiceURI: string | null;
 
-  // Actions
+  isRestarting: boolean;
   initVoices: () => void;
-  play: (text: string, section?: string) => void;
+  play: (text: string, section?: string, isRestarting?: boolean) => void;
   pause: () => void;
   resume: () => void;
   stop: () => void;
@@ -24,12 +24,12 @@ interface TTSState {
 const cleanTextForTTS = (text: string) => {
   if (!text) return '';
   return text
-    .replace(/(\*\*|__)(.*?)\1/g, '$2') // bold
-    .replace(/(\*|_)(.*?)\1/g, '$2') // italic
-    .replace(/#+\s*/g, '') // headers
-    .replace(/`{1,3}[^`\n]*`{1,3}/g, '') // code blocks
-    .replace(/\[(.*?)\]\(.*?\)/g, '$1') // links
-    .replace(/[^\w\s\.,áéíóúÁÉÍÓÚñÑüÜ¿?¡!:-]/g, ' ') // solo letras y puntuación
+    .replace(/(\*\*|__)(.*?)\1/g, '$2')
+    .replace(/(\*|_)(.*?)\1/g, '$2')
+    .replace(/#+\s*/g, '')
+    .replace(/`{1,3}[^`\n]*`{1,3}/g, '')
+    .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+    .replace(/[^\w\s\.,áéíóúÁÉÍÓÚñÑüÜ¿?¡!:-]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 };
@@ -43,6 +43,7 @@ export const useTTSStore = create<TTSState>((set, get) => ({
   speed: 1,
   voices: [],
   selectedVoiceURI: null,
+  isRestarting: false,
 
   initVoices: () => {
     const updateVoices = () => {
@@ -58,10 +59,13 @@ export const useTTSStore = create<TTSState>((set, get) => ({
     }
   },
 
-  play: (text: string, section: string = 'Texto General') => {
+  play: (text: string, section: string = 'Texto General', isRestart = false) => {
     const { volume, speed, voices, selectedVoiceURI } = get();
     if (!('speechSynthesis' in window)) return;
     
+    if (isRestart) {
+      set({ isRestarting: true });
+    }
     window.speechSynthesis.cancel();
     
     const cleaned = cleanTextForTTS(text);
@@ -77,9 +81,21 @@ export const useTTSStore = create<TTSState>((set, get) => ({
       if (voice) utterance.voice = voice;
     }
 
-    utterance.onstart = () => set({ isActive: true, isPaused: false, currentSection: section, currentText: text });
-    utterance.onend = () => set({ isActive: false, isPaused: false, currentSection: '', currentText: '' });
-    utterance.onerror = () => set({ isActive: false, isPaused: false, currentSection: '', currentText: '' });
+    utterance.onstart = () => {
+      set({ isActive: true, isPaused: false, currentSection: section, currentText: text, isRestarting: false });
+    };
+    
+    utterance.onend = () => {
+      if (!get().isRestarting) {
+        set({ isActive: false, isPaused: false, currentSection: '', currentText: '' });
+      }
+    };
+    
+    utterance.onerror = () => {
+      if (!get().isRestarting) {
+        set({ isActive: false, isPaused: false, currentSection: '', currentText: '' });
+      }
+    };
 
     window.speechSynthesis.speak(utterance);
     set({ isActive: true, isPaused: false, currentSection: section, currentText: text });
@@ -97,7 +113,7 @@ export const useTTSStore = create<TTSState>((set, get) => ({
 
   stop: () => {
     window.speechSynthesis.cancel();
-    set({ isActive: false, isPaused: false, currentSection: '' });
+    set({ isActive: false, isPaused: false, currentSection: '', currentText: '', isRestarting: false });
   },
 
   setVolume: (v: number) => {
@@ -105,7 +121,7 @@ export const useTTSStore = create<TTSState>((set, get) => ({
     const { isActive, currentText, currentSection, play } = get();
     if (isActive && currentText) {
       clearTimeout((window as any)._ttsRestartTimer);
-      (window as any)._ttsRestartTimer = setTimeout(() => play(currentText, currentSection), 300);
+      (window as any)._ttsRestartTimer = setTimeout(() => play(currentText, currentSection, true), 300);
     }
   },
   
@@ -114,7 +130,7 @@ export const useTTSStore = create<TTSState>((set, get) => ({
     const { isActive, currentText, currentSection, play } = get();
     if (isActive && currentText) {
       clearTimeout((window as any)._ttsRestartTimer);
-      (window as any)._ttsRestartTimer = setTimeout(() => play(currentText, currentSection), 300);
+      (window as any)._ttsRestartTimer = setTimeout(() => play(currentText, currentSection, true), 300);
     }
   },
 
