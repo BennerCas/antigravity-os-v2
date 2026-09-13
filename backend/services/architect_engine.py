@@ -46,7 +46,15 @@ class ArchitectEngine:
             user_prompt += f"{msg.get('role', 'user')}: {msg.get('content', '')}\n"
             
         try:
-            result_text, _ = await call_ai(system_prompt, user_prompt, model_override=model_override)
+            try:
+                from services.agent_factory import AgentFactory
+            except ImportError:
+                from backend.services.agent_factory import AgentFactory
+            result_text = await AgentFactory.chat_one_shot(
+                agent_id="flowarchitect_analyzer",
+                user_prompt=user_prompt,
+                override_instructions=system_prompt,
+            )
             import re
             json_match = re.search(r'\{.*\}', result_text, re.DOTALL)
             if json_match:
@@ -71,7 +79,15 @@ class ArchitectEngine:
         spec_id = str(uuid.uuid4())
         
         try:
-            result_text, _ = await call_ai(system_prompt, user_prompt, model_override=model_override)
+            try:
+                from services.agent_factory import AgentFactory
+            except ImportError:
+                from backend.services.agent_factory import AgentFactory
+            result_text = await AgentFactory.chat_one_shot(
+                agent_id="flowarchitect_blueprint_generator",
+                user_prompt=user_prompt,
+                override_instructions=system_prompt,
+            )
             import re
             json_match = re.search(r'\{.*\}', result_text, re.DOTALL)
             if json_match:

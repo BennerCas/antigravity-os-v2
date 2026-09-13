@@ -46,6 +46,8 @@ app.include_router(builder_v1.router, prefix="/api/v1")
 app.include_router(architect_v1.router, prefix="/api/v1")
 app.include_router(academy.router, prefix="/api/v1/learning")
 app.include_router(engine.router, prefix="/api/v1")
+from routers.agents_factory import router as agents_factory_router
+app.include_router(agents_factory_router, prefix="/api/v1")
 
 @app.on_event("startup")
 async def startup_event():

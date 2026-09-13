@@ -613,8 +613,16 @@ async def flowboard_copilot(req: CopilotRequest):
         
         user_prompt = f"{history_context}Mensaje del usuario: {req.message}"
         
-        result, _ = await call_ai(FLOWBOARD_COPILOT_SYSTEM, user_prompt)
+        try:
+            from services.agent_factory import AgentFactory
+        except ImportError:
+            from backend.services.agent_factory import AgentFactory
+        result = await AgentFactory.chat_one_shot(
+            agent_id="flowboard_copilot",
+            user_prompt=user_prompt,
+            atlas_knowledge_id="flowboard_master_rules",
+        )
+        
         return {"response": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
