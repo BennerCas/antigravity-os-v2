@@ -249,9 +249,9 @@ export const FlowArchitect: React.FC = () => {
         </div>
 
         {/* AI Prompts Grid */}
-        <div className="p-3 bg-gray-800/20 border-b border-gray-800">
-          <div className="text-[10px] uppercase text-gray-500 font-bold mb-2 tracking-wider">🛠️ AI Tools (Master Prompts)</div>
-          <div className="grid grid-cols-2 gap-2">
+        <div className="p-4 bg-gray-800/20 border-b border-gray-800">
+          <div className="text-xs uppercase text-gray-500 font-bold mb-3 tracking-wider">🛠️ AI Tools (Master Prompts)</div>
+          <div className="grid grid-cols-2 gap-3">
             {[
               { id: 'gatekeeper', label: 'Requirements Gatekeeper', icon: '🛡️', desc: 'Filtro estricto que no deja avanzar si tu idea es ambigua.' },
               { id: 'alternatives', label: 'Architecture Alternatives', icon: '🔀', desc: 'Sugiere alternativas de arquitectura técnica y estructurales.' },
@@ -261,13 +261,13 @@ export const FlowArchitect: React.FC = () => {
               <button 
                 key={p.id} 
                 onClick={() => setInput(`Activa la herramienta ${p.label}: `)} 
-                className="flex flex-col items-start text-left p-2.5 bg-[#0a0a0a] border border-gray-800 rounded-lg hover:bg-blue-950/30 hover:border-blue-800/50 transition-all group"
+                className="flex flex-col items-start text-left p-3 bg-[#0a0a0a] border border-gray-800 border-l-4 border-l-gray-700 rounded-sm hover:bg-blue-950/30 hover:border-gray-700 hover:border-l-blue-500 transition-all group"
               >
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-sm">{p.icon}</span>
-                  <span className="text-[11px] font-bold text-gray-300 group-hover:text-blue-400 transition-colors">{p.label}</span>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-base">{p.icon}</span>
+                  <span className="text-sm font-bold text-gray-300 group-hover:text-blue-400 transition-colors">{p.label}</span>
                 </div>
-                <div className="text-[10px] text-gray-500 group-hover:text-gray-400 leading-snug">
+                <div className="text-xs text-gray-500 group-hover:text-gray-400 leading-relaxed">
                   {p.desc}
                 </div>
               </button>
@@ -275,12 +275,12 @@ export const FlowArchitect: React.FC = () => {
           </div>
         </div>
 
-        <div className="px-4 py-2 bg-gray-800/50 border-b border-gray-700 flex items-center">
-          <span className="text-xs text-gray-400 mr-3">Modelo de Chat:</span>
+        <div className="px-5 py-4 bg-gray-800/50 border-b border-gray-700 flex items-center">
+          <span className="text-sm font-semibold text-gray-400 mr-4">Modelo de Chat:</span>
           <select
             value={selectedModel}
             onChange={e => setSelectedModel(e.target.value)}
-            className="flex-1 bg-gray-900 text-xs text-gray-300 border border-gray-700 rounded px-2 py-1.5 outline-none focus:border-blue-500 cursor-pointer"
+            className="flex-1 bg-gray-900 text-sm text-gray-300 border border-gray-700 rounded-md px-3 py-2 outline-none focus:border-blue-500 cursor-pointer"
             title="Elige el modelo de IA para chatear"
           >
             {models.length === 0 && <option value="gpt-4o">gpt-4o</option>}
@@ -296,16 +296,16 @@ export const FlowArchitect: React.FC = () => {
           `}</style>
           {chatHistory.length === 0 && (
 
-            <div className="text-gray-500 text-sm text-center mt-8">
-              <div className="text-3xl mb-3">💬</div>
+            <div className="text-gray-400 text-base text-center mt-12">
+              <div className="text-4xl mb-4">💬</div>
               <p>Describe la aplicación o flujo que quieres construir.</p>
-              <p className="mt-1 text-xs">El FlowArchitect analizará tus requisitos y generará un blueprint.</p>
+              <p className="mt-2 text-sm text-gray-500">El FlowArchitect analizará tus requisitos y generará un blueprint.</p>
             </div>
           )}
           {chatHistory.map((msg, idx) => (
-            <div key={idx} className={`p-3 rounded-lg ${msg.role === 'user' ? 'bg-blue-600/80 ml-8' : 'bg-gray-700 mr-8'} group relative`}>
-              <div className="flex justify-between items-center mb-1">
-                <div className="text-xs text-gray-400 font-mono uppercase tracking-wider">{msg.role}</div>
+            <div key={idx} className={`p-4 rounded-lg ${msg.role === 'user' ? 'bg-blue-600/80 ml-8' : 'bg-gray-700 mr-8'} group relative`}>
+              <div className="flex justify-between items-center mb-2">
+                <div className="text-sm text-gray-400 font-mono uppercase tracking-wider">{msg.role}</div>
                 {msg.role === 'assistant' && (
                   <button 
                     onClick={() => {
@@ -323,7 +323,7 @@ export const FlowArchitect: React.FC = () => {
                   </button>
                 )}
               </div>
-              <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</div>
+              <div className="text-base leading-relaxed whitespace-pre-wrap">{msg.content}</div>
               
               {msg.role === 'assistant' && msg.suggestedActions && msg.suggestedActions.length > 0 && idx === chatHistory.length - 1 && (
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -337,7 +337,7 @@ export const FlowArchitect: React.FC = () => {
                           handleSend(action);
                         }
                       }}
-                      className="text-xs font-medium bg-blue-900/40 hover:bg-blue-600/80 text-blue-200 hover:text-white border border-blue-700/50 rounded-full px-3 py-1.5 transition-colors text-left"
+                      className="text-sm font-medium bg-blue-900/40 hover:bg-blue-600/80 text-blue-200 hover:text-white border border-blue-700/50 rounded-full px-4 py-2 transition-colors text-left"
                     >
                       {action}
                     </button>
@@ -347,8 +347,8 @@ export const FlowArchitect: React.FC = () => {
             </div>
           ))}
           {isAnalyzing && (
-            <div className="flex items-center gap-2 text-gray-400 text-sm">
-              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <div className="flex items-center gap-2 text-gray-400 text-base mt-2">
+              <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
               Analizando con IA...
             </div>
           )}
@@ -356,7 +356,7 @@ export const FlowArchitect: React.FC = () => {
         <div className="p-4 bg-gray-800 border-t border-gray-700 flex gap-2">
           <input
             type="text"
-            className="flex-1 bg-gray-900 border border-gray-700 rounded-l px-3 py-2 text-white text-sm outline-none focus:border-blue-500 transition-colors"
+            className="flex-1 bg-gray-900 border border-gray-700 rounded-l px-4 py-3 text-white text-base outline-none focus:border-blue-500 transition-colors"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !isAnalyzing && handleSend()}
@@ -366,7 +366,7 @@ export const FlowArchitect: React.FC = () => {
           <button
             onClick={() => handleSend()}
             disabled={isAnalyzing || !input.trim()}
-            className="bg-blue-600 px-4 rounded-r font-bold hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
+            className="bg-blue-600 px-6 rounded-r font-bold hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-base"
           >
             Enviar
           </button>
@@ -375,7 +375,7 @@ export const FlowArchitect: React.FC = () => {
 
       {/* Right panel: Analysis and Blueprint */}
       <div className="w-2/3 min-w-0 flex-shrink-0 flex flex-col">
-        <div className="p-4 bg-gray-800 font-bold border-b border-gray-700 flex justify-between items-center">
+        <div className="p-5 bg-gray-800 font-bold border-b border-gray-700 flex justify-between items-center text-lg">
           <span className="flex items-center gap-2">
             <span className="text-green-400">🗺️</span> Architecture Blueprint
           </span>
@@ -384,7 +384,7 @@ export const FlowArchitect: React.FC = () => {
               <button
                 onClick={generateBlueprint}
                 disabled={isAnalyzing}
-                className="bg-green-600 px-3 py-1.5 rounded text-sm font-bold hover:bg-green-500 disabled:opacity-40 transition-colors"
+                className="bg-green-600 px-4 py-2 rounded-md text-base font-bold hover:bg-green-500 disabled:opacity-40 transition-colors"
               >
                 {isAnalyzing ? '⏳ Generando...' : '⚡ Generar Blueprint'}
               </button>
@@ -393,7 +393,7 @@ export const FlowArchitect: React.FC = () => {
               <button
                 onClick={publishToBuilder}
                 disabled={isAnalyzing}
-                className="bg-purple-600 px-3 py-1.5 rounded text-sm font-bold hover:bg-purple-500 disabled:opacity-40 transition-colors ml-2"
+                className="bg-purple-600 px-4 py-2 rounded-md text-base font-bold hover:bg-purple-500 disabled:opacity-40 transition-colors ml-2"
               >
                 {isAnalyzing ? '⏳ Exportando...' : '🚀 Enviar a FlowBoard'}
               </button>
@@ -403,8 +403,8 @@ export const FlowArchitect: React.FC = () => {
         <div className="flex-1 overflow-hidden p-6 flex space-x-6">
           
           {/* Column 2: Intent & Requirements */}
-          <div className="flex-1 min-w-0 flex flex-col bg-gray-800 p-4 rounded-lg shadow border border-gray-700">
-            <h3 className="font-bold text-gray-300 mb-2 border-b border-gray-700 pb-2 flex items-center gap-2 flex-shrink-0">
+          <div className="flex-1 min-w-0 flex flex-col bg-gray-800 p-5 rounded-lg shadow border border-gray-700">
+            <h3 className="text-base font-bold text-gray-300 mb-3 border-b border-gray-700 pb-3 flex items-center gap-2 flex-shrink-0">
               <span className="text-yellow-400">🎯</span> Intent & Requirements
             </h3>
             <div className="flex-1 overflow-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
@@ -412,27 +412,27 @@ export const FlowArchitect: React.FC = () => {
                 div::-webkit-scrollbar { display: none; }
               `}</style>
               {analysis ? (
-                <pre className="text-xs text-green-400 leading-relaxed whitespace-pre-wrap break-words">
+                <pre className="text-sm text-green-400 leading-relaxed whitespace-pre-wrap break-words">
                   {JSON.stringify(analysis, null, 2)}
                 </pre>
               ) : (
-                <div className="text-gray-500 text-sm mt-4">El análisis aparecerá aquí luego de chatear.</div>
+                <div className="text-gray-500 text-base mt-4">El análisis aparecerá aquí luego de chatear.</div>
               )}
             </div>
           </div>
 
           {/* Column 3: ArchitectureSpec v1 */}
-          <div className="flex-1 min-w-0 flex flex-col bg-gray-800 p-4 rounded-lg shadow border border-gray-700">
-            <h3 className="font-bold text-gray-300 mb-2 border-b border-gray-700 pb-2 flex items-center gap-2 flex-shrink-0">
+          <div className="flex-1 min-w-0 flex flex-col bg-gray-800 p-5 rounded-lg shadow border border-gray-700">
+            <h3 className="text-base font-bold text-gray-300 mb-3 border-b border-gray-700 pb-3 flex items-center gap-2 flex-shrink-0">
               <span className="text-blue-400">📐</span> ArchitectureSpec v1
             </h3>
             <div className="flex-1 overflow-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               {blueprint ? (
-                <pre className="text-xs text-blue-400 leading-relaxed whitespace-pre-wrap break-words">
+                <pre className="text-sm text-blue-400 leading-relaxed whitespace-pre-wrap break-words">
                   {JSON.stringify(blueprint, null, 2)}
                 </pre>
               ) : (
-                <div className="text-gray-500 text-sm mt-4">El blueprint generado aparecerá aquí.</div>
+                <div className="text-gray-500 text-base mt-4">El blueprint generado aparecerá aquí.</div>
               )}
             </div>
           </div>
