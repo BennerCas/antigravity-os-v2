@@ -59,8 +59,8 @@ export default function Architecture() {
   const [panelTab, setPanelTab] = useState<'content' | 'logic'>(() => {
     return (localStorage.getItem('arch_panel_tab') as 'content' | 'logic') || 'content';
   });
-  const [mainTab, setMainTab] = useState<'map' | 'evolution'>(() => {
-    return (localStorage.getItem('arch_main_view') as 'map' | 'evolution') || 'map';
+  const [mainTab, setMainTab] = useState<'map' | 'evolution' | 'library'>(() => {
+    return (localStorage.getItem('arch_main_view') as 'map' | 'evolution' | 'library') || 'map';
   });
   const [currentLogicTask, setCurrentLogicTask] = useState<LogicTaskState | null>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -76,7 +76,19 @@ export default function Architecture() {
   });
 
   const [promptSearchTerm, setPromptSearchTerm] = useState('');
-  
+
+  // Library tab states
+  const [libAgents, setLibAgents] = useState<{id:string;name:string;category:string;description:string;instructions:string;risk?:string}[]>([]);
+  const [libPrompts, setLibPrompts] = useState<{id?:string;title:string;category:string;content:string;isMultiPrompt?:boolean}[]>([]);
+  const [libAgentSearch, setLibAgentSearch] = useState('');
+  const [libKBSearch, setLibKBSearch] = useState('');
+  const [libSelectedAgent, setLibSelectedAgent] = useState<{id:string;name:string;category:string;description:string;instructions:string;risk?:string}|null>(null);
+  const [libSelectedKB, setLibSelectedKB] = useState<{id?:string;title:string;category:string;content:string;isMultiPrompt?:boolean}|null>(null);
+  const [libSpeaking, setLibSpeaking] = useState(false);
+  const [libTranslating, setLibTranslating] = useState<string|null>(null);
+  const [libTranslated, setLibTranslated] = useState<Record<string,string>>({});
+  const [libUpgrading, setLibUpgrading] = useState<string|null>(null);
+
   const [selectedForBatch, setSelectedForBatch] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('arch_batch_selected');
@@ -103,6 +115,19 @@ export default function Architecture() {
 
   useEffect(() => {
     localStorage.setItem('arch_main_view', mainTab);
+  }, [mainTab]);
+
+  useEffect(() => {
+    if (mainTab === 'library') {
+      if (libAgents.length === 0) {
+        fetch((import.meta.env.BASE_URL || '/') + 'skills_v2.json')
+          .then(r => r.json()).then(setLibAgents).catch(() => {});
+      }
+      if (libPrompts.length === 0) {
+        fetch((import.meta.env.BASE_URL || '/') + 'prompts_db.json')
+          .then(r => r.json()).then(setLibPrompts).catch(() => {});
+      }
+    }
   }, [mainTab]);
 
   useEffect(() => {
@@ -398,6 +423,41 @@ export default function Architecture() {
     }
   };
 
+  const handleLibTTS = (text: string) => {
+    if (libSpeaking) { window.speechSynthesis.cancel(); setLibSpeaking(false); return; }
+    const utt = new SpeechSynthesisUtterance(text.slice(0, 1000));
+    utt.lang = 'es-ES'; utt.rate = 0.9;
+    utt.onend = () => setLibSpeaking(false);
+    setLibSpeaking(true);
+    window.speechSynthesis.speak(utt);
+  };
+
+  const handleLibTranslate = async (text: string, key: string) => {
+    if (libTranslated[key]) { setLibTranslated(prev => { const n = {...prev}; delete n[key]; return n; }); return; }
+    setLibTranslating(key);
+    try {
+      const res = await fetch(`${API_URL}/agents/chat`, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({agent_id:'translator', message:`Traduce al español:\n\n${text.slice(0,2000)}`, override_instructions:'Eres un traductor. Solo responde con la traducción al español, sin explicaciones.'})
+      });
+      const d = await res.json();
+      setLibTranslated(prev => ({...prev, [key]: d.response || 'Error'}));
+    } catch { setLibTranslated(prev => ({...prev, [key]: 'Error al traducir'})); }
+    finally { setLibTranslating(null); }
+  };
+
+  const handleLibUpgrade = async (type: 'agent'|'kb', id: string, content: string, title: string) => {
+    setLibUpgrading(id);
+    try {
+      const endpoint = type === 'agent' ? '/agents/optimize' : '/agents/optimize-kb';
+      const body = type === 'agent' ? {agent_id: id, instructions: content} : {kb_title: title, content};
+      const res = await fetch(`${API_URL}${endpoint}`, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+      const d = await res.json();
+      alert(`⚡ ${type==='agent'?'Agente':'KB'} optimizado:\n\n${(d.improved||'').slice(0,300)}...`);
+    } catch { alert('Error al optimizar.'); }
+    finally { setLibUpgrading(null); }
+  };
+
   if (error) {
     return <div className="p-10 text-red-400">Error cargando arquitectura: {error}</div>;
   }
@@ -445,6 +505,17 @@ export default function Architecture() {
             >
               <Sparkle size={18} className={mainTab === 'evolution' ? 'text-[#7B9C7F]' : ''} />
               Evolución & Auto-Mejora (131)
+            </button>
+            <button
+              onClick={() => setMainTab('library')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${
+                mainTab === 'library'
+                  ? 'bg-[#0a0a1a] border border-[#2a2a5e] text-[#8080ff]'
+                  : 'text-[#555] hover:text-[#888]'
+              }`}
+            >
+              <Brain size={18} className={mainTab === 'library' ? 'text-[#8080ff]' : ''} />
+              <span>Biblioteca</span>
             </button>
           </div>
 
@@ -507,7 +578,90 @@ export default function Architecture() {
       </header>
 
       {/* Vista 1: Consola de Evolución & Auto-Mejora Sistémica */}
-      {mainTab === 'evolution' ? (
+      {mainTab === 'library' ? (
+        <div style={{display:'flex', height:'100%'}}>
+          {/* Panel Agentes */}
+          <div style={{flex:1, borderRight:'1px solid #1a1a1a', display:'flex', flexDirection:'column', overflow:'hidden'}}>
+            <div style={{padding:'12px 16px', borderBottom:'1px solid #111', display:'flex', alignItems:'center', gap:'8px', flexShrink:0}}>
+              <span style={{fontSize:'13px', fontWeight:700, color:'#7B9C7F'}}>🤖 Agentes ({libAgents.length})</span>
+              <input value={libAgentSearch} onChange={e=>setLibAgentSearch(e.target.value)} placeholder="Buscar agente..."
+                style={{flex:1, backgroundColor:'#0d0d0d', border:'1px solid #1a1a1a', borderRadius:'6px', padding:'5px 10px', fontSize:'12px', color:'#ccc', outline:'none'}} />
+            </div>
+            <div style={{flex:1, overflowY:'auto', padding:'8px'}}>
+              {libAgents.filter(a=>(a.name||a.id).toLowerCase().includes(libAgentSearch.toLowerCase())||(a.category||'').toLowerCase().includes(libAgentSearch.toLowerCase())).map(agent=>(
+                <div key={agent.id} onClick={()=>setLibSelectedAgent(libSelectedAgent?.id===agent.id?null:agent)}
+                  style={{padding:'10px 12px', marginBottom:'4px', borderRadius:'8px', cursor:'pointer', backgroundColor:libSelectedAgent?.id===agent.id?'#0A1C0D':'#080808', border:`1px solid ${libSelectedAgent?.id===agent.id?'#174A1F':'#111'}`, transition:'all 0.15s'}}>
+                  <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+                    <span style={{fontSize:'12px', fontWeight:600, color:libSelectedAgent?.id===agent.id?'#7B9C7F':'#ccc'}}>{agent.name||agent.id}</span>
+                    <span style={{fontSize:'10px', color:'#444'}}>{agent.category}</span>
+                  </div>
+                  {libSelectedAgent?.id===agent.id&&(
+                    <div style={{marginTop:'8px'}}>
+                      <div style={{fontSize:'11px', color:'#666', fontFamily:'monospace', whiteSpace:'pre-wrap', maxHeight:'120px', overflowY:'auto', backgroundColor:'#050d05', padding:'8px', borderRadius:'4px', marginBottom:'8px'}}>
+                        {libTranslated[agent.id]||agent.instructions?.slice(0,400)||agent.description||'Sin instrucciones'}
+                      </div>
+                      <div style={{display:'flex', gap:'6px', flexWrap:'wrap'}}>
+                        <button onClick={e=>{e.stopPropagation();handleLibTTS(agent.instructions||agent.description||'');}}
+                          style={{fontSize:'10px', padding:'3px 8px', borderRadius:'6px', backgroundColor:'#0d1a0d', border:'1px solid #1a3a1a', color:'#7B9C7F', cursor:'pointer'}}>
+                          {libSpeaking?'⏸ Pausar':'🔊 TTS'}
+                        </button>
+                        <button onClick={e=>{e.stopPropagation();handleLibTranslate(agent.instructions||agent.description||'',agent.id);}}
+                          style={{fontSize:'10px', padding:'3px 8px', borderRadius:'6px', backgroundColor:'#0d0d1a', border:'1px solid #1a1a3a', color:'#8080cc', cursor:'pointer'}}>
+                          {libTranslating===agent.id?'⏳ Traduciendo...':libTranslated[agent.id]?'💬 Original':'🌍 Traducir'}
+                        </button>
+                        <button onClick={e=>{e.stopPropagation();handleLibUpgrade('agent',agent.id,agent.instructions||agent.description||'',agent.name||agent.id);}}
+                          style={{fontSize:'10px', padding:'3px 8px', borderRadius:'6px', backgroundColor:'#1a0d0d', border:'1px solid #3a1a1a', color:'#cc8060', cursor:'pointer'}}>
+                          {libUpgrading===agent.id?'⏳ Optimizando...':'⚡ Upgrade'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Panel Atlas KB */}
+          <div style={{flex:1, display:'flex', flexDirection:'column', overflow:'hidden'}}>
+            <div style={{padding:'12px 16px', borderBottom:'1px solid #111', display:'flex', alignItems:'center', gap:'8px', flexShrink:0}}>
+              <span style={{fontSize:'13px', fontWeight:700, color:'#8080cc'}}>📚 Atlas KB ({libPrompts.length})</span>
+              <input value={libKBSearch} onChange={e=>setLibKBSearch(e.target.value)} placeholder="Buscar conocimiento..."
+                style={{flex:1, backgroundColor:'#0d0d0d', border:'1px solid #1a1a1a', borderRadius:'6px', padding:'5px 10px', fontSize:'12px', color:'#ccc', outline:'none'}} />
+            </div>
+            <div style={{flex:1, overflowY:'auto', padding:'8px'}}>
+              {libPrompts.filter(p=>p.title?.toLowerCase().includes(libKBSearch.toLowerCase())||(p.category||'').toLowerCase().includes(libKBSearch.toLowerCase())).map((prompt,i)=>(
+                <div key={prompt.id||i} onClick={()=>setLibSelectedKB(libSelectedKB?.title===prompt.title?null:prompt)}
+                  style={{padding:'10px 12px', marginBottom:'4px', borderRadius:'8px', cursor:'pointer', backgroundColor:libSelectedKB?.title===prompt.title?'#0a0a1a':'#080808', border:`1px solid ${libSelectedKB?.title===prompt.title?'#1a1a4a':'#111'}`, transition:'all 0.15s'}}>
+                  <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+                    <span style={{fontSize:'12px', fontWeight:600, color:libSelectedKB?.title===prompt.title?'#9090ff':'#ccc'}}>{prompt.title}</span>
+                    <span style={{fontSize:'10px', color:'#444'}}>{prompt.category}</span>
+                  </div>
+                  {libSelectedKB?.title===prompt.title&&(
+                    <div style={{marginTop:'8px'}}>
+                      <div style={{fontSize:'11px', color:'#666', whiteSpace:'pre-wrap', maxHeight:'120px', overflowY:'auto', backgroundColor:'#05050d', padding:'8px', borderRadius:'4px', marginBottom:'8px'}}>
+                        {libTranslated[`kb_${prompt.title}`]||prompt.content?.slice(0,400)}
+                      </div>
+                      <div style={{display:'flex', gap:'6px', flexWrap:'wrap'}}>
+                        <button onClick={e=>{e.stopPropagation();handleLibTTS(prompt.content||'');}}
+                          style={{fontSize:'10px', padding:'3px 8px', borderRadius:'6px', backgroundColor:'#0d1a0d', border:'1px solid #1a3a1a', color:'#7B9C7F', cursor:'pointer'}}>
+                          {libSpeaking?'⏸ Pausar':'🔊 TTS'}
+                        </button>
+                        <button onClick={e=>{e.stopPropagation();handleLibTranslate(prompt.content||'',`kb_${prompt.title}`);}}
+                          style={{fontSize:'10px', padding:'3px 8px', borderRadius:'6px', backgroundColor:'#0d0d1a', border:'1px solid #1a1a3a', color:'#8080cc', cursor:'pointer'}}>
+                          {libTranslating===`kb_${prompt.title}`?'⏳ Traduciendo...':libTranslated[`kb_${prompt.title}`]?'💬 Original':'🌍 Traducir'}
+                        </button>
+                        <button onClick={e=>{e.stopPropagation();handleLibUpgrade('kb',prompt.id||prompt.title,prompt.content||'',prompt.title);}}
+                          style={{fontSize:'10px', padding:'3px 8px', borderRadius:'6px', backgroundColor:'#1a0d0d', border:'1px solid #3a1a1a', color:'#cc8060', cursor:'pointer'}}>
+                          {libUpgrading===(prompt.id||prompt.title)?'⏳ Optimizando...':'⚡ Upgrade'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : mainTab === 'evolution' ? (
         <SystemEvolutionPanel data={data} />
       ) : (
       /* Master-Detail-Subdetail Layout */
