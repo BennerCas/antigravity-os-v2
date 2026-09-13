@@ -1,52 +1,61 @@
 import { useState, useEffect, useRef } from 'react';
 import { API_URL } from '../lib/api';
 import {
-  Brain, MagnifyingGlass, X, PaperPlaneTilt,
-  UsersThree, BookOpen, ChatCircle,
-  ArrowRight, Wrench
+  Brain, MagnifyingGlass, PaperPlaneTilt,
+  
+  Lightning, Plus, Trash, ArrowLeft, ArrowRight
 } from '@phosphor-icons/react';
 
-interface AgentItem {
-  id: string; name: string; category: string;
-  description: string; instructions: string; risk?: string;
-}
-interface AtlasItem {
-  id?: string; title: string; category: string;
-  content: string; isMultiPrompt?: boolean;
-}
+interface AgentItem { id: string; name: string; category: string; description: string; instructions: string; risk?: string; }
+interface AtlasItem { id?: string; title: string; category: string; content: string; isMultiPrompt?: boolean; }
 interface Tool { name: string; description: string; }
-interface ChatMessage {
-  role: 'user' | 'agent' | 'swarm'; content: string;
-  agentId?: string;
-}
+interface ChatMessage { role: 'user'|'agent'|'swarm'|'system'; content: string; agentId?: string; }
+interface Team { id: string; name: string; agents: AgentItem[]; kbTitle?: string; createdAt: string; }
 
-// Avatar emoji por categoría
-const categoryEmoji = (cat: string): string => {
-  const c = cat?.toLowerCase() || '';
+const catEmoji = (cat: string): string => {
+  const c = (cat || '').toLowerCase();
   if (c.includes('market')) return '📣';
   if (c.includes('code') || c.includes('dev')) return '💻';
   if (c.includes('data')) return '📊';
   if (c.includes('design')) return '🎨';
   if (c.includes('business')) return '💼';
   if (c.includes('ai') || c.includes('ml')) return '🤖';
-  if (c.includes('write') || c.includes('content')) return '✍️';
+  if (c.includes('writ') || c.includes('content')) return '✍️';
   if (c.includes('research')) return '🔬';
+  if (c.includes('legal')) return '⚖️';
+  if (c.includes('sales')) return '💰';
   return '⚡';
 };
 
 export default function AgentOS() {
-  const [tab, setTab] = useState<'agents' | 'atlas'>('agents');
-  const [search, setSearch] = useState('');
   const [agents, setAgents] = useState<AgentItem[]>([]);
   const [atlasItems, setAtlasItems] = useState<AtlasItem[]>([]);
-  const [activeAgent, setActiveAgent] = useState<AgentItem | null>(null);
-  const [assignedKB, setAssignedKB] = useState<AtlasItem | null>(null);
   const [tools, setTools] = useState<Tool[]>([]);
+
+  // Screen 1
+  const [view, setView] = useState<'select'|'teams'|'interact'>('select');
+  const [agentSearch, setAgentSearch] = useState('');
+  const [kbSearch, setKBSearch] = useState('');
+  const [selectedAgents, setSelectedAgents] = useState<AgentItem[]>([]);
+  const [assignedKB, setAssignedKB] = useState<AtlasItem|null>(null);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [assistantMessages, setAssistantMessages] = useState<ChatMessage[]>([]);
+  const [assistantInput, setAssistantInput] = useState('');
+  const [optimizingId, setOptimizingId] = useState<string|null>(null);
+
+  // Screen 2
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [editingTeam, setEditingTeam] = useState<Team|null>(null);
+  const [teamAdvisorMessages, setTeamAdvisorMessages] = useState<ChatMessage[]>([]);
+  const [teamAdvisorInput, setTeamAdvisorInput] = useState('');
+  const [activeTeam, setActiveTeam] = useState<Team|null>(null);
+
+  // Screen 3
+  const [interactMode, setInteractMode] = useState<'agent'|'team'>('agent');
+  const [activeAgentForChat, setActiveAgentForChat] = useState<AgentItem|null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMsg, setInputMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [swarmOpen, setSwarmOpen] = useState(false);
-  const [swarmSelected, setSwarmSelected] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -56,413 +65,439 @@ export default function AgentOS() {
       .then(r => r.json()).then(setAtlasItems).catch(() => {});
     fetch(`${API_URL}/agents/tools`)
       .then(r => r.json()).then(d => setTools(d.tools || [])).catch(() => {});
+      
+    const storedView = localStorage.getItem('agentos_view') as any;
+    if (storedView) setView(storedView);
+    const storedTeams = localStorage.getItem('agentos_teams');
+    if (storedTeams) {
+      try { setTeams(JSON.parse(storedTeams)); } catch (e) {}
+    }
   }, []);
 
   useEffect(() => {
+    localStorage.setItem('agentos_view', view);
+  }, [view]);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, assistantMessages, teamAdvisorMessages]);
 
-  // Seleccionar agente activa automáticamente la consola
-  const handleSelectAgent = (agent: AgentItem) => {
-    setActiveAgent(agent);
-    setMessages([{
-      role: 'agent',
-      content: `¡Hola! Soy **${agent.name || agent.id}**. ${agent.description?.slice(0, 120) || '¿En qué puedo ayudarte hoy?'}`,
-      agentId: agent.id
-    }]);
-    setSwarmSelected([]);
-  };
-
+  // Screen 1 functions
   const filteredAgents = agents.filter(a =>
-    (a.name || a.id)?.toLowerCase().includes(search.toLowerCase()) ||
-    a.category?.toLowerCase().includes(search.toLowerCase())
+    (a.name || a.id)?.toLowerCase().includes(agentSearch.toLowerCase()) ||
+    a.category?.toLowerCase().includes(agentSearch.toLowerCase())
   );
   const filteredAtlas = atlasItems.filter(a =>
-    a.title?.toLowerCase().includes(search.toLowerCase()) ||
-    a.category?.toLowerCase().includes(search.toLowerCase())
+    a.title?.toLowerCase().includes(kbSearch.toLowerCase()) ||
+    a.category?.toLowerCase().includes(kbSearch.toLowerCase())
   );
 
-  const handleSend = async () => {
-    if (!inputMsg.trim() || isLoading || !activeAgent) return;
-    const msg = inputMsg;
-    setMessages(prev => [...prev, { role: 'user', content: msg }]);
-    setInputMsg('');
-    setIsLoading(true);
+  const toggleAgent = (a: AgentItem) => {
+    if (selectedAgents.find(sa => sa.id === a.id)) {
+      setSelectedAgents(prev => prev.filter(sa => sa.id !== a.id));
+    } else {
+      setSelectedAgents(prev => [...prev, a]);
+    }
+  };
+
+  const handleOptimizeAgent = async (agent: AgentItem) => {
+    setOptimizingId(agent.id);
+    try {
+      const res = await fetch(`${API_URL}/agents/optimize`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agent_id: agent.id })
+      });
+      if (!res.ok) throw new Error('Failed to optimize');
+      await res.json();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setOptimizingId(null);
+    }
+  };
+
+  const handleOptimizeKB = async (kb: AtlasItem) => {
+    try {
+      await fetch(`${API_URL}/agents/optimize-kb`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kb_title: kb.title, content: kb.content })
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleAssistantSend = async () => {
+    if (!assistantInput.trim()) return;
+    const msg = assistantInput;
+    setAssistantMessages(prev => [...prev, { role: 'user', content: msg }]);
+    setAssistantInput('');
+    try {
+      const res = await fetch(`${API_URL}/agents/search-assist`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: msg })
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setAssistantMessages(prev => [...prev, { role: 'agent', content: data.response }]);
+    } catch (e) {
+      setAssistantMessages(prev => [...prev, { role: 'system', content: 'Asistente no disponible' }]);
+    }
+  };
+
+  // Screen 2 functions
+  const handleNewTeam = () => {
+    const newTeam: Team = { id: Date.now().toString(), name: 'Nuevo Equipo', agents: [], createdAt: new Date().toISOString() };
+    setTeams(prev => [...prev, newTeam]);
+    setEditingTeam(newTeam);
+  };
+  
+  const handleSaveTeam = () => {
+    if (!editingTeam) return;
+    const updated = teams.map(t => t.id === editingTeam.id ? editingTeam : t);
+    setTeams(updated);
+    localStorage.setItem('agentos_teams', JSON.stringify(updated));
+  };
+  
+  const handleDeleteTeam = (id: string) => {
+    const updated = teams.filter(t => t.id !== id);
+    setTeams(updated);
+    localStorage.setItem('agentos_teams', JSON.stringify(updated));
+    if (editingTeam?.id === id) setEditingTeam(null);
+  };
+
+  const handleTeamAdvisorSend = async () => {
+    if (!teamAdvisorInput.trim()) return;
+    const msg = teamAdvisorInput;
+    setTeamAdvisorMessages(prev => [...prev, { role: 'user', content: msg }]);
+    setTeamAdvisorInput('');
     try {
       const res = await fetch(`${API_URL}/agents/chat`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          agent_id: activeAgent.id, message: msg,
-          atlas_knowledge_id: assignedKB?.title || undefined,
-          history: messages.slice(-6).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content }))
-        })
+        body: JSON.stringify({ agent_id: 'agentos_team_advisor', message: msg })
       });
+      if (!res.ok) throw new Error();
       const data = await res.json();
-      setMessages(prev => [...prev, { role: 'agent', content: data.response, agentId: activeAgent.id }]);
+      setTeamAdvisorMessages(prev => [...prev, { role: 'agent', content: data.response }]);
     } catch (e) {
-      setMessages(prev => [...prev, { role: 'agent', content: `Algo salió mal: ${e}` }]);
-    } finally { setIsLoading(false); }
+      setTeamAdvisorMessages(prev => [...prev, { role: 'system', content: 'Error' }]);
+    }
   };
 
-  const handleSwarm = async () => {
-    if (!inputMsg.trim() || swarmSelected.length === 0 || isLoading) return;
+  // Screen 3 functions
+  const handleChatSend = async () => {
+    if (!inputMsg.trim() || isLoading) return;
     const msg = inputMsg;
     setMessages(prev => [...prev, { role: 'user', content: msg }]);
     setInputMsg('');
     setIsLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/agents/swarm`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agent_ids: swarmSelected, message: msg })
-      });
-      const data = await res.json();
-      (data.results || []).forEach((r: { agent: string; response: string }) => {
-        setMessages(prev => [...prev, { role: 'swarm', content: r.response, agentId: r.agent }]);
-      });
-    } catch (e) {
-      setMessages(prev => [...prev, { role: 'agent', content: `Error en el equipo: ${e}` }]);
-    } finally { setIsLoading(false); }
-  };
 
-  const isSwarmMode = swarmSelected.length > 0;
+    try {
+      if (interactMode === 'agent' && activeAgentForChat) {
+        const res = await fetch(`${API_URL}/agents/chat`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            agent_id: activeAgentForChat.id, message: msg,
+            atlas_knowledge_id: assignedKB?.title || undefined,
+            history: messages.slice(-6).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content }))
+          })
+        });
+        const data = await res.json();
+        setMessages(prev => [...prev, { role: 'agent', content: data.response, agentId: activeAgentForChat.id }]);
+      } else if (interactMode === 'team' && activeTeam && activeTeam.agents.length > 0) {
+        const res = await fetch(`${API_URL}/agents/swarm`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agent_ids: activeTeam.agents.map(a => a.id), message: msg })
+        });
+        const data = await res.json();
+        (data.results || []).forEach((r: { agent: string; response: string }) => {
+          setMessages(prev => [...prev, { role: 'swarm', content: r.response, agentId: r.agent }]);
+        });
+      }
+    } catch (e) {
+      setMessages(prev => [...prev, { role: 'system', content: `Algo salió mal: ${e}` }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#030303', color: '#E0E0E0', fontFamily: 'system-ui, sans-serif' }}>
       
-      {/* ── HEADER GLOBAL ── */}
+      {/* HEADER GLOBAL */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', height: '52px', borderBottom: '1px solid #111', backgroundColor: '#050505', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Brain size={22} weight="duotone" style={{ color: '#00D9FF' }} />
           <span style={{ fontSize: '16px', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>AgentOS</span>
-          <span style={{ fontSize: '11px', color: '#333', margin: '0 4px' }}>•</span>
-          <span style={{ fontSize: '11px', color: '#444', letterSpacing: '0.05em' }}>Centro de Control de Agentes</span>
         </div>
-        {activeAgent && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '11px', color: '#555' }}>Agente activo:</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#0a1a0a', border: '1px solid #1a3a1a', borderRadius: '20px', padding: '3px 10px 3px 6px' }}>
-              <span style={{ fontSize: '14px' }}>{categoryEmoji(activeAgent.category)}</span>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#7EC87E' }}>{activeAgent.name || activeAgent.id}</span>
-            </div>
-            {assignedKB && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#0a0a1a', border: '1px solid #1a1a3a', borderRadius: '20px', padding: '3px 10px 3px 6px' }}>
-                <BookOpen size={12} style={{ color: '#8080ff' }} />
-                <span style={{ fontSize: '11px', color: '#8080cc' }}>{assignedKB.title.slice(0, 30)}{assignedKB.title.length > 30 ? '...' : ''}</span>
-              </div>
-            )}
-            <button onClick={() => { setActiveAgent(null); setMessages([]); setAssignedKB(null); }}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#333', padding: '2px' }}>
-              <X size={14} />
-            </button>
-          </div>
-        )}
+        
+        <div style={{ display: 'flex', gap: '16px' }}>
+          <button onClick={() => setView('select')} style={{ background: 'none', border: 'none', borderBottom: view === 'select' ? '2px solid #00D9FF' : '2px solid transparent', color: view === 'select' ? '#fff' : '#666', fontSize: '13px', fontWeight: 600, padding: '15px 8px', cursor: 'pointer' }}>select</button>
+          <button onClick={() => setView('teams')} style={{ background: 'none', border: 'none', borderBottom: view === 'teams' ? '2px solid #00D9FF' : '2px solid transparent', color: view === 'teams' ? '#fff' : '#666', fontSize: '13px', fontWeight: 600, padding: '15px 8px', cursor: 'pointer' }}>teams</button>
+          <button onClick={() => setView('interact')} style={{ background: 'none', border: 'none', borderBottom: view === 'interact' ? '2px solid #00D9FF' : '2px solid transparent', color: view === 'interact' ? '#fff' : '#666', fontSize: '13px', fontWeight: 600, padding: '15px 8px', cursor: 'pointer' }}>interact</button>
+        </div>
       </div>
 
-      {/* ── 3 COLUMNAS ── */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-
-        {/* ══ COLUMNA 1: CATÁLOGO ══ */}
-        <div style={{ width: '300px', minWidth: '300px', borderRight: '1px solid #111', display: 'flex', flexDirection: 'column', backgroundColor: '#040404' }}>
-          
-          {/* Paso 1 header */}
-          <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #0d0d0d' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
-              <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#00D9FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 800, color: '#000' }}>1</div>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Elige tu agente</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#0a0a0a', border: '1px solid #161616', borderRadius: '10px', padding: '8px 12px' }}>
-              <MagnifyingGlass size={14} style={{ color: '#444', flexShrink: 0 }} />
-              <input value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Buscar agentes o conocimiento..."
-                style={{ background: 'none', border: 'none', outline: 'none', color: '#ccc', fontSize: '13px', width: '100%' }} />
-            </div>
-          </div>
-
-          {/* Tabs visuales */}
-          <div style={{ display: 'flex', padding: '8px 12px', gap: '6px', borderBottom: '1px solid #0d0d0d' }}>
-            <button onClick={() => setTab('agents')}
-              style={{ flex: 1, padding: '7px 0', borderRadius: '8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
-                backgroundColor: tab === 'agents' ? '#0a1a0a' : 'transparent',
-                border: tab === 'agents' ? '1px solid #1a3a1a' : '1px solid transparent',
-                color: tab === 'agents' ? '#7EC87E' : '#444' }}>
-              🤖 Agentes
-            </button>
-            <button onClick={() => setTab('atlas')}
-              style={{ flex: 1, padding: '7px 0', borderRadius: '8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
-                backgroundColor: tab === 'atlas' ? '#0a0a1a' : 'transparent',
-                border: tab === 'atlas' ? '1px solid #1a1a3a' : '1px solid transparent',
-                color: tab === 'atlas' ? '#8080ff' : '#444' }}>
-              📚 Conocimiento
-            </button>
-          </div>
-
-          {/* Lista de cards */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '10px 10px' }}>
-            {tab === 'agents' ? (
-              filteredAgents.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px 0', color: '#333', fontSize: '13px' }}>Sin resultados</div>
-              ) : filteredAgents.map(agent => (
-                <button key={agent.id} onClick={() => handleSelectAgent(agent)}
-                  style={{ width: '100%', textAlign: 'left', marginBottom: '6px', padding: '12px', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '12px',
-                    backgroundColor: activeAgent?.id === agent.id ? '#0a1a0a' : '#080808',
-                    border: activeAgent?.id === agent.id ? '1px solid #1a4a1a' : '1px solid #111',
-                    boxShadow: activeAgent?.id === agent.id ? '0 0 0 1px #00D9FF22' : 'none' }}>
-                  {/* Avatar */}
-                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: activeAgent?.id === agent.id ? '#0d2a0d' : '#0d0d0d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0, border: '1px solid #161616' }}>
-                    {categoryEmoji(agent.category)}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: activeAgent?.id === agent.id ? '#7EC87E' : '#ddd', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {agent.name || agent.id}
+      <div style={{ flex: 1, overflow: 'hidden' }}>
+        {view === 'select' && (
+          <div style={{ display: 'flex', height: '100%' }}>
+            {/* Col 1: Agents */}
+            <div style={{ flex: 1, borderRight: '1px solid #111', display: 'flex', flexDirection: 'column', backgroundColor: '#040404' }}>
+              <div style={{ padding: '16px', borderBottom: '1px solid #0d0d0d' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#0a0a0a', border: '1px solid #161616', borderRadius: '10px', padding: '8px 12px' }}>
+                  <MagnifyingGlass size={14} style={{ color: '#444' }} />
+                  <input value={agentSearch} onChange={e => setAgentSearch(e.target.value)} placeholder="Buscar agentes..." style={{ background: 'none', border: 'none', outline: 'none', color: '#ccc', fontSize: '13px', width: '100%' }} />
+                </div>
+              </div>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', alignContent: 'start' }}>
+                {filteredAgents.map(a => {
+                  const selected = !!selectedAgents.find(sa => sa.id === a.id);
+                  return (
+                    <div key={a.id} style={{ display: 'flex', flexDirection: 'column', padding: '16px', borderRadius: '12px', backgroundColor: '#0a0a0a', border: selected ? '1px solid #1a4a1a' : '1px solid #111', position: 'relative' }}>
+                      {a.risk && <span style={{ position: 'absolute', top: 12, right: 12, fontSize: '10px', backgroundColor: '#2a1010', color: '#ff6666', padding: '2px 6px', borderRadius: '4px' }}>{a.risk}</span>}
+                      <div style={{ fontSize: '48px', marginBottom: '8px' }}>{catEmoji(a.category)}</div>
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: '#ddd', marginBottom: '4px' }}>{a.name || a.id}</div>
+                      <div style={{ fontSize: '12px', color: '#666', marginBottom: '16px', flex: 1 }}>{a.description?.slice(0, 80)}...</div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button onClick={() => toggleAgent(a)} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: selected ? '1px solid #1a4a1a' : '1px solid #222', backgroundColor: selected ? '#0a1a0a' : '#111', color: selected ? '#7EC87E' : '#ddd', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>
+                          {selected ? '✔ Seleccionado' : 'Seleccionar'}
+                        </button>
+                        <button onClick={() => handleOptimizeAgent(a)} disabled={optimizingId === a.id} style={{ padding: '8px', borderRadius: '8px', border: '1px solid #16404a', backgroundColor: '#05181c', color: '#00D9FF', cursor: 'pointer' }}>
+                          {optimizingId === a.id ? '...' : <Lightning size={14} />}
+                        </button>
+                      </div>
                     </div>
-                    <div style={{ fontSize: '11px', color: '#444', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {agent.category}
-                    </div>
-                  </div>
-                  {activeAgent?.id === agent.id && (
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#00D9FF', flexShrink: 0, boxShadow: '0 0 6px #00D9FF' }} />
-                  )}
+                  );
+                })}
+              </div>
+              <div style={{ padding: '16px', borderTop: '1px solid #111', backgroundColor: '#050505', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '13px', color: '#888' }}>{selectedAgents.length} agentes | KB: {assignedKB ? assignedKB.title : 'ninguno'}</span>
+                <button onClick={() => setView('interact')} style={{ padding: '10px 16px', borderRadius: '8px', border: 'none', backgroundColor: '#00D9FF', color: '#000', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  → Interactuar
                 </button>
-              ))
-            ) : (
-              filteredAtlas.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px 0', color: '#333', fontSize: '13px' }}>Sin resultados</div>
-              ) : filteredAtlas.map((item, i) => (
-                <button key={item.id || i} onClick={() => { setAssignedKB(item); setTab('agents'); }}
-                  style={{ width: '100%', textAlign: 'left', marginBottom: '6px', padding: '12px', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '12px',
-                    backgroundColor: assignedKB?.title === item.title ? '#0a0a1a' : '#080808',
-                    border: assignedKB?.title === item.title ? '1px solid #1a1a4a' : '1px solid #111' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#0d0d18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0, border: '1px solid #161625' }}>📄</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: assignedKB?.title === item.title ? '#9090ff' : '#ddd', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</div>
-                    <div style={{ fontSize: '11px', color: '#444', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.category}</div>
-                  </div>
-                  {item.isMultiPrompt && <span style={{ fontSize: '9px', backgroundColor: '#0a0a1a', color: '#6060cc', padding: '2px 6px', borderRadius: '20px', border: '1px solid #1a1a3a', flexShrink: 0 }}>Multi</span>}
-                </button>
-              ))
-            )}
-          </div>
-
-          {/* Swarm builder */}
-          <div style={{ borderTop: '1px solid #0d0d0d', padding: '10px 12px' }}>
-            <button onClick={() => setSwarmOpen(!swarmOpen)}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', borderRadius: '10px', cursor: 'pointer', backgroundColor: swarmOpen ? '#140a1e' : '#0a0a0a', border: `1px solid ${swarmOpen ? '#2a1a3e' : '#161616'}`, color: swarmOpen ? '#b060ff' : '#555' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                <UsersThree size={14} weight={swarmOpen ? 'fill' : 'regular'} />
-                <span style={{ fontSize: '11px', fontWeight: 600 }}>Modo Equipo (Swarm)</span>
-              </div>
-              <span style={{ fontSize: '10px', backgroundColor: '#1a0a2e', color: '#9060cc', padding: '1px 6px', borderRadius: '10px' }}>{swarmSelected.length}/3</span>
-            </button>
-            {swarmOpen && (
-              <div style={{ marginTop: '8px', maxHeight: '130px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                <p style={{ fontSize: '10px', color: '#444', padding: '0 4px 4px', margin: 0 }}>Selecciona hasta 3 agentes para trabajar en equipo:</p>
-                {agents.slice(0, 25).map(a => (
-                  <label key={a.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 8px', borderRadius: '8px', cursor: 'pointer', backgroundColor: swarmSelected.includes(a.id) ? '#140a1e' : 'transparent', border: swarmSelected.includes(a.id) ? '1px solid #2a1a3e' : '1px solid transparent' }}>
-                    <input type="checkbox" checked={swarmSelected.includes(a.id)}
-                      onChange={e => { if (e.target.checked && swarmSelected.length < 3) setSwarmSelected(prev => [...prev, a.id]); else setSwarmSelected(prev => prev.filter(id => id !== a.id)); }}
-                      style={{ accentColor: '#b060ff' }} />
-                    <span style={{ fontSize: '12px' }}>{categoryEmoji(a.category)}</span>
-                    <span style={{ fontSize: '11px', color: swarmSelected.includes(a.id) ? '#c090ff' : '#888' }}>{a.name || a.id}</span>
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ══ COLUMNA 2: PANEL CENTRAL ══ */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRight: '1px solid #111' }}>
-          
-          {!activeAgent ? (
-            // ONBOARDING VISUAL
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', gap: '0' }}>
-              <div style={{ marginBottom: '40px', textAlign: 'center' }}>
-                <Brain size={56} weight="thin" style={{ color: '#1a1a1a', marginBottom: '16px' }} />
-                <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#222', margin: '0 0 8px' }}>Tu espacio de trabajo de IA</h2>
-                <p style={{ fontSize: '13px', color: '#333', maxWidth: '320px', lineHeight: '1.7', margin: 0 }}>Selecciona un agente del panel izquierdo para comenzar. Sin código, sin configuración técnica.</p>
-              </div>
-              {/* 3 pasos */}
-              <div style={{ display: 'flex', gap: '0', alignItems: 'center' }}>
-                {[
-                  { icon: '🤖', step: '1', label: 'Elige tu agente', desc: 'Del catálogo de la izquierda' },
-                  { icon: '📚', step: '2', label: 'Asigna conocimiento', desc: 'Opcional: añade Atlas KB' },
-                  { icon: '💬', step: '3', label: 'Conversa', desc: 'Habla con tu agente' },
-                ].map((s, i) => (
-                  <div key={s.step} style={{ display: 'flex', alignItems: 'center' }}>
-                    <div style={{ textAlign: 'center', padding: '20px 24px', borderRadius: '16px', backgroundColor: '#080808', border: '1px solid #111', width: '140px' }}>
-                      <div style={{ fontSize: '28px', marginBottom: '8px' }}>{s.icon}</div>
-                      <div style={{ fontSize: '10px', color: '#333', marginBottom: '4px' }}>PASO {s.step}</div>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '4px' }}>{s.label}</div>
-                      <div style={{ fontSize: '11px', color: '#333', lineHeight: '1.4' }}>{s.desc}</div>
-                    </div>
-                    {i < 2 && <ArrowRight size={16} style={{ color: '#1a1a1a', margin: '0 4px', flexShrink: 0 }} />}
-                  </div>
-                ))}
               </div>
             </div>
-          ) : (
-            // AGENTE ACTIVO — CONFIGURACIÓN
-            <div style={{ flex: 1, overflowY: 'auto', padding: '28px 32px' }}>
-              {/* Card hero del agente */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px', marginBottom: '28px', padding: '24px', borderRadius: '16px', backgroundColor: '#070d07', border: '1px solid #0d250d', position: 'relative', overflow: 'hidden' }}>
-                {/* Glow bg */}
-                <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '120px', height: '120px', borderRadius: '50%', backgroundColor: '#00D9FF08', filter: 'blur(40px)' }} />
-                <div style={{ width: '64px', height: '64px', borderRadius: '16px', backgroundColor: '#0d1d0d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', border: '1px solid #1a3a1a', flexShrink: 0 }}>
-                  {categoryEmoji(activeAgent.category)}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                    <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#fff', margin: 0 }}>{activeAgent.name || activeAgent.id}</h2>
-                    <span style={{ fontSize: '10px', backgroundColor: '#0a1a0a', color: '#7EC87E', padding: '2px 8px', borderRadius: '20px', border: '1px solid #1a3a1a' }}>Activo</span>
-                  </div>
-                  <p style={{ fontSize: '12px', color: '#555', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{activeAgent.category}</p>
-                  <p style={{ fontSize: '13px', color: '#888', margin: 0, lineHeight: '1.6', maxWidth: '500px' }}>
-                    {activeAgent.description?.slice(0, 200) || 'Agente especializado listo para asistirte.'}
-                  </p>
+
+            {/* Col 2: Atlas KB */}
+            <div style={{ flex: 1, borderRight: '1px solid #111', display: 'flex', flexDirection: 'column', backgroundColor: '#040404' }}>
+              <div style={{ padding: '16px', borderBottom: '1px solid #0d0d0d' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#0a0a0a', border: '1px solid #161616', borderRadius: '10px', padding: '8px 12px' }}>
+                  <MagnifyingGlass size={14} style={{ color: '#444' }} />
+                  <input value={kbSearch} onChange={e => setKBSearch(e.target.value)} placeholder="Buscar conocimiento..." style={{ background: 'none', border: 'none', outline: 'none', color: '#ccc', fontSize: '13px', width: '100%' }} />
                 </div>
               </div>
-
-              {/* Conocimiento asignado */}
-              <div style={{ marginBottom: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#00D9FF22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 800, color: '#00D9FF' }}>2</div>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#888' }}>Conocimiento asignado</span>
-                  </div>
-                  <button onClick={() => setTab('atlas')}
-                    style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', backgroundColor: '#0a0a1a', border: '1px solid #1a1a3a', color: '#8080cc' }}>
-                    <BookOpen size={12} /> Explorar Atlas
-                  </button>
-                </div>
-                {assignedKB ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', borderRadius: '12px', backgroundColor: '#0a0a18', border: '1px solid #1a1a35' }}>
-                    <div style={{ fontSize: '24px' }}>📄</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#9090ff' }}>{assignedKB.title}</div>
-                      <div style={{ fontSize: '11px', color: '#444', marginTop: '2px' }}>{assignedKB.category}</div>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {filteredAtlas.map(kb => {
+                  const active = assignedKB?.title === kb.title;
+                  return (
+                    <div key={kb.id || kb.title} style={{ padding: '16px', borderRadius: '12px', backgroundColor: '#0a0a0a', border: active ? '1px solid #1a1a4a' : '1px solid #111', display: 'flex', gap: '12px' }}>
+                      <div style={{ fontSize: '24px' }}>📄</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '14px', fontWeight: 600, color: active ? '#8080ff' : '#ddd', marginBottom: '4px' }}>{kb.title}</div>
+                        <div style={{ fontSize: '11px', color: '#555', marginBottom: '8px' }}>{kb.category}</div>
+                        <div style={{ fontSize: '12px', color: '#888', marginBottom: '12px' }}>{kb.content?.slice(0, 100)}...</div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button onClick={() => setAssignedKB(active ? null : kb)} style={{ padding: '6px 12px', borderRadius: '6px', border: active ? '1px solid #1a1a4a' : '1px solid #222', backgroundColor: active ? '#0a0a1a' : '#111', color: active ? '#8080ff' : '#ddd', cursor: 'pointer', fontSize: '11px' }}>
+                            {active ? 'Asignado' : 'Asignar'}
+                          </button>
+                          <button onClick={() => handleOptimizeKB(kb)} style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #16404a', backgroundColor: '#05181c', color: '#00D9FF', cursor: 'pointer', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Lightning size={12} /> Mejorar KB
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <button onClick={() => setAssignedKB(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#333', padding: '4px' }}>
-                      <X size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <div style={{ padding: '14px 16px', borderRadius: '12px', backgroundColor: '#080808', border: '1px dashed #1a1a1a', textAlign: 'center' }}>
-                    <p style={{ fontSize: '12px', color: '#333', margin: 0 }}>Sin conocimiento adicional — haz click en "Explorar Atlas" y selecciona un prompt</p>
-                  </div>
-                )}
+                  );
+                })}
               </div>
+            </div>
 
-              {/* Habilidades / tools como tags */}
-              {tools.length > 0 && (
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                    <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#ffffff10', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 800, color: '#555' }}>✦</div>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#555' }}>Habilidades del agente</span>
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    {tools.map(t => (
-                      <div key={t.name} title={t.description}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '20px', backgroundColor: '#0a0a0a', border: '1px solid #161616', cursor: 'help' }}>
-                        <Wrench size={11} style={{ color: '#444' }} />
-                        <span style={{ fontSize: '11px', color: '#666' }}>{t.name.replace(/_/g, ' ')}</span>
+            {/* Col 3: AI Assistant */}
+            <div style={{ width: assistantOpen ? '288px' : '48px', transition: 'width 0.2s', display: 'flex', flexDirection: 'column', backgroundColor: '#050505' }}>
+              <div style={{ padding: '16px', borderBottom: '1px solid #0d0d0d', display: 'flex', alignItems: 'center', justifyContent: assistantOpen ? 'space-between' : 'center' }}>
+                {assistantOpen && <span style={{ fontSize: '13px', fontWeight: 600, color: '#00D9FF' }}>Asistente AI</span>}
+                <button onClick={() => setAssistantOpen(!assistantOpen)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}>
+                  {assistantOpen ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
+                </button>
+              </div>
+              {assistantOpen && (
+                <>
+                  <div style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {assistantMessages.map((m, i) => (
+                      <div key={i} style={{ padding: '8px 12px', borderRadius: '8px', backgroundColor: m.role === 'user' ? '#0d0d1a' : '#0a0a0a', border: '1px solid #111', color: m.role === 'user' ? '#fff' : '#00D9FF', fontSize: '12px' }}>
+                        {m.content}
                       </div>
                     ))}
                   </div>
-                </div>
+                  <div style={{ padding: '12px', borderTop: '1px solid #0d0d0d' }}>
+                    <input value={assistantInput} onChange={e => setAssistantInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleAssistantSend(); }} placeholder="Ej: Encuentra agentes..." style={{ width: '100%', padding: '8px', borderRadius: '8px', backgroundColor: '#0a0a0a', border: '1px solid #161616', color: '#fff', fontSize: '12px', outline: 'none' }} />
+                  </div>
+                </>
               )}
             </div>
-          )}
-        </div>
-
-        {/* ══ COLUMNA 3: CONSOLA ══ */}
-        <div style={{ width: '420px', minWidth: '420px', display: 'flex', flexDirection: 'column', backgroundColor: '#030303' }}>
-          
-          {/* Header consola */}
-          <div style={{ padding: '14px 16px', borderBottom: '1px solid #0d0d0d', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: isSwarmMode ? '#b060ff' : '#00D9FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 800, color: '#000' }}>3</div>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#666', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                {isSwarmMode ? '🌀 Modo Equipo' : '💬 Conversa'}
-              </span>
-            </div>
-            {messages.length > 0 && (
-              <button onClick={() => setMessages([])}
-                style={{ fontSize: '10px', color: '#333', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}>
-                Limpiar
-              </button>
-            )}
           </div>
+        )}
 
-          {/* Mensajes */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {messages.length === 0 && (
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#222', textAlign: 'center', gap: '12px' }}>
-                <ChatCircle size={40} weight="thin" style={{ color: '#1a1a1a' }} />
-                <p style={{ fontSize: '13px', color: '#333', margin: 0 }}>
-                  {activeAgent || isSwarmMode ? '✦ Escribe tu primer mensaje' : '← Activa un agente para chatear'}
-                </p>
+        {view === 'teams' && (
+          <div style={{ display: 'flex', height: '100%' }}>
+            {/* Col 1: Mis Equipos */}
+            <div style={{ width: '256px', borderRight: '1px solid #111', display: 'flex', flexDirection: 'column', backgroundColor: '#040404' }}>
+              <div style={{ padding: '16px', borderBottom: '1px solid #0d0d0d', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#ccc' }}>Mis Equipos</span>
+                <button onClick={handleNewTeam} style={{ background: 'none', border: 'none', color: '#00D9FF', cursor: 'pointer' }}><Plus size={16} /></button>
               </div>
-            )}
-            {messages.map((msg, i) => (
-              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '100%' }}>
-                {(msg.role === 'agent' || msg.role === 'swarm') && msg.agentId && (
-                  <div style={{ fontSize: '10px', color: '#333', marginBottom: '4px', paddingLeft: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span>{msg.role === 'swarm' ? '🌀' : categoryEmoji(agents.find(a => a.id === msg.agentId)?.category || '')}</span>
-                    <span>{agents.find(a => a.id === msg.agentId)?.name || msg.agentId}</span>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {teams.map(t => (
+                  <div key={t.id} onClick={() => setEditingTeam(t)} style={{ padding: '12px', borderRadius: '8px', backgroundColor: editingTeam?.id === t.id ? '#0a1a0a' : '#0a0a0a', border: editingTeam?.id === t.id ? '1px solid #1a4a1a' : '1px solid #111', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontSize: '13px', color: '#fff', fontWeight: 600 }}>{t.name}</div>
+                      <div style={{ fontSize: '11px', color: '#666' }}>{t.agents.length} agentes</div>
+                    </div>
+                    <button onClick={(e) => { e.stopPropagation(); handleDeleteTeam(t.id); }} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}><Trash size={14} /></button>
                   </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Col 2: Constructor */}
+            <div style={{ flex: 1, borderRight: '1px solid #111', display: 'flex', flexDirection: 'column', backgroundColor: '#030303' }}>
+              {editingTeam ? (
+                <>
+                  <div style={{ padding: '16px', borderBottom: '1px solid #0d0d0d', display: 'flex', gap: '16px', alignItems: 'center' }}>
+                    <input value={editingTeam.name} onChange={e => setEditingTeam({...editingTeam, name: e.target.value})} style={{ flex: 1, background: 'none', border: 'none', borderBottom: '1px solid #333', color: '#fff', fontSize: '18px', fontWeight: 600, outline: 'none', padding: '4px 0' }} />
+                    <select value={editingTeam.kbTitle || ''} onChange={e => setEditingTeam({...editingTeam, kbTitle: e.target.value})} style={{ padding: '6px 12px', borderRadius: '6px', backgroundColor: '#0a0a0a', border: '1px solid #222', color: '#ccc', fontSize: '12px' }}>
+                      <option value="">Sin KB compartido</option>
+                      {atlasItems.map(kb => <option key={kb.id || kb.title} value={kb.title}>{kb.title}</option>)}
+                    </select>
+                    <button onClick={handleSaveTeam} style={{ padding: '8px 16px', borderRadius: '8px', backgroundColor: '#111', border: '1px solid #222', color: '#fff', cursor: 'pointer', fontSize: '13px' }}>Guardar</button>
+                    <button onClick={() => { setActiveTeam(editingTeam); setInteractMode('team'); setView('interact'); }} style={{ padding: '8px 16px', borderRadius: '8px', backgroundColor: '#0a1a0a', border: '1px solid #1a4a1a', color: '#7EC87E', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>▶ Activar</button>
+                  </div>
+                  <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', alignContent: 'start' }}>
+                    {agents.map(a => {
+                      const checked = !!editingTeam.agents.find(ea => ea.id === a.id);
+                      return (
+                        <label key={a.id} style={{ display: 'flex', gap: '12px', padding: '12px', borderRadius: '8px', backgroundColor: '#0a0a0a', border: checked ? '1px solid #1a4a1a' : '1px solid #111', cursor: 'pointer', alignItems: 'center' }}>
+                          <input type="checkbox" checked={checked} onChange={e => {
+                            if (e.target.checked) setEditingTeam({...editingTeam, agents: [...editingTeam.agents, a]});
+                            else setEditingTeam({...editingTeam, agents: editingTeam.agents.filter(ea => ea.id !== a.id)});
+                          }} style={{ accentColor: '#7EC87E' }} />
+                          <span style={{ fontSize: '20px' }}>{catEmoji(a.category)}</span>
+                          <span style={{ fontSize: '13px', color: '#ddd' }}>{a.name || a.id}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>Selecciona o crea un equipo</div>
+              )}
+            </div>
+
+            {/* Col 3: AI Advisor */}
+            <div style={{ width: '288px', display: 'flex', flexDirection: 'column', backgroundColor: '#050505' }}>
+              <div style={{ padding: '16px', borderBottom: '1px solid #0d0d0d' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#7B9C7F' }}>AI Advisor</span>
+              </div>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {teamAdvisorMessages.map((m, i) => (
+                  <div key={i} style={{ padding: '8px 12px', borderRadius: '8px', backgroundColor: m.role === 'user' ? '#0d0d1a' : '#0a0a0a', border: '1px solid #111', color: m.role === 'user' ? '#fff' : '#7B9C7F', fontSize: '12px' }}>
+                    {m.content}
+                  </div>
+                ))}
+              </div>
+              <div style={{ padding: '12px', borderTop: '1px solid #0d0d0d' }}>
+                <input value={teamAdvisorInput} onChange={e => setTeamAdvisorInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleTeamAdvisorSend(); }} placeholder="Ej: Recomiéndame un equipo..." style={{ width: '100%', padding: '8px', borderRadius: '8px', backgroundColor: '#0a0a0a', border: '1px solid #161616', color: '#fff', fontSize: '12px', outline: 'none' }} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {view === 'interact' && (
+          <div style={{ display: 'flex', height: '100%' }}>
+            {/* Sidebar Contexto */}
+            <div style={{ width: '288px', borderRight: '1px solid #111', display: 'flex', flexDirection: 'column', backgroundColor: '#040404' }}>
+              <div style={{ padding: '16px', borderBottom: '1px solid #0d0d0d', display: 'flex', gap: '8px' }}>
+                <button onClick={() => setInteractMode('agent')} style={{ flex: 1, padding: '6px', borderRadius: '6px', border: interactMode === 'agent' ? '1px solid #1a3a1a' : '1px solid transparent', backgroundColor: interactMode === 'agent' ? '#0a1a0a' : 'transparent', color: interactMode === 'agent' ? '#7EC87E' : '#666', fontSize: '12px', cursor: 'pointer' }}>Modo Agente</button>
+                <button onClick={() => setInteractMode('team')} style={{ flex: 1, padding: '6px', borderRadius: '6px', border: interactMode === 'team' ? '1px solid #2a1a3e' : '1px solid transparent', backgroundColor: interactMode === 'team' ? '#140a1e' : 'transparent', color: interactMode === 'team' ? '#b060ff' : '#666', fontSize: '12px', cursor: 'pointer' }}>Modo Equipo</button>
+              </div>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {interactMode === 'agent' && (
+                  <>
+                    <button onClick={() => setView('select')} style={{ padding: '8px', background: 'none', border: '1px dashed #333', borderRadius: '8px', color: '#888', cursor: 'pointer', fontSize: '12px', marginBottom: '8px' }}>← Volver a Seleccionar</button>
+                    {selectedAgents.map(a => (
+                      <div key={a.id} onClick={() => setActiveAgentForChat(a)} style={{ padding: '12px', borderRadius: '8px', backgroundColor: activeAgentForChat?.id === a.id ? '#0a1a0a' : '#0a0a0a', border: activeAgentForChat?.id === a.id ? '1px solid #1a4a1a' : '1px solid #111', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '16px' }}>{catEmoji(a.category)}</span>
+                        <span style={{ fontSize: '13px', color: activeAgentForChat?.id === a.id ? '#7EC87E' : '#ddd' }}>{a.name || a.id}</span>
+                      </div>
+                    ))}
+                    {assignedKB && (
+                      <div style={{ marginTop: '16px', padding: '12px', borderRadius: '8px', backgroundColor: '#0a0a1a', border: '1px solid #1a1a3a' }}>
+                        <div style={{ fontSize: '11px', color: '#8080ff', marginBottom: '4px' }}>KB Asignado</div>
+                        <div style={{ fontSize: '13px', color: '#ccc' }}>{assignedKB.title}</div>
+                      </div>
+                    )}
+                  </>
                 )}
-                <div style={{
-                  maxWidth: '88%', padding: '12px 16px',
-                  borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                  backgroundColor: msg.role === 'user' ? '#0d0d1a' : msg.role === 'swarm' ? '#14081e' : '#060d06',
-                  border: msg.role === 'user' ? '1px solid #1a1a2e' : msg.role === 'swarm' ? '1px solid #2a1040' : '1px solid #0d200d',
-                  color: msg.role === 'user' ? '#FFFFFF' : msg.role === 'swarm' ? '#c090ff' : '#9BC89F',
-                  fontSize: '13px', lineHeight: '1.65', whiteSpace: 'pre-wrap'
-                }}>
-                  {msg.content}
+                {interactMode === 'team' && (
+                  <>
+                    {activeTeam ? (
+                      <div style={{ padding: '12px', borderRadius: '8px', backgroundColor: '#140a1e', border: '1px solid #2a1a3e' }}>
+                        <div style={{ fontSize: '14px', color: '#b060ff', fontWeight: 600, marginBottom: '8px' }}>{activeTeam.name}</div>
+                        {activeTeam.agents.map(a => (
+                          <div key={a.id} style={{ fontSize: '12px', color: '#ccc', marginBottom: '4px', display: 'flex', gap: '6px' }}>
+                            <span>{catEmoji(a.category)}</span>
+                            <span>{a.name || a.id}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ color: '#666', fontSize: '12px', textAlign: 'center', marginTop: '20px' }}>Ningún equipo activo</div>
+                    )}
+                  </>
+                )}
+                <div style={{ marginTop: '24px' }}>
+                  <div style={{ fontSize: '11px', color: '#666', marginBottom: '8px' }}>Tools Disponibles</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {tools.map(t => (
+                      <span key={t.name} style={{ fontSize: '10px', color: '#888', backgroundColor: '#111', padding: '2px 6px', borderRadius: '4px', border: '1px solid #222' }}>{t.name}</span>
+                    ))}
+                  </div>
                 </div>
               </div>
-            ))}
-            {isLoading && (
-              <div style={{ alignSelf: 'flex-start', padding: '12px 16px', borderRadius: '18px 18px 18px 4px', backgroundColor: '#060d06', border: '1px solid #0d200d', color: '#4a7a4a', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ display: 'inline-block', animation: 'pulse 1s infinite' }}>⏳</span>
-                <span>Procesando...</span>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
+            </div>
 
-          {/* Input */}
-          <div style={{ padding: '12px 14px', borderTop: '1px solid #0d0d0d', flexShrink: 0 }}>
-            {isSwarmMode && (
-              <div style={{ marginBottom: '8px', padding: '6px 10px', borderRadius: '8px', backgroundColor: '#0e0814', border: '1px solid #1e1028', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '11px', color: '#9060cc' }}>🌀 {swarmSelected.length} agentes en equipo listos</span>
-                <button onClick={() => { setSwarmSelected([]); setSwarmOpen(false); }}
-                  style={{ fontSize: '10px', color: '#5a3080', background: 'none', border: 'none', cursor: 'pointer' }}>Cancelar</button>
+            {/* Consola */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#030303' }}>
+              <div style={{ padding: '16px', borderBottom: '1px solid #0d0d0d', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: interactMode === 'team' ? '#b060ff' : '#7EC87E' }}>
+                  {interactMode === 'team' ? (activeTeam?.name || 'Equipo') : (activeAgentForChat?.name || activeAgentForChat?.id || 'Selecciona un agente')}
+                </div>
+                <button onClick={() => setMessages([])} style={{ background: 'none', border: 'none', color: '#666', fontSize: '12px', cursor: 'pointer' }}>Limpiar</button>
               </div>
-            )}
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
-              <textarea
-                value={inputMsg}
-                onChange={e => setInputMsg(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); isSwarmMode ? handleSwarm() : handleSend(); } }}
-                placeholder={!activeAgent && !isSwarmMode ? '← Selecciona un agente primero' : isSwarmMode ? 'Mensaje para el equipo de agentes...' : `Habla con ${activeAgent?.name || 'el agente'}...`}
-                disabled={!activeAgent && !isSwarmMode}
-                rows={2}
-                style={{ flex: 1, backgroundColor: '#0a0a0a', border: '1px solid #161616', borderRadius: '12px', padding: '10px 14px', fontSize: '13px', color: '#ddd', outline: 'none', resize: 'none', fontFamily: 'inherit', lineHeight: '1.5' }}
-              />
-              <button
-                onClick={isSwarmMode ? handleSwarm : handleSend}
-                disabled={isLoading || (!activeAgent && !isSwarmMode) || !inputMsg.trim()}
-                style={{ padding: '12px 14px', borderRadius: '12px', cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s', border: 'none',
-                  backgroundColor: isLoading || (!activeAgent && !isSwarmMode) ? '#0a0a0a' : isSwarmMode ? '#1e0a2e' : '#0a1a0a',
-                  color: isLoading || (!activeAgent && !isSwarmMode) ? '#2a2a2a' : isSwarmMode ? '#b060ff' : '#7EC87E',
-                  boxShadow: (!isLoading && (activeAgent || isSwarmMode)) ? (isSwarmMode ? '0 0 12px #b060ff22' : '0 0 12px #7EC87E22') : 'none' }}>
-                {isSwarmMode ? <UsersThree size={18} weight="fill" /> : <PaperPlaneTilt size={18} />}
-              </button>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {messages.map((m, i) => (
+                  <div key={i} style={{ alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '80%' }}>
+                    {(m.role === 'agent' || m.role === 'swarm') && m.agentId && (
+                      <div style={{ fontSize: '10px', color: '#555', marginBottom: '4px', marginLeft: '4px' }}>{m.agentId} {m.role === 'swarm' && '🌀'}</div>
+                    )}
+                    <div style={{ padding: '12px 16px', borderRadius: m.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px', backgroundColor: m.role === 'user' ? '#0d0d1a' : m.role === 'swarm' ? '#14081e' : m.role === 'system' ? '#111' : '#060d06', border: m.role === 'user' ? '1px solid #1a1a2e' : m.role === 'swarm' ? '1px solid #2a1040' : m.role === 'system' ? '1px solid #222' : '1px solid #0d200d', color: m.role === 'user' ? '#fff' : m.role === 'swarm' ? '#c090ff' : m.role === 'system' ? '#888' : '#9BC89F', fontSize: '13px', whiteSpace: 'pre-wrap' }}>
+                      {m.content}
+                    </div>
+                  </div>
+                ))}
+                {isLoading && (
+                  <div style={{ alignSelf: 'flex-start', fontSize: '12px', color: '#666' }}>•••</div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+              <div style={{ padding: '16px', borderTop: '1px solid #0d0d0d' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <textarea value={inputMsg} onChange={e => setInputMsg(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSend(); } }} placeholder="Escribe un mensaje..." style={{ flex: 1, padding: '12px', borderRadius: '12px', backgroundColor: '#0a0a0a', border: '1px solid #161616', color: '#fff', fontSize: '13px', outline: 'none', resize: 'none', height: '48px' }} />
+                  <button onClick={handleChatSend} disabled={isLoading || !inputMsg.trim()} style={{ padding: '0 16px', borderRadius: '12px', backgroundColor: interactMode === 'team' ? '#140a1e' : '#0a1a0a', border: 'none', color: interactMode === 'team' ? '#b060ff' : '#7EC87E', cursor: 'pointer' }}><PaperPlaneTilt size={20} /></button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
