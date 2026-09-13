@@ -76,6 +76,8 @@ export default function Architecture() {
   });
 
   const [promptSearchTerm, setPromptSearchTerm] = useState('');
+  const [selectedForBatch, setSelectedForBatch] = useState<string[]>([]);
+  const [isBatchOptimizing, setIsBatchOptimizing] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('arch_single_optimized', JSON.stringify(optimizedPrompts));
@@ -253,6 +255,68 @@ export default function Architecture() {
     }
   };
 
+  const handleBatchOptimize = async () => {
+    if (selectedForBatch.length === 0) return;
+    setIsBatchOptimizing(true);
+    const promptsToOptimize: any[] = [];
+    const allModules = [...(data?.flow || []), ...(data?.apps || [])];
+    for (const mod of allModules) {
+       for (const p of mod.prompts) {
+           if (selectedForBatch.includes(p.key)) {
+               promptsToOptimize.push({
+                   key: p.key,
+                   moduleName: mod.name,
+                   category: (p.key.includes('agent') || p.key.includes('executor') || p.key.includes('engine') || p.key.includes('architect') || ['builder', 'orchestrator', 'runtime'].includes(mod.id)) ? 'agent' : 'prompt',
+                   text: p.text,
+                   explanation: p.explanation || ''
+               });
+           }
+       }
+    }
+    
+    try {
+        const res = await fetch(`${API_URL}/architecture/evolve-batch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prompts: promptsToOptimize,
+                batch_index: 0,
+                total_batches: 1
+            })
+        });
+        if (res.ok) {
+            const json = await res.json();
+            if (json.results && json.results.length > 0) {
+               const newOptimized = {...optimizedPrompts};
+               const existing = JSON.parse(localStorage.getItem('system_evolution_overrides') || '{}');
+               
+               for (const result of json.results) {
+                   newOptimized[result.prompt_key] = result.content;
+                   existing[result.prompt_key] = { content: result.content, rationale: result.rationale || 'Optimización por lote' };
+               }
+               setOptimizedPrompts(newOptimized);
+               localStorage.setItem('system_evolution_overrides', JSON.stringify(existing));
+               
+               await fetch(`${API_URL}/architecture/consolidate`, {
+                   method: 'POST',
+                   headers: { 'Content-Type': 'application/json' },
+                   body: JSON.stringify({
+                       overrides: existing,
+                       notes: `Optimización por lote de ${json.results.length} prompts`,
+                       author: 'Usuario',
+                       version: '3.0.0'
+                   })
+               });
+            }
+        }
+    } catch (e) {
+        console.error(e);
+    } finally {
+        setIsBatchOptimizing(false);
+        setSelectedForBatch([]);
+    }
+  };
+
   if (error) {
     return <div className="p-10 text-red-400">Error cargando arquitectura: {error}</div>;
   }
@@ -418,6 +482,42 @@ export default function Architecture() {
                          />
                        </div>
 
+                       {selectedForBatch.length > 0 && (
+                         <div className="mb-4 p-3 bg-[#0A1C0D] border border-[#174A1F] rounded-lg flex flex-col gap-2">
+                           <div className="text-sm font-bold text-[#7B9C7F]">
+                             {selectedForBatch.length} prompts seleccionados
+                           </div>
+                           <div className="flex flex-wrap gap-2">
+                             <button
+                               onClick={() => setSelectedForBatch([])}
+                               className="px-2 py-1 text-xs bg-[#000000] text-gray-300 border border-[#2A2A2A] rounded hover:bg-gray-800"
+                             >
+                               Limpiar
+                             </button>
+                             <button
+                               onClick={handleBatchOptimize}
+                               disabled={isBatchOptimizing}
+                               className="px-2 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-500 font-bold flex items-center gap-1 disabled:opacity-50"
+                             >
+                               {isBatchOptimizing ? <Gear className="animate-spin" /> : '✨'}
+                               {isBatchOptimizing ? 'Optimizando...' : 'Optimizar Lote'}
+                             </button>
+                             <button
+                               onClick={() => {
+                                 const modulePromptKeys = activeModule.prompts.map(p => p.key);
+                                 const toAdd = modulePromptKeys.filter(k => !selectedForBatch.includes(k));
+                                 if (toAdd.length > 0) {
+                                   setSelectedForBatch(prev => [...prev, ...toAdd]);
+                                 }
+                               }}
+                               className="px-2 py-1 text-xs bg-[#000000] text-[#7B9C7F] border border-[#174A1F] rounded hover:bg-[#0A1C0D]"
+                             >
+                               Seleccionar Todos
+                             </button>
+                           </div>
+                         </div>
+                       )}
+
                        <div className="flex flex-col gap-2">
                           {activeModule.prompts.filter(p => p.key.toLowerCase().includes(promptSearchTerm.toLowerCase()) || (p.used_at && p.used_at.toLowerCase().includes(promptSearchTerm.toLowerCase()))).map(p => {
                              const isSelected = selectedPrompt?.key === p.key;
@@ -429,11 +529,26 @@ export default function Architecture() {
                                       className={`w-full flex flex-col items-start gap-1.5 p-3 text-left transition-all outline-none hover:brightness-110 font-bold shadow-sm rounded-lg ${isSelected ? 'nav-item-active shadow-[0_0_10px_rgba(23,74,31,0.5)] border border-[#174A1F]' : 'nav-item-inactive border border-transparent'}`}
                                    >
                                       <div className="w-full flex items-center justify-between">
-                                        <code className={`text-sm font-mono truncate flex-1 ${isSelected ? 'text-[#7B9C7F]' : 'text-gray-200'}`}>{p.key}</code>
-                                        <CaretRight size={14} style={{ opacity: isSelected ? 1 : 0.3, color: isSelected ? '#7B9C7F' : '#ffffff' }} />
+                                        <div className="flex items-center gap-2 overflow-hidden flex-1">
+                                          <input 
+                                            type="checkbox"
+                                            checked={selectedForBatch.includes(p.key)}
+                                            onChange={(e) => {
+                                              if (e.target.checked) {
+                                                setSelectedForBatch(prev => [...prev, p.key]);
+                                              } else {
+                                                setSelectedForBatch(prev => prev.filter(k => k !== p.key));
+                                              }
+                                            }}
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="w-4 h-4 bg-gray-900 border-gray-700 rounded text-emerald-500 focus:ring-emerald-500 cursor-pointer flex-shrink-0"
+                                          />
+                                          <code className={`text-sm font-mono truncate ${isSelected ? 'text-[#7B9C7F]' : 'text-gray-200'}`}>{p.key}</code>
+                                        </div>
+                                        <CaretRight size={14} style={{ opacity: isSelected ? 1 : 0.3, color: isSelected ? '#7B9C7F' : '#ffffff' }} className="flex-shrink-0" />
                                       </div>
                                       {p.used_at && (
-                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-md border font-sans tracking-wide ${isSelected ? 'bg-emerald-950/40 text-emerald-400 border-emerald-800/50' : 'bg-gray-900/50 text-gray-400 border-gray-800'}`}>
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-md border font-sans tracking-wide ml-6 ${isSelected ? 'bg-emerald-950/40 text-emerald-400 border-emerald-800/50' : 'bg-gray-900/50 text-gray-400 border-gray-800'}`}>
                                           {p.used_at}
                                         </span>
                                       )}
