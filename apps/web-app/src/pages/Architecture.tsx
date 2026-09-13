@@ -71,6 +71,8 @@ export default function Architecture() {
     }
   });
 
+  const [promptSearchTerm, setPromptSearchTerm] = useState('');
+
   useEffect(() => {
     localStorage.setItem('arch_single_optimized', JSON.stringify(optimizedPrompts));
   }, [optimizedPrompts]);
@@ -396,21 +398,41 @@ export default function Architecture() {
                     </div>
                     
                     <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                       <div className="text-xs uppercase tracking-widest text-[#8A8A8A] font-bold mb-3 pl-2">
-                         Master Prompts ({activeModule.prompts.length})
+                       <div className="flex items-center justify-between mb-3 pl-2">
+                         <div className="text-xs uppercase tracking-widest text-[#8A8A8A] font-bold">
+                           Master Prompts ({activeModule.prompts.length})
+                         </div>
                        </div>
+                       
+                       <div className="mb-4">
+                         <input 
+                           type="text"
+                           placeholder="Buscar por nombre o uso..."
+                           value={promptSearchTerm}
+                           onChange={(e) => setPromptSearchTerm(e.target.value)}
+                           className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-white placeholder-[#555] focus:outline-none focus:border-[#7B9C7F] transition-colors"
+                         />
+                       </div>
+
                        <div className="flex flex-col gap-2">
-                          {activeModule.prompts.map(p => {
+                          {activeModule.prompts.filter(p => p.key.toLowerCase().includes(promptSearchTerm.toLowerCase()) || (p.used_at && p.used_at.toLowerCase().includes(promptSearchTerm.toLowerCase()))).map(p => {
                              const isSelected = selectedPrompt?.key === p.key;
                               
                               return (
                                  <button 
                                       key={p.key}
                                       onClick={() => setSelectedPrompt(p)}
-                                      className={`w-full flex items-center gap-3 p-3 text-left transition-all outline-none hover:brightness-110 font-bold shadow-sm ${isSelected ? 'nav-item-active shadow-[0_0_10px_rgba(23,74,31,0.5)]' : 'nav-item-inactive'}`}
+                                      className={`w-full flex flex-col items-start gap-1.5 p-3 text-left transition-all outline-none hover:brightness-110 font-bold shadow-sm rounded-lg ${isSelected ? 'nav-item-active shadow-[0_0_10px_rgba(23,74,31,0.5)] border border-[#174A1F]' : 'nav-item-inactive border border-transparent'}`}
                                    >
-                                      <code className="text-base font-mono truncate flex-1">{p.key}</code>
-                                      <CaretRight size={14} style={{ opacity: isSelected ? 1 : 0.3, color: isSelected ? '#7B9C7F' : '#ffffff' }} />
+                                      <div className="w-full flex items-center justify-between">
+                                        <code className={`text-sm font-mono truncate flex-1 ${isSelected ? 'text-[#7B9C7F]' : 'text-gray-200'}`}>{p.key}</code>
+                                        <CaretRight size={14} style={{ opacity: isSelected ? 1 : 0.3, color: isSelected ? '#7B9C7F' : '#ffffff' }} />
+                                      </div>
+                                      {p.used_at && (
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-md border font-sans tracking-wide ${isSelected ? 'bg-emerald-950/40 text-emerald-400 border-emerald-800/50' : 'bg-gray-900/50 text-gray-400 border-gray-800'}`}>
+                                          {p.used_at}
+                                        </span>
+                                      )}
                                   </button>
                              )
                           })}
@@ -553,9 +575,24 @@ export default function Architecture() {
                   <div className="flex-1 overflow-y-auto custom-scrollbar relative flex flex-col">
                      <div className="flex-1 p-6">
                         {panelTab === 'content' ? (
-                           <pre className="text-base md:text-lg text-[#FFFFFF] whitespace-pre-wrap font-mono leading-relaxed drop-shadow-sm">
-                              {optimizedPrompts[selectedPrompt.key] || selectedPrompt.text}
-                           </pre>
+                           <div className="relative rounded-xl overflow-hidden bg-gradient-to-b from-[#0A0A0A] to-[#050505] border border-[#2A2A2A] shadow-2xl">
+                             <div className="flex items-center gap-2 px-4 py-3 bg-[#111] border-b border-[#2A2A2A]">
+                               <div className="flex gap-1.5">
+                                 <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
+                                 <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                                 <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
+                               </div>
+                               <div className="ml-3 flex items-center gap-2 text-xs text-[#8A8A8A] font-mono uppercase tracking-widest font-semibold">
+                                 <TerminalWindow size={15} className="text-[#7B9C7F]" />
+                                 <span>{selectedPrompt.key}.ai</span>
+                               </div>
+                             </div>
+                             <div className="p-5 overflow-x-auto">
+                               <pre className="text-sm text-[#D4D4D4] whitespace-pre-wrap font-mono leading-relaxed selection:bg-[#7B9C7F]/30 selection:text-white">
+                                  {optimizedPrompts[selectedPrompt.key] || selectedPrompt.text}
+                               </pre>
+                             </div>
+                           </div>
                         ) : (
                            <div className="p-6 rounded-xl border border-gray-800 leading-relaxed prose prose-invert max-w-none shadow-inner bg-gray-900/80 text-sm text-gray-300 prose-sm prose-headings:text-blue-400 prose-a:text-blue-400">
                               <ReactMarkdown>
