@@ -57,6 +57,7 @@ from routers.search import (
     DYNAMIC_SECRETS_ISSUER_SYSTEM, SHAMIR_UNSEALER_SYSTEM, FLOW_GENERATOR_SYSTEM
 )
 from services.architect_engine import FLOW_ARCHITECT_DISCOVERY_SYSTEM, FLOW_ARCHITECT_BLUEPRINT_SYSTEM
+from services.master_prompts_v2 import *
 
 ATLAS_UPGRADE_SYSTEM = """Eres un Ingeniero de Prompts de Élite (Staff Prompt Architect). Tu misión es transformar el prompt provisto en una directiva de grado industrial, maximizando la precisión, coherencia, delimitación contextual y control de fallas en modelos LLM modernos.
 
@@ -202,6 +203,16 @@ def get_architecture():
                     {"key": "auditor_contexto", "used_at": "POST /api/v1/builder/action (auditor)", "text": AUDITOR_CONTEXTO_SYSTEM, "explanation": "Linker. Escanea el nodo y alerta si faltan variables o datos requeridos en el contexto o del nodo anterior."},
                     {"key": "flow_architect_discovery", "used_at": "Builder (Flow Architect Tab - Discovery)", "text": FLOW_ARCHITECT_DISCOVERY_SYSTEM, "explanation": "Estructura interactiva conversacional para recopilar ideas y clarificar intenciones del usuario antes de diseñar el blueprint."},
                     {"key": "flow_architect_blueprint", "used_at": "Builder (Flow Architect Tab - Blueprint)", "text": FLOW_ARCHITECT_BLUEPRINT_SYSTEM, "explanation": "Toma los requerimientos y la intención definidos en discovery y genera un ArchitectureSpec con nodos y transiciones listas para inyectarse al Builder."},
+                    {"key": "requirements_gatekeeper", "used_at": "Flow Architect Tab", "text": REQUIREMENTS_GATEKEEPER_SYSTEM, "explanation": "Intercepta, analiza y valida todas las solicitudes entrantes antes de que ingresen al sistema."},
+                    {"key": "architecture_alternatives", "used_at": "Flow Architect Tab", "text": ARCHITECTURE_ALTERNATIVES_SYSTEM, "explanation": "Diseña múltiples aproximaciones arquitectónicas para cualquier requerimiento validado."},
+                    {"key": "feasibility_cost_analyzer", "used_at": "Flow Architect Tab", "text": FEASIBILITY_COST_ANALYZER_SYSTEM, "explanation": "Evalúa viabilidad técnica e impacto económico de las arquitecturas propuestas."},
+                    {"key": "state_schema_designer", "used_at": "Flow Architect Tab", "text": STATE_SCHEMA_DESIGNER_SYSTEM, "explanation": "Define la estructura inmutable del estado del flujo de trabajo para el grafo de ejecución."},
+                    {"key": "canvas_validator", "used_at": "Flowboard Tab", "text": CANVAS_VALIDATOR_SYSTEM, "explanation": "Asegura que el diseño del lienzo de flujo carezca de ciclos muertos o nodos huérfanos."},
+                    {"key": "edge_contract_generator", "used_at": "Flowboard Tab", "text": EDGE_CONTRACT_GENERATOR_SYSTEM, "explanation": "Genera y audita los contratos de interfaz (Edges) entre dos o más nodos."},
+                    {"key": "dynamic_router", "used_at": "Flowboard Tab", "text": DYNAMIC_ROUTER_SYSTEM, "explanation": "Actúa como el despachador de tráfico semántico en tiempo de ejecución."},
+                    {"key": "tool_discovery", "used_at": "Flowboard Tab", "text": TOOL_DISCOVERY_SYSTEM, "explanation": "Indexa, busca y recomienda las herramientas más apropiadas para el contexto de ejecución."},
+                    {"key": "skill_synthesizer", "used_at": "Flowboard Tab", "text": SKILL_SYNTHESIZER_SYSTEM, "explanation": "Combina, adapta y genera sub-habilidades en tiempo real para agentes especializados."},
+                    {"key": "cost_token_optimizer", "used_at": "Flowboard Tab", "text": COST_TOKEN_OPTIMIZER_SYSTEM, "explanation": "Intercepta prompts salientes y reduce el consumo de tokens sin pérdida semántica."},
                 ],
             },
             {
@@ -315,6 +326,45 @@ def get_architecture():
                     {"key": "confidence_scorer", "used_at": "Nexus > Anti-Alucinación", "text": CONFIDENCE_SCORER_SYSTEM, "explanation": "Audita la información recuperada. Si no hay certeza matemática de que sea correcta, bloquea la respuesta y pide intervención humana."},
                     {"key": "semantic_router", "used_at": "Nexus > Enrutamiento", "text": SEMANTIC_ROUTER_SYSTEM, "explanation": "Analiza la intención del usuario y decide en qué base de datos buscar (historial, reglas, código o internet) para ahorrar tokens y tiempo."}
                 ]
+            },
+            {
+                "step": 7,
+                "id": "inspector",
+                "name": "Run Inspector — Diagnóstico y Auditoría",
+                "page": "/inspector",
+                "what": "Analiza la traza de ejecución, diagnostica fallos y detecta anomalías en el comportamiento de los agentes.",
+                "prompts": [
+                    {"key": "root_cause_analyzer", "used_at": "Run Inspector Tab", "text": ROOT_CAUSE_ANALYZER_SYSTEM, "explanation": "Realiza una autopsia exhaustiva de la traza de ejecución y logs de error."},
+                    {"key": "auto_patcher", "used_at": "Run Inspector Tab", "text": AUTO_PATCHER_SYSTEM, "explanation": "Sintetiza y aplica parches dinámicos al código para restaurar operatividad."},
+                    {"key": "hallucination_detector", "used_at": "Run Inspector Tab", "text": HALLUCINATION_DETECTOR_SYSTEM, "explanation": "Cruza salidas generativas contra el contexto base para detectar invenciones."},
+                    {"key": "cognitive_profiler", "used_at": "Run Inspector Tab", "text": COGNITIVE_PROFILER_SYSTEM, "explanation": "Monitorea el comportamiento de razonamiento, evaluando coherencia y sesgos."},
+                    {"key": "data_leak_scanner", "used_at": "Run Inspector Tab", "text": DATA_LEAK_SCANNER_SYSTEM, "explanation": "Salvaguarda información confidencial escaneando proactivamente el contexto de entrada y salida."},
+                ],
+            },
+            {
+                "step": 8,
+                "id": "results",
+                "name": "Run Results — Evaluación de Calidad",
+                "page": "/results",
+                "what": "Genera escenarios de prueba y califica la calidad final de los resultados producidos.",
+                "prompts": [
+                    {"key": "test_scenario_generator", "used_at": "Run Results Tab", "text": TEST_SCENARIO_GENERATOR_SYSTEM, "explanation": "Diseña escenarios de prueba extremos y de casos límite para desafiar la robustez del flujo."},
+                    {"key": "output_evaluator", "used_at": "Run Results Tab", "text": OUTPUT_EVALUATOR_SYSTEM, "explanation": "Califica la calidad final de los resultados producidos contrastándolos con criterios de éxito."},
+                ],
+            },
+            {
+                "step": 9,
+                "id": "engine",
+                "name": "Motor Autónomo — Core",
+                "page": "/engine",
+                "what": "Orquestación interna, gestión de memoria, seguridad y arbitraje de conflictos en tiempo de ejecución.",
+                "prompts": [
+                    {"key": "security_guardrail", "used_at": "Motor de Orquestación Interna", "text": SECURITY_GUARDRAIL_SYSTEM, "explanation": "Última línea de defensa, bloquea ejecución de código o herramientas peligrosas."},
+                    {"key": "hitl_manager", "used_at": "Motor de Orquestación Interna", "text": HITL_MANAGER_SYSTEM, "explanation": "Negociador de escalamiento que pausa el estado para solicitar instrucciones humanas."},
+                    {"key": "context_memory_strategist", "used_at": "Motor de Orquestación Interna", "text": CONTEXT_MEMORY_STRATEGIST_SYSTEM, "explanation": "Orquesta gestión de memoria a corto y largo plazo para evitar degradación de contexto."},
+                    {"key": "debate_moderator", "used_at": "Motor de Orquestación Interna", "text": DEBATE_MODERATOR_SYSTEM, "explanation": "Arbitra el proceso de consenso cuando múltiples sub-agentes proponen soluciones divergentes."},
+                    {"key": "meta_prompt_optimizer", "used_at": "Motor de Orquestación Interna", "text": META_PROMPT_OPTIMIZER_SYSTEM, "explanation": "Reescribe y optimiza prompts dinámicamente según rendimiento empírico."},
+                ],
             }
         ],
         "apps": [
@@ -407,6 +457,76 @@ def get_architecture():
                                 # Podriamos agregar field custom
         except Exception as e:
             print(f"Error loading consolidated overrides: {e}")
+
+    arch["flow"].extend([
+        {
+            "step": 3,
+            "id": "flowarchitect",
+            "name": "Flow Architect - Fase de Diseño y Viabilidad",
+            "page": "/builder",
+            "what": "Chat interactivo de descubrimiento y generación de Blueprints con filtros de seguridad estrictos.",
+            "prompts": [
+                {"key": "requirements_gatekeeper", "used_at": "Flow Architect Tab", "text": REQUIREMENTS_GATEKEEPER_SYSTEM, "explanation": "Filtro estricto que no deja avanzar si tu idea es ambigua."},
+                {"key": "architecture_alternatives", "used_at": "Flow Architect Tab", "text": ARCHITECTURE_ALTERNATIVES_SYSTEM, "explanation": "Te propone 3 caminos (Rápido, Preciso, Local) antes de generar."},
+                {"key": "feasibility_cost_analyzer", "used_at": "Flow Architect Tab", "text": FEASIBILITY_COST_ANALYZER_SYSTEM, "explanation": "Audita si tu computadora o presupuesto aguantan el diseño."},
+                {"key": "state_schema_designer", "used_at": "Flow Architect Tab", "text": STATE_SCHEMA_DESIGNER_SYSTEM, "explanation": "Diseña el JSON/Base de datos temporal que usarán los agentes."}
+            ]
+        },
+        {
+            "step": 4,
+            "id": "flowboard_advanced",
+            "name": "FlowBoard - Orquestación Avanzada",
+            "page": "/builder",
+            "what": "Validadores, enrutadores lógicos y contratos de datos para un lienzo a prueba de errores.",
+            "prompts": [
+                {"key": "canvas_validator", "used_at": "FlowBoard Canvas", "text": CANVAS_VALIDATOR_SYSTEM, "explanation": "Audita todo el mapa y te advierte de bucles o errores lógicos."},
+                {"key": "edge_contract_generator", "used_at": "FlowBoard Canvas", "text": EDGE_CONTRACT_GENERATOR_SYSTEM, "explanation": "Asegura que el Agente A le pase datos legibles al Agente B."},
+                {"key": "dynamic_router", "used_at": "FlowBoard Canvas", "text": DYNAMIC_ROUTER_SYSTEM, "explanation": "Permite crear condicionales y caminos no lineales."},
+                {"key": "tool_discovery", "used_at": "FlowBoard Canvas", "text": TOOL_DISCOVERY_SYSTEM, "explanation": "Asigna herramientas automáticamente al agente."},
+                {"key": "skill_synthesizer", "used_at": "FlowBoard Canvas", "text": SKILL_SYNTHESIZER_SYSTEM, "explanation": "Comprime un flujo entero en una Herramienta reutilizable."},
+                {"key": "cost_token_optimizer", "used_at": "FlowBoard Canvas", "text": COST_TOKEN_OPTIMIZER_SYSTEM, "explanation": "Sugiere usar modelos más baratos en tareas fáciles."}
+            ]
+        },
+        {
+            "step": 5,
+            "id": "runinspector",
+            "name": "Run Inspector - Suite Forense",
+            "page": "/builder",
+            "what": "Herramientas de depuración post-ejecución para leer logs sin esfuerzo.",
+            "prompts": [
+                {"key": "root_cause_analyzer", "used_at": "Run Inspector Tab", "text": ROOT_CAUSE_ANALYZER_SYSTEM, "explanation": "Explica en lenguaje humano por qué falló un nodo y cómo arreglarlo."},
+                {"key": "auto_patcher", "used_at": "Run Inspector Tab", "text": AUTO_PATCHER_SYSTEM, "explanation": "Reescribe el Master Prompt defectuoso y te ofrece un parche rápido."},
+                {"key": "hallucination_detector", "used_at": "Run Inspector Tab", "text": HALLUCINATION_DETECTOR_SYSTEM, "explanation": "Subraya en rojo datos inventados por el modelo."},
+                {"key": "cognitive_profiler", "used_at": "Run Inspector Tab", "text": COGNITIVE_PROFILER_SYSTEM, "explanation": "Audita la cadena de pensamiento interno del agente."},
+                {"key": "data_leak_scanner", "used_at": "Run Inspector Tab", "text": DATA_LEAK_SCANNER_SYSTEM, "explanation": "Revisa que el agente no haya expuesto API Keys o datos privados."}
+            ]
+        },
+        {
+            "step": 6,
+            "id": "runresults",
+            "name": "Run Results - Pruebas y Calidad",
+            "page": "/builder",
+            "what": "Evaluación del output final y simulación de estrés.",
+            "prompts": [
+                {"key": "test_scenario_generator", "used_at": "Run Results Tab", "text": TEST_SCENARIO_GENERATOR_SYSTEM, "explanation": "Inyecta datos falsos extremos para ver si tu enjambre se rompe bajo presión."},
+                {"key": "output_evaluator", "used_at": "Run Results Tab", "text": OUTPUT_EVALUATOR_SYSTEM, "explanation": "Compara lo que pediste con lo que los agentes entregaron."}
+            ]
+        },
+        {
+            "step": 7,
+            "id": "engine_autonomy",
+            "name": "Motor Autónomo - Nivel AGI",
+            "page": "Backend Core",
+            "what": "El alma del sistema: seguridad, autonomía, moderación y evolución darwiniana.",
+            "prompts": [
+                {"key": "security_guardrail", "used_at": "Motor Central", "text": SECURITY_GUARDRAIL_SYSTEM, "explanation": "Escudo que censura datos sensibles y bloquea inyecciones de código."},
+                {"key": "hitl_manager", "used_at": "Motor Central", "text": HITL_MANAGER_SYSTEM, "explanation": "Pausa el sistema y pide permiso humano antes de acciones irreversibles."},
+                {"key": "context_memory_strategist", "used_at": "Motor Central", "text": CONTEXT_MEMORY_STRATEGIST_SYSTEM, "explanation": "Monitorea si el contexto se llena y ordena resumir memoria."},
+                {"key": "debate_moderator", "used_at": "Motor Central", "text": DEBATE_MODERATOR_SYSTEM, "explanation": "Obliga a debatir agentes clónicos hasta llegar a un consenso matemático."},
+                {"key": "meta_prompt_optimizer", "used_at": "Motor Central", "text": META_PROMPT_OPTIMIZER_SYSTEM, "explanation": "Hace competir a tus agentes y reescribe su código para que sean mejores."}
+            ]
+        }
+    ])
 
     return arch
 
