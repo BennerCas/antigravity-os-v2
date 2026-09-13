@@ -196,6 +196,7 @@ export const FlowArchitect: React.FC = () => {
         target: e.to_node || e.to,
         sourceHandle: 'sb', // Source Bottom
         targetHandle: 'tt', // Target Top
+        type: 'straight',
         animated: true,
         label: e.label || undefined,
         style: { stroke: '#3b82f6', strokeWidth: 2 }
