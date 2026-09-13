@@ -1,6 +1,5 @@
 import { NavLink } from 'react-router-dom';
 import { Compass, Robot, Hammer, LockKey, Code, Network, TreeStructure, SpeakerHigh, PlayCircle, PauseCircle, StopCircle, FastForward, Rewind, GraduationCap } from '@phosphor-icons/react';
-import { EngineIndicator } from './EngineIndicator';
 import { useTTSStore } from '../lib/ttsStore';
 import { useEffect } from 'react';
 
@@ -134,22 +133,9 @@ export function Sidebar() {
         className="p-5"
         style={{ borderTop: '1px solid #2A2A2A' }}
       >
-        <div className="flex items-center gap-3">
-          <div
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              border: '1px solid #2A2A2A',
-              backgroundColor: '#151515',
-              flexShrink: 0,
-            }}
-          />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#FFFFFF' }}>Agent 1</p>
-            <p style={{ margin: 0, fontSize: '11px', color: '#8A8A8A' }}>UI Architect</p>
-          </div>
-          <EngineIndicator />
+        <div className="flex flex-col justify-center w-full">
+          <p style={{ margin: 0, fontSize: '13px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.05em', textAlign: 'center' }}>HUMAN AI SYNERGY</p>
+          <p style={{ margin: 0, fontSize: '11px', color: '#8A8A8A', letterSpacing: '0.05em', marginTop: '4px', textAlign: 'center' }}>BY BENNER CASTILLO</p>
         </div>
       </div>
     </aside>

@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTTSStore } from '../../lib/ttsStore';
+import { Robot, SpeakerHigh, StopCircle, X, PaperPlaneRight } from '@phosphor-icons/react';
 
 type Message = {
   id: string;
@@ -11,7 +13,32 @@ export const FlowBoardCopilot: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  const [position, setPosition] = useState({ x: window.innerWidth - 100, y: window.innerHeight - 100 });
+  const [isDragging, setIsDragging] = useState(false);
+  
+  const dragState = useRef({
+    isDragging: false,
+    startX: 0,
+    startY: 0,
+    initialX: 0,
+    initialY: 0,
+    hasMoved: false
+  });
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { play, stop, isActive, currentSection } = useTTSStore();
+
+  useEffect(() => {
+    const handleResize = () => {
+      setPosition(prev => ({
+        x: Math.min(prev.x, window.innerWidth - 80),
+        y: Math.min(prev.y, window.innerHeight - 80)
+      }));
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -19,7 +46,78 @@ export const FlowBoardCopilot: React.FC = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isLoading]);
+  }, [messages, isLoading, isOpen]);
+
+  // Manejo Global de Drag
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragState.current.isDragging) return;
+      
+      const dx = e.clientX - dragState.current.startX;
+      const dy = e.clientY - dragState.current.startY;
+      
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        dragState.current.hasMoved = true;
+      }
+      
+      setPosition({
+        x: dragState.current.initialX + dx,
+        y: dragState.current.initialY + dy
+      });
+    };
+
+    const handleMouseUp = () => {
+      if (dragState.current.isDragging) {
+        dragState.current.isDragging = false;
+        setIsDragging(false);
+      }
+    };
+
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('button, input') && !(e.target as HTMLElement).closest('.close-btn')) {
+      return;
+    }
+    
+    e.preventDefault(); // Evita selección de texto
+    dragState.current = {
+      isDragging: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      initialX: position.x,
+      initialY: position.y,
+      hasMoved: false
+    };
+    setIsDragging(true);
+  };
+
+  const toggleOpen = () => {
+    setIsOpen(!isOpen);
+    if (!isOpen) {
+      setPosition(prev => ({
+        x: Math.min(prev.x, window.innerWidth - 340),
+        y: Math.min(prev.y, window.innerHeight - 420)
+      }));
+    } else {
+      stop();
+    }
+  };
+
+  const handleClick = () => {
+    if (!dragState.current.hasMoved) {
+      toggleOpen();
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -32,130 +130,125 @@ export const FlowBoardCopilot: React.FC = () => {
     try {
       const response = await fetch('http://localhost:8000/api/v1/builder/flowboard/copilot', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMsg.content }),
       });
 
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
+      if (!response.ok) throw new Error('Error en la red');
 
       const data = await response.json();
+      const aiContent = data.reply || data.response || data.message || 'Listo.';
+      const msgId = (Date.now() + 1).toString();
       
-      const assistantMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.reply || data.response || data.message || 'Done.',
-      };
-      
-      setMessages(prev => [...prev, assistantMsg]);
+      setMessages(prev => [...prev, { id: msgId, role: 'assistant', content: aiContent }]);
+      play(aiContent, msgId);
     } catch (error) {
-      const errorMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: 'Error: Could not reach the copilot service.',
-      };
-      setMessages(prev => [...prev, errorMsg]);
+      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: 'Error de conexión.' }]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSend();
-    }
-  };
-
-  if (!isOpen) {
-    return (
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-cyan-900 text-cyan-400 border border-cyan-800 shadow-lg hover:bg-cyan-800 transition-colors"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-        </svg>
-      </button>
-    );
-  }
-
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col w-80 h-96 bg-gray-900 border border-cyan-800 rounded-lg shadow-xl overflow-hidden text-gray-300">
-      {/* Header */}
-      <div className="flex items-center justify-between p-3 bg-gray-800 border-b border-cyan-800 text-cyan-400 font-semibold">
-        <span className="flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="4 7 4 4 20 4 20 7"></polyline>
-            <line x1="9" y1="20" x2="15" y2="20"></line>
-            <line x1="12" y1="4" x2="12" y2="20"></line>
-          </svg>
-          FlowBoard Copilot
-        </span>
-        <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
-        {messages.length === 0 && (
-          <div className="text-center text-gray-500 text-sm mt-10">
-            How can I help you build today?
-          </div>
-        )}
-        {messages.map(msg => (
-          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div
-              className={`max-w-[80%] rounded-lg p-2 text-sm ${
-                msg.role === 'user'
-                  ? 'bg-cyan-900 text-cyan-100 rounded-br-none'
-                  : 'bg-gray-800 border border-gray-700 text-gray-200 rounded-bl-none'
-              }`}
-            >
-              {msg.content}
-            </div>
-          </div>
-        ))}
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="max-w-[80%] rounded-lg p-2 text-sm bg-gray-800 border border-gray-700 text-gray-400 rounded-bl-none flex items-center gap-1">
-              <span className="animate-bounce">.</span>
-              <span className="animate-bounce delay-100">.</span>
-              <span className="animate-bounce delay-200">.</span>
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input */}
-      <div className="p-3 bg-gray-800 border-t border-cyan-800 flex items-center gap-2">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Ask copilot..."
-          className="flex-1 bg-gray-900 border border-gray-700 rounded p-2 text-sm text-gray-200 focus:outline-none focus:border-cyan-500 transition-colors"
-          disabled={isLoading}
-        />
-        <button
-          onClick={handleSend}
-          disabled={!input.trim() || isLoading}
-          className="p-2 bg-cyan-900 text-cyan-400 rounded hover:bg-cyan-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+    <div 
+      style={{ left: position.x, top: position.y }}
+      className="fixed z-[100] flex flex-col shadow-2xl transition-shadow"
+    >
+      {!isOpen ? (
+        <div
+          onMouseDown={handleMouseDown}
+          onClick={handleClick}
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-[#001c24] text-cyan-400 border border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:bg-[#002a3a] hover:shadow-[0_0_25px_rgba(6,182,212,0.7)] transition-all duration-300 cursor-pointer active:cursor-grabbing"
+          title="FlowBoard Copilot (Clic para abrir)"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13"></line>
-            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-          </svg>
-        </button>
-      </div>
+          <Robot size={30} weight="fill" />
+        </div>
+      ) : (
+        <div className="flex flex-col w-[320px] h-[400px] bg-[#000c14] border border-cyan-800 rounded-lg overflow-hidden text-gray-300 shadow-[0_0_30px_rgba(6,182,212,0.15)]">
+          <div 
+            onMouseDown={handleMouseDown}
+            className="flex items-center justify-between p-3 bg-[#001724] border-b border-cyan-800 text-cyan-400 font-bold cursor-grab active:cursor-grabbing"
+          >
+            <span className="flex items-center gap-2 pointer-events-none drop-shadow-[0_0_5px_rgba(6,182,212,0.8)]">
+              <Robot size={20} weight="fill" />
+              FlowBoard AI
+            </span>
+            <button 
+              onClick={handleClick} 
+              className="close-btn text-cyan-700 hover:text-cyan-400 transition-colors z-10" 
+              title="Minimizar"
+            >
+              <X size={20} weight="bold" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#00080a] custom-scrollbar">
+            {messages.length === 0 && (
+              <div className="text-center text-cyan-800 text-sm mt-10">
+                <Robot size={40} className="mx-auto mb-2 opacity-50" />
+                ¿Cómo te ayudo a construir hoy?
+              </div>
+            )}
+            {messages.map(msg => (
+              <div key={msg.id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                <div
+                  className={`max-w-[85%] rounded-lg p-3 text-sm leading-relaxed whitespace-pre-wrap ${
+                    msg.role === 'user'
+                      ? 'bg-cyan-900/30 text-cyan-50 rounded-tr-sm border border-cyan-800'
+                      : 'bg-[#00121a] border border-cyan-900/50 text-gray-200 rounded-tl-sm'
+                  }`}
+                >
+                  {msg.content}
+                </div>
+                {msg.role === 'assistant' && (
+                  <div className="mt-1 flex items-center">
+                    <button
+                      onClick={() => isActive && currentSection === msg.id ? stop() : play(msg.content, msg.id)}
+                      className={`text-xs p-1 rounded transition-colors ${
+                        isActive && currentSection === msg.id 
+                          ? 'text-red-400 hover:bg-red-900/30' 
+                          : 'text-gray-500 hover:bg-gray-800 hover:text-cyan-400'
+                      }`}
+                    >
+                      {isActive && currentSection === msg.id ? <StopCircle size={16} weight="fill" /> : <SpeakerHigh size={16} weight="bold" />}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="max-w-[80%] rounded-lg p-3 text-sm bg-[#00121a] border border-cyan-900/50 text-cyan-500 rounded-tl-sm flex items-center gap-1">
+                  <Robot size={16} weight="fill" className="animate-pulse" />
+                  <span className="animate-bounce">.</span>
+                  <span className="animate-bounce delay-100">.</span>
+                  <span className="animate-bounce delay-200">.</span>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          <div className="p-3 bg-[#00111a] border-t border-cyan-900/50 flex items-center gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}
+              placeholder="Pregúntale al modelo..."
+              className="flex-1 bg-[#000a14] border border-cyan-900/60 rounded-md py-2 px-3 text-sm text-gray-200 focus:outline-none focus:border-cyan-600 transition-all"
+              disabled={isLoading}
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || isLoading}
+              className="p-2 bg-cyan-700 text-white rounded-md hover:bg-cyan-600 disabled:opacity-50 transition-colors"
+            >
+              <PaperPlaneRight size={18} weight="fill" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

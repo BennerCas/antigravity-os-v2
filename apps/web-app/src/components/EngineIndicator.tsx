@@ -39,7 +39,7 @@ export function EngineIndicator() {
   }
 
   const isCloud = status.active === 'cloud';
-  const label = isCloud ? 'GPT-4o' : status.active === 'local' ? 'Hermes3' : 'sin motor';
+  const label = isCloud ? status.cloud.model.split('/').pop() : status.active === 'local' ? status.local.model : 'sin motor';
   const detail = isCloud
     ? `Nube: ${status.cloud.model}`
     : status.active === 'local'

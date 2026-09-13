@@ -25,7 +25,7 @@ interface FlowStep {
 
 interface ArchitectureData {
   app: string;
-  engine: { name: string; cloud: string; local: string; rule: string };
+  engine: { name: string; cloud: string; local: string; rule: string; hybrid_enabled: boolean; cloud_options: string[]; local_options: string[] };
   flow: FlowStep[];
   apps: FlowStep[];
 }
@@ -449,17 +449,58 @@ export default function Architecture() {
           </div>
 
           {/* Motor Híbrido Compacto */}
-          <div className="flex gap-4 items-center bg-[#000000] border border-[#2A2A2A] rounded-xl px-4 py-3 text-xs">
-            <div className="flex items-center gap-1 font-bold text-white">
-              <Cpu size={16} className="text-[#7B9C7F]" /> {data.engine.name}
-            </div>
+          <div className={`flex gap-4 items-center bg-[#000000] border ${data.engine.hybrid_enabled ? 'border-[#7B9C7F]' : 'border-[#2A2A2A]'} rounded-xl px-4 py-3 text-xs`}>
+            <button 
+              onClick={async () => {
+                const res = await fetch(`${API_URL}/engine/config`, {
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({hybrid_enabled: !data.engine.hybrid_enabled})
+                });
+                if (res.ok) window.location.reload();
+              }}
+              className="flex items-center gap-1 font-bold text-white hover:opacity-80 transition-opacity outline-none"
+              title={data.engine.hybrid_enabled ? "Desactivar Motor Híbrido" : "Activar Motor Híbrido"}
+            >
+              <Cpu size={16} className={data.engine.hybrid_enabled ? 'text-[#7B9C7F]' : 'text-gray-500'} /> 
+              {data.engine.name} {data.engine.hybrid_enabled ? 'ON' : 'OFF'}
+            </button>
+            
             <div className="border-l border-[#2A2A2A] pl-4">
-              <span className="text-[#7B9C7F] font-bold uppercase tracking-wide text-[9px] block">Nube</span>
-              <code className="text-[#FFFFFF]">{data.engine.cloud}</code>
+              <span className={`font-bold uppercase tracking-wide text-[9px] block ${data.engine.hybrid_enabled ? 'text-[#7B9C7F]' : 'text-gray-600'}`}>Nube</span>
+              <select 
+                value={data.engine.cloud}
+                onChange={async (e) => {
+                  const res = await fetch(`${API_URL}/engine/config`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({cloud_model: e.target.value})
+                  });
+                  if (res.ok) window.location.reload();
+                }}
+                disabled={!data.engine.hybrid_enabled}
+                className="bg-transparent text-[#FFFFFF] font-mono outline-none cursor-pointer appearance-none disabled:opacity-50"
+              >
+                {data.engine.cloud_options.map(opt => <option key={opt} value={opt} className="bg-black text-white">{opt}</option>)}
+              </select>
             </div>
+            
             <div className="border-l border-[#2A2A2A] pl-4">
               <span className="text-[#8A8A8A] font-bold uppercase tracking-wide text-[9px] block">Local</span>
-              <code className="text-[#FFFFFF]">{data.engine.local}</code>
+              <select 
+                value={data.engine.local}
+                onChange={async (e) => {
+                  const res = await fetch(`${API_URL}/engine/config`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({local_model: e.target.value})
+                  });
+                  if (res.ok) window.location.reload();
+                }}
+                className="bg-transparent text-[#FFFFFF] font-mono outline-none cursor-pointer appearance-none"
+              >
+                {data.engine.local_options.map(opt => <option key={opt} value={opt} className="bg-black text-white">{opt}</option>)}
+              </select>
             </div>
           </div>
         </div>

@@ -10,7 +10,8 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from routers.builder_actions import MASTER_PROMPTS, call_ai, FREE_AI_KEY, OLLAMA_BASE
+from routers.builder_actions import MASTER_PROMPTS, call_ai, FREE_AI_MODELS_CASCADE, OLLAMA_BASE
+from routers.engine import get_config
 from routers.execute import COHESION_PROMPT_DOC, ORCHESTRATOR_PROMPT_DOC
 from services.healer import HEALER_SYSTEM, HEALER_PROMPT
 from routers.search import (
@@ -134,13 +135,17 @@ def get_architecture():
     """Mapa completo del flujo de Antigravity_OS + master prompt exacto en cada punto."""
     
     # 1. Base architecture definition
+    cfg = get_config()
     arch = {
         "app": "Antigravity_OS v2",
         "engine": {
             "name": "Motor Híbrido",
-            "cloud": "openai/gpt-4o (vía Free.AI API)",
-            "local": "hermes3:8b (vía Ollama, 127.0.0.1:11434)",
-            "rule": "Nube primero si hay FREE_AI_API_KEY y conexión; fallback automático a local.",
+            "cloud": cfg["cloud_model"],
+            "local": cfg["local_model"],
+            "hybrid_enabled": cfg["hybrid_enabled"],
+            "cloud_options": cfg["cloud_options"],
+            "local_options": cfg["local_options"],
+            "rule": "Nube primero si está encendido; fallback automático a local.",
         },
         "flow": [
             {
