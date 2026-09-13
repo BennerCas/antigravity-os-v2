@@ -182,23 +182,7 @@ export default function Architecture() {
     if (!selectedPrompt || isOptimizing) return;
     setIsOptimizing(true);
     setOptProgress(0);
-    setOptTimeLeft('12s restantes...');
-    
-    // Simular progreso para UX usando Date.now() para evitar problemas de throttling o closure
-    const totalMs = 12000;
-    const startTime = Date.now();
-    const progressTimer = window.setInterval(() => {
-      const currentElapsed = Date.now() - startTime;
-      const pct = Math.min(99, Math.round((currentElapsed / totalMs) * 100));
-      
-      setOptProgress(prev => {
-        // Asegurar que siempre suba y no se quede pegado
-        return Math.max(prev, pct);
-      });
-      
-      const left = Math.max(0, Math.ceil((totalMs - currentElapsed) / 1000));
-      setOptTimeLeft(`${left}s restantes...`);
-    }, 150);
+    setOptTimeLeft('Conectando al Motor Híbrido...');
 
     // Buscar si es agent o prompt
     let category = 'prompt';
@@ -220,7 +204,7 @@ export default function Architecture() {
     try {
       const res = await fetch(`${API_URL}/architecture/evolve-batch`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
         body: JSON.stringify({
           prompts: [{
             key: selectedPrompt.key,
@@ -230,18 +214,44 @@ export default function Architecture() {
             explanation: selectedPrompt.explanation || ''
           }],
           batch_index: 0,
-          total_batches: 1
+          total_batches: 1,
+          stream: true
         })
       });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.results && json.results[0]) {
-           const result = json.results[0];
-           setOptimizedPrompts(prev => ({ ...prev, [selectedPrompt.key]: result.content }));
+
+      if (res.ok && res.body) {
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let finalResult: any = null;
+        
+        while (true) {
+           const { done, value } = await reader.read();
+           if (done) break;
+           const chunk = decoder.decode(value, { stream: true });
+           const lines = chunk.split('\n');
+           for (const line of lines) {
+               if (line.startsWith('data: ')) {
+                   try {
+                       const d = JSON.parse(line.replace('data: ', ''));
+                       if (d.type === 'progress') {
+                           setOptProgress(15);
+                           setOptTimeLeft('Generando...');
+                       } else if (d.type === 'item_completed') {
+                           setOptProgress(100);
+                           setOptTimeLeft('Completado');
+                           finalResult = d.result;
+                       }
+                   } catch(e) {}
+               }
+           }
+        }
+
+        if (finalResult) {
+           setOptimizedPrompts(prev => ({ ...prev, [selectedPrompt.key]: finalResult.evolved_text }));
            // Sync with Evolution tab AND Consolidate permanently
            try {
              const existing = JSON.parse(localStorage.getItem('system_evolution_overrides') || '{}');
-             existing[selectedPrompt.key] = { content: result.content, rationale: result.rationale || 'Optimización singular manual' };
+             existing[selectedPrompt.key] = { content: finalResult.evolved_text, rationale: finalResult.explanation || 'Optimización singular manual' };
              localStorage.setItem('system_evolution_overrides', JSON.stringify(existing));
              
              // Consolidate in backend instantly
@@ -265,7 +275,6 @@ export default function Architecture() {
     } catch (e) {
       alert("Error de conexión al optimizar.");
     } finally {
-      window.clearInterval(progressTimer);
       setOptProgress(100);
       setTimeout(() => {
         setIsOptimizing(false);
@@ -278,13 +287,12 @@ export default function Architecture() {
     setIsBatchOptimizing(true);
     setIsOptimizing(true);
     setOptProgress(0);
-    setOptTimeLeft('Iniciando...');
+    setOptTimeLeft('Iniciando stream...');
     
     const promptsToOptimize: any[] = [];
     const allModules = [...(data?.flow || []), ...(data?.apps || [])];
     for (const mod of allModules) {
        for (const p of mod.prompts) {
-           // Skip if already processed in this batch session to allow resuming
            if (selectedForBatch.includes(p.key) && !batchWip[p.key]) {
                promptsToOptimize.push({
                    key: p.key,
@@ -297,11 +305,9 @@ export default function Architecture() {
        }
     }
     
-    const CHUNK_SIZE = 2;
     const itemsRemaining = promptsToOptimize.length;
     const totalItems = selectedForBatch.length;
     const alreadyProcessed = totalItems - itemsRemaining;
-    const batchesRemaining = Math.ceil(itemsRemaining / CHUNK_SIZE);
     
     if (itemsRemaining === 0 && totalItems > 0) {
       setOptProgress(100);
@@ -313,35 +319,50 @@ export default function Architecture() {
         let currentExisting = JSON.parse(localStorage.getItem('system_evolution_overrides') || '{}');
         let currentBatchWip = { ...batchWip };
 
-        for (let i = 0; i < batchesRemaining; i++) {
-            const chunk = promptsToOptimize.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-            const itemsDone = alreadyProcessed + (i * CHUNK_SIZE);
-            const progressPct = Math.round((itemsDone / totalItems) * 100);
-            setOptProgress(progressPct);
-            setOptTimeLeft(`Procesando lote ${i + 1} de ${batchesRemaining} restantes...`);
-
+        if (itemsRemaining > 0) {
             const res = await fetch(`${API_URL}/architecture/evolve-batch`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
                 body: JSON.stringify({
-                    prompts: chunk,
-                    batch_index: i,
-                    total_batches: batchesRemaining
+                    prompts: promptsToOptimize,
+                    stream: true
                 })
             });
             
-            if (res.ok) {
-                const json = await res.json();
-                if (json.results && json.results.length > 0) {
-                   for (const result of json.results) {
-                       currentOptimized[result.prompt_key] = result.content;
-                       currentExisting[result.prompt_key] = { content: result.content, rationale: result.rationale || 'Optimización por lote' };
-                       currentBatchWip[result.prompt_key] = result.content;
-                   }
-                   setOptimizedPrompts({ ...currentOptimized });
-                   setBatchWip({ ...currentBatchWip });
-                   localStorage.setItem('arch_batch_wip', JSON.stringify(currentBatchWip));
-                   localStorage.setItem('system_evolution_overrides', JSON.stringify(currentExisting));
+            if (res.ok && res.body) {
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n');
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const d = JSON.parse(line.replace('data: ', ''));
+                                if (d.type === 'progress') {
+                                    const itemsDone = alreadyProcessed + d.current;
+                                    const progressPct = Math.round((itemsDone / totalItems) * 100);
+                                    setOptProgress(progressPct);
+                                    setOptTimeLeft(`Procesando ${d.current} de ${itemsRemaining}...`);
+                                } else if (d.type === 'item_completed') {
+                                    const result = d.result;
+                                    const pKey = d.prompt_key;
+                                    currentOptimized[pKey] = result.evolved_text;
+                                    currentExisting[pKey] = { content: result.evolved_text, rationale: result.explanation || 'Optimización por lote' };
+                                    currentBatchWip[pKey] = result.evolved_text;
+                                    
+                                    setOptimizedPrompts({ ...currentOptimized });
+                                    setBatchWip({ ...currentBatchWip });
+                                    localStorage.setItem('arch_batch_wip', JSON.stringify(currentBatchWip));
+                                    localStorage.setItem('system_evolution_overrides', JSON.stringify(currentExisting));
+                                }
+                            } catch(e) {}
+                        }
+                    }
                 }
             }
         }
@@ -367,8 +388,8 @@ export default function Architecture() {
         setIsBatchOptimizing(false);
         setIsOptimizing(false);
         setOptProgress(0);
-        // Clean up session if it successfully finished
-        if (Object.keys(batchWip).length >= totalItems || batchesRemaining === 0) {
+        
+        if (Object.keys(batchWip).length >= totalItems || itemsRemaining === 0) {
            setSelectedForBatch([]);
            setBatchWip({});
            localStorage.removeItem('arch_batch_selected');
