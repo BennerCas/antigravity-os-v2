@@ -56,6 +56,7 @@ from routers.search import (
     COMPLIANCE_REPORTER_SYSTEM, ANOMALY_DETECTOR_SYSTEM, CERTIFICATE_MANAGER_SYSTEM,
     DYNAMIC_SECRETS_ISSUER_SYSTEM, SHAMIR_UNSEALER_SYSTEM, FLOW_GENERATOR_SYSTEM
 )
+from services.architect_engine import FLOW_ARCHITECT_DISCOVERY_SYSTEM, FLOW_ARCHITECT_BLUEPRINT_SYSTEM
 
 ATLAS_UPGRADE_SYSTEM = """Eres un Ingeniero de Prompts de Élite (Staff Prompt Architect). Tu misión es transformar el prompt provisto en una directiva de grado industrial, maximizando la precisión, coherencia, delimitación contextual y control de fallas en modelos LLM modernos.
 
@@ -199,6 +200,8 @@ def get_architecture():
                     {"key": "game_developer", "used_at": "Plantilla Builder", "text": GAME_DEVELOPER_SYSTEM, "explanation": "Especialista en desarrollo de videojuegos, Game Loops, físicas y Entity-Component-System (ECS)."},
                     {"key": "fusionar", "used_at": "POST /api/v1/builder/action (fusionar)", "text": FUSIONAR_SYSTEM, "explanation": "Optimizador de grafos. Comprime dos o más nodos pequeños en un solo agente altamente eficiente."},
                     {"key": "auditor_contexto", "used_at": "POST /api/v1/builder/action (auditor)", "text": AUDITOR_CONTEXTO_SYSTEM, "explanation": "Linker. Escanea el nodo y alerta si faltan variables o datos requeridos en el contexto o del nodo anterior."},
+                    {"key": "flow_architect_discovery", "used_at": "Builder (Flow Architect Tab - Discovery)", "text": FLOW_ARCHITECT_DISCOVERY_SYSTEM, "explanation": "Estructura interactiva conversacional para recopilar ideas y clarificar intenciones del usuario antes de diseñar el blueprint."},
+                    {"key": "flow_architect_blueprint", "used_at": "Builder (Flow Architect Tab - Blueprint)", "text": FLOW_ARCHITECT_BLUEPRINT_SYSTEM, "explanation": "Toma los requerimientos y la intención definidos en discovery y genera un ArchitectureSpec con nodos y transiciones listas para inyectarse al Builder."},
                 ],
             },
             {

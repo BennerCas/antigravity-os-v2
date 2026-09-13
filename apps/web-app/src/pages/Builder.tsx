@@ -1488,10 +1488,10 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
         {(
           [
             { id: 'flowarchitect', label: '🏗️ Flow Architect' },
-            { id: 'runinspector',  label: '🔍 Run Inspector'  },
             { id: 'flowboard',     label: '⚡ FlowBoard'       },
+            { id: 'runinspector',  label: '🔍 Run Inspector'  },
             { id: 'runresults',    label: '📊 Run Results'     },
-          ] as { id: 'flowarchitect' | 'runinspector' | 'flowboard' | 'runresults'; label: string }[]
+          ] as { id: 'flowarchitect' | 'flowboard' | 'runinspector' | 'runresults'; label: string }[]
         ).map((tab, idx) => {
           const active = builderTab === tab.id;
           
@@ -1524,12 +1524,6 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
 
       <div className="flex-1 overflow-hidden relative" style={{ display: builderTab === 'flowarchitect' ? 'flex' : 'none' }}>
         <FlowArchitect />
-      </div>
-      <div className="flex-1 overflow-hidden relative" style={{ display: builderTab === 'runinspector' ? 'flex' : 'none' }}>
-        <RunInspector runId={(() => { try { const r = JSON.parse(localStorage.getItem('builder_run_results') || '[]'); return r[0]?.run_id || 'no-run'; } catch { return 'no-run'; } })()} />
-      </div>
-      <div className="flex-1 overflow-hidden relative" style={{ display: builderTab === 'runresults' ? 'flex' : 'none' }}>
-        <RunResults key={runResultsKey} />
       </div>
       
       {builderTab === 'flowboard' && (
@@ -2197,6 +2191,14 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
       </div>
       </>
       )}
+
+      <div className="flex-1 overflow-hidden relative" style={{ display: builderTab === 'runinspector' ? 'flex' : 'none' }}>
+        <RunInspector runId={(() => { try { const r = JSON.parse(localStorage.getItem('builder_run_results') || '[]'); return r[0]?.run_id || 'no-run'; } catch { return 'no-run'; } })()} />
+      </div>
+      <div className="flex-1 overflow-hidden relative" style={{ display: builderTab === 'runresults' ? 'flex' : 'none' }}>
+        <RunResults key={runResultsKey} />
+      </div>
+
     </div>
   );
 }

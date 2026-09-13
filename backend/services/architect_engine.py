@@ -4,6 +4,29 @@ from typing import Dict, Any, List
 from backend.schemas.architecture import ArchitectureSpec, Intent, Requirements, ArchitectureStateContract
 from backend.routers.builder_actions import call_ai
 
+FLOW_ARCHITECT_DISCOVERY_SYSTEM = (
+    "Eres el FlowArchitect, un experto arquitecto de sistemas de IA y asistente técnico proactivo. "
+    "Tu objetivo es interactuar con el usuario para ayudarle a diseñar, pensar y estructurar la aplicación o flujo que desea crear. "
+    "Da ideas, sugiere mejoras, haz preguntas clave y asiste activamente en la definición del requerimiento.\n\n"
+    "DEBES devolver UNICAMENTE un JSON valido (sin bloques ```json de markdown) con esta estructura exacta:\n"
+    "{\n"
+    '  "reply": "Tu respuesta conversacional, amigable, experta y en formato Markdown para el usuario",\n'
+    '  "intent": {"goal": "...", "success_criteria": ["..."]}, \n'
+    '  "requirements": {"trigger": "...", "assumptions": [{"name": "...", "value": true}], "constraints": [{"name": "...", "value": "..."}]}\n'
+    "}\n\n"
+    "REGLAS OBLIGATORIAS:\n"
+    "- 'reply' debe contener TODA la respuesta de texto visible para el usuario.\n"
+    "- NUNCA salgas del formato JSON. Si no puedes extraer un intent claro aún, pon valores genéricos u omítelos, pero asegúrate de devolver JSON válido."
+)
+
+FLOW_ARCHITECT_BLUEPRINT_SYSTEM = (
+    "Eres el FlowArchitect. Genera un Blueprint de arquitectura (ArchitectureSpec) basado en la intencion y requerimientos.\n"
+    "DEBES devolver UNICAMENTE un JSON valido con las llaves: 'state_contract', 'steps' y 'transitions'.\n"
+    "- state_contract: {\"input\": {}, \"shared\": {}, \"output\": {}}\n"
+    "- steps: lista de nodos. Cada uno con id, kind (start, agent, decision, transform, human_gate, end), name, configuration.\n"
+    "- transitions: lista de aristas. Cada una con id, from, to, kind ('route'), y label (opcional).\n"
+)
+
 class ArchitectEngine:
     """
     Uses the AI Engine to generate an ArchitectureSpec v1 from conversational discovery.
@@ -14,20 +37,7 @@ class ArchitectEngine:
         """
         Analyzes the chat with the user, provides an expert conversational reply, and extracts structured Intents/Requirements.
         """
-        system_prompt = (
-            "Eres el FlowArchitect, un experto arquitecto de sistemas de IA y asistente técnico proactivo. "
-            "Tu objetivo es interactuar con el usuario para ayudarle a diseñar, pensar y estructurar la aplicación o flujo que desea crear. "
-            "Da ideas, sugiere mejoras, haz preguntas clave y asiste activamente en la definición del requerimiento.\n\n"
-            "DEBES devolver UNICAMENTE un JSON valido (sin bloques ```json de markdown) con esta estructura exacta:\n"
-            "{\n"
-            '  "reply": "Tu respuesta conversacional, amigable, experta y en formato Markdown para el usuario",\n'
-            '  "intent": {"goal": "...", "success_criteria": ["..."]}, \n'
-            '  "requirements": {"trigger": "...", "assumptions": [{"name": "...", "value": true}], "constraints": [{"name": "...", "value": "..."}]}\n'
-            "}\n\n"
-            "REGLAS OBLIGATORIAS:\n"
-            "- 'reply' debe contener TODA la respuesta de texto visible para el usuario.\n"
-            "- NUNCA salgas del formato JSON. Si no puedes extraer un intent claro aún, pon valores genéricos u omítelos, pero asegúrate de devolver JSON válido."
-        )
+        system_prompt = FLOW_ARCHITECT_DISCOVERY_SYSTEM
         
         user_prompt = "Historial de conversacion:\n"
         for msg in conversation_history[-8:]: # ultimos 8 mensajes para contexto
@@ -53,13 +63,7 @@ class ArchitectEngine:
         """
         Takes Intents and Requirements and generates a draft ArchitectureSpec v1 using the AI Engine.
         """
-        system_prompt = (
-            "Eres el FlowArchitect. Genera un Blueprint de arquitectura (ArchitectureSpec) basado en la intencion y requerimientos.\n"
-            "DEBES devolver UNICAMENTE un JSON valido con las llaves: 'state_contract', 'steps' y 'transitions'.\n"
-            "- state_contract: {\"input\": {}, \"shared\": {}, \"output\": {}}\n"
-            "- steps: lista de nodos. Cada uno con id, kind (start, agent, decision, transform, human_gate, end), name, configuration.\n"
-            "- transitions: lista de aristas. Cada una con id, from, to, kind ('route'), y label (opcional).\n"
-        )
+        system_prompt = FLOW_ARCHITECT_BLUEPRINT_SYSTEM
         
         user_prompt = f"Intent: {json.dumps(intent)}\nRequirements: {json.dumps(requirements)}"
         spec_id = str(uuid.uuid4())

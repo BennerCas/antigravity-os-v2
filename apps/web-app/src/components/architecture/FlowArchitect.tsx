@@ -139,20 +139,40 @@ export const FlowArchitect: React.FC = () => {
       const data = await response.json();
       const builderFlow = data.builder_flow;
 
-      // Convertir el builder_flow del backend al formato ReactFlow para FlowBoard
-      const rfNodes = (builderFlow.nodes || []).map((n: any, idx: number) => ({
-        id: n.id,
-        type: 'mainPrompt',
-        position: n.ui?.position || { x: 150 + idx * 380, y: 250 },
-        data: {
-          title: n.name || n.kind || 'Nodo',
-          content: JSON.stringify(n.config || {}, null, 2),
-          role: n.kind || 'architect',
-          framework: 'auto',
-          llm_model: 'hermes3:8b',
-          temperature: 0.7,
+      const rfNodes = (builderFlow.nodes || []).map((n: any, idx: number) => {
+        // Build readable content from config
+        const cfg = n.config || {};
+        const parts = [];
+        if (cfg.role) parts.push(`🎭 Rol:\n${cfg.role}`);
+        if (cfg.goal) parts.push(`🎯 Meta:\n${cfg.goal}`);
+        if (cfg.instructions) parts.push(`📋 Instrucciones:\n${cfg.instructions}`);
+        if (cfg.prompt) parts.push(`💬 Prompt:\n${cfg.prompt}`);
+        
+        let nodeContent = parts.length > 0 ? parts.join('\n\n') : JSON.stringify(cfg, null, 2);
+        if (!nodeContent || nodeContent === '{}') {
+           nodeContent = `Instrucciones para ${n.name || n.kind}`;
         }
-      }));
+
+        // Distributed Layout: 3 nodes per row
+        const row = Math.floor(idx / 3);
+        const col = idx % 3;
+        const xPos = 150 + (col * 450);
+        const yPos = 250 + (row * 400);
+
+        return {
+          id: n.id,
+          type: 'mainPrompt',
+          position: { x: xPos, y: yPos },
+          data: {
+            title: n.name || n.kind || 'Nodo',
+            content: nodeContent,
+            role: n.kind || 'architect',
+            framework: 'auto',
+            llm_model: 'hermes3:8b',
+            temperature: 0.7,
+          }
+        };
+      });
 
       const rfEdges = (builderFlow.edges || []).map((e: any, idx: number) => ({
         id: e.id || `e-${idx}`,
