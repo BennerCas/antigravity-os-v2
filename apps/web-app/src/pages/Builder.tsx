@@ -31,6 +31,7 @@ import { FlowArchitect } from '../components/architecture/FlowArchitect';
 import { RunInspector } from '../components/architecture/RunInspector';
 import { RunResults } from '../components/architecture/RunResults';
 import { BuilderManual } from '../components/builder/BuilderManual';
+import { FlowBoardCopilot } from '../components/builder/FlowBoardCopilot';
 import { ArrowUUpLeft, ArrowUUpRight, FloppyDisk, DownloadSimple, Trash, X, Play, StopCircle, Translate } from '@phosphor-icons/react';
 import { useTTSStore } from '../lib/ttsStore';
 import { Joyride, STATUS } from 'react-joyride';
@@ -2200,6 +2201,8 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
           }} 
           nodeStyle={nodeStyle}
         />
+        
+        <FlowBoardCopilot />
       </div>
       </>
       )}
