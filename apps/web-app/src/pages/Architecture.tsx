@@ -76,12 +76,30 @@ export default function Architecture() {
   });
 
   const [promptSearchTerm, setPromptSearchTerm] = useState('');
-  const [selectedForBatch, setSelectedForBatch] = useState<string[]>([]);
+  
+  const [selectedForBatch, setSelectedForBatch] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('arch_batch_selected');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+  
+  const [batchWip, setBatchWip] = useState<Record<string, string>>(() => {
+    try {
+      const saved = localStorage.getItem('arch_batch_wip');
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
+  
   const [isBatchOptimizing, setIsBatchOptimizing] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('arch_single_optimized', JSON.stringify(optimizedPrompts));
   }, [optimizedPrompts]);
+
+  useEffect(() => {
+    localStorage.setItem('arch_batch_selected', JSON.stringify(selectedForBatch));
+  }, [selectedForBatch]);
 
   useEffect(() => {
     localStorage.setItem('arch_main_view', mainTab);
@@ -266,7 +284,8 @@ export default function Architecture() {
     const allModules = [...(data?.flow || []), ...(data?.apps || [])];
     for (const mod of allModules) {
        for (const p of mod.prompts) {
-           if (selectedForBatch.includes(p.key)) {
+           // Skip if already processed in this batch session to allow resuming
+           if (selectedForBatch.includes(p.key) && !batchWip[p.key]) {
                promptsToOptimize.push({
                    key: p.key,
                    moduleName: mod.name,
@@ -279,18 +298,27 @@ export default function Architecture() {
     }
     
     const CHUNK_SIZE = 2;
-    const totalItems = promptsToOptimize.length;
-    const totalBatches = Math.ceil(totalItems / CHUNK_SIZE);
+    const itemsRemaining = promptsToOptimize.length;
+    const totalItems = selectedForBatch.length;
+    const alreadyProcessed = totalItems - itemsRemaining;
+    const batchesRemaining = Math.ceil(itemsRemaining / CHUNK_SIZE);
+    
+    if (itemsRemaining === 0 && totalItems > 0) {
+      setOptProgress(100);
+      setOptTimeLeft('Todos los prompts ya estaban procesados. Consolidando...');
+    }
     
     try {
         let currentOptimized = { ...optimizedPrompts };
         let currentExisting = JSON.parse(localStorage.getItem('system_evolution_overrides') || '{}');
+        let currentBatchWip = { ...batchWip };
 
-        for (let i = 0; i < totalBatches; i++) {
+        for (let i = 0; i < batchesRemaining; i++) {
             const chunk = promptsToOptimize.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-            const progressPct = Math.round((i / totalBatches) * 100);
+            const itemsDone = alreadyProcessed + (i * CHUNK_SIZE);
+            const progressPct = Math.round((itemsDone / totalItems) * 100);
             setOptProgress(progressPct);
-            setOptTimeLeft(`Procesando lote ${i + 1} de ${totalBatches}...`);
+            setOptTimeLeft(`Procesando lote ${i + 1} de ${batchesRemaining} restantes...`);
 
             const res = await fetch(`${API_URL}/architecture/evolve-batch`, {
                 method: 'POST',
@@ -298,7 +326,7 @@ export default function Architecture() {
                 body: JSON.stringify({
                     prompts: chunk,
                     batch_index: i,
-                    total_batches: totalBatches
+                    total_batches: batchesRemaining
                 })
             });
             
@@ -308,8 +336,11 @@ export default function Architecture() {
                    for (const result of json.results) {
                        currentOptimized[result.prompt_key] = result.content;
                        currentExisting[result.prompt_key] = { content: result.content, rationale: result.rationale || 'Optimización por lote' };
+                       currentBatchWip[result.prompt_key] = result.content;
                    }
                    setOptimizedPrompts({ ...currentOptimized });
+                   setBatchWip({ ...currentBatchWip });
+                   localStorage.setItem('arch_batch_wip', JSON.stringify(currentBatchWip));
                    localStorage.setItem('system_evolution_overrides', JSON.stringify(currentExisting));
                 }
             }
@@ -336,7 +367,13 @@ export default function Architecture() {
         setIsBatchOptimizing(false);
         setIsOptimizing(false);
         setOptProgress(0);
-        setSelectedForBatch([]);
+        // Clean up session if it successfully finished
+        if (Object.keys(batchWip).length >= totalItems || batchesRemaining === 0) {
+           setSelectedForBatch([]);
+           setBatchWip({});
+           localStorage.removeItem('arch_batch_selected');
+           localStorage.removeItem('arch_batch_wip');
+        }
     }
   };
 
@@ -512,7 +549,12 @@ export default function Architecture() {
                            </div>
                            <div className="flex flex-wrap gap-2">
                              <button
-                               onClick={() => setSelectedForBatch([])}
+                               onClick={() => {
+                                 setSelectedForBatch([]);
+                                 setBatchWip({});
+                                 localStorage.removeItem('arch_batch_selected');
+                                 localStorage.removeItem('arch_batch_wip');
+                               }}
                                className="px-2 py-1 text-xs bg-[#000000] text-gray-300 border border-[#2A2A2A] rounded hover:bg-gray-800"
                              >
                                Limpiar
@@ -522,8 +564,13 @@ export default function Architecture() {
                                disabled={isBatchOptimizing}
                                className="px-2 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-500 font-bold flex items-center gap-1 disabled:opacity-50"
                              >
-                               {isBatchOptimizing ? <Gear className="animate-spin" /> : '✨'}
-                               {isBatchOptimizing ? 'Optimizando...' : 'Optimizar Lote'}
+                               {isBatchOptimizing ? <Gear className="animate-spin" /> : '⚡'}
+                               {isBatchOptimizing 
+                                 ? 'Optimizando...' 
+                                 : Object.keys(batchWip).length > 0 
+                                     ? 'Reanudar Lote' 
+                                     : 'Optimizar Lote'
+                               }
                              </button>
                              <button
                                onClick={() => {
