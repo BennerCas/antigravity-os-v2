@@ -1484,49 +1484,56 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
     <div className={`w-full h-full relative flex flex-col transition-colors duration-300 theme-node-style-${nodeStyle}`} style={{ ...themeStyle, backgroundColor: "var(--theme-bg)", color: "var(--theme-text)" }}>
       {/* Tabs / Header Divider */}
       <div className="flex-shrink-0 flex items-center justify-center bg-[#000000] border-b border-[#2A2A2A] px-4 h-16 gap-2 z-[70] relative w-full shadow-sm">
-        <button
-          onClick={() => setBuilderTab('flowarchitect')}
-          className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold text-sm transition-all duration-300 cursor-pointer border ${
-            builderTab === 'flowarchitect'
-              ? 'bg-blue-900/30 border-blue-500 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.5)]'
-              : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5 hover:border-gray-800'
-          }`}
-        >
-          Flow Architect
-        </button>
-        <div className="w-[1px] h-6 bg-gray-800 mx-1"></div>
-        <button
-          onClick={() => setBuilderTab('runinspector')}
-          className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold text-sm transition-all duration-300 cursor-pointer border ${
-            builderTab === 'runinspector'
-              ? 'bg-blue-900/30 border-blue-500 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.5)]'
-              : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5 hover:border-gray-800'
-          }`}
-        >
-          Run Inspector
-        </button>
-        <div className="w-[1px] h-6 bg-gray-800 mx-1"></div>
-        <button
-          onClick={() => setBuilderTab('flowboard')}
-          className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold text-sm transition-all duration-300 cursor-pointer border ${
-            builderTab === 'flowboard'
-              ? 'bg-blue-900/30 border-blue-500 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.5)]'
-              : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5 hover:border-gray-800'
-          }`}
-        >
-          FlowBoard
-        </button>
-        <div className="w-[1px] h-6 bg-gray-800 mx-1"></div>
-        <button
-          onClick={() => setBuilderTab('runresults')}
-          className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold text-sm transition-all duration-300 cursor-pointer border ${
-            builderTab === 'runresults'
-              ? 'bg-blue-900/30 border-blue-500 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.5)]'
-              : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5 hover:border-gray-800'
-          }`}
-        >
-          Run Results
-        </button>
+      {/* ── Tab buttons ── */}
+      {(() => {
+        const tabBtn = (id: 'flowarchitect' | 'runinspector' | 'flowboard' | 'runresults', label: string) => {
+          const isActive = builderTab === id;
+          return (
+            <button
+              key={id}
+              onClick={() => setBuilderTab(id)}
+              style={isActive ? {
+                background: 'rgba(30, 58, 138, 0.35)',
+                border: '1px solid #3b82f6',
+                color: '#93c5fd',
+                boxShadow: '0 0 18px rgba(59,130,246,0.55)',
+              } : {
+                background: 'transparent',
+                border: '1px solid transparent',
+                color: '#9ca3af',
+              }}
+              onMouseEnter={e => {
+                if (!isActive) {
+                  (e.currentTarget as HTMLElement).style.color = '#ffffff';
+                  (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)';
+                  (e.currentTarget as HTMLElement).style.borderColor = '#374151';
+                }
+              }}
+              onMouseLeave={e => {
+                if (!isActive) {
+                  (e.currentTarget as HTMLElement).style.color = '#9ca3af';
+                  (e.currentTarget as HTMLElement).style.background = 'transparent';
+                  (e.currentTarget as HTMLElement).style.borderColor = 'transparent';
+                }
+              }}
+              className="flex items-center gap-2 px-6 py-2 rounded-lg font-bold text-sm cursor-pointer transition-all duration-200"
+            >
+              {label}
+            </button>
+          );
+        };
+        return (
+          <>
+            {tabBtn('flowarchitect', '🏗️ Flow Architect')}
+            <div className="w-[1px] h-6 bg-gray-800 mx-1" />
+            {tabBtn('runinspector', '🔍 Run Inspector')}
+            <div className="w-[1px] h-6 bg-gray-800 mx-1" />
+            {tabBtn('flowboard', '⚡ FlowBoard')}
+            <div className="w-[1px] h-6 bg-gray-800 mx-1" />
+            {tabBtn('runresults', '📊 Run Results')}
+          </>
+        );
+      })()}
       </div>
 
       {builderTab === 'flowarchitect' && <div className="flex-1 overflow-hidden relative"><FlowArchitect /></div>}
