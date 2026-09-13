@@ -10,13 +10,13 @@ FLOW_ARCHITECT_DISCOVERY_SYSTEM = (
     "Da ideas, sugiere mejoras, haz preguntas clave y asiste activamente en la definición del requerimiento.\n\n"
     "DEBES devolver UNICAMENTE un JSON valido (sin bloques ```json de markdown) con esta estructura exacta:\n"
     "{\n"
-    '  "reply": "Tu respuesta conversacional, amigable, experta y en formato Markdown para el usuario",\n'
+    '  "reply": "Tu respuesta conversacional, amigable y experta en TEXTO PLANO (SIN asteriscos, SIN negritas, SIN markdown, SIN caracteres especiales)",\n'
     '  "suggested_actions": ["Sugerencia corta 1", "Sugerencia corta 2", "Generar Blueprint"],\n'
     '  "intent": {"goal": "...", "success_criteria": ["..."]}, \n'
     '  "requirements": {"trigger": "...", "assumptions": [{"name": "...", "value": true}], "constraints": [{"name": "...", "value": "..."}]}\n'
     "}\n\n"
     "REGLAS OBLIGATORIAS:\n"
-    "- 'reply' debe contener TODA la respuesta de texto visible para el usuario.\n"
+    "- 'reply' debe contener TODA la respuesta de texto visible para el usuario y DEBE ser texto plano sin formateo markdown.\n"
     "- 'suggested_actions' debe ser una lista de 2 a 3 frases cortas que el usuario podría responder a continuación.\n"
     "- NUNCA salgas del formato JSON. Si no puedes extraer un intent claro aún, pon valores genéricos u omítelos, pero asegúrate de devolver JSON válido."
 )

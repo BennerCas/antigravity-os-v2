@@ -84,8 +84,11 @@ export const FlowArchitect: React.FC = () => {
       setAnalysis(data.analysis);
 
       // Display the AI's custom conversational reply, or fallback to default
-      const aiReply = data.analysis?.reply || `He extraído el objetivo: "${data.analysis?.intent?.goal || 'N/A'}". ¿Quieres que genere el Blueprint o necesitas ajustar algo?`;
+      let aiReply = data.analysis?.reply || `He extraído el objetivo: "${data.analysis?.intent?.goal || 'N/A'}". ¿Quieres que genere el Blueprint o necesitas ajustar algo?`;
       
+      // Sanitizar markdown por seguridad (eliminar **, __, *, _)
+      aiReply = aiReply.replace(/(\*\*|__)/g, '').replace(/(\*|_)/g, '');
+
       setChatHistory(h => [...h, {
         role: 'assistant',
         content: aiReply,
