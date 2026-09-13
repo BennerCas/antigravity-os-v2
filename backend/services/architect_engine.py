@@ -11,11 +11,13 @@ FLOW_ARCHITECT_DISCOVERY_SYSTEM = (
     "DEBES devolver UNICAMENTE un JSON valido (sin bloques ```json de markdown) con esta estructura exacta:\n"
     "{\n"
     '  "reply": "Tu respuesta conversacional, amigable, experta y en formato Markdown para el usuario",\n'
+    '  "suggested_actions": ["Sugerencia corta 1", "Sugerencia corta 2", "Generar Blueprint"],\n'
     '  "intent": {"goal": "...", "success_criteria": ["..."]}, \n'
     '  "requirements": {"trigger": "...", "assumptions": [{"name": "...", "value": true}], "constraints": [{"name": "...", "value": "..."}]}\n'
     "}\n\n"
     "REGLAS OBLIGATORIAS:\n"
     "- 'reply' debe contener TODA la respuesta de texto visible para el usuario.\n"
+    "- 'suggested_actions' debe ser una lista de 2 a 3 frases cortas que el usuario podría responder a continuación.\n"
     "- NUNCA salgas del formato JSON. Si no puedes extraer un intent claro aún, pon valores genéricos u omítelos, pero asegúrate de devolver JSON válido."
 )
 

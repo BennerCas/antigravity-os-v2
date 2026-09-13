@@ -5,7 +5,7 @@ import { useTTSStore } from '../../lib/ttsStore';
 
 export const FlowArchitect: React.FC = () => {
   const { play, stop, isActive, currentSection } = useTTSStore();
-  const [chatHistory, setChatHistory] = useState<{role: string, content: string}[]>(() => {
+  const [chatHistory, setChatHistory] = useState<{role: string, content: string, suggestedActions?: string[]}[]>(() => {
     try { return JSON.parse(localStorage.getItem('fa_chat_history') || '[]'); } catch { return []; }
   });
   const [input, setInput] = useState('');
@@ -56,13 +56,16 @@ export const FlowArchitect: React.FC = () => {
     setTimeout(() => setError(null), 5000);
   };
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
-    const newHistory = [...chatHistory, { role: 'user', content: input }];
-    setChatHistory(newHistory);
+  const handleSend = async (overrideInput?: string) => {
+    const txt = overrideInput !== undefined ? overrideInput : input;
+    if (!txt.trim() || isAnalyzing) return;
+    
     setInput('');
     setIsAnalyzing(true);
     setError(null);
+    const newMsg = { role: 'user', content: txt };
+    const newHistory = [...chatHistory, newMsg];
+    setChatHistory(newHistory);
 
     try {
       const response = await fetch(`${API_URL}/architect/discovery/analyze`, {
@@ -85,7 +88,8 @@ export const FlowArchitect: React.FC = () => {
       
       setChatHistory(h => [...h, {
         role: 'assistant',
-        content: aiReply
+        content: aiReply,
+        suggestedActions: data.analysis?.suggested_actions || []
       }]);
     } catch (err: any) {
       console.error('[FlowArchitect] analyze error:', err);
@@ -259,13 +263,10 @@ export const FlowArchitect: React.FC = () => {
                 {msg.role === 'assistant' && (
                   <button 
                     onClick={() => {
-                      // Identificador del mensaje
                       const sectionName = `FlowArchitect - Mensaje ${idx + 1}`;
-                      // Si está reproduciendo ESTE mensaje, detenlo
                       if (isActive && currentSection === sectionName) {
                         stop();
                       } else {
-                        // Reproduce este mensaje
                         play(msg.content, sectionName);
                       }
                     }}
@@ -276,7 +277,27 @@ export const FlowArchitect: React.FC = () => {
                   </button>
                 )}
               </div>
-              <div className="text-sm leading-relaxed">{msg.content}</div>
+              <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</div>
+              
+              {msg.role === 'assistant' && msg.suggestedActions && msg.suggestedActions.length > 0 && idx === chatHistory.length - 1 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {msg.suggestedActions.map((action, actionIdx) => (
+                    <button
+                      key={actionIdx}
+                      onClick={() => {
+                        if (action.toLowerCase().includes('generar blueprint') || action.toLowerCase().includes('generar el blueprint')) {
+                          generateBlueprint();
+                        } else {
+                          handleSend(action);
+                        }
+                      }}
+                      className="text-xs font-medium bg-blue-900/40 hover:bg-blue-600/80 text-blue-200 hover:text-white border border-blue-700/50 rounded-full px-3 py-1.5 transition-colors text-left"
+                    >
+                      {action}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
           {isAnalyzing && (
@@ -297,7 +318,7 @@ export const FlowArchitect: React.FC = () => {
             disabled={isAnalyzing}
           />
           <button
-            onClick={handleSend}
+            onClick={() => handleSend()}
             disabled={isAnalyzing || !input.trim()}
             className="bg-blue-600 px-4 rounded-r font-bold hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
           >
