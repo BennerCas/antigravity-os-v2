@@ -524,8 +524,8 @@ export default function Architecture() {
                        <h2 className={`text-xl font-bold mb-3 text-[#7B9C7F]`}>{activeModule.name}</h2>
                        <p className="text-base text-[#FFFFFF] leading-relaxed">{activeModule.what}</p>
                     </div>
-                    
-                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+
+                    <div className="p-4 border-b border-[#2A2A2A] bg-[#000000] flex-shrink-0">
                        <div className="flex items-center justify-between mb-3 pl-2">
                          <div className="text-xs uppercase tracking-widest text-[#8A8A8A] font-bold">
                            Master Prompts ({activeModule.prompts.length})
@@ -590,7 +590,7 @@ export default function Architecture() {
 
                        {/* Barra de progreso de optimización si está corriendo */}
                        {isOptimizing && (
-                         <div className="mb-4 p-3 bg-emerald-950/80 border border-emerald-800 rounded-lg flex flex-col gap-1.5">
+                         <div className="mb-2 p-3 bg-emerald-950/80 border border-emerald-800 rounded-lg flex flex-col gap-1.5">
                            <div className="flex justify-between text-xs text-emerald-400 font-medium">
                              <span className="flex items-center gap-1.5 animate-pulse">✨ Evolucionando con el motor AI...</span>
                              <span>{optProgress}% ({optTimeLeft})</span>
@@ -603,7 +603,9 @@ export default function Architecture() {
                            </div>
                          </div>
                        )}
-
+                    </div>
+                    
+                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
                        <div className="flex flex-col gap-2">
                           {activeModule.prompts.filter(p => p.key.toLowerCase().includes(promptSearchTerm.toLowerCase()) || (p.used_at && p.used_at.toLowerCase().includes(promptSearchTerm.toLowerCase()))).map(p => {
                              const isSelected = selectedPrompt?.key === p.key;
