@@ -1482,58 +1482,80 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
 
   return (
     <div className={`w-full h-full relative flex flex-col transition-colors duration-300 theme-node-style-${nodeStyle}`} style={{ ...themeStyle, backgroundColor: "var(--theme-bg)", color: "var(--theme-text)" }}>
-      {/* Tabs / Header Divider */}
-      <div className="flex-shrink-0 flex items-center justify-center bg-[#000000] border-b border-[#2A2A2A] px-4 h-16 gap-2 z-[70] relative w-full shadow-sm">
-      {/* ── Tab buttons ── */}
-      {(() => {
-        const tabBtn = (id: 'flowarchitect' | 'runinspector' | 'flowboard' | 'runresults', label: string) => {
-          const isActive = builderTab === id;
+      {/* ── Builder Tab Bar ── */}
+      <div className="flex-shrink-0 flex items-center justify-center bg-[#000000] border-b border-[#2A2A2A] px-4 h-16 gap-1 z-[70] relative w-full shadow-sm">
+        {(
+          [
+            { id: 'flowarchitect', label: '🏗️ Flow Architect' },
+            { id: 'runinspector',  label: '🔍 Run Inspector'  },
+            { id: 'flowboard',     label: '⚡ FlowBoard'       },
+            { id: 'runresults',    label: '📊 Run Results'     },
+          ] as { id: 'flowarchitect' | 'runinspector' | 'flowboard' | 'runresults'; label: string }[]
+        ).map((tab, idx) => {
+          const active = builderTab === tab.id;
+          const activeStyle: React.CSSProperties = {
+            background: 'rgba(30,58,138,0.4)',
+            border: '1.5px solid #3b82f6',
+            color: '#93c5fd',
+            boxShadow: '0 0 20px rgba(59,130,246,0.55)',
+            borderRadius: 8,
+            padding: '7px 20px',
+            fontWeight: 700,
+            fontSize: 13,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            transition: 'all 0.18s ease',
+            whiteSpace: 'nowrap',
+          };
+          const inactiveStyle: React.CSSProperties = {
+            background: 'transparent',
+            border: '1.5px solid transparent',
+            color: '#6b7280',
+            borderRadius: 8,
+            padding: '7px 20px',
+            fontWeight: 700,
+            fontSize: 13,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            transition: 'all 0.18s ease',
+            whiteSpace: 'nowrap',
+          };
           return (
-            <button
-              key={id}
-              onClick={() => setBuilderTab(id)}
-              style={isActive ? {
-                background: 'rgba(30, 58, 138, 0.35)',
-                border: '1px solid #3b82f6',
-                color: '#93c5fd',
-                boxShadow: '0 0 18px rgba(59,130,246,0.55)',
-              } : {
-                background: 'transparent',
-                border: '1px solid transparent',
-                color: '#9ca3af',
-              }}
-              onMouseEnter={e => {
-                if (!isActive) {
-                  (e.currentTarget as HTMLElement).style.color = '#ffffff';
-                  (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)';
-                  (e.currentTarget as HTMLElement).style.borderColor = '#374151';
-                }
-              }}
-              onMouseLeave={e => {
-                if (!isActive) {
-                  (e.currentTarget as HTMLElement).style.color = '#9ca3af';
-                  (e.currentTarget as HTMLElement).style.background = 'transparent';
-                  (e.currentTarget as HTMLElement).style.borderColor = 'transparent';
-                }
-              }}
-              className="flex items-center gap-2 px-6 py-2 rounded-lg font-bold text-sm cursor-pointer transition-all duration-200"
-            >
-              {label}
-            </button>
+            <React.Fragment key={tab.id}>
+              {idx > 0 && (
+                <div style={{ width: 1, height: 22, background: '#1f2937', flexShrink: 0, margin: '0 2px' }} />
+              )}
+              <button
+                data-tab={tab.id}
+                data-active={active ? 'true' : 'false'}
+                onClick={() => setBuilderTab(tab.id)}
+                style={active ? activeStyle : inactiveStyle}
+                onMouseEnter={e => {
+                  if (!active) {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.color = '#e5e7eb';
+                    el.style.background = 'rgba(255,255,255,0.06)';
+                    el.style.borderColor = '#374151';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!active) {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.color = '#6b7280';
+                    el.style.background = 'transparent';
+                    el.style.borderColor = 'transparent';
+                  }
+                }}
+              >
+                {tab.label}
+              </button>
+            </React.Fragment>
           );
-        };
-        return (
-          <>
-            {tabBtn('flowarchitect', '🏗️ Flow Architect')}
-            <div className="w-[1px] h-6 bg-gray-800 mx-1" />
-            {tabBtn('runinspector', '🔍 Run Inspector')}
-            <div className="w-[1px] h-6 bg-gray-800 mx-1" />
-            {tabBtn('flowboard', '⚡ FlowBoard')}
-            <div className="w-[1px] h-6 bg-gray-800 mx-1" />
-            {tabBtn('runresults', '📊 Run Results')}
-          </>
-        );
-      })()}
+        })}
       </div>
 
       {builderTab === 'flowarchitect' && <div className="flex-1 overflow-hidden relative"><FlowArchitect /></div>}
