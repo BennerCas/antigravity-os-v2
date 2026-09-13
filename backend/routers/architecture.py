@@ -334,6 +334,7 @@ def get_architecture():
                 "page": "/inspector",
                 "what": "Analiza la traza de ejecución, diagnostica fallos y detecta anomalías en el comportamiento de los agentes.",
                 "prompts": [
+                    {"key": "run_inspector_analysis", "used_at": "Run Inspector Tab", "text": RUN_INSPECTOR_ANALYSIS_SYSTEM, "explanation": "Lee los errores crudos y te explica en lenguaje humano por qué falló un nodo y cómo arreglarlo."},
                     {"key": "root_cause_analyzer", "used_at": "Run Inspector Tab", "text": ROOT_CAUSE_ANALYZER_SYSTEM, "explanation": "Realiza una autopsia exhaustiva de la traza de ejecución y logs de error."},
                     {"key": "auto_patcher", "used_at": "Run Inspector Tab", "text": AUTO_PATCHER_SYSTEM, "explanation": "Sintetiza y aplica parches dinámicos al código para restaurar operatividad."},
                     {"key": "hallucination_detector", "used_at": "Run Inspector Tab", "text": HALLUCINATION_DETECTOR_SYSTEM, "explanation": "Cruza salidas generativas contra el contexto base para detectar invenciones."},
@@ -462,7 +463,7 @@ def get_architecture():
     arch["apps"].insert(0, {
         "id": "master_prompts",
         "name": "🌟 Master Prompts (Nuevos)",
-        "what": "Colección completa de los 22 nuevos Master Prompts integrados en las pestañas del Builder.",
+        "what": "Colección completa de los 23 nuevos Master Prompts integrados en las pestañas del Builder.",
         "prompts": [
             {"key": "requirements_gatekeeper", "used_at": "Flow Architect Tab", "text": REQUIREMENTS_GATEKEEPER_SYSTEM, "explanation": "Filtro estricto que no deja avanzar si tu idea es ambigua."},
             {"key": "architecture_alternatives", "used_at": "Flow Architect Tab", "text": ARCHITECTURE_ALTERNATIVES_SYSTEM, "explanation": "Te propone 3 caminos (Rápido, Preciso, Local) antes de generar."},
@@ -476,7 +477,8 @@ def get_architecture():
             {"key": "skill_synthesizer", "used_at": "FlowBoard Tab", "text": SKILL_SYNTHESIZER_SYSTEM, "explanation": "Funde múltiples roles en un súper-agente cohesivo."},
             {"key": "cost_token_optimizer", "used_at": "FlowBoard Tab", "text": COST_TOKEN_OPTIMIZER_SYSTEM, "explanation": "Filtra ruido del prompt, minimizando tokens para ahorrar dinero y tiempo."},
             
-            {"key": "root_cause_analyzer", "used_at": "Run Inspector Tab", "text": ROOT_CAUSE_ANALYZER_SYSTEM, "explanation": "Realiza una autopsia exhaustiva de la traza de ejecución y logs de error."},
+            {"key": "run_inspector_analysis", "used_at": "Run Inspector Tab", "text": RUN_INSPECTOR_ANALYSIS_SYSTEM, "explanation": "Lee los errores crudos y te explica en lenguaje humano por qué falló un nodo y cómo arreglarlo."},
+                    {"key": "root_cause_analyzer", "used_at": "Run Inspector Tab", "text": ROOT_CAUSE_ANALYZER_SYSTEM, "explanation": "Realiza una autopsia exhaustiva de la traza de ejecución y logs de error."},
             {"key": "auto_patcher", "used_at": "Run Inspector Tab", "text": AUTO_PATCHER_SYSTEM, "explanation": "Sintetiza y aplica parches dinámicos al código para restaurar operatividad."},
             {"key": "hallucination_detector", "used_at": "Run Inspector Tab", "text": HALLUCINATION_DETECTOR_SYSTEM, "explanation": "Cruza salidas generativas contra el contexto base para detectar invenciones."},
             {"key": "cognitive_profiler", "used_at": "Run Inspector Tab", "text": COGNITIVE_PROFILER_SYSTEM, "explanation": "Monitorea el comportamiento de razonamiento, evaluando coherencia y sesgos."},
@@ -1180,4 +1182,5 @@ async def judge_prompt_evaluation(req: JudgeEvaluationRequest):
         },
         "test_cases": eval_results
     }
+
 

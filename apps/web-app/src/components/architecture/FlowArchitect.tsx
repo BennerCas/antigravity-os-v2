@@ -3,7 +3,7 @@ import { ArchitectureSpec } from '../../types/architecture';
 import { API_URL } from '../../lib/api';
 import { useTTSStore } from '../../lib/ttsStore';
 
-import { TooltipButton } from '../builder/TooltipButton';
+
 
 export const FlowArchitect: React.FC = () => {
   const { play, stop, isActive, currentSection } = useTTSStore();
@@ -248,24 +248,31 @@ export const FlowArchitect: React.FC = () => {
           </div>
         </div>
 
-        {/* AI Prompts Toolbar */}
-        <div className="px-3 py-2 bg-gray-800/30 border-b border-gray-800 flex items-center gap-2 overflow-x-auto scrollbar-none">
-          <span className="text-[10px] uppercase text-gray-500 font-bold mr-2 whitespace-nowrap">AI Tools:</span>
-          {[
-            { id: 'gatekeeper', label: 'Requirements Gatekeeper', icon: '🛡️', desc: 'Filtro estricto que no deja avanzar si tu idea es ambigua.' },
-            { id: 'alternatives', label: 'Architecture Alternatives', icon: '🔀', desc: 'Sugiere alternativas de arquitectura técnica y estructurales.' },
-            { id: 'feasibility', label: 'Cost/Feasibility Analyzer', icon: '💰', desc: 'Analiza la viabilidad económica y técnica del proyecto sugerido.' },
-            { id: 'schema', label: 'State Schema Designer', icon: '🗂️', desc: 'Ayuda a diseñar el esquema de estado y datos para la aplicación.' }
-          ].map(p => (
-            <TooltipButton 
-              key={p.id} 
-              onClick={() => setInput(`Activa la herramienta ${p.label}: `)} 
-              className="whitespace-nowrap text-[10px] px-2 py-1 bg-gray-800 border border-gray-700 rounded text-gray-300 hover:bg-blue-900/40 hover:text-blue-300 hover:border-blue-700 transition-all"
-              icon={p.icon}
-              label={p.label}
-              description={p.desc}
-            />
-          ))}
+        {/* AI Prompts Grid */}
+        <div className="p-3 bg-gray-800/20 border-b border-gray-800">
+          <div className="text-[10px] uppercase text-gray-500 font-bold mb-2 tracking-wider">🛠️ AI Tools (Master Prompts)</div>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { id: 'gatekeeper', label: 'Requirements Gatekeeper', icon: '🛡️', desc: 'Filtro estricto que no deja avanzar si tu idea es ambigua.' },
+              { id: 'alternatives', label: 'Architecture Alternatives', icon: '🔀', desc: 'Sugiere alternativas de arquitectura técnica y estructurales.' },
+              { id: 'feasibility', label: 'Cost/Feasibility Analyzer', icon: '💰', desc: 'Analiza la viabilidad económica y técnica del proyecto sugerido.' },
+              { id: 'schema', label: 'State Schema Designer', icon: '🗂️', desc: 'Ayuda a diseñar el esquema de estado y datos para la aplicación.' }
+            ].map(p => (
+              <button 
+                key={p.id} 
+                onClick={() => setInput(`Activa la herramienta ${p.label}: `)} 
+                className="flex flex-col items-start text-left p-2.5 bg-[#0a0a0a] border border-gray-800 rounded-lg hover:bg-blue-950/30 hover:border-blue-800/50 transition-all group"
+              >
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-sm">{p.icon}</span>
+                  <span className="text-[11px] font-bold text-gray-300 group-hover:text-blue-400 transition-colors">{p.label}</span>
+                </div>
+                <div className="text-[10px] text-gray-500 group-hover:text-gray-400 leading-snug">
+                  {p.desc}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="px-4 py-2 bg-gray-800/50 border-b border-gray-700 flex items-center">
