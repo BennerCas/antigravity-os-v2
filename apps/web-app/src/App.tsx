@@ -12,15 +12,14 @@ function RouteTracker() {
 }
 
 function InitialRedirect() {
-  const lastRoute = localStorage.getItem('lastRoute') || '/atlas';
+  const lastRoute = localStorage.getItem('lastRoute') || '/agent-os';
   return <Navigate to={lastRoute} replace />;
 }
 import { Sidebar } from './components/Sidebar';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { InteractiveTour } from './components/InteractiveTour';
 
-const Atlas = lazy(() => import('./pages/Atlas'));
-const Agents = lazy(() => import('./pages/Agents'));
+const AgentOS = lazy(() => import('./pages/AgentOS'));
 const Flows = lazy(() => import('./pages/Flows'));
 const Builder = lazy(() => import('./pages/Builder'));
 const Academy = lazy(() => import('./pages/Academy'));
@@ -38,11 +37,8 @@ function MainContent() {
   return (
     <>
       {path === '/' && <InitialRedirect />}
-      <div style={{ display: path === '/atlas' ? 'block' : 'none', height: '100%', width: '100%' }}>
-        <Atlas />
-      </div>
-      <div style={{ display: path === '/agents' ? 'block' : 'none', height: '100%', width: '100%' }}>
-        <Agents />
+      <div style={{ display: path === '/agent-os' ? 'block' : 'none', height: '100%', width: '100%' }}>
+        <AgentOS />
       </div>
       <div style={{ display: path === '/flows' ? 'block' : 'none', height: '100%', width: '100%' }}>
         <Flows />
