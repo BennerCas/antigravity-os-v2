@@ -1287,11 +1287,11 @@ ${inspectedPrompt.content}
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      {/* Chain toggle */}
+                      {/* Chain / Selection toggle — always visible */}
                       <button
                         onClick={(e) => toggleChainSelect(e, prompt)}
-                        className={`p-2 rounded-full transition-colors ${inChain ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-purple-400'}`}
-                        title={inChain ? 'Quitar del flujo' : 'Añadir al flujo de trabajo'}
+                        className={`p-2 rounded-full border transition-colors ${inChain ? 'bg-cyan-500 border-cyan-400 text-white' : 'border-cyan-400 text-cyan-400 bg-transparent hover:bg-cyan-900/30'}`}
+                        title={inChain ? 'Quitar del flujo' : 'Seleccionar prompt'}
                       >
                         {inChain ? <CheckSquare size={16} /> : <Square size={16} />}
                       </button>

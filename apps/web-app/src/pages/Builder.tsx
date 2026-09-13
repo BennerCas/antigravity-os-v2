@@ -30,6 +30,7 @@ import jsPDF from 'jspdf';
 import { FlowArchitect } from '../components/architecture/FlowArchitect';
 import { RunInspector } from '../components/architecture/RunInspector';
 import { RunResults } from '../components/architecture/RunResults';
+import { BuilderManual } from '../components/builder/BuilderManual';
 import { ArrowUUpLeft, ArrowUUpRight, FloppyDisk, DownloadSimple, Trash, X, Play, StopCircle, Translate } from '@phosphor-icons/react';
 import { useTTSStore } from '../lib/ttsStore';
 import { Joyride, STATUS } from 'react-joyride';
@@ -190,7 +191,7 @@ function BuilderContent() {
   const canvasNodesKey = promptKey ? `builder_nodes_${promptKey}` : 'builderNodes';
   const canvasEdgesKey = promptKey ? `builder_edges_${promptKey}` : 'builderEdges';
 
-  const [builderTab, setBuilderTab] = useState<'flowarchitect' | 'runinspector' | 'flowboard' | 'runresults'>('flowarchitect');
+  const [builderTab, setBuilderTab] = useState<'flowarchitect' | 'runinspector' | 'flowboard' | 'runresults' | 'manual'>('flowarchitect');
   const [runResultsKey, setRunResultsKey] = useState(0);
   const [nodes, setNodes] = useState<Node[]>(() => {
     if (restoreCanvas && promptKey) {
@@ -1497,7 +1498,8 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
             { id: 'flowboard',     label: '⚡ FlowBoard'       },
             { id: 'runinspector',  label: '🔍 Run Inspector'  },
             { id: 'runresults',    label: '📊 Run Results'     },
-          ] as { id: 'flowarchitect' | 'flowboard' | 'runinspector' | 'runresults'; label: string }[]
+            { id: 'manual',        label: '📖 Manual & Pipeline' },
+          ] as { id: 'flowarchitect' | 'flowboard' | 'runinspector' | 'runresults' | 'manual'; label: string }[]
         ).map((tab, idx) => {
           const active = builderTab === tab.id;
           
@@ -1530,6 +1532,10 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
 
       <div className="flex-1 overflow-hidden relative" style={{ display: builderTab === 'flowarchitect' ? 'flex' : 'none' }}>
         <FlowArchitect />
+      </div>
+
+      <div className="flex-1 overflow-hidden relative" style={{ display: builderTab === 'manual' ? 'flex' : 'none' }}>
+        <BuilderManual />
       </div>
       
       {builderTab === 'flowboard' && (

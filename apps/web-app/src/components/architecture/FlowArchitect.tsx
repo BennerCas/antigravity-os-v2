@@ -3,6 +3,8 @@ import { ArchitectureSpec } from '../../types/architecture';
 import { API_URL } from '../../lib/api';
 import { useTTSStore } from '../../lib/ttsStore';
 
+import { TooltipButton } from '../builder/TooltipButton';
+
 export const FlowArchitect: React.FC = () => {
   const { play, stop, isActive, currentSection } = useTTSStore();
   const [chatHistory, setChatHistory] = useState<{role: string, content: string, suggestedActions?: string[]}[]>(() => {
@@ -250,14 +252,19 @@ export const FlowArchitect: React.FC = () => {
         <div className="px-3 py-2 bg-gray-800/30 border-b border-gray-800 flex items-center gap-2 overflow-x-auto scrollbar-none">
           <span className="text-[10px] uppercase text-gray-500 font-bold mr-2 whitespace-nowrap">AI Tools:</span>
           {[
-            { id: 'gatekeeper', label: 'Requirements Gatekeeper', icon: '🛡️' },
-            { id: 'alternatives', label: 'Architecture Alternatives', icon: '🔀' },
-            { id: 'feasibility', label: 'Cost/Feasibility Analyzer', icon: '💰' },
-            { id: 'schema', label: 'State Schema Designer', icon: '🗂️' }
+            { id: 'gatekeeper', label: 'Requirements Gatekeeper', icon: '🛡️', desc: 'Filtro estricto que no deja avanzar si tu idea es ambigua.' },
+            { id: 'alternatives', label: 'Architecture Alternatives', icon: '🔀', desc: 'Sugiere alternativas de arquitectura técnica y estructurales.' },
+            { id: 'feasibility', label: 'Cost/Feasibility Analyzer', icon: '💰', desc: 'Analiza la viabilidad económica y técnica del proyecto sugerido.' },
+            { id: 'schema', label: 'State Schema Designer', icon: '🗂️', desc: 'Ayuda a diseñar el esquema de estado y datos para la aplicación.' }
           ].map(p => (
-            <button key={p.id} onClick={() => setInput(`Activa la herramienta ${p.label}: `)} className="whitespace-nowrap text-[10px] px-2 py-1 bg-gray-800 border border-gray-700 rounded text-gray-300 hover:bg-blue-900/40 hover:text-blue-300 hover:border-blue-700 transition-all">
-              {p.icon} {p.label}
-            </button>
+            <TooltipButton 
+              key={p.id} 
+              onClick={() => setInput(`Activa la herramienta ${p.label}: `)} 
+              className="whitespace-nowrap text-[10px] px-2 py-1 bg-gray-800 border border-gray-700 rounded text-gray-300 hover:bg-blue-900/40 hover:text-blue-300 hover:border-blue-700 transition-all"
+              icon={p.icon}
+              label={p.label}
+              description={p.desc}
+            />
           ))}
         </div>
 

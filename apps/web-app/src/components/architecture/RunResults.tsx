@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Play, Translate, Pause, StopCircle, CheckCircle, Clock } from '@phosphor-icons/react';
 import { useTTSStore } from '../../lib/ttsStore';
 import { API_URL } from '../../lib/api';
+import { TooltipButton } from '../builder/TooltipButton';
 
 // Example type for an execution result
 export interface ExecutionRecord {
@@ -96,12 +97,17 @@ export const RunResults: React.FC = () => {
       <div className="py-2 mb-6 border-b border-gray-800 flex items-center gap-2 overflow-x-auto scrollbar-none">
         <span className="text-[10px] uppercase text-gray-500 font-bold mr-2 whitespace-nowrap">QA & Eval Tools:</span>
         {[
-          { id: 'testgen', label: 'Test Scenario Generator', icon: '🧪' },
-          { id: 'evaluator', label: 'Output Evaluator', icon: '⚖️' }
+          { id: 'testgen', label: 'Test Scenario Generator', icon: '🧪', desc: 'Genera escenarios de prueba comprensivos basados en los resultados.' },
+          { id: 'evaluator', label: 'Output Evaluator', icon: '⚖️', desc: 'Evalúa la calidad del output generado usando métricas avanzadas.' }
         ].map(p => (
-          <button key={p.id} className="whitespace-nowrap text-[10px] px-2 py-1 bg-gray-800 border border-gray-700 rounded text-gray-300 hover:bg-emerald-900/40 hover:text-emerald-300 hover:border-emerald-700 transition-all">
-            {p.icon} {p.label}
-          </button>
+          <TooltipButton
+            key={p.id}
+            className="whitespace-nowrap text-[10px] px-2 py-1 bg-gray-800 border border-gray-700 rounded text-gray-300 hover:bg-emerald-900/40 hover:text-emerald-300 hover:border-emerald-700 transition-all"
+            icon={p.icon}
+            label={p.label}
+            description={p.desc}
+            onClick={() => {}}
+          />
         ))}
       </div>
 

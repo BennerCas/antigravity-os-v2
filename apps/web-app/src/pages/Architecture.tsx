@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { API_URL } from '../lib/api';
 import ReactMarkdown from 'react-markdown';
-import { Brain, Compass, Hammer, Rocket, Gear, Database, Cpu, CaretRight, Copy, Check, TerminalWindow, Lightning, LockKey, Sparkle } from '@phosphor-icons/react';
+import { Star, Cpu, MagnifyingGlass, CheckCircle, Compass, Hammer, Brain, Gear, Rocket, Database, TerminalWindow, Lightning, LockKey, CaretRight, Sparkle, Check, Copy } from '@phosphor-icons/react';
 import { logicTaskManager, LogicTaskState } from '../lib/logicTaskManager';
 import { sendToBuilderBridge } from '../lib/builderBridge';
 import { useNavigate } from 'react-router-dom';
@@ -31,6 +31,10 @@ interface ArchitectureData {
 }
 
 const STEP_ICONS: Record<string, React.ReactNode> = {
+  master_prompts: <Star size={22} weight="fill" className="text-yellow-500" />,
+  engine: <Cpu size={22} weight="light" />,
+  inspector: <MagnifyingGlass size={22} weight="light" />,
+  results: <CheckCircle size={22} weight="light" />,
   atlas: <Compass size={22} weight="light" />,
   builder: <Hammer size={22} weight="light" />,
   orchestrator: <Brain size={22} weight="light" />,

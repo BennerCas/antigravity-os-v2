@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { API_URL } from '../../lib/api';
+import { TooltipButton } from '../builder/TooltipButton';
 
 interface RunEvent {
   id: string;
@@ -8,14 +7,9 @@ interface RunEvent {
   payload: any;
 }
 
-interface ApprovalTask {
-  id: string;
-  run_id: string;
-  pending_node_id: string;
-  status: string;
-  title: string;
-  objective: string;
-}
+// ... skipped code in mind, writing properly
+import React, { useState, useEffect, useRef } from 'react';
+import { API_URL } from '../../lib/api';
 
 export const RunInspector: React.FC<{ runId: string }> = ({ runId }) => {
   const [events, setEvents] = useState<RunEvent[]>([]);
@@ -186,15 +180,20 @@ export const RunInspector: React.FC<{ runId: string }> = ({ runId }) => {
         <div className="py-2 mb-4 border-b border-gray-800 flex items-center gap-2 overflow-x-auto scrollbar-none">
           <span className="text-[10px] uppercase text-gray-500 font-bold mr-2 whitespace-nowrap">Inspector AI:</span>
           {[
-            { id: 'rootcause', label: 'Root Cause Analyzer', icon: '🔍' },
-            { id: 'autopatch', label: 'Auto Patcher', icon: '🩹' },
-            { id: 'hallucination', label: 'Hallucination Detector', icon: '👁️' },
-            { id: 'cognitive', label: 'Cognitive Profiler', icon: '🧠' },
-            { id: 'dataleak', label: 'Data Leak Scanner', icon: '🔐' }
+            { id: 'rootcause', label: 'Root Cause Analyzer', icon: '🔍', desc: 'Analiza la causa raíz de un error o comportamiento inusual en la ejecución.' },
+            { id: 'autopatch', label: 'Auto Patcher', icon: '🩹', desc: 'Intenta generar y aplicar parches automáticamente para reparar el flujo.' },
+            { id: 'hallucination', label: 'Hallucination Detector', icon: '👁️', desc: 'Identifica información falsa o inventada en los resultados del LLM.' },
+            { id: 'cognitive', label: 'Cognitive Profiler', icon: '🧠', desc: 'Evalúa la capacidad de razonamiento y entendimiento contextual del agente.' },
+            { id: 'dataleak', label: 'Data Leak Scanner', icon: '🔐', desc: 'Revisa y detecta posible filtración de datos sensibles en el output.' }
           ].map(p => (
-            <button key={p.id} className="whitespace-nowrap text-[10px] px-2 py-1 bg-gray-800 border border-gray-700 rounded text-gray-300 hover:bg-purple-900/40 hover:text-purple-300 hover:border-purple-700 transition-all">
-              {p.icon} {p.label}
-            </button>
+            <TooltipButton
+              key={p.id}
+              className="whitespace-nowrap text-[10px] px-2 py-1 bg-gray-800 border border-gray-700 rounded text-gray-300 hover:bg-purple-900/40 hover:text-purple-300 hover:border-purple-700 transition-all"
+              icon={p.icon}
+              label={p.label}
+              description={p.desc}
+              onClick={() => {}}
+            />
           ))}
         </div>
 
