@@ -246,6 +246,21 @@ export const FlowArchitect: React.FC = () => {
           </div>
         </div>
 
+        {/* AI Prompts Toolbar */}
+        <div className="px-3 py-2 bg-gray-800/30 border-b border-gray-800 flex items-center gap-2 overflow-x-auto scrollbar-none">
+          <span className="text-[10px] uppercase text-gray-500 font-bold mr-2 whitespace-nowrap">AI Tools:</span>
+          {[
+            { id: 'gatekeeper', label: 'Requirements Gatekeeper', icon: '🛡️' },
+            { id: 'alternatives', label: 'Architecture Alternatives', icon: '🔀' },
+            { id: 'feasibility', label: 'Cost/Feasibility Analyzer', icon: '💰' },
+            { id: 'schema', label: 'State Schema Designer', icon: '🗂️' }
+          ].map(p => (
+            <button key={p.id} onClick={() => setInput(`Activa la herramienta ${p.label}: `)} className="whitespace-nowrap text-[10px] px-2 py-1 bg-gray-800 border border-gray-700 rounded text-gray-300 hover:bg-blue-900/40 hover:text-blue-300 hover:border-blue-700 transition-all">
+              {p.icon} {p.label}
+            </button>
+          ))}
+        </div>
+
         <div className="px-4 py-2 bg-gray-800/50 border-b border-gray-700 flex items-center">
           <span className="text-xs text-gray-400 mr-3">Modelo de Chat:</span>
           <select

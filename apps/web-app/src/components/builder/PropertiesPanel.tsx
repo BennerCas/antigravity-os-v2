@@ -141,7 +141,14 @@ export default function PropertiesPanel({ selectedNode, onUpdateNode, onAddVaria
       
               <div className="flex-1 flex flex-col min-h-[220px]">
                 <div className="flex items-center justify-between mb-1.5 shrink-0">
-                   <div className="flex items-center gap-2"><label className="block text-sm font-semibold uppercase tracking-wider opacity-70">Instrucción / Prompt</label><button onClick={() => playTTS(data.content as string)} className="opacity-50 hover:opacity-100 transition-opacity"><Volume2 size={14} className="text-emerald-400"/></button></div>
+                  <div className="flex items-center gap-2">
+                    <label className="block text-sm font-semibold uppercase tracking-wider opacity-70">
+                      {selectedNode.type === 'supervisor' ? 'Instrucciones del Supervisor' : 'Prompt / Instrucciones del Agente'}
+                    </label>
+                    <button onClick={() => playTTS(data.content as string)} className="opacity-50 hover:opacity-100 transition-opacity" title="Escuchar texto">
+                      <Volume2 size={14} className="text-emerald-400"/>
+                    </button>
+                  </div>
                    {isAgentConfigurable && (
                      <button 
                        onClick={handleAutoSuggest} 
@@ -154,6 +161,35 @@ export default function PropertiesPanel({ selectedNode, onUpdateNode, onAddVaria
                      </button>
                    )}
                 </div>
+
+                {/* AI Prompts Toolbar for Builder */}
+                {isAgentConfigurable && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {[
+                      { id: 'validator', label: 'Canvas Validator', icon: '✅' },
+                      { id: 'edge', label: 'Edge Contract Generator', icon: '🔗' },
+                      { id: 'router', label: 'Dynamic Router', icon: '🔀' },
+                      { id: 'tools', label: 'Tool Discovery', icon: '🛠️' },
+                      { id: 'skill', label: 'Skill Synthesizer', icon: '🎭' },
+                      { id: 'cost', label: 'Cost/Token Optimizer', icon: '🪙' },
+                      { id: 'security', label: 'Security Guardrail', icon: '🛡️' },
+                      { id: 'hitl', label: 'HITL Manager', icon: '👨‍💻' },
+                      { id: 'context', label: 'Context Memory', icon: '🧠' },
+                      { id: 'debate', label: 'Debate Moderator', icon: '⚖️' },
+                      { id: 'meta', label: 'Meta Prompt Optimizer', icon: '✨' }
+                    ].map(p => (
+                      <button 
+                        key={p.id} 
+                        onClick={() => handleChange('content', (data.content || '') + `\n\n[Usando ${p.label}]: `)}
+                        className="text-[9px] px-1.5 py-0.5 border border-purple-500/30 rounded text-purple-400 hover:bg-purple-500/20 transition-colors"
+                        title={p.label}
+                      >
+                        {p.icon} {p.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <textarea
                   value={data.content || ''}
                   onChange={(e) => handleChange('content', e.target.value)}

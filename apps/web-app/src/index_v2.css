@@ -69,9 +69,7 @@
 /* =====================================================
    GLOBAL RESETS — box-shadow & backdrop gone
    ===================================================== */
-* {
-  box-shadow: none !important;
-}
+/* NOTE: box-shadow reset removed — Neon LED glow effects require box-shadow to work */
 
 *::selection {
   background-color: rgba(255, 255, 255, 0.1);
@@ -312,68 +310,51 @@ p, span, h1, h2, h3, h4, h5, h6, label {
 }
 
 /* =====================================================
-   ACTIVE CARD — dark forest green selected state
+   ACTIVE CARD — Orange selected state (Agents module)
    ===================================================== */
 .active-card {
-  background-color: #0A1C0D !important;
+  background-color: rgba(249, 115, 22, 0.06) !important;
   background-image: none !important;
-  border: 1px solid #174A1F !important;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  border: 1px solid #f97316 !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-/* Text inside active card goes green-pale */
+/* Titles inside active card go orange */
 .active-card h1,
 .active-card h2,
 .active-card h3,
-.active-card h4,
-.active-card p,
-.active-card strong,
-.active-card b,
-.active-card em,
-.active-card span:not(.active-card-exempt),
-.active-card label {
-  color: #7B9C7F !important;
+.active-card h4 {
+  color: #fb923c !important;
   transition: color 0.2s ease;
 }
 
-/* Buttons inside active card stay dark — exception */
-.active-card button,
-.active-card .active-card-exempt {
-  background-color: #151515 !important;
-  border-color: #2A2A2A !important;
-  color: #FFFFFF !important;
+/* Buttons inside active card get orange border */
+.active-card button {
+  border-color: #f97316 !important;
+  color: #fb923c !important;
 }
 
 /* =====================================================
-   ACTIVE CARD BLUE — dark blue selected state (for generated/upgraded prompts)
+   ACTIVE CARD BLUE — Cyan selected state (Atlas module)
    ===================================================== */
 .active-card-blue {
-  background-color: #08101e !important; /* Very dark blue */
+  background-color: rgba(6, 182, 212, 0.06) !important;
   background-image: none !important;
-  border: 1px solid #2563eb !important; /* Vibrant Blue */
-  box-shadow: 0 0 20px rgba(37, 99, 235, 0.15) !important;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid #22d3ee !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .active-card-blue h1,
 .active-card-blue h2,
 .active-card-blue h3,
-.active-card-blue h4,
-.active-card-blue p,
-.active-card-blue strong,
-.active-card-blue b,
-.active-card-blue em,
-.active-card-blue span:not(.active-card-exempt),
-.active-card-blue label {
-  color: #93c5fd !important; /* Blue 300 */
+.active-card-blue h4 {
+  color: #22d3ee !important;
   transition: color 0.2s ease;
 }
 
-.active-card-blue button,
-.active-card-blue .active-card-exempt {
-  background-color: #151515 !important;
-  border-color: #2A2A2A !important;
-  color: #FFFFFF !important;
+.active-card-blue button {
+  border-color: #22d3ee !important;
+  color: #22d3ee !important;
 }
 
 
@@ -563,7 +544,7 @@ p, span, h1, h2, h3, h4, h5, h6, label {
 @plugin "@tailwindcss/typography";
 
 /* =====================================================
-   UNIVERSAL SELECTION RULES — DARK FOREST GREEN & ACCENTS
+   UNIVERSAL SELECTION RULES — NEON CYAN ACCENTS
    ===================================================== */
 .selected-green,
 .active-card,
@@ -571,22 +552,21 @@ p, span, h1, h2, h3, h4, h5, h6, label {
 button.selected-green,
 div.selected-green,
 div.active-card {
-  background-color: #0A1C0D !important;
-  border-color: #174A1F !important;
-  color: #7B9C7F !important;
+  background-color: rgba(249, 115, 22, 0.06) !important;
+  border-color: #f97316 !important;
 }
 
 .selected-green svg,
 .active-card svg,
 .nav-item-active svg {
-  color: #7B9C7F !important;
-  stroke: #7B9C7F !important;
+  color: #fb923c !important;
+  stroke: #fb923c !important;
 }
 
 .selected-green code,
 .active-card code,
 .nav-item-active code {
-  color: #7B9C7F !important;
+  color: #fb923c !important;
 }
 
 .tab-active-green {

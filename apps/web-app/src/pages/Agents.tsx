@@ -839,12 +839,12 @@ ${inspectedAgent.instructions || inspectedAgent.content}
     <div
       key={cat.id || idx}
       onClick={() => handleCategoryClick(cat)}
-      className="bg-gray-900 border border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-blue-500 hover:shadow-xl hover:-translate-y-0.5 transition-all flex flex-col justify-between min-h-[10.5rem]"
+      className="bg-gray-900 border border-orange-400 rounded-2xl p-4 cursor-pointer hover:border-orange-400 hover:shadow-xl hover:-translate-y-0.5 transition-all flex flex-col justify-between min-h-[10.5rem]"
     >
       <div>
         <div className="flex justify-between items-start mb-2">
           <div className="flex items-center gap-2">
-            <span className="bg-blue-900/40 text-blue-400 text-xs font-bold px-2.5 py-0.5 rounded-full border border-blue-800/50 w-fit">
+            <span className="bg-blue-900/40 text-blue-400 text-xs font-bold px-2.5 py-0.5 rounded-full border border-orange-400 w-fit">
               {cat.totalCount.toLocaleString()} Agentes
             </span>
             <span className="text-gray-600 text-[11px]">{cat.subCategories.length} subcat.</span>
@@ -857,7 +857,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
             <SpeakerHigh size={15} />
           </button>
         </div>
-        <h3 className="font-bold text-lg text-gray-100 mb-2 leading-tight truncate">{cat.title}</h3>
+        <h3 className="font-bold text-lg text-orange-400 mb-2 leading-tight truncate">{cat.title}</h3>
       </div>
       
       <div className="overflow-hidden">
@@ -915,9 +915,9 @@ ${inspectedAgent.instructions || inspectedAgent.content}
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
 
         {/* Fixed Top Section: Header, Search & Filters */}
-        <div className="flex-shrink-0 px-8 pt-5 pb-3 bg-[#0a0c10]/95 backdrop-blur-md border-b border-gray-800/80 z-20 shadow-md">
+        <div className="flex-shrink-0 px-8 pt-5 pb-3 bg-[#0a0c10]/95 backdrop-blur-md border-b border-orange-400/80 z-20 shadow-md">
           <header className="mb-4 text-center">
-            <h1 className="text-3xl font-bold text-blue-500 tracking-wide">Directorio de Agentes</h1>
+            <h1 className="text-3xl font-bold text-orange-400 tracking-wide">Directorio de Agentes</h1>
             <p className="text-gray-400 mt-1 text-xs">Análisis Milimétrico de Skills y Agentes de IA</p>
           </header>
 
@@ -931,24 +931,24 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="flex-1 bg-gray-900 border border-gray-700 rounded-xl p-3.5 text-white outline-none focus:border-blue-500 transition-colors shadow-lg text-sm"
+                  className="flex-1 bg-gray-900 border border-orange-400 rounded-xl p-3.5 text-white outline-none focus:border-blue-500 transition-colors shadow-lg text-sm"
                 />
                 <button
                   onClick={handleImprove}
-                  className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 whitespace-nowrap text-sm"
+                  className="bg-transparent border border-orange-500 text-orange-400 hover:bg-orange-500/20 font-bold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 whitespace-nowrap text-sm"
                 >
                   <MagicWand size={18} /> Mejorar
                 </button>
                 <button
                   onClick={handleSearch}
-                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 whitespace-nowrap text-sm"
+                  className="bg-transparent border border-orange-400 text-orange-400 hover:bg-cyan-500/20 font-bold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 whitespace-nowrap text-sm"
                 >
                   <MagnifyingGlass size={18} /> Buscar
                 </button>
                 <button
                   onClick={handleSuggestFlows}
                   disabled={isSuggesting}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-wait text-sm"
+                  className="bg-transparent border border-orange-400 text-orange-400 hover:bg-cyan-500/20 font-bold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-wait text-sm"
                   title="La IA mejora tu texto y diseña el flujo de trabajo ideal + 5 alternativas"
                 >
                   <Sparkle size={18} /> {isSuggesting ? 'Diseñando...' : 'Diseñar Flujo'}
@@ -966,7 +966,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
 
               {/* ─── FLOW SUGGESTION PANEL ─── */}
               {(isSuggesting || recommendedFlow || flowAlternatives.length > 0 || suggestError || enhancedQuery) && (
-                <div className="mt-2 bg-gray-900/90 border border-emerald-800/50 rounded-2xl p-4 shadow-2xl max-h-56 overflow-y-auto custom-scrollbar">
+                <div className="mt-2 bg-gray-900/90 border border-orange-400 rounded-2xl p-4 shadow-2xl max-h-56 overflow-y-auto custom-scrollbar">
                   {isSuggesting && (
                     <div className="flex items-center gap-3 text-emerald-300 text-sm">
                       <span className="animate-spin text-lg">⚙️</span>
@@ -986,7 +986,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                   )}
 
                   {recommendedFlow && (
-                    <div className="mb-4 bg-emerald-950/40 border border-emerald-700/60 rounded-xl p-4">
+                    <div className="mb-4 bg-emerald-950/40 border border-orange-400/60 rounded-xl p-4">
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <div className="text-[10px] uppercase tracking-widest text-emerald-400 font-bold mb-1">⭐ Flujo Recomendado por la IA</div>
@@ -1007,13 +1007,13 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                         <div className="flex flex-col gap-2 flex-shrink-0">
                           <button
                             onClick={() => launchFlowInBuilder(recommendedFlow)}
-                            className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                            className="bg-transparent border border-orange-400 text-orange-400 hover:bg-cyan-500/20 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                           >
                             Abrir en Builder →
                           </button>
                           <button
                             onClick={() => saveFlowToNexus(recommendedFlow)}
-                            className="bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                            className="bg-transparent border border-orange-400 text-orange-400 hover:bg-cyan-500/20 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                           >
                             Guardar en Nexus
                           </button>
@@ -1030,7 +1030,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                           <button
                             key={alt.id}
                             onClick={() => navigate('/flows')}
-                            className="text-left bg-gray-800/60 hover:bg-gray-800 border border-gray-700 hover:border-emerald-600/60 rounded-xl p-2.5 transition-all group"
+                            className="text-left bg-gray-800/60 hover:bg-gray-800 border border-orange-400 hover:border-emerald-600/60 rounded-xl p-2.5 transition-all group"
                           >
                             <div className="text-xs font-semibold text-gray-200 group-hover:text-emerald-300 flex items-center justify-between">
                               <span>{alt.name}</span>
@@ -1052,7 +1052,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
             <div className="mt-3">
               <button
                 onClick={goBack}
-                className="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors px-3 py-1.5 bg-gray-900 rounded-lg w-fit border border-gray-800"
+                className="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors px-3 py-1.5 bg-gray-900 rounded-lg w-fit border border-orange-400"
               >
                 <ArrowLeft size={16} />
                 {view === 'subcategories' ? 'Volver a Categorías' : selectedSubCategory ? `Volver a ${selectedCategory?.title}` : 'Volver a Categorías'}
@@ -1081,17 +1081,17 @@ ${inspectedAgent.instructions || inspectedAgent.content}
 
         /* ─── SUBCATEGORÍAS ───────────────────────────────────────────────── */
         <div>
-          <h2 className="text-2xl font-bold text-white mb-1">{selectedCategory.title}</h2>
+          <h2 className="text-2xl font-bold text-orange-400 mb-1">{selectedCategory.title}</h2>
           <p className="text-gray-500 mb-6">{selectedCategory.totalCount.toLocaleString()} agentes en {selectedCategory.subCategories.length} subcategorías</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {selectedCategory.subCategories.map((sub, idx) => (
               <div
                 key={idx}
                 onClick={() => handleSubCategoryClick(sub.name)}
-                className="bg-gray-900 border border-gray-800 rounded-xl p-5 cursor-pointer hover:border-blue-500 hover:shadow-lg hover:-translate-y-1 transition-all flex flex-col justify-between min-h-[8rem]"
+                className="bg-gray-900 border border-orange-400 rounded-xl p-5 cursor-pointer hover:border-orange-400 hover:shadow-lg hover:-translate-y-1 transition-all flex flex-col justify-between min-h-[8rem]"
               >
-                <h3 className="font-semibold text-gray-100 text-md leading-snug">{sub.name}</h3>
-                <span className="mt-3 bg-blue-900/30 text-blue-400 text-xs font-bold px-2 py-1 rounded-full border border-blue-800/40 w-fit">
+                <h3 className="font-semibold text-orange-400 text-md leading-snug">{sub.name}</h3>
+                <span className="mt-3 bg-blue-900/30 text-blue-400 text-xs font-bold px-2 py-1 rounded-full border border-orange-400/40 w-fit">
                   {sub.count} agentes
                 </span>
               </div>
@@ -1105,7 +1105,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
         <div>
           {selectedCategory && selectedSubCategory && (
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-white">{selectedSubCategory}</h2>
+              <h2 className="text-2xl font-bold text-orange-400">{selectedSubCategory}</h2>
               <p className="text-gray-500">{selectedCategory.title} › {selectedSubCategory} — {displayAgentes.length} agentes</p>
             </div>
           )}
@@ -1124,7 +1124,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
               const inChain = isInChain(agent);
               const chainPos = selectedForChain.findIndex(p => makeAgentKey(p) === key);
               const isGenerated = isGeneratedAgent(agent);
-              const activeClass = isGenerated ? 'active-card-blue' : 'active-card';
+              const activeClass = 'bg-orange-950/40 border-orange-400';
               const isInspected = (inspectedAgent && makeAgentKey(inspectedAgent) === key) || inspectedAgent === agent;
 
               return (
@@ -1136,10 +1136,10 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                   }}
                   className={`border rounded-2xl p-6 flex flex-col h-80 relative cursor-pointer transition-all group ${
                     inChain
-                      ? (isGenerated ? 'border-blue-500 active-card-blue' : 'border-[#174A1F] active-card')
+                      ? (isGenerated ? 'bg-black/80 border-orange-400' : 'bg-black/80 border-orange-400')
                       : isInspected
                         ? activeClass
-                        : (isGenerated ? 'bg-[#151515] border-blue-900/40 hover:border-blue-700/60' : 'bg-[#151515] border-[#2A2A2A] hover:border-[#3a3a3a]')
+                        : (isGenerated ? 'bg-black/40 border-orange-400 hover:border-orange-400' : 'bg-black/40 border-orange-500/50 hover:border-orange-500')
                   }`}
                 >
                   {/* Chain position badge */}
@@ -1157,11 +1157,11 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      {/* Chain toggle */}
+                      {/* Chain / Selection toggle — always visible */}
                       <button
                         onClick={(e) => toggleChainSelect(e, agent)}
-                        className={`p-2 rounded-full transition-colors ${inChain ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-purple-400'}`}
-                        title={inChain ? 'Quitar del flujo' : 'Añadir al flujo de trabajo'}
+                        className={`p-2 rounded-full border transition-colors ${inChain ? 'bg-orange-500 border-orange-400 text-white' : 'border-orange-400 text-orange-400 bg-transparent hover:bg-orange-900/30'}`}
+                        title={inChain ? 'Quitar del flujo' : 'Seleccionar agente'}
                       >
                         {inChain ? <CheckSquare size={16} /> : <Square size={16} />}
                       </button>
@@ -1177,7 +1177,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                   </div>
 
                   <div className="flex justify-between items-start mb-2 gap-2">
-                    <h3 className={`font-bold text-lg line-clamp-2 leading-snug flex-1 ${isGenerated ? 'text-blue-300' : 'text-gray-100'}`}>{agent.title}</h3>
+                    <h3 className="font-bold text-lg text-orange-400 line-clamp-2 leading-snug flex-1">{agent.title}</h3>
                     {agent.upgradeExplanation && (
                       <button
                         onClick={(e) => {
@@ -1195,8 +1195,8 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                   {agent.isMultiAgent && agent.chain ? (
                     <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-2 mt-1 pr-1 custom-scrollbar">
                       {agent.chain.map((step, i) => (
-                        <div key={i} className="flex items-start gap-3 text-sm text-gray-300 bg-gray-800/40 p-2.5 rounded-lg border border-gray-700/50">
-                          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-xs border border-purple-500/30 mt-0.5">
+                        <div key={i} className="flex items-start gap-3 text-sm text-gray-300 bg-gray-800/40 p-2.5 rounded-lg border border-orange-400/50">
+                          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-xs border border-orange-500/30 mt-0.5">
                             {i + 1}
                           </div>
                           <div className="flex-1 flex flex-col">
@@ -1220,16 +1220,14 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                             agentKey: `chain_${Date.now()}`
                           });
                         }}
-                        className="active-card-exempt text-white font-bold py-2 px-4 rounded-lg transition-colors w-full flex items-center justify-center gap-2"
-                        style={{ backgroundColor: '#151515', border: '1px solid #2A2A2A' }}
+                        className="border-orange-400 text-orange-400 hover:bg-orange-900/30 font-bold py-2 px-4 rounded-lg transition-colors w-full flex items-center justify-center gap-2"
                       >
                         <Sparkle size={18} /> Enviar Flujo a Builder
                       </button>
                     ) : (
                       <button
                         onClick={(e) => handleSetAgent(e, agent)}
-                        className="active-card-exempt text-white font-bold py-2 px-4 rounded-lg transition-colors w-full"
-                        style={{ backgroundColor: '#151515', border: '1px solid #2A2A2A' }}
+                        className="border-orange-400 text-orange-400 hover:bg-orange-900/30 font-bold py-2 px-4 rounded-lg transition-colors w-full"
                       >
                         {lastOpened ? '🔁 Continuar en Builder' : 'Abrir en Builder'}
                       </button>
@@ -1251,7 +1249,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
 
         {/* ─── CHAIN TOOLBAR ──────────────────────────────────────────────────── */}
         {selectedForChain.length > 0 && (
-          <div className="absolute bottom-[230px] left-1/2 -translate-x-1/2 z-50 bg-gray-900 border border-purple-500 rounded-2xl shadow-2xl px-6 py-4 flex items-center gap-4 max-w-3xl w-full mx-4">
+          <div className="absolute bottom-[230px] left-1/2 -translate-x-1/2 z-50 bg-gray-900 border border-orange-500 rounded-2xl shadow-2xl px-6 py-4 flex items-center gap-4 max-w-3xl w-full mx-4">
             <div className="flex-1">
               <p className="text-purple-400 font-bold text-sm">{selectedForChain.length} agentes seleccionados para el flujo</p>
               <div className="flex flex-wrap gap-1 mt-1">
@@ -1265,7 +1263,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
             </div>
             <button
               onClick={launchChain}
-              className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-6 rounded-xl flex items-center gap-2 whitespace-nowrap transition-colors"
+              className="bg-transparent border border-orange-500 text-orange-400 hover:bg-orange-500/20 font-bold py-3 px-6 rounded-xl flex items-center gap-2 whitespace-nowrap transition-colors"
             >
               <Sparkle size={18} /> Lanzar Flujo
             </button>
@@ -1277,10 +1275,10 @@ ${inspectedAgent.instructions || inspectedAgent.content}
 
         {/* ─── FIXED BOTTOM TICKER: CINTA DE AGENTES RECIÉN ABIERTOS (IGUAL A ATLAS) ─── */}
         {recentAgents.length > 0 && (
-          <div className="flex-shrink-0 border-t border-gray-800/80 bg-[#0a0c10]/95 backdrop-blur-md z-20 py-4 px-6 shadow-[0_-10px_30px_rgba(0,0,0,0.6)]">
+          <div className="flex-shrink-0 border-t border-orange-400/80 bg-[#0a0c10]/95 backdrop-blur-md z-20 py-4 px-6 shadow-[0_-10px_30px_rgba(0,0,0,0.6)]">
             <div className="flex items-center gap-2 mb-3 px-2">
               <Clock weight="fill" className="text-green-500" size={20} />
-              <h3 className="text-sm font-bold text-gray-200 tracking-wide uppercase">Agentes Recién Abiertos</h3>
+              <h3 className="text-sm font-bold text-orange-400 tracking-wide uppercase">Agentes Recién Abiertos</h3>
             </div>
             <style>{`
               @keyframes marquee-recent-bottom {
@@ -1301,7 +1299,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                   const key = makeAgentKey(agent);
                   const isInspected = inspectedAgent === agent || (inspectedAgent && makeAgentKey(inspectedAgent) === key);
                   const isGenerated = isGeneratedAgent(agent);
-                  const activeClass = isGenerated ? 'active-card-blue' : 'active-card';
+                  const activeClass = 'bg-orange-950/40 border-orange-400';
                   return (
                     <div 
                       key={i} 
@@ -1315,14 +1313,14 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                       className={`w-[320px] h-36 rounded-2xl p-4 shrink-0 shadow-lg relative cursor-pointer transition-colors flex flex-col justify-between overflow-hidden group border ${
                         isInspected 
                           ? activeClass 
-                          : (isGenerated ? 'bg-[#151515] border-blue-900/40 hover:border-blue-700/60' : 'bg-[#151515] border-[#2A2A2A] hover:border-gray-500')
+                          : (isGenerated ? 'bg-black/40 border-orange-400 hover:border-orange-400' : 'bg-black/40 border-orange-500/50 hover:border-gray-500')
                       }`}
                     >
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <h4 className={`font-bold text-sm line-clamp-1 flex-1 leading-snug ${isGenerated ? 'text-blue-300' : 'text-gray-100'}`}>{agent.title}</h4>
                           {isGenerated && (
-                            <span className="text-[10px] font-bold bg-blue-900/40 text-blue-400 border border-blue-800/50 px-1.5 py-0.5 rounded-full flex-shrink-0">IA</span>
+                            <span className="text-[10px] font-bold bg-blue-900/40 text-blue-400 border border-orange-400 px-1.5 py-0.5 rounded-full flex-shrink-0">IA</span>
                           )}
                         </div>
                         <p className={`text-xs mt-1.5 line-clamp-2 leading-relaxed ${isGenerated ? 'text-blue-400/80' : 'text-gray-500'}`}>
@@ -1343,9 +1341,9 @@ ${inspectedAgent.instructions || inspectedAgent.content}
       </div> {/* End Left Column */}
 
       {/* Right Column: AI & Inspected Agent */}
-      <div className="w-96 md:w-[600px] border-l border-gray-800 bg-[#0f111a] flex flex-col z-20 flex-shrink-0 shadow-2xl">
-        <div className="p-5 border-b border-gray-800 flex items-center justify-between bg-gray-900/50">
-          <h2 className="font-bold text-gray-200 flex items-center gap-2"><Sparkle size={18} className="text-blue-400" /> Panel del Agente</h2>
+      <div className="w-96 md:w-[600px] border-l border-orange-400 bg-[#0f111a] flex flex-col z-20 flex-shrink-0 shadow-2xl">
+        <div className="p-5 border-b border-orange-400 flex items-center justify-between bg-gray-900/50">
+          <h2 className="font-bold text-orange-400 flex items-center gap-2"><Sparkle size={18} className="text-blue-400" /> Panel del Agente</h2>
           {inspectedAgent && (
             <button onClick={() => setInspectedAgent(null)} className="text-gray-500 hover:text-white transition-colors">
               <X size={16} />
@@ -1362,25 +1360,25 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                 
                 {/* Herramientas IA en la parte superior */}
                 <div className="flex flex-col gap-2 mb-6">
-                  <div className="text-[10px] uppercase font-bold text-gray-500 tracking-widest border-b border-gray-800 pb-2 mb-1">Herramientas IA</div>
+                  <div className="text-[10px] uppercase font-bold text-gray-500 tracking-widest border-b border-orange-400 pb-2 mb-1">Herramientas IA</div>
                   <div className="flex flex-wrap gap-2">
                     <button 
                       onClick={handleUpgrade} 
                       disabled={isUpgrading}
-                      className="rounded bg-gray-800 hover:bg-gray-700 border border-transparent hover:border-blue-500 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] disabled:opacity-50"
+                      className="rounded bg-gray-800 hover:bg-gray-700 border border-transparent hover:border-orange-400 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] disabled:opacity-50"
                     >
                       {isUpgrading ? '⚡ Upgrade...' : '✨ Upgrade'}
                     </button>
                     <button 
                       onClick={handleTTS}
                       disabled={isTranslating}
-                      className="rounded bg-gray-800 hover:bg-gray-700 border border-transparent hover:border-blue-500 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] disabled:opacity-50"
+                      className="rounded bg-gray-800 hover:bg-gray-700 border border-transparent hover:border-orange-400 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] disabled:opacity-50"
                     >
                       {isTranslating ? '🔊 Traduciendo...' : '🗣️ TTS'}
                     </button>
                     <button 
                       onClick={handleLogic}
-                      className={`rounded bg-gray-800 hover:bg-gray-700 border border-transparent hover:border-blue-500 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] ${panelTab === 'logic' ? 'text-blue-400 border-blue-500 bg-blue-950/30' : ''}`}
+                      className={`rounded bg-gray-800 hover:bg-gray-700 border border-transparent hover:border-orange-400 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] ${panelTab === 'logic' ? 'text-blue-400 border-blue-500 bg-blue-950/30' : ''}`}
                     >
                       {currentLogicTask?.isRunning ? '🧠 Analizando...' : '🧠 Lógica'}
                     </button>
@@ -1389,7 +1387,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                   <div className="flex gap-2 mt-2 w-full">
                     <button 
                       onClick={() => setPanelTab('content')} 
-                      className={`flex-1 text-sm font-bold px-3 py-2 rounded border transition-colors flex items-center justify-center gap-2 shadow-sm ${panelTab === 'content' ? 'bg-gray-800 text-white border-gray-500' : 'bg-transparent text-gray-400 border-gray-700 hover:text-gray-200'}`}
+                      className={`flex-1 text-sm font-bold px-3 py-2 rounded border transition-colors flex items-center justify-center gap-2 shadow-sm ${panelTab === 'content' ? 'bg-gray-800 text-white border-gray-500' : 'bg-transparent text-gray-400 border-orange-400 hover:text-gray-200'}`}
                     >
                       💬 Original
                     </button>
@@ -1408,7 +1406,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                         <span>Generando mejora...</span>
                         <span>{upgradeProgress}% ({upgradeTimeLeft})</span>
                       </div>
-                      <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden border border-[#2A2A2A]">
+                      <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden border border-orange-500/50">
                         <div 
                           className="h-full rounded-full transition-all duration-300 ease-out"
                           style={{ width: `${upgradeProgress}%`, backgroundColor: '#4ade80', boxShadow: '0 0 10px rgba(74,222,128,0.5)' }}
@@ -1424,7 +1422,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                         <span>Analizando lógica interna...</span>
                         <span>{currentLogicTask.progress}% ({currentLogicTask.timeLeft})</span>
                       </div>
-                      <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden border border-[#2A2A2A]">
+                      <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden border border-orange-500/50">
                         <div 
                           className="h-full rounded-full transition-all duration-300 ease-out"
                           style={{ width: `${currentLogicTask.progress}%`, backgroundColor: '#3b82f6', boxShadow: '0 0 10px rgba(59,130,246,0.5)' }}
@@ -1443,7 +1441,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                 </div>
                 
                 {/* Contenido (Markdown) */}
-                <div className={`p-6 rounded-xl border border-gray-800 leading-relaxed prose prose-invert max-w-none shadow-inner bg-gray-900/80 ${
+                <div className={`p-6 rounded-xl border border-orange-400 leading-relaxed prose prose-invert max-w-none shadow-inner bg-gray-900/80 ${
                   panelTab === 'logic' 
                     ? 'text-sm text-gray-300 prose-sm prose-headings:text-blue-400 prose-a:text-blue-400' 
                     : isGeneratedAgent(inspectedAgent)
@@ -1470,10 +1468,11 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                   style={{
                     display: 'block',
                     width: '100%',
-                    backgroundColor: '#2A2A2A',
-                    border: 'none',
+                    backgroundColor: 'rgba(0,0,0,0.4)',
+                    borderTop: '1px solid #22d3ee',
+                    boxShadow: '0 -5px 15px rgba(34,211,238,0.3)',
                     borderRadius: '0',
-                    color: '#FFFFFF',
+                    color: '#22d3ee',
                     fontWeight: 700,
                     fontSize: '14px',
                     letterSpacing: '0.04em',
@@ -1482,8 +1481,8 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                     transition: 'background-color 150ms ease',
                     textAlign: 'center',
                   }}
-                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#3a3a3a')}
-                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#2A2A2A')}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(34,211,238,0.1)')}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.4)')}
                 >
                   Abrir en el Builder →
                 </button>
@@ -1512,7 +1511,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
               to { opacity: 1; transform: scale(1); }
             }
           `}</style>
-          <div className="bg-[#0a0c10] border border-blue-500/50 rounded-2xl p-6 max-w-md w-full shadow-[0_0_50px_rgba(59,130,246,0.15)] relative">
+          <div className="bg-[#0a0c10] border border-orange-400 rounded-2xl p-6 max-w-md w-full relative">
             <button 
               onClick={() => {
                 if ('speechSynthesis' in window) window.speechSynthesis.cancel();
@@ -1524,12 +1523,12 @@ ${inspectedAgent.instructions || inspectedAgent.content}
             </button>
             <div className="flex items-center gap-3 mb-4">
               <Sparkle weight="fill" className="text-blue-400" size={24} />
-              <h3 className="text-xl font-bold text-white">Mejora Aplicada</h3>
+              <h3 className="text-xl font-bold text-orange-400">Mejora Aplicada</h3>
             </div>
             <p className="text-sm text-gray-400 mb-4">
               Explicación de la optimización y cambios en <strong>{explanationPopup.title}</strong>:
             </p>
-            <div className="bg-gray-900 border border-gray-800 p-4 rounded-xl text-gray-300 text-sm leading-relaxed custom-scrollbar max-h-48 overflow-y-auto">
+            <div className="bg-gray-900 border border-orange-400 p-4 rounded-xl text-gray-300 text-sm leading-relaxed custom-scrollbar max-h-48 overflow-y-auto">
               {explanationPopup.text}
             </div>
             <div className="mt-6 flex justify-between items-center">
@@ -1543,7 +1542,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                     window.speechSynthesis.speak(utterance);
                   }
                 }}
-                className="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                className="bg-transparent border border-orange-400 text-orange-400 hover:bg-cyan-500/20 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
               >
                 🔊 Escuchar
               </button>
@@ -1552,7 +1551,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
                   setExplanationPopup(null);
                 }}
-                className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                className="bg-transparent border border-orange-400 text-orange-400 hover:bg-cyan-500/20 px-6 py-2 rounded-lg font-medium transition-colors"
               >
                 Entendido
               </button>

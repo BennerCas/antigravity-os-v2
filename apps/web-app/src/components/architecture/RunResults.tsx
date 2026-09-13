@@ -74,7 +74,7 @@ export const RunResults: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full w-full bg-[#050505] text-white p-6 overflow-y-auto">
-      <div className="flex justify-between items-center mb-6 border-b border-[#2A2A2A] pb-4">
+      <div className="flex justify-between items-center border-b border-[#2A2A2A] pb-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-100 flex items-center gap-2">
             <CheckCircle weight="fill" className="text-emerald-500" />
@@ -90,6 +90,19 @@ export const RunResults: React.FC = () => {
         >
           Actualizar
         </button>
+      </div>
+
+      {/* AI Prompts Toolbar */}
+      <div className="py-2 mb-6 border-b border-gray-800 flex items-center gap-2 overflow-x-auto scrollbar-none">
+        <span className="text-[10px] uppercase text-gray-500 font-bold mr-2 whitespace-nowrap">QA & Eval Tools:</span>
+        {[
+          { id: 'testgen', label: 'Test Scenario Generator', icon: '🧪' },
+          { id: 'evaluator', label: 'Output Evaluator', icon: '⚖️' }
+        ].map(p => (
+          <button key={p.id} className="whitespace-nowrap text-[10px] px-2 py-1 bg-gray-800 border border-gray-700 rounded text-gray-300 hover:bg-emerald-900/40 hover:text-emerald-300 hover:border-emerald-700 transition-all">
+            {p.icon} {p.label}
+          </button>
+        ))}
       </div>
 
       {loading ? (

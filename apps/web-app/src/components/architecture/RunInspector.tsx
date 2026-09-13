@@ -169,7 +169,7 @@ export const RunInspector: React.FC<{ runId: string }> = ({ runId }) => {
     <div className="flex h-full w-full bg-gray-950 text-white">
       {/* Event Timeline */}
       <div className="w-1/2 border-r border-gray-800 p-6 overflow-y-auto flex flex-col">
-        <div className="flex items-center justify-between mb-6 border-b border-gray-800 pb-2">
+        <div className="flex items-center justify-between border-b border-gray-800 pb-2">
           <h2 className="text-xl font-bold text-gray-200">
             Run Inspector Timeline
             {runId !== 'no-run' && (
@@ -180,6 +180,22 @@ export const RunInspector: React.FC<{ runId: string }> = ({ runId }) => {
             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-gray-600'}`} />
             <span className="text-xs text-gray-500">{isConnected ? 'Conectado' : 'Desconectado'}</span>
           </div>
+        </div>
+
+        {/* AI Prompts Toolbar */}
+        <div className="py-2 mb-4 border-b border-gray-800 flex items-center gap-2 overflow-x-auto scrollbar-none">
+          <span className="text-[10px] uppercase text-gray-500 font-bold mr-2 whitespace-nowrap">Inspector AI:</span>
+          {[
+            { id: 'rootcause', label: 'Root Cause Analyzer', icon: '🔍' },
+            { id: 'autopatch', label: 'Auto Patcher', icon: '🩹' },
+            { id: 'hallucination', label: 'Hallucination Detector', icon: '👁️' },
+            { id: 'cognitive', label: 'Cognitive Profiler', icon: '🧠' },
+            { id: 'dataleak', label: 'Data Leak Scanner', icon: '🔐' }
+          ].map(p => (
+            <button key={p.id} className="whitespace-nowrap text-[10px] px-2 py-1 bg-gray-800 border border-gray-700 rounded text-gray-300 hover:bg-purple-900/40 hover:text-purple-300 hover:border-purple-700 transition-all">
+              {p.icon} {p.label}
+            </button>
+          ))}
         </div>
 
         {events.length === 0 ? (
