@@ -384,7 +384,8 @@ async def list_available_models():
             async with httpx.AsyncClient(timeout=3) as client:
                 resp = await client.get(f"{FREE_AI_BASE}/models", headers={"Authorization": f"Bearer {FREE_AI_KEY}"})
                 if resp.status_code == 200:
-                    models_data = resp.json().get("data", [])[:10] # take top 10
+                    json_resp = resp.json()
+                    models_data = json_resp.get("data") or json_resp.get("models", [])
                     free_ai_models = [{"name": f"free.ai/{m['id']}", "source": "free.ai"} for m in models_data]
         except Exception:
             free_ai_models = [{"name": "free.ai/auto-best", "source": "free.ai"}]

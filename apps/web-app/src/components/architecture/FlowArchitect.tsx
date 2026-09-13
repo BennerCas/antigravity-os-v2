@@ -113,8 +113,7 @@ export const FlowArchitect: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           intent: analysis.intent, 
-          requirements: analysis.requirements,
-          model_override: selectedModel
+          requirements: analysis.requirements
         })
       });
       if (!response.ok) {
