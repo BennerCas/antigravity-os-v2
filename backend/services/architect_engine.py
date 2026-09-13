@@ -10,26 +10,31 @@ class ArchitectEngine:
     """
     
     @staticmethod
-    async def analyze_discovery(conversation_history: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def analyze_discovery(conversation_history: List[Dict[str, Any]], model_override: str = "gpt-4o") -> Dict[str, Any]:
         """
-        Analyzes the chat with the user and extracts structured Intents and Requirements.
+        Analyzes the chat with the user, provides an expert conversational reply, and extracts structured Intents/Requirements.
         """
         system_prompt = (
-            "Eres el FlowArchitect, un experto arquitecto de sistemas. Tu objetivo es analizar "
-            "la conversacion con el usuario y extraer las intenciones y requisitos de la aplicacion que desea crear.\n"
-            "DEBES devolver UNICAMENTE un JSON valido (sin markdown) con esta estructura exacta:\n"
+            "Eres el FlowArchitect, un experto arquitecto de sistemas de IA y asistente técnico proactivo. "
+            "Tu objetivo es interactuar con el usuario para ayudarle a diseñar, pensar y estructurar la aplicación o flujo que desea crear. "
+            "Da ideas, sugiere mejoras, haz preguntas clave y asiste activamente en la definición del requerimiento.\n\n"
+            "DEBES devolver UNICAMENTE un JSON valido (sin bloques ```json de markdown) con esta estructura exacta:\n"
             "{\n"
+            '  "reply": "Tu respuesta conversacional, amigable, experta y en formato Markdown para el usuario",\n'
             '  "intent": {"goal": "...", "success_criteria": ["..."]}, \n'
             '  "requirements": {"trigger": "...", "assumptions": [{"name": "...", "value": true}], "constraints": [{"name": "...", "value": "..."}]}\n'
-            "}"
+            "}\n\n"
+            "REGLAS OBLIGATORIAS:\n"
+            "- 'reply' debe contener TODA la respuesta de texto visible para el usuario.\n"
+            "- NUNCA salgas del formato JSON. Si no puedes extraer un intent claro aún, pon valores genéricos u omítelos, pero asegúrate de devolver JSON válido."
         )
         
         user_prompt = "Historial de conversacion:\n"
-        for msg in conversation_history[-5:]: # ultimos 5 mensajes para contexto
+        for msg in conversation_history[-8:]: # ultimos 8 mensajes para contexto
             user_prompt += f"{msg.get('role', 'user')}: {msg.get('content', '')}\n"
             
         try:
-            result_text, _ = await call_ai(system_prompt, user_prompt, model_override="gpt-4o")
+            result_text, _ = await call_ai(system_prompt, user_prompt, model_override=model_override)
             import re
             json_match = re.search(r'\{.*\}', result_text, re.DOTALL)
             if json_match:
@@ -38,12 +43,13 @@ class ArchitectEngine:
         except Exception as e:
             # Fallback robusto en caso de error
             return {
+                "reply": f"Error de comunicación con el motor de IA: {str(e)}",
                 "intent": {"goal": f"Error extrayendo: {str(e)}", "success_criteria": []},
                 "requirements": {"trigger": "manual", "assumptions": [], "constraints": []}
             }
         
     @staticmethod
-    async def generate_blueprint(intent: Dict[str, Any], requirements: Dict[str, Any]) -> ArchitectureSpec:
+    async def generate_blueprint(intent: Dict[str, Any], requirements: Dict[str, Any], model_override: str = "gpt-4o") -> ArchitectureSpec:
         """
         Takes Intents and Requirements and generates a draft ArchitectureSpec v1 using the AI Engine.
         """
@@ -59,7 +65,7 @@ class ArchitectEngine:
         spec_id = str(uuid.uuid4())
         
         try:
-            result_text, _ = await call_ai(system_prompt, user_prompt, model_override="gpt-4o")
+            result_text, _ = await call_ai(system_prompt, user_prompt, model_override=model_override)
             import re
             json_match = re.search(r'\{.*\}', result_text, re.DOTALL)
             if json_match:

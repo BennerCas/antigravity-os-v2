@@ -16,6 +16,20 @@ export const FlowArchitect: React.FC = () => {
   });
   const [error, setError] = useState<string | null>(null);
 
+  const [models, setModels] = useState<{name: string, source: string}[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>('gpt-4o');
+
+  useEffect(() => {
+    fetch(`${API_URL}/builder/models`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.models && data.models.length > 0) {
+          setModels(data.models);
+        }
+      })
+      .catch(err => console.error('[FlowArchitect] error loading models:', err));
+  }, []);
+
   useEffect(() => {
     try { localStorage.setItem('fa_chat_history', JSON.stringify(chatHistory)); } catch {}
   }, [chatHistory]);
@@ -52,7 +66,10 @@ export const FlowArchitect: React.FC = () => {
       const response = await fetch(`${API_URL}/architect/discovery/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversation_history: newHistory })
+        body: JSON.stringify({ 
+          conversation_history: newHistory,
+          model_override: selectedModel
+        })
       });
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
@@ -61,10 +78,12 @@ export const FlowArchitect: React.FC = () => {
       const data = await response.json();
       setAnalysis(data.analysis);
 
-      const goal = data.analysis?.intent?.goal || 'Objetivo extraído';
+      // Display the AI's custom conversational reply, or fallback to default
+      const aiReply = data.analysis?.reply || `He extraído el objetivo: "${data.analysis?.intent?.goal || 'N/A'}". ¿Quieres que genere el Blueprint o necesitas ajustar algo?`;
+      
       setChatHistory(h => [...h, {
         role: 'assistant',
-        content: `Entendido. He extraído el objetivo: "${goal}". ¿Quieres que genere el Blueprint o necesitas ajustar algo?`
+        content: aiReply
       }]);
     } catch (err: any) {
       console.error('[FlowArchitect] analyze error:', err);
@@ -83,7 +102,11 @@ export const FlowArchitect: React.FC = () => {
       const response = await fetch(`${API_URL}/architect/blueprint/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ intent: analysis.intent, requirements: analysis.requirements })
+        body: JSON.stringify({ 
+          intent: analysis.intent, 
+          requirements: analysis.requirements,
+          model_override: selectedModel
+        })
       });
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
@@ -172,15 +195,28 @@ export const FlowArchitect: React.FC = () => {
           <div className="flex items-center gap-2">
             <span className="text-blue-400">🏗️</span> FlowArchitect Discovery
           </div>
-          {(chatHistory.length > 0 || analysis || blueprint) && (
-            <button
-              onClick={handleClear}
-              className="text-xs text-gray-500 hover:text-red-400 transition-colors px-2 py-1 rounded hover:bg-red-900/20"
-              title="Limpiar sesión"
+          <div className="flex items-center gap-3">
+            <select
+              value={selectedModel}
+              onChange={e => setSelectedModel(e.target.value)}
+              className="bg-gray-900 text-xs text-gray-300 border border-gray-700 rounded px-2 py-1 outline-none focus:border-blue-500 cursor-pointer"
+              title="Elige el modelo de IA para chatear y generar"
             >
-              🗑️ Limpiar
-            </button>
-          )}
+              {models.length === 0 && <option value="gpt-4o">gpt-4o</option>}
+              {models.map(m => (
+                <option key={m.name} value={m.name}>{m.name} ({m.source})</option>
+              ))}
+            </select>
+            {(chatHistory.length > 0 || analysis || blueprint) && (
+              <button
+                onClick={handleClear}
+                className="text-xs text-gray-500 hover:text-red-400 transition-colors px-2 py-1 rounded hover:bg-red-900/20"
+                title="Limpiar sesión"
+              >
+                🗑️ Limpiar
+              </button>
+            )}
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           <style>{`

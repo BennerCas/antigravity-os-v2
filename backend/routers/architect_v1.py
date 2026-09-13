@@ -11,6 +11,7 @@ router = APIRouter(prefix="/architect", tags=["FlowArchitect V1"])
 
 class DiscoveryRequest(BaseModel):
     conversation_history: List[Dict[str, Any]]
+    model_override: str = "gpt-4o"
 
 @router.post("/discovery/analyze")
 async def analyze_discovery(req: DiscoveryRequest):
@@ -18,7 +19,7 @@ async def analyze_discovery(req: DiscoveryRequest):
     Analyzes conversation to extract Intents and Requirements.
     """
     try:
-        analysis = await ArchitectEngine.analyze_discovery(req.conversation_history)
+        analysis = await ArchitectEngine.analyze_discovery(req.conversation_history, req.model_override)
         return {"status": "success", "analysis": analysis}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -26,6 +27,7 @@ async def analyze_discovery(req: DiscoveryRequest):
 class BlueprintRequest(BaseModel):
     intent: Dict[str, Any]
     requirements: Dict[str, Any]
+    model_override: str = "gpt-4o"
 
 @router.post("/blueprint/generate")
 async def generate_blueprint(req: BlueprintRequest):
@@ -33,7 +35,7 @@ async def generate_blueprint(req: BlueprintRequest):
     Generates ArchitectureSpec v1 from Intents and Requirements.
     """
     try:
-        spec = await ArchitectEngine.generate_blueprint(req.intent, req.requirements)
+        spec = await ArchitectEngine.generate_blueprint(req.intent, req.requirements, req.model_override)
         return {"status": "success", "spec": spec.model_dump()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
