@@ -192,8 +192,8 @@ export const FlowArchitect: React.FC = () => {
 
       const rfEdges = (builderFlow.edges || []).map((e: any, idx: number) => ({
         id: e.id || `e-${idx}`,
-        source: e.from,
-        target: e.to,
+        source: e.from_node || e.from,
+        target: e.to_node || e.to,
         sourceHandle: 'sb', // Source Bottom
         targetHandle: 'tt', // Target Top
         animated: true,

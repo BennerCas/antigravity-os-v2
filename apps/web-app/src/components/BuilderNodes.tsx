@@ -169,7 +169,7 @@ export const ActionNode = ({ id, data, selected }: BuilderNodeProps) => {
   const isVariant = data.isVariant;
 
   return (
-    <div className={`flex flex-col transition-colors duration-300 p-5 rounded-xl w-full h-full min-w-[250px] min-h-[200px] transform transition-transform hover:scale-105 relative cyber-glass-node border-2 border-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.3)] ${isVariant ? 'variant' : ''}`}>
+    <div className={`flex flex-col transition-colors duration-300 p-5 rounded-xl w-full h-full min-w-[250px] min-h-[200px] transform transition-transform hover:scale-105 relative cyber-glass-node cyber-glass-node-action ${isVariant ? 'variant' : ''}`}>
       <NodeResizer color="#22c55e" isVisible={!!selected} minWidth={250} minHeight={200} />
       <CardHeaderActions id={id} data={data} customColor={isVariant ? "var(--theme-bg)" : undefined} />
       <UniversalHandles />
@@ -196,7 +196,7 @@ export const LogicaNode = ({ id, data, selected }: BuilderNodeProps) => {
   const isVariant = data.isVariant;
 
   return (
-    <div className={`flex flex-col transition-colors duration-300 p-5 rounded-xl w-full h-full min-w-[300px] min-h-[350px] transform transition-transform hover:scale-105 relative cyber-glass-node border-2 border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.3)] ${isVariant ? 'variant' : ''}`}>
+    <div className={`flex flex-col transition-colors duration-300 p-5 rounded-xl w-full h-full min-w-[300px] min-h-[350px] transform transition-transform hover:scale-105 relative cyber-glass-node cyber-glass-node-logic ${isVariant ? 'variant' : ''}`}>
       <NodeResizer color="#a855f7" isVisible={!!selected} minWidth={300} minHeight={350} />
       <CardHeaderActions id={id} data={data} customColor={isVariant ? "var(--theme-bg)" : undefined} />
       <UniversalHandles />
