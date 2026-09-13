@@ -14,6 +14,7 @@ export const FlowArchitect: React.FC = () => {
   const [blueprint, setBlueprint] = useState<ArchitectureSpec | null>(() => {
     try { const s = localStorage.getItem('fa_blueprint'); return s ? JSON.parse(s) : null; } catch { return null; }
   });
+  const [ttsState, setTtsState] = useState<'idle' | 'playing' | 'paused'>('idle');
   const [error, setError] = useState<string | null>(null);
 
   const [models, setModels] = useState<{name: string, source: string}[]>([]);
@@ -200,6 +201,70 @@ export const FlowArchitect: React.FC = () => {
     }
   };
 
+  const handlePlayTTS = (text: string, idx: number) => {
+    if (!('speechSynthesis' in window)) return;
+    
+    // Si ya estamos hablando ESTE mensaje, alternar pausa
+    if ((window as any)._currentSpeakingIdx === idx) {
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+        setTtsState('playing');
+      } else if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.pause();
+        setTtsState('paused');
+      }
+      return;
+    }
+
+    // Cancelar cualquier otro audio previo
+    window.speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'es-ES';
+    
+    const voices = window.speechSynthesis.getVoices();
+    const spanishVoices = voices.filter(v => v.lang.startsWith('es'));
+    if (spanishVoices.length > 0) {
+      const esES = spanishVoices.find(v => v.lang === 'es-ES');
+      utterance.voice = esES || spanishVoices[0];
+    }
+    
+    utterance.onstart = () => setTtsState('playing');
+    utterance.onend = () => {
+      (window as any)._currentSpeakingIdx = null;
+      setTtsState('idle');
+    };
+    utterance.onerror = () => {
+      (window as any)._currentSpeakingIdx = null;
+      setTtsState('idle');
+    };
+    
+    (window as any)._currentSpeakingIdx = idx;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleStopTTS = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    (window as any)._currentSpeakingIdx = null;
+    setTtsState('idle');
+  };
+
+  const handleResumeTTS = () => {
+    if ('speechSynthesis' in window && window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+      setTtsState('playing');
+    }
+  };
+
+  const handlePauseTTS = () => {
+    if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+      window.speechSynthesis.pause();
+      setTtsState('paused');
+    }
+  };
+
   return (
     <div className="flex h-full w-full bg-gray-900 text-white relative">
       {/* Error Toast */}
@@ -256,35 +321,11 @@ export const FlowArchitect: React.FC = () => {
                 <div className="text-xs text-gray-400 font-mono uppercase tracking-wider">{msg.role}</div>
                 {msg.role === 'assistant' && (
                   <button 
-                    onClick={() => {
-                      if (!('speechSynthesis' in window)) return;
-                      // Usa una variable global simple para rastrear el ID hablando actualmente
-                      const isCurrentlySpeaking = (window as any)._currentSpeakingIdx === idx;
-                      window.speechSynthesis.cancel();
-                      
-                      if (isCurrentlySpeaking) {
-                        (window as any)._currentSpeakingIdx = null;
-                        return;
-                      }
-                      
-                      const utterance = new SpeechSynthesisUtterance(msg.content);
-                      utterance.lang = 'es-ES';
-                      
-                      const voices = window.speechSynthesis.getVoices();
-                      const spanishVoices = voices.filter(v => v.lang.startsWith('es'));
-                      if (spanishVoices.length > 0) {
-                        const esES = spanishVoices.find(v => v.lang === 'es-ES');
-                        utterance.voice = esES || spanishVoices[0];
-                      }
-                      
-                      utterance.onend = () => { (window as any)._currentSpeakingIdx = null; };
-                      (window as any)._currentSpeakingIdx = idx;
-                      window.speechSynthesis.speak(utterance);
-                    }}
-                    className="text-gray-400 hover:text-white transition-colors p-1 opacity-50 group-hover:opacity-100 hover:bg-gray-600 rounded-full flex items-center justify-center w-6 h-6"
-                    title="Reproducir audio"
+                    onClick={() => handlePlayTTS(msg.content, idx)}
+                    className={`text-gray-400 hover:text-white transition-colors p-1 rounded-full flex items-center justify-center w-6 h-6 ${(window as any)._currentSpeakingIdx === idx ? 'opacity-100 bg-blue-600' : 'opacity-50 group-hover:opacity-100 hover:bg-gray-600'}`}
+                    title={(window as any)._currentSpeakingIdx === idx ? (ttsState === 'playing' ? 'Pausar audio' : 'Reanudar audio') : 'Reproducir audio'}
                   >
-                    🔊
+                    {(window as any)._currentSpeakingIdx === idx && ttsState === 'playing' ? '⏸️' : '🔊'}
                   </button>
                 )}
               </div>
@@ -298,6 +339,33 @@ export const FlowArchitect: React.FC = () => {
             </div>
           )}
         </div>
+        
+        {/* Reproductor TTS Persistente (se muestra cuando hay algo activo) */}
+        {(window as any)._currentSpeakingIdx !== null && (
+          <div className="bg-blue-900/50 border-t border-blue-800/50 p-2 flex items-center justify-between px-4 animate-fade-in shadow-[0_-5px_15px_rgba(0,0,0,0.3)]">
+            <div className="flex items-center gap-3">
+              <div className={`w-2 h-2 rounded-full ${ttsState === 'playing' ? 'bg-green-400 animate-pulse' : 'bg-yellow-400'}`}></div>
+              <span className="text-xs text-blue-200 font-medium">
+                {ttsState === 'playing' ? 'Sintetizando voz...' : 'Voz pausada'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {ttsState === 'playing' ? (
+                <button onClick={handlePauseTTS} className="text-white hover:text-blue-300 p-1 bg-blue-800 rounded hover:bg-blue-700" title="Pausar">
+                  ⏸️
+                </button>
+              ) : (
+                <button onClick={handleResumeTTS} className="text-white hover:text-blue-300 p-1 bg-blue-800 rounded hover:bg-blue-700" title="Reanudar">
+                  ▶️
+                </button>
+              )}
+              <button onClick={handleStopTTS} className="text-white hover:text-red-400 p-1 bg-blue-800 rounded hover:bg-red-900/50" title="Detener">
+                ⏹️
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="p-4 bg-gray-800 border-t border-gray-700 flex gap-2">
           <input
             type="text"
