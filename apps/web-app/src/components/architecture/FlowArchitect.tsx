@@ -251,8 +251,43 @@ export const FlowArchitect: React.FC = () => {
             </div>
           )}
           {chatHistory.map((msg, idx) => (
-            <div key={idx} className={`p-3 rounded-lg ${msg.role === 'user' ? 'bg-blue-600/80 ml-8' : 'bg-gray-700 mr-8'}`}>
-              <div className="text-xs text-gray-400 mb-1 font-mono uppercase tracking-wider">{msg.role}</div>
+            <div key={idx} className={`p-3 rounded-lg ${msg.role === 'user' ? 'bg-blue-600/80 ml-8' : 'bg-gray-700 mr-8'} group relative`}>
+              <div className="flex justify-between items-center mb-1">
+                <div className="text-xs text-gray-400 font-mono uppercase tracking-wider">{msg.role}</div>
+                {msg.role === 'assistant' && (
+                  <button 
+                    onClick={() => {
+                      if (!('speechSynthesis' in window)) return;
+                      // Usa una variable global simple para rastrear el ID hablando actualmente
+                      const isCurrentlySpeaking = (window as any)._currentSpeakingIdx === idx;
+                      window.speechSynthesis.cancel();
+                      
+                      if (isCurrentlySpeaking) {
+                        (window as any)._currentSpeakingIdx = null;
+                        return;
+                      }
+                      
+                      const utterance = new SpeechSynthesisUtterance(msg.content);
+                      utterance.lang = 'es-ES';
+                      
+                      const voices = window.speechSynthesis.getVoices();
+                      const spanishVoices = voices.filter(v => v.lang.startsWith('es'));
+                      if (spanishVoices.length > 0) {
+                        const esES = spanishVoices.find(v => v.lang === 'es-ES');
+                        utterance.voice = esES || spanishVoices[0];
+                      }
+                      
+                      utterance.onend = () => { (window as any)._currentSpeakingIdx = null; };
+                      (window as any)._currentSpeakingIdx = idx;
+                      window.speechSynthesis.speak(utterance);
+                    }}
+                    className="text-gray-400 hover:text-white transition-colors p-1 opacity-50 group-hover:opacity-100 hover:bg-gray-600 rounded-full flex items-center justify-center w-6 h-6"
+                    title="Reproducir audio"
+                  >
+                    🔊
+                  </button>
+                )}
+              </div>
               <div className="text-sm leading-relaxed">{msg.content}</div>
             </div>
           ))}
