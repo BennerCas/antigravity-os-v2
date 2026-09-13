@@ -197,10 +197,11 @@ PROMPT TO ANALYZE:
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
 async def call_free_ai(system: str, user: str) -> tuple[str, str]:
-    """Motor Híbrido — Nube vía Free.AI. Cadena de 3 niveles:
-    1. Premium: openai/gpt-4o en POST /v1/chat/ (requiere tokens comprados)
-    2. Gratis self-hosted: qwen7b (Qwen3-30B) en POST /v1/chat/completions
-    3. (si ambos fallan, call_ai cae a Ollama local hermes3:8b)
+    """Motor Híbrido — Nube vía Free.AI. Cadena de 4 niveles:
+    1. anthropic/claude-3.5-sonnet
+    2. openai/gpt-4o
+    3. meta-llama/llama-3.1-70b-instruct
+    4. qwen/qwen-2.5-72b-instruct
     """
     if not FREE_AI_KEY:
         raise Exception("No FREE_AI_API_KEY configured")
@@ -218,26 +219,31 @@ async def call_free_ai(system: str, user: str) -> tuple[str, str]:
             "max_tokens": 2048,
         }
 
-    # Nivel 1: premium GPT-4o (endpoint /v1/chat/)
-    try:
-        async with httpx.AsyncClient(timeout=60) as client:
-            resp = await client.post(f"{FREE_AI_BASE}/chat/", json=_payload("openai/gpt-4o"), headers=headers)
-            if resp.status_code == 200:
-                text = resp.json()["choices"][0]["message"]["content"].strip()
-                return text, "free.ai/openai/gpt-4o"
-            if resp.status_code != 429:
-                resp.raise_for_status()
-    except Exception:
-        pass  # sin créditos premium o endpoint caído → seguir
+    models_to_try = [
+        "anthropic/claude-3.5-sonnet",
+        "openai/gpt-4o",
+        "meta-llama/llama-3.1-70b-instruct",
+        "qwen/qwen-2.5-72b-instruct"
+    ]
 
-    # Nivel 2: self-hosted gratis (endpoint /v1/chat/completions)
-    for model in ("qwen7b", "qwen3-8b", "mistral-small", "deepseek-r1"):
+    for model in models_to_try:
         try:
             async with httpx.AsyncClient(timeout=60) as client:
                 resp = await client.post(f"{FREE_AI_BASE}/chat/completions", json=_payload(model), headers=headers)
+                
+                # Si el endpoint estándar no existe para ese modelo (como el GPT-4o original en algunas configs)
+                if resp.status_code == 404:
+                    resp = await client.post(f"{FREE_AI_BASE}/chat/", json=_payload(model), headers=headers)
+
+                if resp.status_code == 200:
+                    text = resp.json()["choices"][0]["message"]["content"].strip()
+                    return text, f"free.ai/{model}"
+                
+                # Si es rate limit o falta de saldo, pasa al siguiente
+                if resp.status_code in (429, 402, 403):
+                    continue
+                
                 resp.raise_for_status()
-                text = resp.json()["choices"][0]["message"]["content"].strip()
-                return text, f"free.ai/{model}"
         except Exception:
             continue
 
