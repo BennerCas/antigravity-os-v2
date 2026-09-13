@@ -169,13 +169,15 @@ export const ActionNode = ({ id, data, selected }: BuilderNodeProps) => {
   const isVariant = data.isVariant;
 
   return (
-    <div className={`flex flex-col transition-colors duration-300 p-6 rounded-xl w-full h-full min-w-[360px] min-h-[640px] transform transition-transform hover:scale-105 relative cyber-glass-node ${isVariant ? 'variant' : ''}`}>
-      <NodeResizer color="#3b82f6" isVisible={!!selected} minWidth={360} minHeight={640} />
+    <div className={`flex flex-col transition-colors duration-300 p-5 rounded-xl w-full h-full min-w-[250px] min-h-[200px] transform transition-transform hover:scale-105 relative cyber-glass-node border-2 border-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.3)] ${isVariant ? 'variant' : ''}`}>
+      <NodeResizer color="#22c55e" isVisible={!!selected} minWidth={250} minHeight={200} />
       <CardHeaderActions id={id} data={data} customColor={isVariant ? "var(--theme-bg)" : undefined} />
       <UniversalHandles />
-      <h3 className="font-bold text-lg mb-4 pr-32 flex-shrink-0">{String(data.title || data.actionType || "Action Node")}</h3>
+      <h3 className="font-bold text-lg mb-4 pr-32 flex items-center gap-2 flex-shrink-0 text-green-400">
+        🚀 {String(data.title || data.actionType || "Action Node")}
+      </h3>
       <textarea onWheel={onWheelTextarea} 
-        className="flex-grow w-full rounded p-2 text-sm resize-none outline-none overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--theme-border)] whitespace-pre-wrap"
+        className="flex-grow w-full rounded p-2 text-sm resize-none outline-none overflow-y-auto scrollbar-thin scrollbar-thumb-green-500/50 whitespace-pre-wrap bg-black/20"
         style={{ scrollbarWidth: 'none' }}
         value={textContent}
         onChange={(e) => {
@@ -194,13 +196,15 @@ export const LogicaNode = ({ id, data, selected }: BuilderNodeProps) => {
   const isVariant = data.isVariant;
 
   return (
-    <div className={`flex flex-col transition-colors duration-300 p-6 rounded-xl w-full h-full min-w-[360px] min-h-[640px] transform transition-transform hover:scale-105 relative cyber-glass-node ${isVariant ? 'variant' : ''}`}>
-      <NodeResizer color="#3b82f6" isVisible={!!selected} minWidth={360} minHeight={640} />
+    <div className={`flex flex-col transition-colors duration-300 p-5 rounded-xl w-full h-full min-w-[300px] min-h-[350px] transform transition-transform hover:scale-105 relative cyber-glass-node border-2 border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.3)] ${isVariant ? 'variant' : ''}`}>
+      <NodeResizer color="#a855f7" isVisible={!!selected} minWidth={300} minHeight={350} />
       <CardHeaderActions id={id} data={data} customColor={isVariant ? "var(--theme-bg)" : undefined} />
       <UniversalHandles />
-      <h3 className="font-bold text-lg mb-4 pr-32 flex items-center gap-2 flex-shrink-0">🧠 Lógica del Prompt</h3>
+      <h3 className="font-bold text-lg mb-4 pr-32 flex items-center gap-2 flex-shrink-0 text-purple-400">
+        🧠 {data.title || "Lógica del Prompt"}
+      </h3>
       <textarea onWheel={onWheelTextarea} 
-        className="flex-grow w-full rounded p-2 text-sm resize-none outline-none scrollbar-none whitespace-pre-wrap opacity-90"
+        className="flex-grow w-full rounded p-2 text-sm resize-none outline-none overflow-y-auto scrollbar-thin scrollbar-thumb-purple-500/50 whitespace-pre-wrap bg-black/20"
         style={{ scrollbarWidth: 'none' }}
         value={textContent}
         onChange={(e) => {

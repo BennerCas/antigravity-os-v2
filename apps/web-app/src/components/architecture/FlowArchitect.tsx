@@ -166,7 +166,7 @@ export const FlowArchitect: React.FC = () => {
         if (n.kind === 'transform' || n.kind === 'decision') {
           nodeType = 'logicaNode';
         } else if (n.kind === 'start' || n.kind === 'end') {
-          nodeType = 'actionNode';
+          nodeType = 'action';
         }
 
         // Distributed Layout: 3 nodes per row
