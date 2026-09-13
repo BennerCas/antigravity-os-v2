@@ -138,6 +138,56 @@ const CardHeaderActions = ({ id, data, customColor }: { id: string; data: Builde
     </div>
   );
 };
+
+export const renderHighlightedText = (text: string) => {
+  if (!text) return null;
+  const regex = /(TODO:|EDITAR:|\[.*?\]|<.*?>)/g;
+  const parts = text.split(regex);
+  return parts.map((part, i) => {
+    if (part.match(regex)) {
+      return (
+        <span key={i} className="bg-yellow-400 text-black px-1 rounded font-bold mx-1">
+          {part}
+        </span>
+      );
+    }
+    return part;
+  });
+};
+
+export const HighlightedTextarea = ({ value, onChange, onWheel, className, placeholder, style, textareaClassName }: any) => {
+  return (
+    <div className={`relative overflow-hidden ${className || ''}`} style={style}>
+      <div 
+        className={`absolute inset-0 whitespace-pre-wrap break-words pointer-events-none overflow-hidden ${textareaClassName || ''}`}
+        aria-hidden="true"
+      >
+        {!value && placeholder ? (
+          <span className="opacity-50">{placeholder}</span>
+        ) : (
+          renderHighlightedText(value)
+        )}
+      </div>
+      <textarea
+        onWheel={onWheel}
+        onScroll={(e) => {
+          const target = e.target as HTMLTextAreaElement;
+          if (target.previousElementSibling) {
+            const div = target.previousElementSibling as HTMLDivElement;
+            div.scrollTop = target.scrollTop;
+            div.scrollLeft = target.scrollLeft;
+          }
+        }}
+        className={`absolute inset-0 w-full h-full resize-none outline-none overflow-y-auto whitespace-pre-wrap break-words bg-transparent ${textareaClassName || ''}`}
+        style={{ WebkitTextFillColor: 'transparent', scrollbarWidth: 'none' }}
+        value={value}
+        onChange={onChange}
+        spellCheck={false}
+      />
+    </div>
+  );
+};
+
 export const MainPromptNode = ({ id, data, selected }: BuilderNodeProps) => {
   const { updateNodeData } = useReactFlow();
   const [textContent, setTextContent] = useState(String(data.content || data.prompt || ""));
@@ -149,11 +199,12 @@ export const MainPromptNode = ({ id, data, selected }: BuilderNodeProps) => {
       <CardHeaderActions id={id} data={data} customColor={isVariant ? "var(--theme-bg)" : undefined} />
       <UniversalHandles />
       <h3 className="font-bold text-lg mb-4 pr-32 flex-shrink-0">{data.title || "Main Prompt"}</h3>
-      <textarea onWheel={onWheelTextarea} 
-        className="flex-grow w-full rounded p-2 text-sm resize-none outline-none overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--theme-border)] whitespace-pre-wrap"
-        style={{ scrollbarWidth: 'none' }}
+      <HighlightedTextarea 
+        onWheel={onWheelTextarea}
+        className="flex-grow w-full"
+        textareaClassName="rounded p-2 text-sm scrollbar-thin scrollbar-thumb-[var(--theme-border)]"
         value={textContent}
-        onChange={(e) => {
+        onChange={(e: any) => {
           setTextContent(e.target.value);
           updateNodeData(id, { content: e.target.value });
         }}
@@ -176,11 +227,12 @@ export const ActionNode = ({ id, data, selected }: BuilderNodeProps) => {
       <h3 className="font-bold text-lg mb-4 pr-32 flex items-center gap-2 flex-shrink-0 text-green-400">
         🚀 {String(data.title || data.actionType || "Action Node")}
       </h3>
-      <textarea onWheel={onWheelTextarea} 
-        className="flex-grow w-full rounded p-2 text-sm resize-none outline-none overflow-y-auto scrollbar-thin scrollbar-thumb-green-500/50 whitespace-pre-wrap bg-black/20"
-        style={{ scrollbarWidth: 'none' }}
+      <HighlightedTextarea 
+        onWheel={onWheelTextarea}
+        className="flex-grow w-full bg-black/20 rounded"
+        textareaClassName="p-2 text-sm scrollbar-thin scrollbar-thumb-green-500/50"
         value={textContent}
-        onChange={(e) => {
+        onChange={(e: any) => {
           setTextContent(e.target.value);
           updateNodeData(id, { content: e.target.value });
         }}
@@ -203,11 +255,12 @@ export const LogicaNode = ({ id, data, selected }: BuilderNodeProps) => {
       <h3 className="font-bold text-lg mb-4 pr-32 flex items-center gap-2 flex-shrink-0 text-purple-400">
         🧠 {data.title || "Lógica del Prompt"}
       </h3>
-      <textarea onWheel={onWheelTextarea} 
-        className="flex-grow w-full rounded p-2 text-sm resize-none outline-none overflow-y-auto scrollbar-thin scrollbar-thumb-purple-500/50 whitespace-pre-wrap bg-black/20"
-        style={{ scrollbarWidth: 'none' }}
+      <HighlightedTextarea 
+        onWheel={onWheelTextarea}
+        className="flex-grow w-full bg-black/20 rounded"
+        textareaClassName="p-2 text-sm scrollbar-thin scrollbar-thumb-purple-500/50"
         value={textContent}
-        onChange={(e) => {
+        onChange={(e: any) => {
           setTextContent(e.target.value);
           updateNodeData(id, { content: e.target.value });
         }}
@@ -238,11 +291,12 @@ export const TraducirNode = ({ id, data, selected }: BuilderNodeProps) => {
         <option value="Alemán" className="bg-black">Alemán</option>
         <option value="Italiano" className="bg-black">Italiano</option>
       </select>
-      <textarea onWheel={onWheelTextarea} 
-        className="w-full rounded p-2 text-sm resize-none h-24 outline-none scrollbar-none"
-        style={{ scrollbarWidth: 'none' }}
+      <HighlightedTextarea 
+        onWheel={onWheelTextarea}
+        className="w-full h-24"
+        textareaClassName="rounded p-2 text-sm scrollbar-none"
         value={content}
-        onChange={(e) => setContent(e.target.value)}
+        onChange={(e: any) => setContent(e.target.value)}
         placeholder="Texto a traducir..."
       />
     </div>
@@ -259,11 +313,12 @@ export const EditarNode = ({ id, data, selected }: BuilderNodeProps) => {
       <CardHeaderActions id={id} data={data} />
       <UniversalHandles />
       <h3 className="font-bold mb-4 pr-32">Editar</h3>
-      <textarea onWheel={onWheelTextarea} 
-        className="w-full rounded p-2 text-sm resize-none h-32 outline-none scrollbar-none"
-        style={{ scrollbarWidth: 'none' }}
+      <HighlightedTextarea 
+        onWheel={onWheelTextarea}
+        className="w-full h-32"
+        textareaClassName="rounded p-2 text-sm scrollbar-none"
         value={content}
-        onChange={(e) => {
+        onChange={(e: any) => {
           setContent(e.target.value);
           updateNodeData(id, { content: e.target.value });
         }}
@@ -314,15 +369,17 @@ export const PostItNode = ({ id, data, selected }: BuilderNodeProps) => {
 
       <CardHeaderActions id={id} data={data} customColor={textColor} />
 
-      <textarea onWheel={onWheelTextarea} 
-        className="w-full h-32 bg-transparent resize-none outline-none font-mono text-sm leading-relaxed scrollbar-none"
-        placeholder="Escribe una nota..."
+      <HighlightedTextarea 
+        onWheel={onWheelTextarea}
+        className="w-full h-32"
+        textareaClassName="font-mono text-sm leading-relaxed scrollbar-none"
         value={note}
-        onChange={(e) => {
+        onChange={(e: any) => {
           setNote(e.target.value);
           updateNodeData(id, { note: e.target.value });
         }}
-        style={{ color: textColor, scrollbarWidth: 'none' }}
+        style={{ color: textColor }}
+        placeholder="Escribe una nota..."
       />
     </div>
   );
