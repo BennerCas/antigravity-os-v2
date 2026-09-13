@@ -1484,7 +1484,7 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
   return (
     <div className={`w-full h-full relative flex flex-col transition-colors duration-300 theme-node-style-${nodeStyle}`} style={{ ...themeStyle, backgroundColor: "var(--theme-bg)", color: "var(--theme-text)" }}>
       {/* ── Builder Tab Bar ── */}
-      <div className="flex-shrink-0 flex items-center justify-center bg-[#000000] border-b border-[#2A2A2A] px-4 h-16 gap-1 z-[70] relative w-full shadow-sm">
+      <div className="flex-shrink-0 flex items-center justify-center bg-[#000000] border-b border-[#2A2A2A] px-4 h-16 gap-2 z-[70] relative w-full shadow-sm">
         {(
           [
             { id: 'flowarchitect', label: '🏗️ Flow Architect' },
@@ -1494,41 +1494,11 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
           ] as { id: 'flowarchitect' | 'runinspector' | 'flowboard' | 'runresults'; label: string }[]
         ).map((tab, idx) => {
           const active = builderTab === tab.id;
-          const activeStyle: React.CSSProperties = {
-            background: 'rgba(30,58,138,0.4)',
-            border: '1.5px solid #3b82f6',
-            color: '#93c5fd',
-            boxShadow: '0 0 20px rgba(59,130,246,0.55)',
-            borderRadius: 8,
-            padding: '7px 20px',
-            fontWeight: 700,
-            fontSize: 13,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            transition: 'all 0.18s ease',
-            whiteSpace: 'nowrap',
-          };
-          const inactiveStyle: React.CSSProperties = {
-            background: 'transparent',
-            border: '1.5px solid transparent',
-            color: '#6b7280',
-            borderRadius: 8,
-            padding: '7px 20px',
-            fontWeight: 700,
-            fontSize: 13,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            transition: 'all 0.18s ease',
-            whiteSpace: 'nowrap',
-          };
+          
           return (
             <React.Fragment key={tab.id}>
               {idx > 0 && (
-                <div style={{ width: 1, height: 22, background: '#1f2937', flexShrink: 0, margin: '0 2px' }} />
+                <div className="w-[1px] h-6 bg-gray-800 flex-shrink-0 mx-1" />
               )}
               <button
                 data-tab={tab.id}
@@ -1537,23 +1507,13 @@ const [activeDrawPoints, setActiveDrawPoints] = useState<number[][] | null>(null
                   setBuilderTab(tab.id);
                   if (tab.id === 'runresults') setRunResultsKey(k => k + 1);
                 }}
-                style={active ? activeStyle : inactiveStyle}
-                onMouseEnter={e => {
-                  if (!active) {
-                    const el = e.currentTarget as HTMLElement;
-                    el.style.color = '#e5e7eb';
-                    el.style.background = 'rgba(255,255,255,0.06)';
-                    el.style.borderColor = '#374151';
+                className={`
+                  flex items-center gap-2 px-6 py-2 rounded-lg font-bold text-sm cursor-pointer transition-all duration-200 border-2 whitespace-nowrap
+                  ${active 
+                    ? 'bg-blue-900/40 border-blue-500 text-blue-300 shadow-[0_0_20px_rgba(59,130,246,0.6)]' 
+                    : 'bg-transparent border-transparent text-gray-500 hover:text-gray-200 hover:bg-white/5 hover:border-gray-700'
                   }
-                }}
-                onMouseLeave={e => {
-                  if (!active) {
-                    const el = e.currentTarget as HTMLElement;
-                    el.style.color = '#6b7280';
-                    el.style.background = 'transparent';
-                    el.style.borderColor = 'transparent';
-                  }
-                }}
+                `}
               >
                 {tab.label}
               </button>
