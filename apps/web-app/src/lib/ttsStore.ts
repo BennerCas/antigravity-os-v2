@@ -4,6 +4,7 @@ interface TTSState {
   isActive: boolean;
   isPaused: boolean;
   currentSection: string;
+  currentText: string;
   volume: number;
   speed: number;
   voices: SpeechSynthesisVoice[];
@@ -37,6 +38,7 @@ export const useTTSStore = create<TTSState>((set, get) => ({
   isActive: false,
   isPaused: false,
   currentSection: '',
+  currentText: '',
   volume: 1,
   speed: 1,
   voices: [],
@@ -75,12 +77,12 @@ export const useTTSStore = create<TTSState>((set, get) => ({
       if (voice) utterance.voice = voice;
     }
 
-    utterance.onstart = () => set({ isActive: true, isPaused: false, currentSection: section });
-    utterance.onend = () => set({ isActive: false, isPaused: false, currentSection: '' });
-    utterance.onerror = () => set({ isActive: false, isPaused: false, currentSection: '' });
+    utterance.onstart = () => set({ isActive: true, isPaused: false, currentSection: section, currentText: text });
+    utterance.onend = () => set({ isActive: false, isPaused: false, currentSection: '', currentText: '' });
+    utterance.onerror = () => set({ isActive: false, isPaused: false, currentSection: '', currentText: '' });
 
     window.speechSynthesis.speak(utterance);
-    set({ isActive: true, isPaused: false, currentSection: section });
+    set({ isActive: true, isPaused: false, currentSection: section, currentText: text });
   },
 
   pause: () => {
@@ -100,10 +102,20 @@ export const useTTSStore = create<TTSState>((set, get) => ({
 
   setVolume: (v: number) => {
     set({ volume: v });
+    const { isActive, currentText, currentSection, play } = get();
+    if (isActive && currentText) {
+      clearTimeout((window as any)._ttsRestartTimer);
+      (window as any)._ttsRestartTimer = setTimeout(() => play(currentText, currentSection), 300);
+    }
   },
   
   setSpeed: (s: number) => {
     set({ speed: s });
+    const { isActive, currentText, currentSection, play } = get();
+    if (isActive && currentText) {
+      clearTimeout((window as any)._ttsRestartTimer);
+      (window as any)._ttsRestartTimer = setTimeout(() => play(currentText, currentSection), 300);
+    }
   },
 
   setVoice: (uri: string) => {
