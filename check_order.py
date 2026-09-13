@@ -1,26 +1,13 @@
-import json
-
-with open("apps/web-app/src/data/prompts_db.json", "r", encoding="utf-8") as f:
-    data = json.load(f)
-
-# Simulate the JS catMap building (insertion order)
-cat_map = {}
-
-# mockMultiPrompt is added first with unshift in JS code
-mock = {"category": "Marketing > Flujos Completos"}
-data_with_mock = [mock] + data
-
-for p in data_with_mock:
-    parts = (p.get("category", "General")).split(" > ")
-    main = parts[0].strip()
-    sub = parts[1].strip() if len(parts) > 1 else "General"
-    if main not in cat_map:
-        cat_map[main] = {}
-    cat_map[main][sub] = cat_map[main].get(sub, 0) + 1
-
-categories = list(cat_map.keys())
-print(f"Total categories: {len(categories)}")
-for i, cat in enumerate(categories):
-    total = sum(cat_map[cat].values())
-    print(f"  [{i}] {cat}: {total} prompts")
-
+content = open('apps/web-app/src/components/academy/KnowledgeGraph3D.tsx','r',encoding='utf-8').read()
+idx_gd = content.find('.graphData(initialGraphData)')
+idx_fx = content.find('node.fx = px;')
+idx_init = content.find('const initialGraphData')
+idx_render = content.find('const renderCustomNode')
+print(f'initialGraphData at {idx_init}')
+print(f'node.fx at {idx_fx}')
+print(f'renderCustomNode at {idx_render}')
+print(f'graphData() at {idx_gd}')
+print()
+# Show surrounding context of where fib_block ended up
+print('Context around node.fx:')
+print(content[idx_fx-100:idx_fx+100].encode('ascii','replace').decode())

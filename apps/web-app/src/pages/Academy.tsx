@@ -72,7 +72,7 @@ type AcademyTab = 'hub' | 'tracks' | 'sandbox' | 'graph' | 'drift' | 'certificat
 
 export default function Academy() {
   const [currentUserId] = useState<string>('learner_default');
-  const [activeTab, setActiveTab] = useState<AcademyTab>('hub');
+  const [activeTab, setActiveTab] = useState<AcademyTab>('graph');
   const [profile, setProfile] = useState<LearningProfile | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [missions, setMissions] = useState<MissionDefinition[]>([]);
