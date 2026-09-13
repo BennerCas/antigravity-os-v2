@@ -176,7 +176,7 @@ PROPORCIONA SOLO EL CONTENIDO MEJORADO, sin explicaciones adicionales."""
 async def search_assist(req: SearchAssistRequest):
     """
     Asistente IA para buscar agentes o KB relevantes para una consulta.
-    Retorna sugerencias en lenguaje natural.
+    Retorna sugerencias en lenguaje natural usando busqueda semantica/keywords combinada.
     """
     try:
         try:
@@ -184,50 +184,83 @@ async def search_assist(req: SearchAssistRequest):
         except ImportError:
             from backend.services.agent_factory import AgentFactory, SKILLS_PATH, PROMPTS_PATH
 
-        import json, os
+        import json, os, re
 
-        # Cargar catalogo resumido
-        agents_catalog = []
+        skills = []
         if os.path.exists(SKILLS_PATH):
             try:
                 with open(SKILLS_PATH, encoding='utf-8') as f:
                     skills = json.load(f)
-                agents_catalog = [{"name": s.get("name", s.get("id")), "category": s.get("category", ""), "desc": s.get("description", "")[:80]} for s in skills[:100]]
             except Exception:
                 pass
 
-        prompts_catalog = []
+        prompts = []
         if os.path.exists(PROMPTS_PATH):
             try:
                 with open(PROMPTS_PATH, encoding='utf-8') as f:
                     prompts = json.load(f)
-                prompts_catalog = [{"title": p.get("title"), "category": p.get("category", "")} for p in prompts[:100]]
             except Exception:
                 pass
+
+        stopwords = {"un", "una", "el", "la", "los", "las", "de", "del", "que", "para", "por", "en", "con", "a", "al", "y", "o", "quiero", "necesito", "busco", "agente", "conocimiento", "prompt", "experto", "asistente", "sistema"}
+        query_words = [w for w in re.findall(r'\w+', req.query.lower()) if w not in stopwords]
+        
+        if not query_words:
+            query_words = [w for w in re.findall(r'\w+', req.query.lower())]
+
+        def score_agent(agent):
+            if not isinstance(agent, dict): return -1
+            s = 0
+            name = (agent.get('name') or agent.get('id', '')).lower()
+            cat = agent.get('category', '').lower()
+            desc = agent.get('description', '').lower()
+            for w in query_words:
+                if w in name: s += 10
+                if w in cat: s += 5
+                if w in desc: s += 1
+            return s
+
+        def score_prompt(p):
+            if not isinstance(p, dict): return -1
+            s = 0
+            title = p.get('title', '').lower()
+            cat = p.get('category', '').lower()
+            content = p.get('content', '')[:1000].lower()
+            for w in query_words:
+                if w in title: s += 10
+                if w in cat: s += 5
+                if w in content: s += 1
+            return s
+
+        skills.sort(key=score_agent, reverse=True)
+        top_skills = [a for a in skills[:15] if isinstance(a, dict)]
+        
+        prompts.sort(key=score_prompt, reverse=True)
+        top_prompts = [p for p in prompts[:15] if isinstance(p, dict)]
 
         context_info = req.context or 'todos'
 
         search_prompt = f"""El usuario busca: \"{req.query}\"
 Contexto: {context_info}
 
-CATÁLOGO DISPONIBLE:
+CATÁLOGO FILTRADO (Top coincidencias):
 
 AGENTES:
-{json.dumps([{"nombre": a['name'] or a.get('id',''), "categoria": a['category'], "descripcion": a['description'][:60] if a.get('description') else ''} for a in skills[:60] if isinstance(a, dict)], ensure_ascii=False, indent=1)}
+{json.dumps([{"nombre": a.get('name') or a.get('id',''), "categoria": a.get('category',''), "descripcion": str(a.get('description',''))[:60]} for a in top_skills], ensure_ascii=False, indent=1)}
 
 KNOWLEDGE BASE:
-{json.dumps([{"titulo": p['title'], "categoria": p.get('category','')} for p in prompts[:60] if isinstance(p, dict)], ensure_ascii=False, indent=1)}
+{json.dumps([{"titulo": p.get('title',''), "categoria": p.get('category','')} for p in top_prompts], ensure_ascii=False, indent=1)}
 
-INSTRUCCION: Basandote en la consulta del usuario, responde en espanol con:
-1. Una breve explicacion de lo que necesita el usuario (1 oracion)
-2. Lista de 3-5 agentes MAS relevantes con sus nombres EXACTOS del catalogo
-3. Lista de 2-3 KB MAS relevantes con sus titulos EXACTOS del catalogo
-Se conciso. Usa exactamente los nombres/titulos del catalogo."""
+INSTRUCCION: Basandote EXCLUSIVAMENTE en la consulta del usuario y el catalogo filtrado de arriba, responde en español con:
+1. Una breve explicacion de cómo estos elementos ayudan al usuario (1 oracion)
+2. Lista de 3-5 agentes MAS relevantes con sus nombres EXACTOS
+3. Lista de 2-3 KB MAS relevantes con sus titulos EXACTOS
+Tu respuesta debe ser limpia y usar EXACTAMENTE los nombres/titulos provistos en el catalogo para que la interfaz pueda encontrarlos."""
 
         response = await AgentFactory.chat_one_shot(
             agent_id="agentos_assistant",
             user_prompt=search_prompt,
-            override_instructions="Eres un asistente experto en recomendar agentes IA y bases de conocimiento. Responde siempre en español, de forma concisa y util."
+            override_instructions="Eres un asistente experto en recomendar agentes IA y bases de conocimiento de un catalogo. Responde siempre en español de forma hiperconcisa y usa los nombres exactos."
         )
         return {"query": req.query, "response": response, "status": "ok"}
     except Exception as e:
