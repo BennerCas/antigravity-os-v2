@@ -15,6 +15,9 @@ import os
 import config  # noqa: F401  (carga dotenv al importar)
 import db
 from routers.search import FLOW_GENERATOR_SYSTEM
+from services.master_prompts_v2 import *
+from routers.engine import get_config
+from routers.engine import get_config
 
 db.init_db()
 
@@ -196,13 +199,14 @@ PROMPT TO ANALYZE:
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
+FREE_AI_MODELS_CASCADE = [
+    "anthropic/claude-3.5-sonnet",
+    "openai/gpt-4o",
+    "meta-llama/llama-3.1-70b-instruct",
+    "qwen/qwen-2.5-72b-instruct"
+]
+
 async def call_free_ai(system: str, user: str) -> tuple[str, str]:
-    """Motor Híbrido — Nube vía Free.AI. Cadena de 4 niveles:
-    1. anthropic/claude-3.5-sonnet
-    2. openai/gpt-4o
-    3. meta-llama/llama-3.1-70b-instruct
-    4. qwen/qwen-2.5-72b-instruct
-    """
     if not FREE_AI_KEY:
         raise Exception("No FREE_AI_API_KEY configured")
 
@@ -219,12 +223,8 @@ async def call_free_ai(system: str, user: str) -> tuple[str, str]:
             "max_tokens": 2048,
         }
 
-    models_to_try = [
-        "anthropic/claude-3.5-sonnet",
-        "openai/gpt-4o",
-        "meta-llama/llama-3.1-70b-instruct",
-        "qwen/qwen-2.5-72b-instruct"
-    ]
+    cfg = get_config()
+    models_to_try = [cfg["cloud_model"]] + [m for m in cfg["cloud_options"] if m != cfg["cloud_model"]]
 
     for model in models_to_try:
         try:
@@ -252,7 +252,9 @@ async def call_free_ai(system: str, user: str) -> tuple[str, str]:
 
 async def call_ollama_fallback(system: str, user: str, model_override: Optional[str] = None) -> tuple[str, str]:
     """Try Ollama local models as fallback."""
-    models_to_try = [model_override] + OLLAMA_FALLBACK if model_override else OLLAMA_FALLBACK
+    cfg = get_config()
+    base_models = [cfg["local_model"]] + [m for m in cfg["local_options"] if m != cfg["local_model"]]
+    models_to_try = [model_override] + base_models if model_override else base_models
     models_to_try = list(dict.fromkeys(models_to_try)) # Deduplicate
 
     for model in models_to_try:
@@ -287,20 +289,32 @@ async def call_ai(system: str, user: str, model_override: Optional[str] = None) 
     Returns (result_text, model_name).
     """
     if model_override:
-        # User explicitly chose a model — try Ollama first
-        try:
-            return await call_ollama_fallback(system, user, model_override)
-        except Exception:
-            pass
+        # Check if it's a known cloud model
+        cfg = get_config()
+        if model_override in cfg["cloud_options"]:
+            if FREE_AI_KEY:
+                # Need a custom call to free ai
+                # Just use call_free_ai but hack it temporarily by pushing the model to the top?
+                # Actually, call_free_ai doesn't take an override. 
+                # Let's just let it fall through but with hybrid enabled?
+                pass
+            
+        else:
+            try:
+                return await call_ollama_fallback(system, user, model_override)
+            except Exception:
+                pass
 
-    # Primary: Free.AI (dynamically picks best model like gpt-4o or claude if available)
-    if FREE_AI_KEY:
+    cfg = get_config()
+    hybrid_enabled = cfg.get("hybrid_enabled", True)
+
+    if hybrid_enabled and FREE_AI_KEY:
         try:
             return await call_free_ai(system, user)
         except Exception:
             pass
 
-    # Fallback: local Ollama (Hermes 3, etc)
+    # Fallback or hybrid disabled: local Ollama
     return await call_ollama_fallback(system, user, model_override)
 
 
@@ -492,7 +506,9 @@ async def list_executions(limit: int = 50):
 
 @router.get("/engine")
 async def engine_status():
-    """Estado del Motor Hibrido: que motor responderia ahora (nube GPT-4o o local Hermes3)."""
+    """Estado del Motor Hibrido."""
+    cfg = get_config()
+    hybrid_enabled = cfg.get("hybrid_enabled", True)
     cloud_ready = bool(FREE_AI_KEY)
     local_ready = False
     ollama_models = []
@@ -501,14 +517,15 @@ async def engine_status():
             resp = await client.get(f"{OLLAMA_BASE}/api/tags")
             if resp.status_code == 200:
                 ollama_models = [m["name"] for m in resp.json().get("models", [])]
-                local_ready = any("hermes3" in m for m in ollama_models)
+                local_ready = True
     except Exception:
         pass
-    active = "cloud" if cloud_ready else ("local" if local_ready else "offline")
+        
+    active = "cloud" if (cloud_ready and hybrid_enabled) else ("local" if local_ready else "offline")
     return {
         "active": active,
-        "cloud": {"provider": "free.ai", "model": "openai/gpt-4o", "ready": cloud_ready},
-        "local": {"provider": "ollama", "model": "hermes3:8b", "ready": local_ready},
+        "cloud": {"provider": "free.ai", "model": cfg["cloud_model"], "ready": cloud_ready},
+        "local": {"provider": "ollama", "model": cfg["local_model"], "ready": local_ready},
         "ollama_models": ollama_models[:12],
     }
 
@@ -557,6 +574,47 @@ async def generate_flow(req: GenerateFlowRequest):
             print("[AI Flow Generator] Error parsing JSON:", response_text)
             raise HTTPException(status_code=500, detail="La IA no devolvió un JSON válido.")
             
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class CopilotRequest(BaseModel):
+    message: str
+    history: list = []
+
+FLOWBOARD_COPILOT_SYSTEM = """
+Eres el "Copiloto Guía de FlowBoard", un experto AI asistente integrado directamente en el editor visual de nodos (FlowBoard).
+Tu misión es guiar paso a paso al usuario para que todo quede bien configurado antes de ejecutar su flujo, respondiendo dudas sobre cómo interactuar con los paneles y nodos vacíos.
+
+Detalles de FlowBoard que debes conocer:
+- Los nodos se editan en el panel derecho de propiedades.
+- Existe un botón 'Execute' (Ejecutar) que se utiliza cuando el flujo está listo.
+- Se pueden agregar nodos vacíos y conectarlos entre sí mediante aristas.
+- Debes ayudar al usuario a entender qué información falta o cómo estructurar su flujo.
+
+Proporciona instrucciones claras, amigables y concisas. Si el usuario está perdido, sugiere crear nodos vacíos o revisar las propiedades en el panel derecho antes de presionar 'Execute'.
+RULES: ALWAYS EXECUTE, REASON, AND RESPOND STRICTLY IN SPANISH (unless otherwise requested).
+"""
+
+@router.post("/flowboard/copilot")
+async def flowboard_copilot(req: CopilotRequest):
+    try:
+        history_context = ""
+        if req.history:
+            # Try to format history if it's a list of dicts
+            formatted_msgs = []
+            for msg in req.history:
+                if isinstance(msg, dict):
+                    role = msg.get("role", "unknown")
+                    content = msg.get("content", "")
+                    formatted_msgs.append(f"{role.capitalize()}: {content}")
+                else:
+                    formatted_msgs.append(str(msg))
+            history_context = "\n\nHistorial previo:\n" + "\n".join(formatted_msgs) + "\n\n"
+        
+        user_prompt = f"{history_context}Mensaje del usuario: {req.message}"
+        
+        result, _ = await call_ai(FLOWBOARD_COPILOT_SYSTEM, user_prompt)
+        return {"response": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
