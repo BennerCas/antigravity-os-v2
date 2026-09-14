@@ -163,20 +163,18 @@ const FlowArchitect: React.FC = () => {
           const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sin respuesta';
           addChatMessage({ role: 'agent', content: text, model: selectedModel });
         } else {
-          // Free.AI (Pollinations fallback)
-          // Map to 'openai' which is fully supported for free anonymous queries
-          const res = await fetch('https://text.pollinations.ai/openai/chat/completions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              model: 'openai',
-              messages: [{ role: 'user', content: textToSend }]
-            })
+          // Free.AI – usa la API de Pollinations (sin llave, anónima y gratuita)
+          const modelLabel = selectedModel || 'openai';
+          const pollinationsModel = modelLabel.includes('claude') ? 'claude' :
+                                   modelLabel.includes('llama') ? 'mistral' :
+                                   modelLabel.includes('qwen') ? 'qwen' : 'openai';
+          const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(textToSend)}?model=${pollinationsModel}&seed=${Date.now()}&json=false`, {
+            method: 'GET',
+            headers: { 'Accept': 'text/plain' }
           });
-          if (!res.ok) throw new Error('Error de conexión con la red global Free.AI');
-          const data = await res.json();
-          const text = data.choices?.[0]?.message?.content || 'Sin respuesta';
-          addChatMessage({ role: 'agent', content: text, model: selectedModel });
+          if (!res.ok) throw new Error(`Pollinations respondió ${res.status}`);
+          const text = await res.text();
+          addChatMessage({ role: 'agent', content: text.trim() || 'Sin respuesta', model: selectedModel });
         }
       }
     } catch (err: any) {
@@ -285,23 +283,15 @@ const FlowArchitect: React.FC = () => {
                 </div>
               </div>
               {msg.role === 'agent' && (
-                <div className={`flex items-center gap-4 mt-2 px-1 text-[11px] font-bold ${t.primary} uppercase tracking-widest opacity-80`}>
-                  <div className="flex items-center gap-1.5">
-                    <Cpu size={14} /> {msg.model || 'AureliOS Core'}
-                  </div>
-                  <div className="flex items-center gap-1.5 opacity-60">
-                    <Clock size={14} /> {new Date(parseInt(msg.id) > 10000000000 ? parseInt(msg.id) : Date.now()).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}
-                  </div>
-                  <div className="flex items-center gap-3 ml-auto opacity-70">
-                    <button onClick={() => navigator.clipboard.writeText(msg.content)} title="Copiar" className="hover:opacity-100 transition-opacity border-none outline-none ring-0 bg-transparent flex items-center gap-1">
-                      <Copy size={14} /> Copiar
-                    </button>
-                    <button onClick={() => speak(msg.content)} title="Escuchar" className="hover:opacity-100 transition-opacity border-none outline-none ring-0 bg-transparent flex items-center gap-1">
-                      <SpeakerHigh size={14} /> Escuchar
-                    </button>
-                    <button title="Regenerar" className="hover:opacity-100 transition-opacity border-none outline-none ring-0 bg-transparent flex items-center gap-1">
-                      <ArrowsClockwise size={14} /> Regenerar
-                    </button>
+                <div className={`flex items-center gap-3 mt-1.5 px-1 text-[11px] font-bold ${t.primary} uppercase tracking-widest opacity-75 flex-nowrap`}>
+                  <Cpu size={12} />
+                  <span className="opacity-90 normal-case font-semibold truncate max-w-[160px]">{msg.model || 'AureliOS'}</span>
+                  <Clock size={12} className="opacity-50 ml-1 shrink-0" />
+                  <span className="opacity-50 normal-case font-semibold whitespace-nowrap">{new Date(parseInt(msg.id) > 10000000000 ? parseInt(msg.id) : Date.now()).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}</span>
+                  <div className="flex items-center gap-2 ml-auto shrink-0">
+                    <button onClick={() => navigator.clipboard.writeText(msg.content)} title="Copiar" style={{all:'unset',cursor:'pointer'}} className="hover:opacity-100 opacity-60 transition-opacity"><Copy size={13} /></button>
+                    <button onClick={() => speak(msg.content)} title="Escuchar" style={{all:'unset',cursor:'pointer'}} className="hover:opacity-100 opacity-60 transition-opacity"><SpeakerHigh size={13} /></button>
+                    <button title="Regenerar" style={{all:'unset',cursor:'pointer'}} className="hover:opacity-100 opacity-60 transition-opacity"><ArrowsClockwise size={13} /></button>
                   </div>
                 </div>
               )}
