@@ -167,7 +167,7 @@ const FlowArchitect: React.FC = () => {
           body: JSON.stringify({
             message: textToSend,
             model: selectedModel,
-            system: 'Eres AureliOS, un asistente de IA avanzado. Responde en el idioma del usuario con formato Markdown: **negritas**, *cursivas*, listas, títulos, párrafos.'
+            system: 'Eres AureliOS, el Arquitecto Maestro y Sistema Operativo de Enjambres de Antigravity. Tu propósito es ayudar al usuario a diseñar, orquestar y desplegar sistemas de IA multi-agente. Eres el cerebro de "AgentOS Studio", capaz de analizar problemas complejos y proponer flujos de nodos y agentes especializados. Responde SIEMPRE en el idioma del usuario de forma concisa, profesional y visionaria, utilizando formato Markdown (negritas, cursivas, listas, subtítulos).'
           })
         });
         if (!res.ok) throw new Error(`Backend Free.AI respondió ${res.status}`);
@@ -556,6 +556,8 @@ const FlowDiagram: React.FC = () => {
 
 const AgentCarousel: React.FC = () => {
   const { agentCards, focusedAgent, setFocusedAgent } = useStudioStore();
+  const [currentIndex, setCurrentIndex] = React.useState(0);
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
   if (agentCards.length === 0) {
     return (
@@ -567,68 +569,145 @@ const AgentCarousel: React.FC = () => {
     );
   }
 
-  return (
-    <div className="flex-1 bg-transparent overflow-y-auto p-4 relative">
-      <style>{`
-        .agent-card { perspective: 1000px; }
-        .agent-card-inner { transition: transform 0.5s; transform-style: preserve-3d; position: relative; }
-        .agent-card:hover .agent-card-inner { transform: rotateY(8deg) rotateX(-3deg); }
-        .agent-card-inner::before {
-          content: ''; position: absolute; inset: 0; border-radius: 12px;
-          background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.05), transparent 70%);
-          pointer-events: none;
-        }
-      `}</style>
-      <div className="grid grid-cols-2 gap-3">
-        {agentCards.map((card) => (
-          <div key={card.id} className="agent-card cursor-pointer" onClick={() => setFocusedAgent(card)}>
-            <div className="agent-card-inner rounded-xl p-4" style={{ background: '#0d1117', border: `1.5px solid ${card.color}33`, boxShadow: `0 4px 20px ${card.color}22` }}>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: card.color }} />
-                <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: card.color }}>{card.role}</span>
-              </div>
-              <h3 className="text-white font-bold text-sm mb-1 leading-tight">{card.name}</h3>
-              <p className="text-gray-400 text-xs leading-relaxed line-clamp-2">{card.description}</p>
-              {card.tools.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {card.tools.map(t => (
-                    <span key={t} className="px-1.5 py-0.5 rounded text-[9px] font-mono" style={{ background: `${card.color}22`, color: card.color }}>{t}</span>
-                  ))}
-                </div>
+  // Coverflow 3D effect calculation
+  const renderCard = (card: any, index: number) => {
+    const isFocused = focusedAgent?.id === card.id;
+    const offset = index - currentIndex;
+    const absOffset = Math.abs(offset);
+    
+    // CSS rules for Coverflow
+    let zIndex = 100 - absOffset;
+    let translateX = offset * 150; // space between cards
+    let rotateY = offset === 0 ? 0 : offset > 0 ? -35 : 35;
+    let translateZ = absOffset * -200; // push background cards back
+    let opacity = absOffset > 3 ? 0 : 1 - absOffset * 0.2;
+    let scale = offset === 0 ? 1 : 0.9;
+    
+    // Override if in focus mode
+    if (focusedAgent) {
+      if (isFocused) {
+        translateX = 0; rotateY = 0; translateZ = 150; opacity = 1; scale = 1.1; zIndex = 200;
+      } else {
+        opacity = 0;
+      }
+    }
+
+    
+
+    return (
+      <div 
+        key={card.id}
+        onClick={() => {
+          if (!focusedAgent) {
+            if (offset === 0) setFocusedAgent(card);
+            else setCurrentIndex(index);
+          }
+        }}
+        className="absolute left-1/2 top-1/2 cursor-pointer transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
+        style={{
+          width: '280px',
+          height: '400px',
+          marginLeft: '-140px',
+          marginTop: '-200px',
+          transform: `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
+          zIndex,
+          opacity,
+          pointerEvents: (opacity === 0 ? 'none' : 'auto') as any,
+          transformStyle: 'preserve-3d',
+        }}
+      >
+        <div className="w-full h-full rounded-2xl shadow-2xl relative overflow-hidden flex flex-col group border border-white/5" style={{ background: card.color || '#1e293b' }}>
+          {/* Card UI */}
+          <div className="p-5 flex flex-col h-full bg-black/20 backdrop-blur-sm relative z-10">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-xl font-bold text-white tracking-tight leading-tight">{card.name}</h3>
+              {isFocused && (
+                <button onClick={(e) => { e.stopPropagation(); setFocusedAgent(null); }} className="text-white/50 hover:text-white p-1 bg-black/20 rounded-full">
+                  <X size={16} />
+                </button>
               )}
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Focus Modal */}
-      {focusedAgent && (
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-20 p-6">
-          <div className="rounded-2xl p-6 w-full max-w-md relative" style={{ background: '#0d1117', border: `2px solid ${focusedAgent.color}`, boxShadow: `0 0 40px ${focusedAgent.color}44` }}>
-            <button onClick={() => setFocusedAgent(null)} style={{ all: 'unset', cursor: 'pointer', position: 'absolute', top: 16, right: 16, color: '#888' }}>✕</button>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: `${focusedAgent.color}22`, border: `2px solid ${focusedAgent.color}` }}>
-                <Brain size={20} style={{ color: focusedAgent.color }} />
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: focusedAgent.color }}>{focusedAgent.role}</p>
-                <h2 className="text-white font-bold text-lg">{focusedAgent.name}</h2>
-              </div>
+            <div className="text-xs font-semibold text-white/70 uppercase tracking-widest mb-4 flex items-center gap-1.5">
+              <Robot size={14} weight="duotone" style={{ color: card.color }} /> {card.role}
             </div>
-            <p className="text-gray-300 text-sm leading-relaxed mb-4">{focusedAgent.description}</p>
-            {focusedAgent.tools.length > 0 && (
-              <div>
-                <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2">Herramientas</p>
-                <div className="flex flex-wrap gap-2">
-                  {focusedAgent.tools.map(t => (
-                    <span key={t} className="px-2 py-1 rounded-lg text-xs font-mono font-bold" style={{ background: `${focusedAgent.color}22`, color: focusedAgent.color }}>{t}</span>
-                  ))}
-                </div>
+            
+            <p className="text-sm text-white/80 leading-relaxed mb-6 flex-1 line-clamp-4">
+              {card.description}
+            </p>
+
+            {/* If focused, show Flip & Focus extended data */}
+            {isFocused && (
+              <div className="flex-1 overflow-y-auto pr-2 mt-2 border-t border-white/10 pt-4 custom-scrollbar">
+                {card.inputOutputContract && (
+                  <div className="mb-4">
+                    <span className="text-xs font-bold text-white/50 block mb-1">Contrato de E/S</span>
+                    <div className="bg-black/30 p-2 rounded text-xs text-[#7EC87E] font-mono">
+                      {card.inputOutputContract}
+                    </div>
+                  </div>
+                )}
+                {card.requiredTools && card.requiredTools.length > 0 && (
+                  <div className="mb-4">
+                    <span className="text-xs font-bold text-white/50 block mb-1">Herramientas requeridas</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {card.requiredTools.map((t: string) => (
+                        <span key={t} className="bg-white/10 px-2 py-0.5 rounded text-[10px] text-white/80">{t}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {card.genes && card.genes.length > 0 && (
+                   <div className="mb-4">
+                    <span className="text-xs font-bold text-white/50 block mb-1">Genética (RRF)</span>
+                    <div className="flex flex-col gap-1.5">
+                      {card.genes.map((g: any, i: number) => (
+                        <div key={i} className="flex flex-col bg-black/20 p-2 rounded">
+                          <span className="text-[10px] text-white/40 uppercase font-bold">{g.kind}</span>
+                          <span className="text-xs text-white/80">{g.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <button className="w-full mt-4 py-2 bg-white/10 hover:bg-white/20 transition-colors rounded-lg flex items-center justify-center gap-2 text-sm font-semibold text-white border border-white/20">
+                  <PaintBrush size={16} /> Editar prompt
+                </button>
+              </div>
+            )}
+            
+            {!isFocused && card.genes && (
+              <div className="flex flex-wrap gap-1 mt-auto">
+                 {card.genes.slice(0, 3).map((g: any, i: number) => (
+                    <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-black/30 text-white/70 border border-white/10">
+                      {g.kind}
+                    </span>
+                 ))}
+                 {card.genes.length > 3 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/30 text-white/50">+{card.genes.length-3}</span>}
               </div>
             )}
           </div>
+          
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none z-0"></div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex-1 bg-[#050505] overflow-hidden relative flex flex-col" style={{ perspective: '1200px' }}>
+      {!focusedAgent && (
+        <div className="absolute top-6 w-full flex justify-center z-50">
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-full px-4 py-1.5 text-xs text-white/60 font-medium tracking-wide flex items-center gap-4 shadow-xl">
+             <button onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))} disabled={currentIndex === 0} className="hover:text-white disabled:opacity-30">← Prev</button>
+             <span>{currentIndex + 1} / {agentCards.length}</span>
+             <button onClick={() => setCurrentIndex(Math.min(agentCards.length - 1, currentIndex + 1))} disabled={currentIndex === agentCards.length - 1} className="hover:text-white disabled:opacity-30">Next →</button>
+          </div>
         </div>
       )}
+      
+      <div ref={containerRef} className="flex-1 relative transform-gpu" style={{ transformStyle: 'preserve-3d' }}>
+        {agentCards.map((card, i) => renderCard(card, i))}
+      </div>
     </div>
   );
 };
@@ -658,6 +737,59 @@ const ArchitectureBlueprint: React.FC = () => {
 const CanvasTabs: React.FC = () => {
   const { activeTab, setActiveTab } = useStudioStore();
 
+  const runMatchAndFusePipeline = async () => {
+    const { flowNodes, setAgentCards, setActiveTab, setIsSynthesizing } = useStudioStore.getState();
+    setActiveTab('synthesis');
+    if (flowNodes.length === 0) return;
+
+    setIsSynthesizing(true);
+    try {
+      const selectedModel = localStorage.getItem('aurelios_model') || 'free.ai/auto';
+      
+      const res = await fetch(`${API_URL}/studio/match_fuse`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          nodes: flowNodes.map(n => n.data),
+          model: selectedModel 
+        })
+      });
+      
+      if (!res.ok) throw new Error("Backend SDK request failed");
+      const data = await res.json();
+      const rawText = data.response;
+
+      const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+      const jsonStr = jsonMatch ? jsonMatch[0] : rawText;
+      
+      const generatedCards = JSON.parse(jsonStr);
+      setAgentCards(generatedCards);
+        } catch (e: any) {
+      console.error("Match & Fuse v2 SDK Error:", e);
+      let errMsg = "Generado localmente porque el SDK de Antigravity fallo o no tiene claves validas.";
+      if (e instanceof SyntaxError) {
+        errMsg = "El modelo (Free.AI) no respondio con JSON valido o esta saturado. Por favor, reintenta.";
+      }
+      setAgentCards([
+        {
+          id: "mf-fallback-1",
+          name: "Error de Sintesis",
+          role: "FALLBACK",
+          description: errMsg,
+          color: "#EF4444",
+          noveltyScore: 0.1,
+          evalStatus: "FAIL",
+          inputOutputContract: "IN: Error -> OUT: None",
+          requiredTools: [],
+          health: "red",
+          genes: []
+        }
+      ]);
+    } finally {
+      setIsSynthesizing(false);
+    }
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'discovery': return <FlowDiagram />;
@@ -686,6 +818,13 @@ const CanvasTabs: React.FC = () => {
             {tab === 'blueprint' && '3 Blueprint'}
           </button>
         ))}
+        <div className="flex-1" />
+        <button 
+          onClick={runMatchAndFusePipeline}
+          className="h-full px-6 flex items-center gap-2 bg-[#00D9FF]/10 text-[#00D9FF] hover:bg-[#00D9FF]/20 border-b-2 border-[#00D9FF] transition-all font-bold text-sm"
+        >
+          <Brain size={18} weight="duotone" /> Detectar Agentes
+        </button>
       </div>
       <div className="flex-1 flex flex-col relative min-h-0 p-4 md:p-5" style={{ background: '#030712' }}>
         <div className="flex-1 flex flex-col relative overflow-hidden bg-transparent">

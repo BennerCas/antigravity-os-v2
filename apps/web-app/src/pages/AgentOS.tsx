@@ -1,35 +1,27 @@
 import { useState, useEffect } from 'react';
-import { Brain, Target, UsersThree, ChatCircle, Graph, MagnifyingGlass } from '@phosphor-icons/react';
+import { Brain, Target, HardDrives, ChatCircle, Graph, MagnifyingGlass } from '@phosphor-icons/react';
 import AgentOSStudio from './AgentOSStudio';
-import AgentOSTeams from './AgentOSTeams';
+import AgentOSAgentland from './AgentOSAgentland';
+
 import AgentOSInteract from './AgentOSInteract';
 import AgentOSFlowboard from './AgentOSFlowboard';
 import AgentOSInspector from './AgentOSInspector';
 import type { AgentItem, AtlasItem } from './AgentOSSelect';
 import type { Team } from './AgentOSTeams';
 
-type View = 'studio' | 'teams' | 'interact' | 'flowboard' | 'inspector';
+type View = 'studio' | 'agentland' | 'interact' | 'flowboard' | 'inspector';
 
 export default function AgentOS() {
   const [view, setView] = useState<View>(() => (localStorage.getItem('agentos_view') as View) || 'studio');
   const [agents, setAgents] = useState<AgentItem[]>([]);
-  const [atlasItems, setAtlasItems] = useState<AtlasItem[]>([]);
-  
-  const [selectedAgents, setSelectedAgents] = useState<AgentItem[]>(() => {
-    try { return JSON.parse(localStorage.getItem('agentos_selected_agents') || '[]'); } catch { return []; }
-  });
-  const [assignedKB, setAssignedKB] = useState<AtlasItem | null>(() => {
-    try { const s = localStorage.getItem('agentos_assigned_kb'); return s ? JSON.parse(s) : null; } catch { return null; }
-  });
-  const [teams, setTeams] = useState<Team[]>(() => {
-    try { return JSON.parse(localStorage.getItem('agentos_teams') || '[]'); } catch { return []; }
-  });
-
+  const [selectedAgents] = useState<AgentItem[]>([]);
+  const [assignedKB] = useState<AtlasItem | null>(null);
+  const [teams] = useState<Team[]>([]);
   useEffect(() => {
     fetch((import.meta.env.BASE_URL || '/') + 'skills_v2.json')
       .then(r => r.json()).then(setAgents).catch(() => {});
     fetch((import.meta.env.BASE_URL || '/') + 'prompts_db.json')
-      .then(r => r.json()).then(setAtlasItems).catch(() => {});
+      .then(r => r.json()).then((()=>{})).catch(() => {});
   }, []);
 
   useEffect(() => { localStorage.setItem('agentos_view', view); }, [view]);
@@ -49,7 +41,7 @@ export default function AgentOS() {
         {/* TAB NAVIGATION */}
         {[
           { id:'studio', label:'Studio', icon:<Target size={15}/> },
-          { id:'teams', label:'Equipos', icon:<UsersThree size={15}/> },
+          { id:'agentland', label:'Agentland', icon:<HardDrives size={15}/> },
           { id:'interact', label:'Interactuar', icon:<ChatCircle size={15}/> },
           { id:'flowboard', label:'Flowboard', icon:<Graph size={15}/> },
           { id:'inspector', label:'Inspector', icon:<MagnifyingGlass size={15}/> },
@@ -67,7 +59,7 @@ export default function AgentOS() {
                 {selectedAgents.length}
               </span>
             )}
-            {tab.id === 'teams' && teams.length > 0 && (
+            {tab.id === 'agentland' && teams.length > 0 && (
               <span className="text-[10px] bg-[#b060ff] text-[#fff] rounded-full px-1.5 font-extrabold ml-1">
                 {teams.length}
               </span>
@@ -81,26 +73,17 @@ export default function AgentOS() {
         <div className="absolute inset-0" style={{ display: view === 'studio' ? 'block' : 'none' }}>
           <AgentOSStudio />
         </div>
-        <div className="absolute inset-0" style={{ display: view === 'teams' ? 'block' : 'none' }}>
-          <AgentOSTeams
-            agents={agents}
-            atlasItems={atlasItems}
-            teams={teams}
-            setTeams={setTeams}
-            onActivateTeam={(team) => {
-              localStorage.setItem('agentos_active_team_id', team.id);
-              setView('interact');
-            }}
-          />
+        <div className="absolute inset-0" style={{ display: view === 'agentland' ? 'block' : 'none' }}>
+          <AgentOSAgentland />
         </div>
         <div className="absolute inset-0" style={{ display: view === 'interact' ? 'block' : 'none' }}>
           <AgentOSInteract
-            selectedAgents={selectedAgents}
-            assignedKB={assignedKB}
-            teams={teams}
+            selectedAgents={[]}
+            assignedKB={null}
+            teams={[]}
             agents={agents}
             onGoToSelect={() => setView('studio')}
-            onGoToTeams={() => setView('teams')}
+            onGoToTeams={() => setView('agentland')}
           />
         </div>
         <div className="absolute inset-0" style={{ display: view === 'flowboard' ? 'block' : 'none' }}>

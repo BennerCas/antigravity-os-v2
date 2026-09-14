@@ -58,11 +58,11 @@ const StudioNode: React.FC<NodeProps> = ({ data, selected }) => {
       <div style={{ padding: '8px 10px 10px' }}>
         {/* Nombre */}
         <div style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 12, marginBottom: 4, lineHeight: 1.3 }}>
-          {data.label as string}
+          {data.label as any}
         </div>
 
         {/* Descripción */}
-        {data.description && (
+        {Boolean(data.description) && (
           <div style={{ color: '#94a3b8', fontSize: 10, lineHeight: 1.4, marginBottom: 5,
             overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any }}>
             {data.description as string}

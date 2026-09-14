@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Node, Edge } from '@xyflow/react';
 
-export type TabId = 'discovery' | 'synthesis' | 'blueprint';
+export type TabId = 'discovery' | 'synthesis' | 'blueprint' | 'agentland';
 
 export interface ChatMessage {
   id: string;
@@ -11,19 +11,33 @@ export interface ChatMessage {
   model?: string;
 }
 
+export interface AgentGene {
+  kind: 'reasoning' | 'domain' | 'format' | 'tool' | 'policy';
+  value: string;
+}
+
 export interface AgentCard {
   id: string;
   name: string;
   role: string;
   description: string;
-  tools: string[];
+  genes: AgentGene[];
+  noveltyScore: number;
+  evalStatus: 'PASS' | 'FAIL' | 'PENDING';
   color: string;
+  inputOutputContract?: string;
+  requiredTools?: string[];
+  health?: 'green' | 'yellow' | 'red';
 }
 
 interface StudioState {
   // Chat
   activeTab: TabId;
   setActiveTab: (tab: TabId) => void;
+  isSynthesizing: boolean;
+  setIsSynthesizing: (val: boolean) => void;
+  theme: string;
+  setTheme: (theme: string) => void;
   chatMessages: ChatMessage[];
   addChatMessage: (msg: Omit<ChatMessage, 'id'>) => void;
   clearMessages: () => void;
@@ -111,7 +125,7 @@ export function parseAIResponseToFlow(text: string): { nodes: Node[]; edges: Edg
         },
       });
 
-      cards.push({ id, name, role: kind.charAt(0).toUpperCase() + kind.slice(1), description: desc.slice(0,180), tools, color });
+      // Cards are now exclusively generated via the Match & Fuse v2 pipeline, not during initial parsing.
 
       if (prevId) {
         edges.push({
@@ -141,6 +155,10 @@ export const useStudioStore = create<StudioState>()(
     (set) => ({
       activeTab: 'discovery',
       setActiveTab: (tab) => set({ activeTab: tab }),
+      isSynthesizing: false,
+      setIsSynthesizing: (val) => set({ isSynthesizing: val }),
+      theme: 'obsidian',
+      setTheme: (theme) => set({ theme }),
 
       chatMessages: [
         { id: '1', role: 'system', content: 'Bienvenido a **AureliOS Studio**. Dime qué sistema quieres construir y veré el flujo aparecer en tiempo real  ' }
@@ -177,6 +195,7 @@ export const useStudioStore = create<StudioState>()(
         agentCards: state.agentCards,
         blueprintMd: state.blueprintMd,
         activeTab: state.activeTab,
+        theme: state.theme,
       }),
     }
   )

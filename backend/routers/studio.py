@@ -127,3 +127,140 @@ async def _call_ollama(user: str, system: str, model: str) -> ChatResponse:
             model_used=model,
             engine="error"
         )
+
+from typing import List, Any
+from google.antigravity import Agent, LocalAgentConfig, CapabilitiesConfig
+
+class MatchFuseRequest(BaseModel):
+    nodes: List[Any]
+    model: Optional[str] = None
+
+@router.post("/match_fuse", response_model=ChatResponse)
+async def match_fuse(req: MatchFuseRequest):
+    """
+    Uses the google.antigravity SDK (Free.AI API) to execute the Match & Fuse v2 pipeline.
+    """
+    prompt = f"""
+Act as the Antigravity Match & Fuse v2 pipeline.
+Execute these stages:
+1. Intention parsing
+2. RRF Retrieval
+3. Gene decomposition (reasoning, domain, format, tool, policy)
+4. Novelty & Eval check
+
+Convert these diagram nodes into a JSON array of AgentCards:
+{req.nodes}
+
+OUTPUT EXACTLY a valid JSON array of AgentCard objects. Do NOT use markdown code blocks (```). Just return the raw JSON array (starting with [ and ending with ]).
+INTERFACE:
+{{
+  "id": string,
+  "name": string,
+  "role": string,
+  "description": string, // Detailed system prompt/role description
+  "color": string, // hex color
+  "noveltyScore": number, // 0.0 to 1.0
+  "evalStatus": "PASS" | "FAIL",
+  "inputOutputContract": string, // e.g. "IN: Text -> OUT: JSON"
+  "requiredTools": string[], // List of tool names
+  "health": "green" | "yellow" | "red", // Green if PASS and novelty > 0.8
+  "genes": [
+    {{ "kind": "reasoning" | "domain" | "format" | "tool" | "policy", "value": string }}
+  ]
+}}
+    """
+
+    from google.antigravity.connections.local.local_openai_connection_config import LocalOpenAIAgentConfig
+    
+    # Limpiar prefijo free.ai/ si existe
+    model_name = req.model or "qwen3-8b"
+    model_name = model_name.replace("free.ai/", "")
+
+    os.environ["OPENAI_API_KEY"] = os.getenv("FREE_AI_API_KEY", "")
+    
+    config = LocalOpenAIAgentConfig(
+        base_url=os.getenv("FREE_AI_BASE_URL", "https://api.free.ai/v1"),
+        model=model_name,
+        system_instructions="You are the Antigravity OS core logic. Respond ONLY with the requested JSON array.",
+        tools=[],
+        capabilities=CapabilitiesConfig(enable_subagents=False),
+        env={"OPENAI_API_KEY": os.getenv("FREE_AI_API_KEY", "")}
+    )
+        
+    try:
+        async with Agent(config) as agent:
+            response = await agent.chat(prompt)
+            text = await response.text()
+            return ChatResponse(response=text, model_used=f"free.ai/{model_name} (via SDK)", engine="sdk")
+    except Exception as e:
+        return ChatResponse(
+            response=f"[ERROR SDK] {str(e)}",
+            model_used=f"free.ai/{model_name} (via SDK)",
+            engine="error"
+        )
+
+from typing import List, Any
+from google.antigravity import Agent, LocalAgentConfig, CapabilitiesConfig
+
+class MatchFuseRequest(BaseModel):
+    nodes: List[Any]
+    model: Optional[str] = None
+
+@router.post("/match_fuse", response_model=ChatResponse)
+async def match_fuse(req: MatchFuseRequest):
+    """
+    Uses the google.antigravity SDK to execute the Match & Fuse v2 pipeline.
+    """
+    prompt = f"""
+Act as the Antigravity Match & Fuse v2 pipeline.
+Execute these stages:
+1. Intention parsing
+2. RRF Retrieval
+3. Gene decomposition (reasoning, domain, format, tool, policy)
+4. Novelty & Eval check
+
+Convert these diagram nodes into a JSON array of AgentCards:
+{req.nodes}
+
+OUTPUT EXACTLY a valid JSON array of AgentCard objects. Do NOT use markdown code blocks (```). Just return the raw JSON array (starting with [ and ending with ]).
+INTERFACE:
+{{
+  "id": string,
+  "name": string,
+  "role": string,
+  "description": string, // Detailed system prompt/role description
+  "color": string, // hex color
+  "noveltyScore": number, // 0.0 to 1.0
+  "evalStatus": "PASS" | "FAIL",
+  "inputOutputContract": string, // e.g. "IN: Text -> OUT: JSON"
+  "requiredTools": string[], // List of tool names
+  "health": "green" | "yellow" | "red", // Green if PASS and novelty > 0.8
+  "genes": [
+    {{ "kind": "reasoning" | "domain" | "format" | "tool" | "policy", "value": string }}
+  ]
+}}
+    """
+
+    config = LocalAgentConfig(
+        api_key=os.getenv("GEMINI_API_KEY", "invalid"),
+        system_instructions="You are the Antigravity OS core logic. Respond ONLY with the requested JSON array.",
+        tools=[],
+        capabilities=CapabilitiesConfig(enable_subagents=False),
+        model=None
+    )
+    
+    # Avoid Base URL conflict with SDK
+    if "GEMINI_API_BASE_URL" in os.environ:
+        del os.environ["GEMINI_API_BASE_URL"]
+        
+    try:
+        async with Agent(config) as agent:
+            response = await agent.chat(prompt)
+            text = await response.text()
+            return ChatResponse(response=text, model_used="google.antigravity_sdk", engine="sdk")
+    except Exception as e:
+        return ChatResponse(
+            response=f"[ERROR SDK] {str(e)}",
+            model_used="google.antigravity_sdk",
+            engine="error"
+        )
