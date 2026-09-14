@@ -105,3 +105,7 @@ skills/spline-3d-integration/*.zip
 /apps/web-app/inject_cyberpunk.cjs
 /apps/web-app/scratch_gdata.js
 /apps/web-app/graph_*.png
+*.db
+*.db-shm
+*.db-wal
+*.sqlite3
