@@ -72,6 +72,20 @@ const AURELIOS_THEMES: Record<string, any> = {
     toolBg: 'bg-[#111111]', toolHover: 'hover:border-[#999999]', aiBubble: 'bg-[#0A0A0A] border-[#555555] text-[#FFFFFF]',
     humanBubble: 'bg-[#FFFFFF] text-black', inputBg: 'bg-[#0A0A0A] border-[#333333]', inputFocus: 'focus:border-[#999999]',
     sendActive: 'bg-[#FFFFFF] text-black hover:bg-[#CCCCCC]', sendDisabled: 'bg-[#111111] text-[#333333]'
+  },
+  claude: {
+    name: 'Claude Elegance', bg: 'bg-[#F9F8F6]', text: 'text-[#2D2A26]', border: 'border-[#E5E2DC]',
+    panelBg: 'bg-[#FFFFFF]', panelBorder: 'border-[#EAE7E1]', primary: 'text-[#D97757]',
+    toolBg: 'bg-[#F2EFE9]', toolHover: 'hover:border-[#D97757]', aiBubble: 'bg-[#FFFFFF] border-[#EAE7E1] text-[#2D2A26]',
+    humanBubble: 'bg-[#D97757] text-white', inputBg: 'bg-[#FFFFFF] border-[#EAE7E1]', inputFocus: 'focus:border-[#D97757]',
+    sendActive: 'bg-[#D97757] text-white hover:bg-[#C26547]', sendDisabled: 'bg-[#E5E2DC] text-[#A39E93]'
+  },
+  solargrid: {
+    name: 'Solar Grid (Retro)', bg: 'bg-[#1A0B2E]', text: 'text-[#FCD34D]', border: 'border-[#7C3AED]',
+    panelBg: 'bg-[#2E1065]', panelBorder: 'border-[#9333EA]', primary: 'text-[#F97316]',
+    toolBg: 'bg-[#3B0764]', toolHover: 'hover:border-[#F97316]', aiBubble: 'bg-[#2E1065] border-[#9333EA] text-[#FDE047]',
+    humanBubble: 'bg-[#F97316] text-black', inputBg: 'bg-[#2E1065] border-[#7C3AED]', inputFocus: 'focus:border-[#F97316]',
+    sendActive: 'bg-[#F97316] text-black hover:bg-[#EA580C]', sendDisabled: 'bg-[#3B0764] text-[#7C3AED]'
   }
 };
 
