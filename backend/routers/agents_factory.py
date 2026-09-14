@@ -260,7 +260,7 @@ Tu respuesta debe ser limpia y usar EXACTAMENTE los nombres/titulos provistos en
         response = await AgentFactory.chat_one_shot(
             agent_id="agentos_assistant",
             user_prompt=search_prompt,
-            override_instructions="Eres un asistente experto en recomendar agentes IA y bases de conocimiento de un catalogo. Responde siempre en español de forma hiperconcisa y usa los nombres exactos."
+            override_instructions="Eres un asistente experto en recomendar agentes IA y bases de conocimiento de un catalogo. Responde siempre en español de forma hiperconcisa y usa los nombres exactos.", use_tools=False
         )
         return {"query": req.query, "response": response, "status": "ok"}
     except Exception as e:

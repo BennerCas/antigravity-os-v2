@@ -76,13 +76,13 @@ export default function AgentOSSelect({
     if (!query) return;
     setAgentLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/v1/agents/search-assist`, {
+      const res = await fetch(`${API_URL}/agents/search-assist`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query, context: 'agents' })
       });
       const data = await res.json();
-      const text = data.text || '';
+      const text = data.response || data.text || '';
       setAgentAiResponse(text);
       setSuggestedAgents(parseAgentSuggestions(text, agents));
     } catch (err) {
@@ -97,13 +97,13 @@ export default function AgentOSSelect({
     if (!query) return;
     setKbLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/v1/agents/search-assist`, {
+      const res = await fetch(`${API_URL}/agents/search-assist`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query, context: 'kb' })
       });
       const data = await res.json();
-      const text = data.text || '';
+      const text = data.response || data.text || '';
       setKbAiResponse(text);
       setSuggestedKbs(parseKBSuggestions(text, atlasItems));
     } catch (err) {
@@ -116,7 +116,7 @@ export default function AgentOSSelect({
 
   const optimizeAgent = async (agent: AgentItem) => {
     try {
-      const res = await fetch(`${API_URL}/api/v1/agents/optimize`, {
+      const res = await fetch(`${API_URL}/agents/optimize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ agent_id: agent.id, instructions: agent.instructions })
@@ -131,7 +131,7 @@ export default function AgentOSSelect({
 
   const optimizeKb = async (kb: AtlasItem) => {
     try {
-      const res = await fetch(`${API_URL}/api/v1/agents/optimize-kb`, {
+      const res = await fetch(`${API_URL}/agents/optimize-kb`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ kb_title: kb.title, content: kb.content })

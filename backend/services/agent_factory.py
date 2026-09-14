@@ -11,16 +11,19 @@ import json
 import psutil
 from typing import List, Callable, Optional, Dict, Any
 
-try:
-    from config import FREE_AI_API_KEY, FREE_AI_BASE_URL
-except ImportError:
-    try:
-        from backend.config import FREE_AI_API_KEY, FREE_AI_BASE_URL
-    except ImportError:
-        FREE_AI_API_KEY = os.getenv("FREE_AI_API_KEY", "")
-        FREE_AI_BASE_URL = os.getenv("FREE_AI_BASE_URL", "https://api.free.ai/v1")
+import os
+from dotenv import load_dotenv
 
-os.environ.setdefault("GEMINI_API_BASE_URL", FREE_AI_BASE_URL)
+ENV_PATH = os.path.join(os.path.dirname(__file__), "..", ".env")
+load_dotenv(ENV_PATH)
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY_1", "")
+os.environ["GEMINI_API_KEY"] = GEMINI_API_KEY
+
+# Remove GEMINI_API_BASE_URL if it was set to free.ai to ensure we hit the real Google API
+if "GEMINI_API_BASE_URL" in os.environ:
+    del os.environ["GEMINI_API_BASE_URL"]
+
 
 from google.antigravity import Agent, LocalAgentConfig, CapabilitiesConfig
 
@@ -160,16 +163,16 @@ class AgentFactory:
         atlas_knowledge_id: Optional[str] = None,
         override_instructions: Optional[str] = None,
         extra_tools: Optional[List[Callable]] = None,
-        model: Optional[str] = None,
+        model: Optional[str] = None, use_tools: bool = True,
     ) -> LocalAgentConfig:
         system_instructions = ensamblar_instrucciones(
             agent_id, atlas_knowledge_id, override_instructions
         )
-        all_tools = TOOL_REGISTRY.copy()
+        all_tools = TOOL_REGISTRY.copy() if use_tools else []
         if extra_tools:
             all_tools.extend(extra_tools)
         return LocalAgentConfig(
-            api_key=FREE_AI_API_KEY or "antigravity-local",
+            api_key=GEMINI_API_KEY,
             system_instructions=system_instructions,
             tools=all_tools,
             capabilities=CapabilitiesConfig(enable_subagents=False),
@@ -184,14 +187,14 @@ class AgentFactory:
         atlas_knowledge_id: Optional[str] = None,
         override_instructions: Optional[str] = None,
         extra_tools: Optional[List[Callable]] = None,
-        model: Optional[str] = None,
+        model: Optional[str] = None, use_tools: bool = True,
     ) -> str:
         config = cls.build_config(
             agent_id=agent_id,
             atlas_knowledge_id=atlas_knowledge_id,
             override_instructions=override_instructions,
             extra_tools=extra_tools,
-            model=model,
+            model=model, use_tools=use_tools,
         )
         try:
             async with Agent(config) as agent:

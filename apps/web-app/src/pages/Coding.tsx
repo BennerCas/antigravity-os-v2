@@ -41,7 +41,7 @@ export default function Coding() {
   const handleCompile = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/v1/compile/generate`, {
+      const response = await fetch(`${API_URL}/compile/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ framework, nodes: [], edges: [], execution_plan: prompt })

@@ -21,9 +21,4 @@ FREE_AI_BASE_URL = os.getenv("FREE_AI_BASE_URL", "https://api.free.ai/v1")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 
 # Orígenes permitidos para CORS (frontend local v1 y v2)
-CORS_ORIGINS = [
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
+CORS_ORIGINS = ["*"]
