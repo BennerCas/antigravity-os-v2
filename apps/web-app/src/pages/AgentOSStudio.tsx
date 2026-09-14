@@ -161,7 +161,7 @@ const FlowArchitect: React.FC = () => {
         const data = await response.json();
         addChatMessage({ role: 'agent', content: data.message?.content || 'Respuesta vacía.' });
       } else {
-        const modelName = selectedModel.replace('free.ai/', '');
+        
         const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
         if (!apiKey) {
           addChatMessage({ role: 'agent', content: '[AURELIOS] Para usar la red global, configura tu VITE_GEMINI_API_KEY en el archivo .env' });
@@ -297,9 +297,11 @@ const FlowArchitect: React.FC = () => {
               <div className={`p-3 text-[15px] leading-relaxed border ${
                 msg.role === 'human' ? `${t.humanBubble} border-transparent rounded-xl rounded-tr-sm font-medium` : `${t.aiBubble} rounded-xl rounded-tl-sm shadow-sm`
               } transition-colors duration-500`}>
-                <ReactMarkdown className={`prose prose-sm max-w-none ${msg.role === 'agent' ? t.text : 'text-inherit'} prose-headings:text-current prose-p:text-current prose-strong:text-current prose-a:text-current prose-ul:text-current prose-ol:text-current prose-li:text-current`}>
-                  {msg.content}
-                </ReactMarkdown>
+                <div className={`prose prose-sm max-w-none ${msg.role === 'agent' ? t.text : 'text-inherit'} prose-headings:text-current prose-p:text-current prose-strong:text-current prose-a:text-current prose-ul:text-current prose-ol:text-current prose-li:text-current`}>
+                  <ReactMarkdown>
+                    {msg.content}
+                  </ReactMarkdown>
+                </div>
               </div>
               {msg.role === 'agent' && (
                 <div className="flex items-center gap-2 mt-1.5 px-1">
