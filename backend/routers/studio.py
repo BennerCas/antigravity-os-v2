@@ -155,7 +155,7 @@ INTERFACE:
                 raise Exception("FREE_AI_API_KEY no configurada.")
             headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
             payload = {
-                "model": model_name,
+                "model": "qwen3-8b", # Forzamos el modelo soportado por Free.AI en este endpoint
                 "messages": [
                     {"role": "system", "content": "You are the Antigravity OS core logic. Respond ONLY with the requested JSON array."},
                     {"role": "user", "content": prompt}
