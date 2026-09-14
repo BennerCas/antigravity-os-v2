@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Brain, Hammer, LockKey, Code, TreeStructure, SpeakerHigh, PlayCircle, PauseCircle, StopCircle, FastForward, Rewind, GraduationCap } from '@phosphor-icons/react';
+import { Brain, Hammer, Code, TreeStructure, SpeakerHigh, PlayCircle, PauseCircle, StopCircle, FastForward, Rewind, GraduationCap } from '@phosphor-icons/react';
 import { useTTSStore } from '../lib/ttsStore';
 import { useEffect } from 'react';
 
@@ -17,8 +17,6 @@ export function Sidebar() {
     { path: '/agent-os',      label: 'AgentOS',        icon: <Brain         size={20} weight="light" /> },
     { path: '/builder',       label: 'Builder',        icon: <Hammer        size={20} weight="light" /> },
     { path: '/academy',       label: 'Academy',        icon: <GraduationCap size={20} weight="light" /> },
-    { path: '/vault',         label: 'Vault',          icon: <LockKey       size={20} weight="light" /> },
-    { path: '/coding',        label: 'Coding',         icon: <Code          size={20} weight="light" /> },
     { path: '/architecture',  label: 'Arquitectura',   icon: <TreeStructure size={20} weight="light" /> },
     { path: '/automations',   label: 'Automatización', icon: <Code          size={20} weight="light" /> },
   ];

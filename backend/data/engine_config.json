@@ -1,1 +1,0 @@
-{"hybrid_enabled": true, "cloud_model": "anthropic/claude-3.5-sonnet", "local_model": "hermes3:8b", "cloud_options": ["anthropic/claude-3.5-sonnet", "openai/gpt-4o", "meta-llama/llama-3.1-70b-instruct", "qwen/qwen-2.5-72b-instruct"], "local_options": ["hermes3:8b", "llama3.1:8b", "mistral", "qwen2.5:7b", "phi3:3.8b"]}

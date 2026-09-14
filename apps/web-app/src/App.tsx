@@ -11,8 +11,15 @@ function RouteTracker() {
   return null;
 }
 
+// Rutas retiradas del OS (módulos Vault y Coding eliminados): redirigir al shell principal
+const RETIRED_ROUTES = ['/vault', '/coding'];
+
 function InitialRedirect() {
-  const lastRoute = localStorage.getItem('lastRoute') || '/agent-os';
+  let lastRoute = localStorage.getItem('lastRoute') || '/agent-os';
+  if (RETIRED_ROUTES.includes(lastRoute)) {
+    lastRoute = '/agent-os';
+    localStorage.setItem('lastRoute', lastRoute);
+  }
   return <Navigate to={lastRoute} replace />;
 }
 import { Sidebar } from './components/Sidebar';
@@ -22,8 +29,6 @@ import { InteractiveTour } from './components/InteractiveTour';
 const AgentOS = lazy(() => import('./pages/AgentOS'));
 const Builder = lazy(() => import('./pages/Builder'));
 const Academy = lazy(() => import('./pages/Academy'));
-const Vault = lazy(() => import('./pages/Vault'));
-const Coding = lazy(() => import('./pages/Coding'));
 const Architecture = lazy(() => import('./pages/Architecture'));
 const Automations = lazy(() => import('./pages/Automations'));
 
@@ -44,12 +49,6 @@ function MainContent() {
       </div>
       <div style={{ display: path === '/academy' ? 'block' : 'none', height: '100%', width: '100%' }}>
         <Academy />
-      </div>
-      <div style={{ display: path === '/vault' ? 'block' : 'none', height: '100%', width: '100%' }}>
-        <Vault />
-      </div>
-      <div style={{ display: path === '/coding' ? 'block' : 'none', height: '100%', width: '100%' }}>
-        <Coding />
       </div>
       <div style={{ display: path === '/architecture' ? 'block' : 'none', height: '100%', width: '100%' }}>
         <Architecture />
