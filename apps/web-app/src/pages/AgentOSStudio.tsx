@@ -296,6 +296,18 @@ const FlowArchitect: React.FC = () => {
             </div>
           ))
         )}
+        {isTyping && (
+          <div className="flex flex-col max-w-[85%] mr-auto mt-4">
+            <div className={`p-4 rounded-xl rounded-tl-sm shadow-sm font-medium ${t.aiBubble} border animate-pulse flex items-center gap-3`}>
+              <div className="flex gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '300ms' }}></span>
+              </div>
+              <span className="text-sm tracking-wide">{thinkingPhrase}</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Input Box */}
