@@ -1,52 +1,127 @@
 import React, { useState } from 'react';
 import { useStudioStore, TabId } from '../stores/useStudioStore';
+import { Robot, Trash, Wrench, ShieldCheck, TreeStructure, CurrencyDollar, Database, SpeakerHigh, Star, PaperPlaneRight } from '@phosphor-icons/react';
 
 const FlowArchitect: React.FC = () => {
   const { chatMessages, addChatMessage } = useStudioStore();
   const [input, setInput] = useState('');
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-    addChatMessage({ role: 'human', content: input });
-    setInput('');
+  const speak = (text: string) => {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'es-ES';
+    const voices = window.speechSynthesis.getVoices();
+    const spanishVoice = voices.find(v => v.lang.startsWith('es'));
+    if (spanishVoice) utterance.voice = spanishVoice;
+    window.speechSynthesis.speak(utterance);
   };
 
+  const clearChat = () => {
+    useStudioStore.setState({ chatMessages: [] });
+  };
+
+  const handleSend = (overrideInput?: string) => {
+    const textToSend = (typeof overrideInput === 'string') ? overrideInput : input;
+    if (!textToSend.trim()) return;
+    addChatMessage({ role: 'human', content: textToSend });
+    setInput('');
+    // Fake AI response for testing
+    setTimeout(() => {
+      addChatMessage({ role: 'ai', content: 'He recibido tu instrucción. Procederé a analizar la arquitectura del sistema y sugerir mejoras basadas en los patrones de diseño.' });
+    }, 600);
+  };
+
+  const aiTools = [
+    { title: 'Requirements Gatekeeper', icon: <ShieldCheck size={18} className="text-[#3b82f6]" weight="fill" />, desc: 'Filtro estricto de validación. Evalúa tu idea buscando ambigüedades y exige claridad absoluta antes de permitir el diseño.' },
+    { title: 'Architecture Alternatives', icon: <TreeStructure size={18} className="text-[#3b82f6]" weight="fill" />, desc: 'Explora y compara enfoques arquitectónicos (microservicios, monolitos, serverless) para recomendar la estructura óptima.' },
+    { title: 'Cost/Feasibility Analyzer', icon: <CurrencyDollar size={18} className="text-[#f5a623]" weight="fill" />, desc: 'Auditoría integral técnica y financiera. Proyecta viabilidad, detecta cuellos de botella y estima costos de infraestructura.' },
+    { title: 'State Schema Designer', icon: <Database size={18} className="text-[#f5a623]" weight="fill" />, desc: 'Ingeniero de datos. Modela esquemas de estado, entidades y relaciones garantizando normalización y rendimiento.' }
+  ];
+
   return (
-    <div className="flex flex-col h-full bg-gray-900 text-gray-100 p-4">
-      <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
-        {chatMessages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`p-3 rounded-lg max-w-[85%] ${
-              msg.role === 'human'
-                ? 'bg-blue-600 self-end ml-auto'
-                : msg.role === 'system'
-                ? 'bg-gray-800 border border-gray-700 text-gray-300 text-sm'
-                : 'bg-gray-700'
-            }`}
-          >
-            {msg.content}
-          </div>
-        ))}
+    <div className="flex flex-col h-full bg-[#050505] text-[#E0E0E0] p-4 relative">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-3 border-b border-[#1A1A1A] shrink-0">
+        <div className="flex items-center gap-2">
+          <Robot weight="duotone" size={24} className="text-[#F5A623]" />
+          <h2 className="text-[17px] font-bold text-white tracking-tight">FlowArchitect Discovery</h2>
+        </div>
+        <button onClick={clearChat} className="flex items-center gap-1.5 px-3 py-1.5 border border-[#333] rounded-md text-xs font-medium hover:bg-[#111] transition-colors">
+          <Trash size={14} /> Limpiar
+        </button>
       </div>
-      <div className="flex flex-col shrink-0 gap-2">
-        <div className="text-xs text-gray-400">Activity Rail: Standing by...</div>
-        <div className="text-xs text-gray-400 mb-2">Budget: $0.00 / $5.00</div>
-        <div className="flex">
+
+      {/* Chat History / Empty State with Invisible Scroll */}
+      <div className="flex-1 overflow-y-auto mb-4 py-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {chatMessages.length === 0 ? (
+          <div className="flex flex-col h-full pt-2">
+            <div className="flex items-center gap-2 mb-4 text-[#888] text-xs font-bold tracking-wider">
+              <Wrench size={14} /> AI TOOLS (MASTER PROMPTS)
+            </div>
+            <div className="grid grid-cols-1 2xl:grid-cols-2 gap-3 mb-8">
+              {aiTools.map((tool, i) => (
+                <div key={i} className="bg-[#0A0A0A] border border-[#1A1A1A] p-4 rounded-lg flex flex-col hover:border-[#333] transition-colors cursor-pointer group" onClick={() => { handleSend(tool.title); }}>
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2 text-sm font-bold text-white">
+                      {tool.icon}
+                      {tool.title}
+                    </div>
+                    <button onClick={(e) => { e.stopPropagation(); speak(tool.desc); }} className="text-[#555] hover:text-[#E0E0E0] p-1.5 border border-[#333] rounded-full bg-[#111] transition-colors"><SpeakerHigh size={14} /></button>
+                  </div>
+                  <p className="text-[#888] text-xs leading-relaxed">{tool.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-auto p-4 border border-[#1A1A1A] rounded-lg bg-[#0A0A0A]">
+              <span className="text-[#888] text-sm font-bold">Modelo de Chat:</span>
+              <select className="bg-[#111] text-[#E0E0E0] border border-[#333] rounded px-2 py-1 text-sm focus:ring-0 cursor-pointer outline-none font-medium">
+                <option>hermes3:8b (ollama)</option>
+              </select>
+              <span className="text-[#F5A623] flex items-center gap-1 text-sm font-bold"><Star weight="fill" size={14} /> Recomendado</span>
+            </div>
+          </div>
+        ) : (
+          chatMessages.map(msg => (
+            <div key={msg.id} className={`flex flex-col max-w-[85%] ${msg.role === 'human' ? 'ml-auto' : 'mr-auto'}`}>
+              <div className={`p-3 rounded-xl text-sm leading-relaxed ${
+                msg.role === 'human' ? 'bg-[#00D9FF] text-black rounded-tr-sm font-medium' : 'bg-[#111] border border-[#222] text-[#E0E0E0] rounded-tl-sm'
+              }`}>
+                {msg.content}
+              </div>
+              {msg.role === 'ai' && (
+                <div className="flex items-center gap-2 mt-1.5 px-1">
+                  <button onClick={() => speak(msg.content)} className="text-[#555] hover:text-[#00D9FF] flex items-center gap-1 text-xs font-semibold transition-colors">
+                    <SpeakerHigh size={14} /> Escuchar
+                  </button>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Input Box - fixed at bottom of container */}
+      <div className="shrink-0 mt-auto pt-4 border-t border-[#1A1A1A] bg-[#050505]">
+        <div className="flex items-center bg-[#111] border border-[#333] rounded-xl overflow-hidden focus-within:border-[#555] transition-colors p-1">
           <input
             type="text"
-            className="flex-1 bg-gray-800 border border-gray-700 rounded-l-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Type your intent..."
+            className="flex-1 bg-transparent px-3 py-2.5 text-sm text-[#E0E0E0] placeholder-[#666] focus:outline-none"
+            placeholder="Describe tu arquitectura o escribe una idea..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
           />
           <button
-            onClick={handleSend}
-            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-r-md font-semibold transition-colors"
+            onClick={() => handleSend()}
+            className={`p-2.5 rounded-lg transition-colors flex items-center justify-center mr-1 ${input.trim() ? 'bg-[#00D9FF] text-black hover:bg-[#00BFFF]' : 'bg-[#222] text-[#555] cursor-not-allowed'}`}
           >
-            Send
+            <PaperPlaneRight weight="fill" size={16} />
           </button>
+        </div>
+        <div className="text-center mt-2">
+          <span className="text-[10px] text-[#555] font-medium tracking-wide">ANTIGRAVITY OS • AI ARCHITECTURE DISCOVERY</span>
         </div>
       </div>
     </div>
