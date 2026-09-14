@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStudioStore, TabId } from '../stores/useStudioStore';
-import { Robot, Trash, Wrench, ShieldCheck, TreeStructure, CurrencyDollar, Database, SpeakerHigh, Star, PaperPlaneRight, LockKey, Lightning } from '@phosphor-icons/react';
+import { Robot, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain } from '@phosphor-icons/react';
 
 const FlowArchitect: React.FC = () => {
   const { chatMessages, addChatMessage } = useStudioStore();
@@ -37,19 +37,21 @@ const FlowArchitect: React.FC = () => {
     if (!textToSend.trim()) return;
     addChatMessage({ role: 'human', content: textToSend });
     setInput('');
-    // Mock response
     setTimeout(() => {
-      addChatMessage({ role: 'agent', content: `He procesado tu solicitud usando el modelo ${selectedModel}. La cascada de Free.AI y el SDK de Antigravity están listos para orquestar los subagentes necesarios.` });
+      addChatMessage({ role: 'agent', content: `[${selectedModel}] Sistema en línea. Despliegue de subagentes iniciado...` });
     }, 600);
   };
 
   const aiTools = [
-    { title: 'Requirements Gatekeeper', icon: <ShieldCheck size={18} className="text-[#3b82f6]" weight="fill" />, desc: 'Filtro estricto de validación. Evalúa tu idea buscando ambigüedades.' },
-    { title: 'Architecture Alternatives', icon: <TreeStructure size={18} className="text-[#3b82f6]" weight="fill" />, desc: 'Explora y compara enfoques arquitectónicos.' },
-    { title: 'Cost/Feasibility Analyzer', icon: <CurrencyDollar size={18} className="text-[#f5a623]" weight="fill" />, desc: 'Auditoría integral técnica y financiera.' },
-    { title: 'State Schema Designer', icon: <Database size={18} className="text-[#f5a623]" weight="fill" />, desc: 'Ingeniero de datos. Modela esquemas de estado y relaciones.' },
-    { title: 'Security & Auth Auditor', icon: <LockKey size={18} className="text-[#e11d48]" weight="fill" />, desc: 'Auditor de seguridad. Busca vulnerabilidades y revisa políticas de acceso.' },
-    { title: 'Performance Profiler', icon: <Lightning size={18} className="text-[#e11d48]" weight="fill" />, desc: 'Analizador de rendimiento. Detecta cuellos de botella y optimiza recursos.' }
+    { title: 'Swarm Orchestrator', icon: <Network size={16} className="text-[#3b82f6]" weight="duotone" />, desc: 'Orquesta múltiples agentes autónomos. Asigna tareas complejas, gestiona el estado compartido y resuelve dependencias en paralelo.' },
+    { title: 'Umpire Core', icon: <Scales size={16} className="text-[#e11d48]" weight="duotone" />, desc: 'Árbitro determinista. Somete el código y la arquitectura a pruebas de estrés implacables para asegurar escalabilidad y cero alucinaciones.' },
+    { title: 'State Reducer', icon: <Cube size={16} className="text-[#f5a623]" weight="duotone" />, desc: 'Diseña el flujo de datos unidireccional. Modela mutaciones de estado predecibles, inmutables y auditables en tiempo real.' },
+    { title: 'RAG Synthesizer', icon: <Strategy size={16} className="text-[#10b981]" weight="duotone" />, desc: 'Cerebro de memoria profunda. Fusiona bases de datos vectoriales y grafos de conocimiento para contextualizar decisiones al instante.' },
+    { title: 'Codebase Overlord', icon: <Cpu size={16} className="text-[#8b5cf6]" weight="duotone" />, desc: 'Maestro del código. Refactoriza, optimiza y ensambla piezas arquitectónicas masivas a nivel de repositorio completo.' },
+    { title: 'Forensic Inspector', icon: <MagnifyingGlass size={16} className="text-[#06b6d4]" weight="duotone" />, desc: 'Analizador de telemetría en vivo. Destripa cuellos de botella y audita el rendimiento e integraciones a nivel milisegundo.' },
+    { title: 'Zero-Trust Gatekeeper', icon: <ShieldCheck size={16} className="text-[#f43f5e]" weight="duotone" />, desc: 'Auditor de ciberseguridad extremo. Detecta vulnerabilidades y exige políticas estrictas de autenticación y autorización.' },
+    { title: 'Resource Optimizer', icon: <CurrencyDollar size={16} className="text-[#f5a623]" weight="duotone" />, desc: 'Estratega de infraestructuras. Balancea la carga entre modelos locales y en la nube minimizando costos y uso límite de VRAM.' },
+    { title: 'UX Psychologist', icon: <Brain size={16} className="text-[#d946ef]" weight="duotone" />, desc: 'Especialista en interfaces persuasivas. Aplica sesgos cognitivos e inyecta fricción positiva para dominar la experiencia del usuario.' }
   ];
 
   return (
@@ -57,51 +59,65 @@ const FlowArchitect: React.FC = () => {
       {/* Top Fixed Area */}
       <div className="shrink-0 flex flex-col gap-3 pb-3 border-b border-[#1A1A1A]">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Robot weight="duotone" size={24} className="text-[#F5A623]" />
             <h2 className="text-[17px] font-bold text-white tracking-tight">FlowArchitect</h2>
+            
+            {/* AI Model Selector inline with title */}
+            <div className="flex items-center bg-[#0A0A0A] px-2 py-1 rounded-md border border-[#222] ml-2">
+              <span className="text-[#888] text-[9px] font-bold mr-1 tracking-wider uppercase">Mod:</span>
+              <select 
+                className="bg-transparent text-[#00D9FF] text-xs font-bold focus:outline-none cursor-pointer appearance-none max-w-[120px] truncate"
+                value={selectedModel}
+                onChange={e => setSelectedModel(e.target.value)}
+              >
+                <optgroup label="Free.AI (Cascada Inteligente)">
+                  <option value="free.ai/auto">Auto (Cascada)</option>
+                  <option value="free.ai/gemini-1.5-pro">Gemini 1.5</option>
+                  <option value="free.ai/claude-3.5">Claude 3.5</option>
+                  <option value="free.ai/gpt-4o">GPT-4o</option>
+                </optgroup>
+                <optgroup label="Ollama (Locales)">
+                  {ollamaModels.map(m => <option key={m} value={`ollama/${m}`}>{m}</option>)}
+                  {ollamaModels.length === 0 && <option value="ollama/hermes3:8b">hermes3 (Local)</option>}
+                </optgroup>
+              </select>
+            </div>
           </div>
-          <button onClick={clearChat} className="flex items-center gap-1.5 px-3 py-1.5 border border-[#333] rounded-md text-xs font-medium hover:bg-[#111] transition-colors">
+
+          <button onClick={clearChat} className="flex items-center gap-1.5 px-3 py-1.5 border border-[#333] rounded-md text-xs font-medium hover:bg-[#111] transition-colors shrink-0">
             <Trash size={14} /> Limpiar
           </button>
         </div>
 
-        {/* AI Model Selector */}
-        <div className="flex items-center justify-between bg-[#0A0A0A] p-2 rounded-lg border border-[#1A1A1A]">
-          <span className="text-[#888] text-[11px] font-bold ml-1 tracking-wider">MODELO AI:</span>
-          <select 
-            className="bg-transparent text-[#00D9FF] text-xs font-bold focus:outline-none cursor-pointer flex-1 mx-2 text-right appearance-none"
-            value={selectedModel}
-            onChange={e => setSelectedModel(e.target.value)}
-          >
-            <optgroup label="Free.AI (Cascada Inteligente)">
-              <option value="free.ai/auto">Cascada (Auto-Routing) 🌟</option>
-              <option value="free.ai/gemini-1.5-pro">Gemini 1.5 Pro</option>
-              <option value="free.ai/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
-              <option value="free.ai/gpt-4o">GPT-4o</option>
-            </optgroup>
-            <optgroup label="Ollama (Locales)">
-              {ollamaModels.map(m => <option key={m} value={`ollama/${m}`}>{m}</option>)}
-              {ollamaModels.length === 0 && <option value="ollama/hermes3:8b">hermes3:8b (Offline)</option>}
-            </optgroup>
-          </select>
+        {/* Fixed AI Tools (9 buttons, 3 columns) */}
+        <div className="flex items-center gap-2 mb-0.5 mt-1 text-[#888] text-[10px] font-bold tracking-wider uppercase">
+          <Wrench size={12} /> God-Tier Master Prompts
         </div>
-
-        {/* Fixed AI Tools (6 buttons) */}
-        <div className="flex items-center gap-2 mb-1 text-[#888] text-[10px] font-bold tracking-wider uppercase">
-          <Wrench size={12} /> AI Tools (Master Prompts)
-        </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {aiTools.map((tool, i) => (
-            <button 
-              key={i} 
-              onClick={() => handleSend(tool.title)} 
-              title={tool.desc}
-              className="flex items-center gap-2 p-2 bg-[#111] border border-[#222] hover:border-[#444] rounded-lg text-left transition-colors group"
-            >
-              <div className="shrink-0">{tool.icon}</div>
-              <span className="text-[10.5px] font-bold text-[#E0E0E0] leading-tight group-hover:text-white transition-colors">{tool.title}</span>
-            </button>
+            <div key={i} className="relative group">
+              <button 
+                onClick={() => handleSend(tool.title)} 
+                className="w-full flex items-center justify-between p-1.5 bg-[#111] border border-[#222] hover:border-[#444] rounded text-left transition-colors"
+              >
+                <div className="flex items-center gap-1.5 overflow-hidden">
+                  <div className="shrink-0">{tool.icon}</div>
+                  <span className="text-[9.5px] font-bold text-[#E0E0E0] truncate group-hover:text-white transition-colors">{tool.title}</span>
+                </div>
+                <div 
+                  onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
+                  className="text-[#555] hover:text-[#00D9FF] shrink-0 ml-1 p-0.5 cursor-pointer bg-[#000] border border-[#333] rounded-sm"
+                  title="Escuchar descripción"
+                >
+                  <SpeakerHigh size={12} weight="fill" />
+                </div>
+              </button>
+              {/* Invisible custom tooltip */}
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 p-2 bg-[#000] border border-[#333] text-xs text-[#E0E0E0] rounded shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none text-center font-medium leading-snug">
+                {tool.desc}
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -110,7 +126,7 @@ const FlowArchitect: React.FC = () => {
       <div className="flex-1 overflow-y-auto py-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {chatMessages.length === 0 ? (
           <div className="flex h-full items-center justify-center text-center text-[#444] text-sm px-8 font-medium">
-            Selecciona una herramienta de IA del panel superior o escribe tu idea para comenzar.
+            Selecciona un arquitecto de la forja o escribe tu idea para comenzar.
           </div>
         ) : (
           chatMessages.map(msg => (
@@ -138,7 +154,7 @@ const FlowArchitect: React.FC = () => {
           <input
             type="text"
             className="flex-1 bg-[#111] border border-[#333] rounded-xl px-4 py-3 text-sm text-[#E0E0E0] placeholder-[#666] focus:outline-none focus:border-[#555] shadow-inner transition-colors"
-            placeholder="Describe tu arquitectura o idea..."
+            placeholder="Comanda al enjambre..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
@@ -151,7 +167,7 @@ const FlowArchitect: React.FC = () => {
           </button>
         </div>
         <div className="text-center mt-3">
-          <span className="text-[10px] text-[#555] font-medium tracking-wide">ANTIGRAVITY OS • SDK INTEGRATED CHAT</span>
+          <span className="text-[10px] text-[#555] font-medium tracking-wide uppercase">Antigravity OS • FlowArchitect Console</span>
         </div>
       </div>
     </div>
