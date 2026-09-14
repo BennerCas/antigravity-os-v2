@@ -5,6 +5,7 @@ import { useStudioStore } from '../stores/useStudioStore';
 export default function AgentOSAgentland() {
   const { agentCards, setAgentCards } = useStudioStore();
   const [searchTerm, setSearchTerm] = useState('');
+  const [memoryEnabled, setMemoryEnabled] = useState(true);
   
   const filteredCards = agentCards.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -49,6 +50,14 @@ export default function AgentOSAgentland() {
           </div>
           <button className="bg-[#0f1115] border border-[#222] p-2 rounded-lg text-gray-400 hover:text-white transition-colors">
             <Funnel size={18} />
+          </button>
+          
+          <button 
+            onClick={() => setMemoryEnabled(!memoryEnabled)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold tracking-widest transition-all ${memoryEnabled ? 'bg-[#0f1115] border-green-500/50 text-green-400 shadow-[0_0_10px_rgba(34,197,94,0.2)]' : 'bg-[#0f1115] border-[#222] text-gray-500 hover:text-gray-300'}`}
+          >
+            <div className={`w-1.5 h-1.5 rounded-full ${memoryEnabled ? 'bg-green-400 animate-pulse' : 'bg-gray-600'}`} />
+            PERSISTENCIA DE MEMORIA
           </button>
         </div>
       </div>
@@ -118,6 +127,7 @@ export default function AgentOSAgentland() {
                 <div className="mb-4 flex items-center gap-2 relative z-10">
                   {getHealthBadge(agent.health)}
                   {agent.evalStatus === 'PASS' && <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1"><ShieldCheck size={12}/> EVAL PASS</span>}
+                  {memoryEnabled && <span className="bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1">MEMORIA ACTIVA</span>}
                 </div>
 
                 <p className="text-xs text-gray-400 mb-4 line-clamp-3 flex-1 relative z-10 leading-relaxed">
