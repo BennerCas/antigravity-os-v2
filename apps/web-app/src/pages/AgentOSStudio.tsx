@@ -7,8 +7,8 @@ const AURELIOS_THEMES: Record<string, any> = {
     name: 'Obsidian Emperor', bg: 'bg-[#050505]', text: 'text-[#E0E0E0]', border: 'border-[#1A1A1A]',
     panelBg: 'bg-[#0A0A0A]', panelBorder: 'border-[#222]', primary: 'text-[#00D9FF]',
     toolBg: 'bg-[#111]', toolHover: 'hover:border-[#444]', aiBubble: 'bg-[#111] border-[#222] text-[#E0E0E0]',
-    humanBubble: 'bg-[#00D9FF] text-black', inputBg: 'bg-[#111] border-[#333]', inputFocus: 'focus:border-[#555]',
-    sendActive: 'bg-[#00D9FF] text-black hover:bg-[#00BFFF]', sendDisabled: 'bg-[#222] text-[#555]'
+    humanBubble: 'bg-[#00D9FF] text-[#050505]', inputBg: 'bg-[#111] border-[#333]', inputFocus: 'focus:border-[#555]',
+    sendActive: 'bg-[#00D9FF] text-[#050505] hover:bg-[#00BFFF]', sendDisabled: 'bg-[#222] text-[#555]'
   },
   marble: {
     name: 'Marble Stoic', bg: 'bg-[#F8F9FA]', text: 'text-[#1F2937]', border: 'border-[#E5E7EB]',
@@ -42,36 +42,36 @@ const AURELIOS_THEMES: Record<string, any> = {
     name: 'Solar Flare', bg: 'bg-[#180A05]', text: 'text-[#FDE68A]', border: 'border-[#78350F]',
     panelBg: 'bg-[#291008]', panelBorder: 'border-[#92400E]', primary: 'text-[#F59E0B]',
     toolBg: 'bg-[#451A03]', toolHover: 'hover:border-[#B45309]', aiBubble: 'bg-[#291008] border-[#92400E] text-[#FEF3C7]',
-    humanBubble: 'bg-[#F59E0B] text-black', inputBg: 'bg-[#291008] border-[#78350F]', inputFocus: 'focus:border-[#B45309]',
-    sendActive: 'bg-[#F59E0B] text-black hover:bg-[#D97706]', sendDisabled: 'bg-[#451A03] text-[#78350F]'
+    humanBubble: 'bg-[#F59E0B] text-[#050505]', inputBg: 'bg-[#291008] border-[#78350F]', inputFocus: 'focus:border-[#B45309]',
+    sendActive: 'bg-[#F59E0B] text-[#050505] hover:bg-[#D97706]', sendDisabled: 'bg-[#451A03] text-[#78350F]'
   },
   abyssal: {
     name: 'Abyssal Ocean', bg: 'bg-[#030B14]', text: 'text-[#BAE6FD]', border: 'border-[#0C4A6E]',
     panelBg: 'bg-[#07172A]', panelBorder: 'border-[#0284C7]', primary: 'text-[#38BDF8]',
     toolBg: 'bg-[#082F49]', toolHover: 'hover:border-[#0EA5E9]', aiBubble: 'bg-[#07172A] border-[#0284C7] text-[#E0F2FE]',
-    humanBubble: 'bg-[#38BDF8] text-black', inputBg: 'bg-[#07172A] border-[#0C4A6E]', inputFocus: 'focus:border-[#0EA5E9]',
-    sendActive: 'bg-[#38BDF8] text-black hover:bg-[#0284C7]', sendDisabled: 'bg-[#082F49] text-[#0C4A6E]'
+    humanBubble: 'bg-[#38BDF8] text-[#050505]', inputBg: 'bg-[#07172A] border-[#0C4A6E]', inputFocus: 'focus:border-[#0EA5E9]',
+    sendActive: 'bg-[#38BDF8] text-[#050505] hover:bg-[#0284C7]', sendDisabled: 'bg-[#082F49] text-[#0C4A6E]'
   },
   toxic: {
     name: 'Toxic Wasteland', bg: 'bg-[#111311]', text: 'text-[#D9F99D]', border: 'border-[#3F6212]',
     panelBg: 'bg-[#1A1F1A]', panelBorder: 'border-[#4D7C0F]', primary: 'text-[#84CC16]',
     toolBg: 'bg-[#222E22]', toolHover: 'hover:border-[#65A30D]', aiBubble: 'bg-[#1A1F1A] border-[#4D7C0F] text-[#ECFCCB]',
-    humanBubble: 'bg-[#84CC16] text-black', inputBg: 'bg-[#1A1F1A] border-[#3F6212]', inputFocus: 'focus:border-[#65A30D]',
-    sendActive: 'bg-[#84CC16] text-black hover:bg-[#65A30D]', sendDisabled: 'bg-[#222E22] text-[#3F6212]'
+    humanBubble: 'bg-[#84CC16] text-[#050505]', inputBg: 'bg-[#1A1F1A] border-[#3F6212]', inputFocus: 'focus:border-[#65A30D]',
+    sendActive: 'bg-[#84CC16] text-[#050505] hover:bg-[#65A30D]', sendDisabled: 'bg-[#222E22] text-[#3F6212]'
   },
   midnight: {
     name: 'Midnight Rose', bg: 'bg-[#0F0A0D]', text: 'text-[#FBCFE8]', border: 'border-[#831843]',
     panelBg: 'bg-[#1A1016]', panelBorder: 'border-[#9D174D]', primary: 'text-[#F472B6]',
     toolBg: 'bg-[#2E1624]', toolHover: 'hover:border-[#BE185D]', aiBubble: 'bg-[#1A1016] border-[#9D174D] text-[#FCE7F3]',
-    humanBubble: 'bg-[#F472B6] text-black', inputBg: 'bg-[#1A1016] border-[#831843]', inputFocus: 'focus:border-[#BE185D]',
-    sendActive: 'bg-[#F472B6] text-black hover:bg-[#DB2777]', sendDisabled: 'bg-[#2E1624] text-[#831843]'
+    humanBubble: 'bg-[#F472B6] text-[#050505]', inputBg: 'bg-[#1A1016] border-[#831843]', inputFocus: 'focus:border-[#BE185D]',
+    sendActive: 'bg-[#F472B6] text-[#050505] hover:bg-[#DB2777]', sendDisabled: 'bg-[#2E1624] text-[#831843]'
   },
   monochrome: {
     name: 'Monochrome Terminal', bg: 'bg-[#000000]', text: 'text-[#FFFFFF]', border: 'border-[#333333]',
     panelBg: 'bg-[#0A0A0A]', panelBorder: 'border-[#555555]', primary: 'text-[#FFFFFF]',
     toolBg: 'bg-[#111111]', toolHover: 'hover:border-[#999999]', aiBubble: 'bg-[#0A0A0A] border-[#555555] text-[#FFFFFF]',
-    humanBubble: 'bg-[#FFFFFF] text-black', inputBg: 'bg-[#0A0A0A] border-[#333333]', inputFocus: 'focus:border-[#999999]',
-    sendActive: 'bg-[#FFFFFF] text-black hover:bg-[#CCCCCC]', sendDisabled: 'bg-[#111111] text-[#333333]'
+    humanBubble: 'bg-[#FFFFFF] text-[#050505]', inputBg: 'bg-[#0A0A0A] border-[#333333]', inputFocus: 'focus:border-[#999999]',
+    sendActive: 'bg-[#FFFFFF] text-[#050505] hover:bg-[#CCCCCC]', sendDisabled: 'bg-[#111111] text-[#333333]'
   },
   claude: {
     name: 'Claude Elegance', bg: 'bg-[#F9F8F6]', text: 'text-[#2D2A26]', border: 'border-[#E5E2DC]',
@@ -84,8 +84,8 @@ const AURELIOS_THEMES: Record<string, any> = {
     name: 'Solar Grid (Retro)', bg: 'bg-[#1A0B2E]', text: 'text-[#FCD34D]', border: 'border-[#7C3AED]',
     panelBg: 'bg-[#2E1065]', panelBorder: 'border-[#9333EA]', primary: 'text-[#F97316]',
     toolBg: 'bg-[#3B0764]', toolHover: 'hover:border-[#F97316]', aiBubble: 'bg-[#2E1065] border-[#9333EA] text-[#FDE047]',
-    humanBubble: 'bg-[#F97316] text-black', inputBg: 'bg-[#2E1065] border-[#7C3AED]', inputFocus: 'focus:border-[#F97316]',
-    sendActive: 'bg-[#F97316] text-black hover:bg-[#EA580C]', sendDisabled: 'bg-[#3B0764] text-[#7C3AED]'
+    humanBubble: 'bg-[#F97316] text-[#050505]', inputBg: 'bg-[#2E1065] border-[#7C3AED]', inputFocus: 'focus:border-[#F97316]',
+    sendActive: 'bg-[#F97316] text-[#050505] hover:bg-[#EA580C]', sendDisabled: 'bg-[#3B0764] text-[#7C3AED]'
   }
 };
 
@@ -148,25 +148,19 @@ const FlowArchitect: React.FC = () => {
         const data = await response.json();
         addChatMessage({ role: 'agent', content: data.message?.content || 'Respuesta vacía.' });
       } else {
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-        if (!apiKey) {
-          addChatMessage({ role: 'agent', content: `[AURELIOS] Bloqueo de seguridad: No se detectó VITE_GEMINI_API_KEY en tu archivo .env local. Por favor, configura tu API Key de Google o selecciona un modelo local de Ollama en el panel superior.` });
-          setIsTyping(false);
-          return;
-        }
-        
-        // Use Gemini API directly as Free.AI cascade fallback
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        const modelName = selectedModel.replace('free.ai/', '');
+        const res = await fetch('https://api.free.ai/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: textToSend }] }]
+            model: modelName,
+            messages: [{ role: 'user', content: textToSend }]
           })
         });
         
-        if (!res.ok) throw new Error('Error de conexión con la nube');
+        if (!res.ok) throw new Error('Error de conexión con Free.AI');
         const data = await res.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sin respuesta';
+        const text = data.choices?.[0]?.message?.content || 'Sin respuesta';
         addChatMessage({ role: 'agent', content: text });
       }
     } catch (err: any) {
