@@ -1,3 +1,5 @@
+import ReactMarkdown from 'react-markdown';
+import { useEffect } from 'react';
 import React, { useState } from 'react';
 import { useStudioStore, TabId } from '../stores/useStudioStore';
 import { Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush } from '@phosphor-icons/react';
@@ -7,7 +9,7 @@ const AURELIOS_THEMES: Record<string, any> = {
     name: 'Obsidian Emperor', bg: 'bg-zinc-950', text: 'text-zinc-100', border: 'border-zinc-800',
     panelBg: 'bg-zinc-900', panelBorder: 'border-zinc-700', primary: 'text-cyan-400',
     toolBg: 'bg-zinc-800', toolHover: 'hover:border-zinc-500', aiBubble: 'bg-zinc-900 border-zinc-700 text-zinc-100',
-    humanBubble: 'bg-cyan-400 text-black', inputBg: 'bg-zinc-900 border-zinc-700', inputFocus: 'focus:border-cyan-400',
+    humanBubble: 'bg-cyan-600 text-white', inputBg: 'bg-zinc-900 border-zinc-700', inputFocus: 'focus:border-cyan-400',
     sendActive: 'bg-cyan-400 text-black hover:bg-cyan-300', sendDisabled: 'bg-zinc-800 text-zinc-600'
   },
   marble: {
@@ -42,7 +44,7 @@ const AURELIOS_THEMES: Record<string, any> = {
     name: 'Solar Flare', bg: 'bg-orange-950', text: 'text-orange-100', border: 'border-orange-800',
     panelBg: 'bg-orange-900', panelBorder: 'border-orange-700', primary: 'text-amber-400',
     toolBg: 'bg-orange-800', toolHover: 'hover:border-amber-500', aiBubble: 'bg-orange-900 border-orange-700 text-orange-100',
-    humanBubble: 'bg-amber-500 text-black', inputBg: 'bg-orange-900 border-orange-800', inputFocus: 'focus:border-amber-400',
+    humanBubble: 'bg-amber-600 text-white', inputBg: 'bg-orange-900 border-orange-800', inputFocus: 'focus:border-amber-400',
     sendActive: 'bg-amber-500 text-black hover:bg-amber-400', sendDisabled: 'bg-orange-800 text-orange-500'
   },
   abyssal: {
@@ -56,7 +58,7 @@ const AURELIOS_THEMES: Record<string, any> = {
     name: 'Toxic Wasteland', bg: 'bg-stone-950', text: 'text-lime-100', border: 'border-lime-900',
     panelBg: 'bg-stone-900', panelBorder: 'border-lime-800', primary: 'text-lime-400',
     toolBg: 'bg-stone-800', toolHover: 'hover:border-lime-500', aiBubble: 'bg-stone-900 border-lime-800 text-lime-100',
-    humanBubble: 'bg-lime-500 text-black', inputBg: 'bg-stone-900 border-lime-900', inputFocus: 'focus:border-lime-400',
+    humanBubble: 'bg-lime-600 text-white', inputBg: 'bg-stone-900 border-lime-900', inputFocus: 'focus:border-lime-400',
     sendActive: 'bg-lime-500 text-black hover:bg-lime-400', sendDisabled: 'bg-stone-800 text-lime-700'
   },
   midnight: {
@@ -90,12 +92,20 @@ const AURELIOS_THEMES: Record<string, any> = {
 };
 
 const FlowArchitect: React.FC = () => {
-  const { chatMessages, addChatMessage } = useStudioStore();
+    const { chatMessages, addChatMessage } = useStudioStore();
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [thinkingPhrase, setThinkingPhrase] = useState('');
-  const [selectedModel, setSelectedModel] = useState('free.ai/auto');
-  const [currentThemeKey, setCurrentThemeKey] = useState('obsidian');
+  const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem('aurelios_model') || 'free.ai/auto');
+  const [currentThemeKey, setCurrentThemeKey] = useState(() => localStorage.getItem('aurelios_theme') || 'obsidian');
+
+  useEffect(() => {
+    localStorage.setItem('aurelios_model', selectedModel);
+  }, [selectedModel]);
+
+  useEffect(() => {
+    localStorage.setItem('aurelios_theme', currentThemeKey);
+  }, [currentThemeKey]);
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   
   const t = AURELIOS_THEMES[currentThemeKey];
@@ -152,18 +162,21 @@ const FlowArchitect: React.FC = () => {
         addChatMessage({ role: 'agent', content: data.message?.content || 'Respuesta vacía.' });
       } else {
         const modelName = selectedModel.replace('free.ai/', '');
-        const res = await fetch('https://text.pollinations.ai/openai/chat/completions', {
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+        if (!apiKey) {
+          addChatMessage({ role: 'agent', content: '[AURELIOS] Para usar la red global, configura tu VITE_GEMINI_API_KEY en el archivo .env' });
+          setIsTyping(false);
+          return;
+        }
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: modelName === 'auto' ? 'openai' : modelName,
-            messages: [{ role: 'user', content: textToSend }]
-          })
+          body: JSON.stringify({ contents: [{ parts: [{ text: textToSend }] }] })
         });
         
-        if (!res.ok) throw new Error('Error de conexión con la red global Free.AI');
+        if (!res.ok) throw new Error('Error de conexión con la red global Gemini/Free.AI');
         const data = await res.json();
-        const text = data.choices?.[0]?.message?.content || 'Sin respuesta';
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sin respuesta';
         addChatMessage({ role: 'agent', content: text });
       }
     } catch (err: any) {
@@ -284,7 +297,9 @@ const FlowArchitect: React.FC = () => {
               <div className={`p-3 text-[15px] leading-relaxed border ${
                 msg.role === 'human' ? `${t.humanBubble} border-transparent rounded-xl rounded-tr-sm font-medium` : `${t.aiBubble} rounded-xl rounded-tl-sm shadow-sm`
               } transition-colors duration-500`}>
-                {msg.content}
+                <ReactMarkdown className={`prose prose-sm max-w-none ${msg.role === 'agent' ? t.text : 'text-inherit'} prose-headings:text-current prose-p:text-current prose-strong:text-current prose-a:text-current prose-ul:text-current prose-ol:text-current prose-li:text-current`}>
+                  {msg.content}
+                </ReactMarkdown>
               </div>
               {msg.role === 'agent' && (
                 <div className="flex items-center gap-2 mt-1.5 px-1">
