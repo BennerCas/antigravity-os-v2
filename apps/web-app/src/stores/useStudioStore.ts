@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { Node, Edge } from '@xyflow/react';
 
 export type TabId = 'discovery' | 'synthesis' | 'blueprint';
@@ -135,33 +136,48 @@ export function parseAIResponseToFlow(text: string): { nodes: Node[]; edges: Edg
   return { nodes, edges, cards, md: text };
 }
 
-export const useStudioStore = create<StudioState>((set) => ({
-  activeTab: 'discovery',
-  setActiveTab: (tab) => set({ activeTab: tab }),
+export const useStudioStore = create<StudioState>()(
+  persist(
+    (set) => ({
+      activeTab: 'discovery',
+      setActiveTab: (tab) => set({ activeTab: tab }),
 
-  chatMessages: [
-    { id: '1', role: 'system', content: 'Bienvenido a **AureliOS Studio**. Dime qué sistema quieres construir y veré el flujo aparecer en tiempo real →' }
-  ],
-  addChatMessage: (msg) =>
-    set((state) => ({
-      chatMessages: [...state.chatMessages, { ...msg, id: Date.now().toString() }],
-    })),
-  clearMessages: () =>
-    set({
-      chatMessages: [{ id: Date.now().toString(), role: 'system', content: 'Chat limpiado. ¿Qué sistema quieres construir?' }],
-      flowNodes: [], flowEdges: [], agentCards: [], blueprintMd: '',
+      chatMessages: [
+        { id: '1', role: 'system', content: 'Bienvenido a **AureliOS Studio**. Dime qué sistema quieres construir y veré el flujo aparecer en tiempo real  ' }
+      ],
+      addChatMessage: (msg) =>
+        set((state) => ({
+          chatMessages: [...state.chatMessages, { ...msg, id: Date.now().toString() }],
+        })),
+      clearMessages: () =>
+        set({
+          chatMessages: [{ id: Date.now().toString(), role: 'system', content: 'Chat limpiado. ¿Qué sistema quieres construir?' }],
+          flowNodes: [], flowEdges: [], agentCards: [], blueprintMd: '',
+        }),
+
+      flowNodes: [],
+      flowEdges: [],
+      setFlow: (flowNodes, flowEdges) => set({ flowNodes, flowEdges }),
+
+      agentCards: [],
+      setAgentCards: (agentCards) => set({ agentCards }),
+
+      blueprintMd: '',
+      setBlueprintMd: (blueprintMd) => set({ blueprintMd }),
+
+      focusedAgent: null,
+      setFocusedAgent: (focusedAgent) => set({ focusedAgent }),
     }),
-
-  flowNodes: [],
-  flowEdges: [],
-  setFlow: (flowNodes, flowEdges) => set({ flowNodes, flowEdges }),
-
-  agentCards: [],
-  setAgentCards: (agentCards) => set({ agentCards }),
-
-  blueprintMd: '',
-  setBlueprintMd: (blueprintMd) => set({ blueprintMd }),
-
-  focusedAgent: null,
-  setFocusedAgent: (focusedAgent) => set({ focusedAgent }),
-}));
+    {
+      name: 'agentos-studio-storage',
+      partialize: (state) => ({
+        chatMessages: state.chatMessages,
+        flowNodes: state.flowNodes,
+        flowEdges: state.flowEdges,
+        agentCards: state.agentCards,
+        blueprintMd: state.blueprintMd,
+        activeTab: state.activeTab,
+      }),
+    }
+  )
+);
