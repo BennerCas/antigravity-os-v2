@@ -162,23 +162,33 @@ const FlowArchitect: React.FC = () => {
         const data = await response.json();
         addChatMessage({ role: 'agent', content: data.message?.content || 'Respuesta vacía.' });
       } else {
-        
         const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-        if (!apiKey) {
-          addChatMessage({ role: 'agent', content: '[AURELIOS] Para usar la red global, configura tu VITE_GEMINI_API_KEY en el archivo .env' });
-          setIsTyping(false);
-          return;
+        if (apiKey) {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: textToSend }] }] })
+          });
+          if (!res.ok) throw new Error('Error de conexión con Gemini');
+          const data = await res.json();
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sin respuesta';
+          addChatMessage({ role: 'agent', content: text });
+        } else {
+          // Free.AI (Pollinations fallback)
+          // Map to 'openai' which is fully supported for free anonymous queries
+          const res = await fetch('https://text.pollinations.ai/openai/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: 'openai',
+              messages: [{ role: 'user', content: textToSend }]
+            })
+          });
+          if (!res.ok) throw new Error('Error de conexión con la red global Free.AI');
+          const data = await res.json();
+          const text = data.choices?.[0]?.message?.content || 'Sin respuesta';
+          addChatMessage({ role: 'agent', content: text });
         }
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: textToSend }] }] })
-        });
-        
-        if (!res.ok) throw new Error('Error de conexión con la red global Gemini/Free.AI');
-        const data = await res.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sin respuesta';
-        addChatMessage({ role: 'agent', content: text });
       }
     } catch (err: any) {
       addChatMessage({ role: 'agent', content: `[ERROR] No se pudo contactar al motor de IA: ${err.message}` });
