@@ -1,10 +1,21 @@
 import React, { useState } from 'react';
 import { useStudioStore, TabId } from '../stores/useStudioStore';
-import { Robot, Trash, Wrench, ShieldCheck, TreeStructure, CurrencyDollar, Database, SpeakerHigh, Star, PaperPlaneRight } from '@phosphor-icons/react';
+import { Robot, Trash, Wrench, ShieldCheck, TreeStructure, CurrencyDollar, Database, SpeakerHigh, Star, PaperPlaneRight, LockKey, Lightning } from '@phosphor-icons/react';
 
 const FlowArchitect: React.FC = () => {
   const { chatMessages, addChatMessage } = useStudioStore();
   const [input, setInput] = useState('');
+  const [selectedModel, setSelectedModel] = useState('free.ai/auto');
+  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+
+  React.useEffect(() => {
+    fetch('http://127.0.0.1:11434/api/tags')
+      .then(res => res.json())
+      .then(data => {
+        if (data.models) setOllamaModels(data.models.map((m: any) => m.name));
+      })
+      .catch(() => {});
+  }, []);
 
   const speak = (text: string) => {
     if (!window.speechSynthesis) return;
@@ -26,61 +37,80 @@ const FlowArchitect: React.FC = () => {
     if (!textToSend.trim()) return;
     addChatMessage({ role: 'human', content: textToSend });
     setInput('');
-    // Fake AI response for testing
+    // Mock response
     setTimeout(() => {
-      addChatMessage({ role: 'agent', content: 'He recibido tu instrucción. Procederé a analizar la arquitectura del sistema y sugerir mejoras basadas en los patrones de diseño.' });
+      addChatMessage({ role: 'agent', content: `He procesado tu solicitud usando el modelo ${selectedModel}. La cascada de Free.AI y el SDK de Antigravity están listos para orquestar los subagentes necesarios.` });
     }, 600);
   };
 
   const aiTools = [
-    { title: 'Requirements Gatekeeper', icon: <ShieldCheck size={18} className="text-[#3b82f6]" weight="fill" />, desc: 'Filtro estricto de validación. Evalúa tu idea buscando ambigüedades y exige claridad absoluta antes de permitir el diseño.' },
-    { title: 'Architecture Alternatives', icon: <TreeStructure size={18} className="text-[#3b82f6]" weight="fill" />, desc: 'Explora y compara enfoques arquitectónicos (microservicios, monolitos, serverless) para recomendar la estructura óptima.' },
-    { title: 'Cost/Feasibility Analyzer', icon: <CurrencyDollar size={18} className="text-[#f5a623]" weight="fill" />, desc: 'Auditoría integral técnica y financiera. Proyecta viabilidad, detecta cuellos de botella y estima costos de infraestructura.' },
-    { title: 'State Schema Designer', icon: <Database size={18} className="text-[#f5a623]" weight="fill" />, desc: 'Ingeniero de datos. Modela esquemas de estado, entidades y relaciones garantizando normalización y rendimiento.' }
+    { title: 'Requirements Gatekeeper', icon: <ShieldCheck size={18} className="text-[#3b82f6]" weight="fill" />, desc: 'Filtro estricto de validación. Evalúa tu idea buscando ambigüedades.' },
+    { title: 'Architecture Alternatives', icon: <TreeStructure size={18} className="text-[#3b82f6]" weight="fill" />, desc: 'Explora y compara enfoques arquitectónicos.' },
+    { title: 'Cost/Feasibility Analyzer', icon: <CurrencyDollar size={18} className="text-[#f5a623]" weight="fill" />, desc: 'Auditoría integral técnica y financiera.' },
+    { title: 'State Schema Designer', icon: <Database size={18} className="text-[#f5a623]" weight="fill" />, desc: 'Ingeniero de datos. Modela esquemas de estado y relaciones.' },
+    { title: 'Security & Auth Auditor', icon: <LockKey size={18} className="text-[#e11d48]" weight="fill" />, desc: 'Auditor de seguridad. Busca vulnerabilidades y revisa políticas de acceso.' },
+    { title: 'Performance Profiler', icon: <Lightning size={18} className="text-[#e11d48]" weight="fill" />, desc: 'Analizador de rendimiento. Detecta cuellos de botella y optimiza recursos.' }
   ];
 
   return (
     <div className="flex flex-col h-full bg-[#050505] text-[#E0E0E0] p-4 relative">
-      {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-[#1A1A1A] shrink-0">
-        <div className="flex items-center gap-2">
-          <Robot weight="duotone" size={24} className="text-[#F5A623]" />
-          <h2 className="text-[17px] font-bold text-white tracking-tight">FlowArchitect Discovery</h2>
+      {/* Top Fixed Area */}
+      <div className="shrink-0 flex flex-col gap-3 pb-3 border-b border-[#1A1A1A]">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Robot weight="duotone" size={24} className="text-[#F5A623]" />
+            <h2 className="text-[17px] font-bold text-white tracking-tight">FlowArchitect</h2>
+          </div>
+          <button onClick={clearChat} className="flex items-center gap-1.5 px-3 py-1.5 border border-[#333] rounded-md text-xs font-medium hover:bg-[#111] transition-colors">
+            <Trash size={14} /> Limpiar
+          </button>
         </div>
-        <button onClick={clearChat} className="flex items-center gap-1.5 px-3 py-1.5 border border-[#333] rounded-md text-xs font-medium hover:bg-[#111] transition-colors">
-          <Trash size={14} /> Limpiar
-        </button>
+
+        {/* AI Model Selector */}
+        <div className="flex items-center justify-between bg-[#0A0A0A] p-2 rounded-lg border border-[#1A1A1A]">
+          <span className="text-[#888] text-[11px] font-bold ml-1 tracking-wider">MODELO AI:</span>
+          <select 
+            className="bg-transparent text-[#00D9FF] text-xs font-bold focus:outline-none cursor-pointer flex-1 mx-2 text-right appearance-none"
+            value={selectedModel}
+            onChange={e => setSelectedModel(e.target.value)}
+          >
+            <optgroup label="Free.AI (Cascada Inteligente)">
+              <option value="free.ai/auto">Cascada (Auto-Routing) 🌟</option>
+              <option value="free.ai/gemini-1.5-pro">Gemini 1.5 Pro</option>
+              <option value="free.ai/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+              <option value="free.ai/gpt-4o">GPT-4o</option>
+            </optgroup>
+            <optgroup label="Ollama (Locales)">
+              {ollamaModels.map(m => <option key={m} value={`ollama/${m}`}>{m}</option>)}
+              {ollamaModels.length === 0 && <option value="ollama/hermes3:8b">hermes3:8b (Offline)</option>}
+            </optgroup>
+          </select>
+        </div>
+
+        {/* Fixed AI Tools (6 buttons) */}
+        <div className="flex items-center gap-2 mb-1 text-[#888] text-[10px] font-bold tracking-wider uppercase">
+          <Wrench size={12} /> AI Tools (Master Prompts)
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {aiTools.map((tool, i) => (
+            <button 
+              key={i} 
+              onClick={() => handleSend(tool.title)} 
+              title={tool.desc}
+              className="flex items-center gap-2 p-2 bg-[#111] border border-[#222] hover:border-[#444] rounded-lg text-left transition-colors group"
+            >
+              <div className="shrink-0">{tool.icon}</div>
+              <span className="text-[10.5px] font-bold text-[#E0E0E0] leading-tight group-hover:text-white transition-colors">{tool.title}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Chat History / Empty State with Invisible Scroll */}
-      <div className="flex-1 overflow-y-auto mb-4 py-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      {/* Chat History / Invisible Scroll */}
+      <div className="flex-1 overflow-y-auto py-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {chatMessages.length === 0 ? (
-          <div className="flex flex-col h-full pt-2">
-            <div className="flex items-center gap-2 mb-4 text-[#888] text-xs font-bold tracking-wider">
-              <Wrench size={14} /> AI TOOLS (MASTER PROMPTS)
-            </div>
-            <div className="grid grid-cols-1 2xl:grid-cols-2 gap-3 mb-8">
-              {aiTools.map((tool, i) => (
-                <div key={i} className="bg-[#0A0A0A] border border-[#1A1A1A] p-4 rounded-lg flex flex-col hover:border-[#333] transition-colors cursor-pointer group" onClick={() => { handleSend(tool.title); }}>
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-2 text-sm font-bold text-white">
-                      {tool.icon}
-                      {tool.title}
-                    </div>
-                    <button onClick={(e) => { e.stopPropagation(); speak(tool.desc); }} className="text-[#555] hover:text-[#E0E0E0] p-1.5 border border-[#333] rounded-full bg-[#111] transition-colors"><SpeakerHigh size={14} /></button>
-                  </div>
-                  <p className="text-[#888] text-xs leading-relaxed">{tool.desc}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center gap-3 mt-auto p-4 border border-[#1A1A1A] rounded-lg bg-[#0A0A0A]">
-              <span className="text-[#888] text-sm font-bold">Modelo de Chat:</span>
-              <select className="bg-[#111] text-[#E0E0E0] border border-[#333] rounded px-2 py-1 text-sm focus:ring-0 cursor-pointer outline-none font-medium">
-                <option>hermes3:8b (ollama)</option>
-              </select>
-              <span className="text-[#F5A623] flex items-center gap-1 text-sm font-bold"><Star weight="fill" size={14} /> Recomendado</span>
-            </div>
+          <div className="flex h-full items-center justify-center text-center text-[#444] text-sm px-8 font-medium">
+            Selecciona una herramienta de IA del panel superior o escribe tu idea para comenzar.
           </div>
         ) : (
           chatMessages.map(msg => (
@@ -102,26 +132,26 @@ const FlowArchitect: React.FC = () => {
         )}
       </div>
 
-      {/* Input Box - fixed at bottom of container */}
-      <div className="shrink-0 mt-auto pt-4 border-t border-[#1A1A1A] bg-[#050505]">
-        <div className="flex items-center bg-[#111] border border-[#333] rounded-xl overflow-hidden focus-within:border-[#555] transition-colors p-1">
+      {/* Input Box - Split Layout, 0.5cm (mb-5) bottom margin */}
+      <div className="shrink-0 pt-2 mb-5">
+        <div className="flex items-center gap-2">
           <input
             type="text"
-            className="flex-1 bg-transparent px-3 py-2.5 text-sm text-[#E0E0E0] placeholder-[#666] focus:outline-none"
-            placeholder="Describe tu arquitectura o escribe una idea..."
+            className="flex-1 bg-[#111] border border-[#333] rounded-xl px-4 py-3 text-sm text-[#E0E0E0] placeholder-[#666] focus:outline-none focus:border-[#555] shadow-inner transition-colors"
+            placeholder="Describe tu arquitectura o idea..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
           />
           <button
             onClick={() => handleSend()}
-            className={`p-2.5 rounded-lg transition-colors flex items-center justify-center mr-1 ${input.trim() ? 'bg-[#00D9FF] text-black hover:bg-[#00BFFF]' : 'bg-[#222] text-[#555] cursor-not-allowed'}`}
+            className={`p-3 rounded-xl transition-all shadow-md flex items-center justify-center shrink-0 ${input.trim() ? 'bg-[#00D9FF] text-black hover:bg-[#00BFFF] hover:scale-105' : 'bg-[#222] text-[#555] cursor-not-allowed'}`}
           >
-            <PaperPlaneRight weight="fill" size={16} />
+            <PaperPlaneRight weight="fill" size={18} />
           </button>
         </div>
-        <div className="text-center mt-2">
-          <span className="text-[10px] text-[#555] font-medium tracking-wide">ANTIGRAVITY OS • AI ARCHITECTURE DISCOVERY</span>
+        <div className="text-center mt-3">
+          <span className="text-[10px] text-[#555] font-medium tracking-wide">ANTIGRAVITY OS • SDK INTEGRATED CHAT</span>
         </div>
       </div>
     </div>
