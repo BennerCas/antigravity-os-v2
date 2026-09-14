@@ -38,7 +38,7 @@ export default function AgentOS() {
   useEffect(() => { try { localStorage.setItem('agentos_teams', JSON.stringify(teams)); } catch {} }, [teams]);
 
   return (
-    <div className="flex flex-col h-screen w-full bg-[#030303] text-[#E0E0E0] overflow-hidden font-sans">
+    <div className="flex flex-col h-full w-full bg-[#030303] text-[#E0E0E0] overflow-hidden font-sans">
       
       {/* HEADER GLOBAL */}
       <div className="flex items-center px-6 h-[52px] border-b border-[#111] bg-[#050505] shrink-0 gap-2">

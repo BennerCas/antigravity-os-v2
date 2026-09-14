@@ -81,7 +81,7 @@ function App(): React.ReactElement {
       <div className="flex h-screen bg-[var(--surface-canvas)] text-[var(--text-primary)] overflow-hidden">
         <Sidebar />
         
-        <main className="flex-1 overflow-y-auto h-screen relative bg-[var(--surface-canvas)]">
+        <main className="flex-1 overflow-hidden h-screen relative bg-[var(--surface-canvas)]">
           <Suspense
             fallback={
               <div className="flex h-full w-full items-center justify-center text-[var(--text-muted)] font-mono text-sm">
