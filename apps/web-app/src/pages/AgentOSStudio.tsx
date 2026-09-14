@@ -126,7 +126,14 @@ const FlowArchitect: React.FC = () => {
   };
 
   const clearChat = () => {
-    useStudioStore.setState({ chatMessages: [] });
+    useStudioStore.setState({ 
+      chatMessages: [],
+      flowNodes: [],
+      flowEdges: [],
+      agentCards: [],
+      blueprintMd: '',
+      activeTab: 'discovery'
+    });
   };
 
   const handleSend = async (overrideInput?: string) => {
@@ -442,8 +449,10 @@ const FlowDiagram: React.FC = () => {
         attributionPosition="bottom-left"
       >
         <Background color="#0f172a" gap={24} size={1} />
-        <Controls className="!bg-[#0d1117] !border-[#1e293b] !rounded-xl" />
+        <Controls position="bottom-left" className="!bg-[#0d1117] !border-[#1e293b] !rounded-xl" />
         <MiniMap
+          position="bottom-left"
+          style={{ left: 60, bottom: 0 }}
           nodeColor={(n) => {
             const k = (n.data?.kind as string) || 'agent';
             const colors: Record<string,string> = { agent:'#3b82f6', trigger:'#10b981', tool:'#f59e0b', router:'#a855f7', human:'#ec4899', sink:'#64748b' };
@@ -819,16 +828,18 @@ const CanvasTabs: React.FC = () => {
           </button>
         ))}
         <div className="flex-1" />
-        <button 
-          onClick={runMatchAndFusePipeline}
-          className="h-full px-6 flex items-center gap-2 bg-[#00D9FF]/10 text-[#00D9FF] hover:bg-[#00D9FF]/20 border-b-2 border-[#00D9FF] transition-all font-bold text-sm"
-        >
-          <Brain size={18} weight="duotone" /> Detectar Agentes
-        </button>
       </div>
       <div className="flex-1 flex flex-col relative min-h-0 p-4 md:p-5" style={{ background: '#030712' }}>
         <div className="flex-1 flex flex-col relative overflow-hidden bg-transparent">
           {renderContent()}
+        </div>
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
+          <button 
+            onClick={runMatchAndFusePipeline}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#00D9FF] text-black hover:brightness-110 shadow-[0_0_20px_rgba(0,217,255,0.3)] transition-all font-bold text-sm"
+          >
+            <Brain size={18} weight="duotone" /> Detectar Agentes
+          </button>
         </div>
       </div>
     </div>

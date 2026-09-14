@@ -138,6 +138,159 @@ class MatchFuseRequest(BaseModel):
 @router.post("/match_fuse", response_model=ChatResponse)
 async def match_fuse(req: MatchFuseRequest):
     """
+    Uses the google.antigravity SDK to execute the Match & Fuse v2 pipeline.
+    Currently bridged to local Ollama (OpenAI compatible endpoint).
+    """
+    prompt = f"""
+Act as the Antigravity Match & Fuse v2 pipeline.
+Execute these stages:
+1. Intention parsing
+2. RRF Retrieval
+3. Gene decomposition (reasoning, domain, format, tool, policy)
+4. Novelty & Eval check
+
+Convert these diagram nodes into a JSON array of AgentCards:
+{req.nodes}
+
+OUTPUT EXACTLY a valid JSON array of AgentCard objects. Do NOT use markdown code blocks (```). Just return the raw JSON array (starting with [ and ending with ]).
+INTERFACE:
+{{
+  "id": string,
+  "name": string,
+  "role": string,
+  "description": string, // Detailed system prompt/role description
+  "color": string, // hex color
+  "noveltyScore": number, // 0.0 to 1.0
+  "evalStatus": "PASS" | "FAIL",
+  "inputOutputContract": string, // e.g. "IN: Text -> OUT: JSON"
+  "requiredTools": string[], // List of tool names
+  "health": "green" | "yellow" | "red", // Green if PASS and novelty > 0.8
+  "genes": [
+    {{ "kind": "reasoning" | "domain" | "format" | "tool" | "policy", "value": string }}
+  ]
+}}
+    """
+
+    from google.antigravity.connections.local.local_openai_connection_config import LocalOpenAIAgentConfig
+    import os
+    
+    # Use OLLAMA as OpenAI compatible endpoint
+    ollama_base = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434").rstrip('/')
+    # Ollama OpenAI compat endpoint is usually /v1
+    openai_compat_url = f"{ollama_base}/v1"
+    
+    os.environ["OPENAI_API_KEY"] = "ollama"
+    
+    config = LocalOpenAIAgentConfig(
+        base_url=openai_compat_url,
+        model="llama3.1:8b", # Default local model fallback
+        system_instructions="You are the Antigravity OS core logic. Respond ONLY with the requested JSON array. Do not output anything else.",
+        tools=[],
+        capabilities=CapabilitiesConfig(enable_subagents=False),
+        env={"OPENAI_API_KEY": "ollama"}
+    )
+        
+    try:
+        async with Agent(config) as agent:
+            response = await agent.chat(prompt)
+            text = await response.text()
+            # Try to extract just the JSON array if there's extra text
+            import re
+            json_match = re.search(r'\[.*\]', text, re.DOTALL)
+            if json_match:
+                text = json_match.group(0)
+            return ChatResponse(response=text, model_used=f"ollama/llama3.1:8b (via SDK)", engine="sdk")
+    except Exception as e:
+        return ChatResponse(
+            response=f"[ERROR SDK] {str(e)}",
+            model_used=f"ollama/llama3.1:8b (via SDK)",
+            engine="error"
+        )
+
+from typing import List, Any
+from google.antigravity import Agent, LocalAgentConfig, CapabilitiesConfig
+
+class MatchFuseRequest(BaseModel):
+    nodes: List[Any]
+    model: Optional[str] = None
+
+@router.post("/match_fuse", response_model=ChatResponse)
+async def match_fuse(req: MatchFuseRequest):
+    """
+    Uses the google.antigravity SDK to execute the Match & Fuse v2 pipeline.
+    Currently bridged to GROQ since Free.AI is down.
+    """
+    prompt = f"""
+Act as the Antigravity Match & Fuse v2 pipeline.
+Execute these stages:
+1. Intention parsing
+2. RRF Retrieval
+3. Gene decomposition (reasoning, domain, format, tool, policy)
+4. Novelty & Eval check
+
+Convert these diagram nodes into a JSON array of AgentCards:
+{req.nodes}
+
+OUTPUT EXACTLY a valid JSON array of AgentCard objects. Do NOT use markdown code blocks (```). Just return the raw JSON array (starting with [ and ending with ]).
+INTERFACE:
+{{
+  "id": string,
+  "name": string,
+  "role": string,
+  "description": string, // Detailed system prompt/role description
+  "color": string, // hex color
+  "noveltyScore": number, // 0.0 to 1.0
+  "evalStatus": "PASS" | "FAIL",
+  "inputOutputContract": string, // e.g. "IN: Text -> OUT: JSON"
+  "requiredTools": string[], // List of tool names
+  "health": "green" | "yellow" | "red", // Green if PASS and novelty > 0.8
+  "genes": [
+    {{ "kind": "reasoning" | "domain" | "format" | "tool" | "policy", "value": string }}
+  ]
+}}
+    """
+
+    from google.antigravity.connections.local.local_openai_connection_config import LocalOpenAIAgentConfig
+    
+    # Bridge via GROQ (Since Free.AI is returning 'model is restarting')
+    os.environ["OPENAI_API_KEY"] = os.getenv("GROQ_API_KEY", "")
+    
+    config = LocalOpenAIAgentConfig(
+        base_url="https://api.groq.com/openai/v1",
+        model="llama-3.1-70b-versatile",
+        system_instructions="You are the Antigravity OS core logic. Respond ONLY with the requested JSON array. Do not output anything else.",
+        tools=[],
+        capabilities=CapabilitiesConfig(enable_subagents=False),
+        env={"OPENAI_API_KEY": os.getenv("GROQ_API_KEY", "")}
+    )
+        
+    try:
+        async with Agent(config) as agent:
+            response = await agent.chat(prompt)
+            text = await response.text()
+            # Try to extract just the JSON array if there's extra text
+            import re
+            json_match = re.search(r'\[.*\]', text, re.DOTALL)
+            if json_match:
+                text = json_match.group(0)
+            return ChatResponse(response=text, model_used=f"groq/llama-3.1-70b (via SDK)", engine="sdk")
+    except Exception as e:
+        return ChatResponse(
+            response=f"[ERROR SDK] {str(e)}",
+            model_used=f"groq/llama-3.1-70b (via SDK)",
+            engine="error"
+        )
+
+from typing import List, Any
+from google.antigravity import Agent, LocalAgentConfig, CapabilitiesConfig
+
+class MatchFuseRequest(BaseModel):
+    nodes: List[Any]
+    model: Optional[str] = None
+
+@router.post("/match_fuse", response_model=ChatResponse)
+async def match_fuse(req: MatchFuseRequest):
+    """
     Uses the google.antigravity SDK (Free.AI API) to execute the Match & Fuse v2 pipeline.
     """
     prompt = f"""
