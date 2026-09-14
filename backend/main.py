@@ -13,9 +13,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import config  # carga .env local (o fallback legacy) antes que todo
-from routers import execute, search, prompts, builder_actions, compiler, runtime, flows, architecture, automations, native_engine, semantic_search, builder_v1, architect_v1, academy, engine
+from routers import execute, search, prompts, builder_actions, compiler, runtime, flows, architecture, automations, native_engine, semantic_search, builder_v1, architect_v1, academy, engine, authoring, flowboard, inspector
 
 app = FastAPI(
+
     title="Antigravity_OS Backend API",
     description="Backend API for managing agents and execution frameworks.",
     version="0.2.0"
@@ -46,6 +47,9 @@ app.include_router(academy.router, prefix="/api/v1/learning")
 app.include_router(engine.router, prefix="/api/v1")
 from routers.agents_factory import router as agents_factory_router
 app.include_router(agents_factory_router, prefix="/api/v1")
+app.include_router(authoring.router, prefix="/api/v1")
+app.include_router(flowboard.router)
+app.include_router(inspector.router)
 
 @app.on_event("startup")
 async def startup_event():

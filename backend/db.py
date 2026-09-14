@@ -183,6 +183,85 @@ def init_db() -> None:
                 payload TEXT NOT NULL,
                 created_at TEXT NOT NULL
             );
+            
+            -- Multi-tenancy & Versioning Tables (v2)
+            CREATE TABLE IF NOT EXISTS organizations (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                kms_key_id TEXT,
+                billing_tier TEXT DEFAULT 'free',
+                created_at TEXT NOT NULL
+            );
+            
+            CREATE TABLE IF NOT EXISTS workspaces (
+                id TEXT PRIMARY KEY,
+                org_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                rbac_policy TEXT,
+                quotas TEXT,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY(org_id) REFERENCES organizations(id)
+            );
+            
+            CREATE TABLE IF NOT EXISTS projects (
+                id TEXT PRIMARY KEY,
+                workspace_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                status TEXT DEFAULT 'active',
+                created_at TEXT NOT NULL,
+                FOREIGN KEY(workspace_id) REFERENCES workspaces(id)
+            );
+            
+            CREATE TABLE IF NOT EXISTS assets (
+                id TEXT PRIMARY KEY,
+                project_id TEXT NOT NULL,
+                kind TEXT NOT NULL,
+                name TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY(project_id) REFERENCES projects(id)
+            );
+            
+            CREATE TABLE IF NOT EXISTS revisions (
+                id TEXT PRIMARY KEY,
+                asset_id TEXT NOT NULL,
+                version TEXT NOT NULL,
+                hash TEXT NOT NULL,
+                parent_rev TEXT,
+                payload TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY(asset_id) REFERENCES assets(id)
+            );
+            
+            CREATE TABLE IF NOT EXISTS runs (
+                id TEXT PRIMARY KEY,
+                revision_id TEXT NOT NULL,
+                status TEXT NOT NULL,
+                trace_id TEXT,
+                metrics TEXT,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY(revision_id) REFERENCES revisions(id)
+            );
+            
+            CREATE TABLE IF NOT EXISTS spans (
+                id TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL,
+                node_id TEXT NOT NULL,
+                tool_call TEXT,
+                llm_call TEXT,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY(run_id) REFERENCES runs(id)
+            );
+            
+            CREATE TABLE IF NOT EXISTS vault_secrets (
+                id TEXT PRIMARY KEY,
+                workspace_id TEXT NOT NULL,
+                secret_handle TEXT NOT NULL,
+                encrypted_value TEXT NOT NULL,
+                metadata TEXT,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY(workspace_id) REFERENCES workspaces(id)
+            );
+            
             CREATE INDEX IF NOT EXISTS idx_sessions_user_mission ON mission_sessions (user_id, mission_id);
             CREATE INDEX IF NOT EXISTS idx_evidence_user_skill ON evidence_ledger (user_id, skill_id);
             CREATE INDEX IF NOT EXISTS idx_mastery_user ON skill_mastery (user_id);

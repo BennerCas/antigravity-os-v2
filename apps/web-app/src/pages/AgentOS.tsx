@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Brain, Target, UsersThree, ChatCircle } from '@phosphor-icons/react';
+import { Brain, Target, UsersThree, ChatCircle, Graph, MagnifyingGlass } from '@phosphor-icons/react';
 import AgentOSSelect from './AgentOSSelect';
 import AgentOSTeams from './AgentOSTeams';
 import AgentOSInteract from './AgentOSInteract';
+import AgentOSFlowboard from './AgentOSFlowboard';
+import AgentOSInspector from './AgentOSInspector';
 import type { AgentItem, AtlasItem } from './AgentOSSelect';
 import type { Team } from './AgentOSTeams';
 
-type View = 'select' | 'teams' | 'interact';
+type View = 'select' | 'teams' | 'interact' | 'flowboard' | 'inspector';
 
 export default function AgentOS() {
   const [view, setView] = useState<View>(() => (localStorage.getItem('agentos_view') as View) || 'select');
@@ -49,6 +51,8 @@ export default function AgentOS() {
           { id:'select', label:'Seleccionar', icon:<Target size={15}/> },
           { id:'teams', label:'Equipos', icon:<UsersThree size={15}/> },
           { id:'interact', label:'Interactuar', icon:<ChatCircle size={15}/> },
+          { id:'flowboard', label:'Flowboard', icon:<Graph size={15}/> },
+          { id:'inspector', label:'Inspector', icon:<MagnifyingGlass size={15}/> },
         ].map(tab => (
           <button key={tab.id} onClick={() => setView(tab.id as View)}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs transition-all ${
@@ -106,6 +110,12 @@ export default function AgentOS() {
             onGoToSelect={() => setView('select')}
             onGoToTeams={() => setView('teams')}
           />
+        </div>
+        <div className="absolute inset-0" style={{ display: view === 'flowboard' ? 'block' : 'none' }}>
+          <AgentOSFlowboard />
+        </div>
+        <div className="absolute inset-0" style={{ display: view === 'inspector' ? 'block' : 'none' }}>
+          <AgentOSInspector />
         </div>
       </div>
     </div>
