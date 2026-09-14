@@ -130,6 +130,8 @@ const FlowArchitect: React.FC = () => {
     
     addChatMessage({ role: 'human', content: textToSend });
     setInput('');
+    
+    setThinkingPhrase(THINKING_PHRASES[Math.floor(Math.random() * THINKING_PHRASES.length)]);
     setIsTyping(true);
 
     try {
