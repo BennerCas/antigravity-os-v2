@@ -709,8 +709,8 @@ export default function AgentOSStudio() {
   return (
     <div
       style={{
-        height: '100vh',
-        width: '100vw',
+        height: '100%',
+        width: '100%',
         boxSizing: 'border-box',
         display: 'flex',
         overflow: 'hidden',
