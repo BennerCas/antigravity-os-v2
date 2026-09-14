@@ -686,8 +686,10 @@ const CanvasTabs: React.FC = () => {
           </button>
         ))}
       </div>
-      <div className="flex-1 flex flex-col relative min-h-0">
-        {renderContent()}
+      <div className="flex-1 flex flex-col relative min-h-0 p-4 md:p-5" style={{ background: '#030712' }}>
+        <div className="flex-1 flex flex-col relative rounded-xl overflow-hidden border border-gray-800/60 shadow-2xl bg-[#050505] ring-1 ring-white/5">
+          {renderContent()}
+        </div>
       </div>
     </div>
   );
@@ -709,7 +711,6 @@ export default function AgentOSStudio() {
       style={{
         height: '100vh',
         width: '100vw',
-        paddingBottom: '0.5cm',
         boxSizing: 'border-box',
         display: 'flex',
         overflow: 'hidden',
