@@ -2,7 +2,7 @@ import ReactMarkdown from 'react-markdown';
 import { useEffect } from 'react';
 import React, { useState } from 'react';
 import { useStudioStore, TabId } from '../stores/useStudioStore';
-import { Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush } from '@phosphor-icons/react';
+import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush } from '@phosphor-icons/react';
 
 const AURELIOS_THEMES: Record<string, any> = {
   obsidian: {
@@ -96,6 +96,7 @@ const FlowArchitect: React.FC = () => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [thinkingPhrase, setThinkingPhrase] = useState('');
+  const [showSetup, setShowSetup] = useState(false);
   const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem('aurelios_model') || 'free.ai/auto');
   const [currentThemeKey, setCurrentThemeKey] = useState(() => localStorage.getItem('aurelios_theme') || 'obsidian');
 
@@ -219,50 +220,19 @@ const FlowArchitect: React.FC = () => {
       `}</style>
       {/* Top Fixed Area */}
       <div className={`shrink-0 flex flex-col gap-3 pb-3 border-b ${t.border} transition-colors duration-500`}>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-3">
             <Columns weight="duotone" size={26} className="text-[#F5A623]" />
             <h2 className="text-[20px] font-bold tracking-tight">AureliOS</h2>
-        </div>
-
-        <div className="flex items-center gap-6 mt-1">
-            {/* AI Model Selector */}
-            <div className={`flex items-center gap-1 transition-colors duration-500`}>
-              <span className={`text-[11px] font-bold mr-1 tracking-wider uppercase `}>Mod:</span>
-              <select 
-                className={`bg-transparent border-none outline-none ring-0 shadow-none ${t.primary} text-[13px] font-bold cursor-pointer appearance-none max-w-[120px] truncate`}
-                value={selectedModel}
-                onChange={e => setSelectedModel(e.target.value)}
-              >
-                <optgroup label="Free.AI (Cascada Inteligente)">
-                  <option value="free.ai/auto">Auto (Cascada)</option>
-                  <option value="free.ai/gemini-1.5-pro">Gemini 1.5</option>
-                  <option value="free.ai/claude-3.5">Claude 3.5</option>
-                  <option value="free.ai/gpt-4o">GPT-4o</option>
-                </optgroup>
-                <optgroup label="Ollama (Locales)">
-                  {ollamaModels.map(m => <option key={m} value={`ollama/${m}`}>{m}</option>)}
-                  {ollamaModels.length === 0 && <option value="ollama/hermes3:8b">hermes3 (Local)</option>}
-                </optgroup>
-              </select>
-            </div>
-
-            {/* Theme Selector */}
-            <div className={`flex items-center gap-1 transition-colors duration-500`}>
-              <PaintBrush size={14} className=" mr-1.5" />
-              <select 
-                className="bg-transparent border-none outline-none ring-0 shadow-none text-[13px] font-medium cursor-pointer appearance-none"
-                value={currentThemeKey}
-                onChange={e => setCurrentThemeKey(e.target.value)}
-              >
-                {Object.entries(AURELIOS_THEMES).map(([key, theme]) => (
-                  <option key={key} value={key} className="bg-black text-white">{theme.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <button onClick={clearChat} className={`flex items-center gap-1.5 text-[13px] bg-transparent border-none outline-none ring-0 shadow-none font-medium hover:brightness-125 transition-opacity shrink-0`}>
-              <Trash size={14} /> Limpiar
+          </div>
+          <div className="flex items-center gap-4">
+            <button onClick={clearChat} title="Limpiar chat" className={`hover:brightness-125 transition-opacity ${t.text}`}>
+              <Trash size={18} />
             </button>
+            <button onClick={() => setShowSetup(true)} title="Configuración de Modelo y Tema" className={`hover:brightness-125 transition-opacity ${t.text}`}>
+              <Gear size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Fixed AI Tools */}
@@ -361,6 +331,78 @@ const FlowArchitect: React.FC = () => {
           <span className="text-[11px]  font-bold tracking-widest uppercase">AURELIOS • STOIC AI ORCHESTRATOR</span>
         </div>
       </div>
+      {/* Setup Modal */}
+      {showSetup && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 rounded-xl">
+          <div className={`w-full max-w-2xl rounded-2xl border ${t.panelBorder} ${t.panelBg} shadow-2xl p-6 flex flex-col gap-6`}>
+            <div className="flex justify-between items-center border-b pb-4" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+              <h3 className="text-[16px] font-bold flex items-center gap-2"><Gear size={20} className={t.primary} /> Configuración de AureliOS</h3>
+              <button onClick={() => setShowSetup(false)} className="hover:opacity-70 transition-opacity">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-8">
+              {/* Models Column */}
+              <div className="flex flex-col gap-3">
+                <h4 className="font-bold flex items-center gap-2 text-[14px] uppercase tracking-wider mb-2"><Cpu size={16} /> Modelos IA</h4>
+                
+                <div className="text-[11px] font-bold uppercase tracking-wider text-white/50 mt-1 mb-1">Free.AI (Cascada Inteligente)</div>
+                {['free.ai/auto', 'free.ai/gemini-1.5-pro', 'free.ai/claude-3.5', 'free.ai/gpt-4o'].map(m => (
+                  <button 
+                    key={m}
+                    onClick={() => setSelectedModel(m)}
+                    className={`flex items-center justify-between p-2 rounded-lg border ${selectedModel === m ? `border-current ${t.primary}` : 'border-transparent hover:bg-white/5'} transition-colors text-left`}
+                  >
+                    <span className="text-[13px] font-medium">{m === 'free.ai/auto' ? 'Auto (Cascada)' : m.replace('free.ai/', '')}</span>
+                    {selectedModel === m && <Check size={14} weight="bold" />}
+                  </button>
+                ))}
+
+                <div className="text-[11px] font-bold uppercase tracking-wider text-white/50 mt-3 mb-1">Ollama (Locales)</div>
+                {ollamaModels.length === 0 ? (
+                  <button 
+                    onClick={() => setSelectedModel('ollama/hermes3:8b')}
+                    className={`flex items-center justify-between p-2 rounded-lg border ${selectedModel === 'ollama/hermes3:8b' ? `border-current ${t.primary}` : 'border-transparent hover:bg-white/5'} transition-colors text-left`}
+                  >
+                    <span className="text-[13px] font-medium">hermes3 (Local)</span>
+                    {selectedModel === 'ollama/hermes3:8b' && <Check size={14} weight="bold" />}
+                  </button>
+                ) : (
+                  ollamaModels.map(m => (
+                    <button 
+                      key={m}
+                      onClick={() => setSelectedModel(`ollama/${m}`)}
+                      className={`flex items-center justify-between p-2 rounded-lg border ${selectedModel === `ollama/${m}` ? `border-current ${t.primary}` : 'border-transparent hover:bg-white/5'} transition-colors text-left`}
+                    >
+                      <span className="text-[13px] font-medium">{m}</span>
+                      {selectedModel === `ollama/${m}` && <Check size={14} weight="bold" />}
+                    </button>
+                  ))
+                )}
+              </div>
+
+              {/* Themes Column */}
+              <div className="flex flex-col gap-1">
+                <h4 className="font-bold flex items-center gap-2 text-[14px] uppercase tracking-wider mb-2"><PaintBrush size={16} /> Temas Visuales</h4>
+                {Object.entries(AURELIOS_THEMES).map(([key, theme]) => (
+                  <button 
+                    key={key}
+                    onClick={() => setCurrentThemeKey(key)}
+                    className={`flex items-center justify-between p-2 rounded-lg border ${currentThemeKey === key ? `border-current ${theme.primary}` : 'border-transparent hover:bg-white/5'} transition-colors text-left`}
+                  >
+                    <span className="text-[13px] font-medium flex items-center gap-2">
+                      <span className={`w-3 h-3 rounded-full ${theme.primary.replace('text-', 'bg-')}`}></span>
+                      {theme.name}
+                    </span>
+                    {currentThemeKey === key && <Check size={14} weight="bold" className={theme.primary} />}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -471,8 +513,7 @@ export default function AgentOSStudio() {
   return (
     <div className="flex h-screen w-full bg-gray-950 text-white overflow-hidden font-sans">
       <div className="w-[35%] border-r border-gray-800 flex flex-col shrink-0">
-        <FlowArchitect />
-      </div>
+        <FlowArchitect />      </div>
       <div className="w-[65%] flex flex-col shrink-0">
         <CanvasTabs />
       </div>
