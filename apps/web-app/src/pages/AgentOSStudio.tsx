@@ -416,7 +416,7 @@ const FlowDiagram: React.FC = () => {
 
   if (flowNodes.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-[#050505] text-gray-600 gap-3">
+      <div className="flex-1 flex flex-col items-center justify-center bg-transparent text-gray-600 gap-3">
         <Network size={40} weight="light" className="opacity-30" />
         <p className="text-sm font-medium">El diagrama aparecerá aquí en tiempo real</p>
         <p className="text-xs opacity-50">Envía un mensaje describiendo tu sistema →</p>
@@ -559,7 +559,7 @@ const AgentCarousel: React.FC = () => {
 
   if (agentCards.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-[#050505] text-gray-600 gap-3">
+      <div className="flex-1 flex flex-col items-center justify-center bg-transparent text-gray-600 gap-3">
         <Brain size={40} weight="light" className="opacity-30" />
         <p className="text-sm font-medium">Las tarjetas de agentes aparecerán aquí</p>
         <p className="text-xs opacity-50">Pide a AureliOS que diseñe un equipo de agentes →</p>
@@ -568,7 +568,7 @@ const AgentCarousel: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 bg-[#050505] overflow-y-auto p-4 relative">
+    <div className="flex-1 bg-transparent overflow-y-auto p-4 relative">
       <style>{`
         .agent-card { perspective: 1000px; }
         .agent-card-inner { transition: transform 0.5s; transform-style: preserve-3d; position: relative; }
@@ -638,7 +638,7 @@ const ArchitectureBlueprint: React.FC = () => {
 
   if (!blueprintMd) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-[#050505] text-gray-600 gap-3">
+      <div className="flex-1 flex flex-col items-center justify-center bg-transparent text-gray-600 gap-3">
         <Cube size={40} weight="light" className="opacity-30" />
         <p className="text-sm font-medium">El blueprint aparecerá aquí</p>
         <p className="text-xs opacity-50">La respuesta completa de la IA se renderiza como documento técnico →</p>
@@ -647,7 +647,7 @@ const ArchitectureBlueprint: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 bg-[#050505] overflow-y-auto p-6">
+    <div className="flex-1 bg-transparent overflow-y-auto p-6">
       <div className="prose prose-invert prose-sm max-w-none text-gray-200">
         <ReactMarkdown>{blueprintMd}</ReactMarkdown>
       </div>
@@ -668,7 +668,7 @@ const CanvasTabs: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#050505', minHeight: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'transparent', minHeight: 0 }}>
       <div className="flex border-b border-gray-700 bg-gray-900 shrink-0">
         {(['discovery', 'synthesis', 'blueprint'] as TabId[]).map((tab) => (
           <button
