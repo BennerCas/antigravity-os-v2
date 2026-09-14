@@ -204,7 +204,7 @@ const FlowArchitect: React.FC = () => {
   ];
 
   return (
-    <div className={`flex flex-col ${t.bg} ${t.text} p-4 relative transition-colors duration-500`} style={{ height: '100%', overflow: 'hidden' }}>
+    <div className={`flex flex-col ${t.bg} ${t.text} relative transition-colors duration-500`} style={{ height: '100%', overflow: 'hidden' }}>
       
       <style>{`
         .markdown-body p:not(:last-child) { margin-bottom: 0.75rem; }
@@ -220,24 +220,24 @@ const FlowArchitect: React.FC = () => {
         .markdown-body code { background: rgba(0,0,0,0.1); padding: 0.1rem 0.3rem; border-radius: 0.25rem; font-family: monospace; }
       `}</style>
       {/* Top Fixed Area */}
-      <div className={`shrink-0 flex flex-col gap-3 pb-3 border-b ${t.border} transition-colors duration-500`}>
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-3">
-            <Columns weight="duotone" size={26} className="text-[#F5A623]" />
-            <h2 className="text-[20px] font-bold tracking-tight">AureliOS</h2>
-          </div>
-          <div className="flex items-center gap-4">
-            <button onClick={clearChat} title="Limpiar chat" className={`hover:brightness-125 transition-opacity ${t.text}`}>
-              <Trash size={18} />
-            </button>
-            <button onClick={() => setShowSetup(true)} title="Configuración de Modelo y Tema" className={`hover:brightness-125 transition-opacity ${t.text}`}>
-              <Gear size={18} />
-            </button>
-          </div>
+      <div className={`shrink-0 flex items-center justify-between h-16 px-4 transition-colors duration-500`}>
+        <div className="flex items-center gap-3">
+          <Columns weight="duotone" size={26} className="text-[#F5A623]" />
+          <h2 className="text-[20px] font-bold tracking-tight">AureliOS</h2>
         </div>
+        <div className="flex items-center gap-4">
+          <button onClick={clearChat} title="Limpiar chat" className={`hover:brightness-125 transition-opacity ${t.text}`}>
+            <Trash size={18} />
+          </button>
+          <button onClick={() => setShowSetup(true)} title="Configuración de Modelo y Tema" className={`hover:brightness-125 transition-opacity ${t.text}`}>
+            <Gear size={18} />
+          </button>
+        </div>
+      </div>
 
+      <div className="px-4 pb-2 shrink-0 flex flex-col gap-3">
         {/* Fixed AI Tools */}
-        <div className="flex items-center gap-2 mb-0.5 mt-1 text-[11px] font-bold tracking-wider uppercase ">
+        <div className="flex items-center gap-2 mb-0.5 mt-3 text-[11px] font-bold tracking-wider uppercase ">
           <Wrench size={14} /> God-Tier Master Prompts
         </div>
         <div className="grid grid-cols-3 gap-2">
@@ -269,7 +269,7 @@ const FlowArchitect: React.FC = () => {
       </div>
 
       {/* Chat History / Invisible Scroll */}
-      <div className="flex-1 overflow-y-auto py-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="flex-1 overflow-y-auto px-4 py-2 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {chatMessages.length === 0 ? (
           <div className="flex h-full items-center justify-center text-center  text-base px-8 font-medium leading-relaxed">
             Selecciona un pilar de AureliOS o escribe tu visión arquitectónica para comenzar.
@@ -317,7 +317,7 @@ const FlowArchitect: React.FC = () => {
       </div>
 
       {/* Input Box */}
-      <div className="shrink-0 pt-2 mb-5">
+      <div className="shrink-0 px-4 pt-2 mb-5">
         <div className="flex items-center gap-2">
           <input
             type="text"
@@ -669,15 +669,16 @@ const CanvasTabs: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'transparent', minHeight: 0 }}>
-      <div className="flex border-b border-gray-700 bg-gray-900 shrink-0">
+      <div className="flex shrink-0 h-16 bg-transparent">
         {(['discovery', 'synthesis', 'blueprint'] as TabId[]).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-6 py-3 font-medium text-sm transition-colors ${
+            style={{ borderRadius: 0, borderTop: 'none', borderLeft: 'none', borderRight: 'none' }}
+            className={`px-6 h-full font-medium text-sm transition-colors flex items-center border-b-2 ${
               activeTab === tab
-                ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-800'
-                : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
+                ? 'text-blue-400 border-blue-400 bg-white/5'
+                : 'text-gray-400 border-transparent hover:text-gray-200 hover:bg-white/5'
             }`}
           >
             {tab === 'discovery' && '1 Descubrir'}
@@ -687,7 +688,7 @@ const CanvasTabs: React.FC = () => {
         ))}
       </div>
       <div className="flex-1 flex flex-col relative min-h-0 p-4 md:p-5" style={{ background: '#030712' }}>
-        <div className="flex-1 flex flex-col relative rounded-xl overflow-hidden bg-transparent">
+        <div className="flex-1 flex flex-col relative overflow-hidden bg-transparent">
           {renderContent()}
         </div>
       </div>
@@ -720,7 +721,7 @@ export default function AgentOSStudio() {
       }}
     >
       {/* Columna 1 — 30% — Chat */}
-      <div style={{ width: '30%', height: '100%', display: 'flex', flexDirection: 'column', borderRight: '1px solid #1f2937', flexShrink: 0, minWidth: 0 }}>
+      <div style={{ width: '30%', height: '100%', display: 'flex', flexDirection: 'column', borderRight: '1px solid #2A2A2A', flexShrink: 0, minWidth: 0 }}>
         <FlowArchitect />
       </div>
 
