@@ -276,11 +276,11 @@ const FlowArchitect: React.FC = () => {
           </div>
         ) : (
           chatMessages.map(msg => (
-            <div key={msg.id} className={`flex flex-col max-w-[85%] ${msg.role === 'human' ? 'ml-auto' : 'mr-auto'}`}>
-              <div className={`p-3 text-[15px] leading-relaxed border ${
+            <div key={msg.id} className={`flex flex-col max-w-[90%] min-w-0 ${msg.role === 'human' ? 'ml-auto' : 'mr-auto'}`}>
+              <div className={`p-3 text-[14px] leading-relaxed border break-words ${
                 msg.role === 'human' ? `${t.humanBubble} border-transparent rounded-xl rounded-tr-sm font-medium` : `${t.aiBubble} rounded-xl rounded-tl-sm shadow-sm`
               } transition-colors duration-500`}>
-                <div className={`markdown-body max-w-none ${msg.role === 'agent' ? t.text : 'text-inherit'}`}>
+                <div className={`markdown-body max-w-none break-words ${msg.role === 'agent' ? t.text : 'text-inherit'}`}>
                   <ReactMarkdown>
                     {msg.content}
                   </ReactMarkdown>
@@ -718,13 +718,13 @@ export default function AgentOSStudio() {
         fontFamily: 'inherit',
       }}
     >
-      {/* Columna 1 — 35% — Chat */}
-      <div style={{ width: '35%', height: '100%', display: 'flex', flexDirection: 'column', borderRight: '1px solid #1f2937', flexShrink: 0 }}>
+      {/* Columna 1 — 30% — Chat */}
+      <div style={{ width: '30%', height: '100%', display: 'flex', flexDirection: 'column', borderRight: '1px solid #1f2937', flexShrink: 0, minWidth: 0 }}>
         <FlowArchitect />
       </div>
 
-      {/* Columna 2 — 65% — Canvas */}
-      <div style={{ width: '65%', height: '100%', display: 'flex', flexDirection: 'column', flexShrink: 0, minHeight: 0 }}>
+      {/* Columna 2 — 70% — Canvas */}
+      <div style={{ width: '70%', height: '100%', display: 'flex', flexDirection: 'column', flexShrink: 0, minHeight: 0, minWidth: 0 }}>
         <CanvasTabs />
       </div>
     </div>
