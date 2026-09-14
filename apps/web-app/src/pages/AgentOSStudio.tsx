@@ -203,6 +203,20 @@ const FlowArchitect: React.FC = () => {
 
   return (
     <div className={`flex flex-col h-full ${t.bg} ${t.text} p-4 relative transition-colors duration-500`}>
+      
+      <style>{`
+        .markdown-body p:not(:last-child) { margin-bottom: 0.75rem; }
+        .markdown-body ul { list-style-type: disc; margin-left: 1.25rem; margin-bottom: 0.75rem; }
+        .markdown-body ol { list-style-type: decimal; margin-left: 1.25rem; margin-bottom: 0.75rem; }
+        .markdown-body li { margin-bottom: 0.25rem; }
+        .markdown-body h1 { font-size: 1.5em; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .markdown-body h2 { font-size: 1.25em; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .markdown-body h3 { font-size: 1.125em; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .markdown-body strong { font-weight: 700; }
+        .markdown-body em { font-style: italic; }
+        .markdown-body pre { background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 0.75rem; }
+        .markdown-body code { background: rgba(0,0,0,0.1); padding: 0.1rem 0.3rem; border-radius: 0.25rem; font-family: monospace; }
+      `}</style>
       {/* Top Fixed Area */}
       <div className={`shrink-0 flex flex-col gap-3 pb-3 border-b ${t.border} transition-colors duration-500`}>
         <div className="flex items-center justify-between">
