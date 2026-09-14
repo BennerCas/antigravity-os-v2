@@ -26773,25 +26773,6 @@
       "runtime_files": []
     },
     {
-      "id": "windows-privilege-escalation",
-      "path": "skills/windows-privilege-escalation",
-      "targets": {
-        "codex": "supported",
-        "claude": "supported"
-      },
-      "setup": {
-        "type": "none",
-        "summary": "",
-        "docs": null
-      },
-      "reasons": [],
-      "blocked_reasons": {
-        "codex": [],
-        "claude": []
-      },
-      "runtime_files": []
-    },
-    {
       "id": "windows-shell-reliability",
       "path": "skills/windows-shell-reliability",
       "targets": {
@@ -27439,10 +27420,10 @@
     }
   ],
   "summary": {
-    "total_skills": 1435,
+    "total_skills": 1434,
     "supported": {
-      "codex": 1404,
-      "claude": 1419
+      "codex": 1403,
+      "claude": 1418
     },
     "blocked": {
       "codex": 31,
