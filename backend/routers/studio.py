@@ -1,12 +1,11 @@
-"""
-studio.py — Endpoint del Motor Híbrido para AureliOS Studio
-Usa: Free.AI (nube) → Ollama (local) según el modelo seleccionado por el usuario.
-"""
+
 from fastapi import APIRouter
 from pydantic import BaseModel
-from typing import Optional
+from typing import List, Any, Optional
 import httpx
 import os
+from google.antigravity import Agent, CapabilitiesConfig
+from google.antigravity.connections.local.local_openai_connection_config import LocalOpenAIAgentConfig
 
 router = APIRouter(prefix="/api/v1/studio", tags=["Studio"])
 
@@ -27,67 +26,41 @@ LOCAL_MODELS = {
     "hermes3:8b", "llama3.1:8b", "mistral", "qwen2.5:7b", "phi3:3.8b"
 }
 
-
 class ChatRequest(BaseModel):
     message: str
     model: Optional[str] = "anthropic/claude-3.5-sonnet"
     system: Optional[str] = "Eres AureliOS, un asistente de IA avanzado. Responde siempre en el mismo idioma del usuario, con formato Markdown claro."
 
-
 class ChatResponse(BaseModel):
     response: str
     model_used: str
-    engine: str   # "free.ai" | "ollama" | "error"
-
+    engine: str
 
 @router.post("/chat", response_model=ChatResponse)
 async def studio_chat(req: ChatRequest):
-    """
-    Motor híbrido de chat:
-    - Modelos NUBE → Free.AI API (api.free.ai/v1)
-    - Modelos LOCAL → Ollama local (127.0.0.1:11434)
-    - Si el modelo nube falla → fallback a Ollama
-    """
     model = req.model or "anthropic/claude-3.5-sonnet"
-    # Normalizar: quitar prefijo "free.ai/" si viene del frontend legacy
     model = model.replace("free.ai/", "")
-    
     is_local = model in LOCAL_MODELS or ":" in model
 
     if is_local:
         return await _call_ollama(req.message, req.system or "", model)
     else:
-        # Intentar Free.AI primero, luego Ollama como fallback
         result = await _call_free_ai(req.message, req.system or "", model)
         if result.engine == "error":
-            # Fallback al mejor modelo local disponible
             result = await _call_ollama(req.message, req.system or "", "hermes3:8b")
         return result
-
 
 async def _call_free_ai(user: str, system: str, model: str) -> ChatResponse:
     if not FREE_AI_KEY:
         return ChatResponse(response="[ERROR] FREE_AI_API_KEY no configurada en el backend.", model_used=model, engine="error")
-
-    headers = {
-        "Authorization": f"Bearer {FREE_AI_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    # Free.AI en api.free.ai/v1 solo acepta estos modelos propios
-    # Todos los modelos NUBE del UI se mapean al mejor disponible
+    headers = {"Authorization": f"Bearer {FREE_AI_KEY}", "Content-Type": "application/json"}
     FREE_AI_VALID_MODELS = ["qwen3-8b", "qwen7b"]
-
     payload = {
-        "model": FREE_AI_VALID_MODELS[0],  # qwen3-8b es el mejor
-        "messages": [
-            {"role": "system", "content": system},
-            {"role": "user",   "content": user}
-        ],
+        "model": FREE_AI_VALID_MODELS[0],
+        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         "temperature": 0.7,
         "max_tokens": 2048,
     }
-
     for m in FREE_AI_VALID_MODELS:
         payload["model"] = m
         try:
@@ -96,22 +69,14 @@ async def _call_free_ai(user: str, system: str, model: str) -> ChatResponse:
                 if resp.status_code == 200:
                     text = resp.json()["choices"][0]["message"]["content"].strip()
                     return ChatResponse(response=text, model_used=f"free.ai/{model} (via {m})", engine="free.ai")
-                if resp.status_code in (429, 402, 403, 404):
-                    continue
-                resp.raise_for_status()
         except Exception:
-            continue
-
+            pass
     return ChatResponse(response="[Free.AI] Todos los modelos fallaron, usando local...", model_used=model, engine="error")
-
 
 async def _call_ollama(user: str, system: str, model: str) -> ChatResponse:
     payload = {
         "model": model,
-        "messages": [
-            {"role": "system", "content": system},
-            {"role": "user",   "content": user}
-        ],
+        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         "stream": False,
         "options": {"temperature": 0.7, "num_predict": 2048, "num_ctx": 4096}
     }
@@ -122,14 +87,7 @@ async def _call_ollama(user: str, system: str, model: str) -> ChatResponse:
             text = resp.json()["message"]["content"].strip()
             return ChatResponse(response=text, model_used=f"ollama/{model}", engine="ollama")
     except Exception as e:
-        return ChatResponse(
-            response=f"[ERROR Ollama] {str(e)}\n\nAsegúrate de que Ollama está corriendo: `ollama serve`",
-            model_used=model,
-            engine="error"
-        )
-
-from typing import List, Any
-from google.antigravity import Agent, LocalAgentConfig, CapabilitiesConfig
+        return ChatResponse(response=f"[ERROR Ollama] {str(e)}", model_used=model, engine="error")
 
 class MatchFuseRequest(BaseModel):
     nodes: List[Any]
@@ -137,9 +95,6 @@ class MatchFuseRequest(BaseModel):
 
 @router.post("/match_fuse", response_model=ChatResponse)
 async def match_fuse(req: MatchFuseRequest):
-    """
-    Uses the google.antigravity SDK (Free.AI API or Ollama) to execute the Match & Fuse v2 pipeline.
-    """
     prompt = f"""
 Act as the Antigravity Match & Fuse v2 pipeline.
 Execute these stages:
@@ -169,49 +124,52 @@ INTERFACE:
   ]
 }}
     """
-
-    from google.antigravity.connections.local.local_openai_connection_config import LocalOpenAIAgentConfig
-    import os
     
     model_name = req.model or "qwen3-8b"
     model_name = model_name.replace("free.ai/", "")
-    
+    if model_name == "auto":
+        model_name = "qwen3-8b"
+        
     is_local = model_name in LOCAL_MODELS or ":" in model_name
     
-    if is_local:
-        base_url = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434").rstrip('/')
-        if not base_url.endswith("/v1"):
-            base_url += "/v1"
-        api_key = "ollama"
-    else:
-        base_url = os.getenv("FREE_AI_BASE_URL", "https://api.free.ai/v1")
-        api_key = os.getenv("FREE_AI_API_KEY", "")
-        if not api_key:
-            return ChatResponse(
-                response='[{"id":"error","name":"Error de Configuración","role":"FALLBACK","description":"FREE_AI_API_KEY no configurada.","color":"#EF4444","noveltyScore":0,"evalStatus":"FAIL","inputOutputContract":"","requiredTools":[],"health":"red","genes":[]}]',
-                model_used=model_name,
-                engine="error"
-            )
-
-    os.environ["OPENAI_API_KEY"] = api_key
-    
-    config = LocalOpenAIAgentConfig(
-        base_url=base_url,
-        model=model_name,
-        system_instructions="You are the Antigravity OS core logic. Respond ONLY with the requested JSON array.",
-        tools=[],
-        capabilities=CapabilitiesConfig(enable_subagents=False),
-        env={"OPENAI_API_KEY": api_key}
-    )
-        
     try:
-        async with Agent(config) as agent:
-            response = await agent.chat(prompt)
-            text = await response.text()
-            return ChatResponse(response=text, model_used=model_name, engine="sdk")
+        if is_local:
+            base_url = OLLAMA_BASE.rstrip("/")
+            if not base_url.endswith("/v1"):
+                base_url += "/v1"
+            config = LocalOpenAIAgentConfig(
+                base_url=base_url,
+                model=model_name,
+                system_instructions="You are the Antigravity OS core logic. Respond ONLY with the requested JSON array.",
+                tools=[],
+                capabilities=CapabilitiesConfig(enable_subagents=False),
+                env={"OPENAI_API_KEY": "ollama"}
+            )
+            async with Agent(config) as agent:
+                response = await agent.chat(prompt)
+                text = await response.text()
+                return ChatResponse(response=text, model_used=model_name, engine="sdk")
+        else:
+            api_key = FREE_AI_KEY
+            if not api_key:
+                raise Exception("FREE_AI_API_KEY no configurada.")
+            headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+            payload = {
+                "model": model_name,
+                "messages": [
+                    {"role": "system", "content": "You are the Antigravity OS core logic. Respond ONLY with the requested JSON array."},
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": 0.2
+            }
+            import httpx
+            async with httpx.AsyncClient(timeout=60) as client:
+                resp = await client.post(f"{FREE_AI_BASE}/chat/completions", json=payload, headers=headers)
+                if resp.status_code != 200:
+                    raise Exception(f"Free.AI HTTP {resp.status_code}: {resp.text}")
+                data = resp.json()
+                text = data["choices"][0]["message"]["content"]
+                return ChatResponse(response=text, model_used=model_name, engine="httpx")
     except Exception as e:
-        return ChatResponse(
-            response=f'[ERROR SDK] {str(e)}',
-            model_used=model_name,
-            engine="error"
-        )
+        return ChatResponse(response=f"[ERROR] {str(e)}", model_used=model_name, engine="error")
+

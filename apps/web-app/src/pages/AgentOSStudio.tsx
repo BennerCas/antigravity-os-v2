@@ -766,25 +766,27 @@ const CanvasTabs: React.FC = () => {
       
       if (!res.ok) throw new Error("Backend SDK request failed");
       const data = await res.json();
-      const rawText = data.response;
+      const rawText = data.response || "";
 
+      let jsonStr = rawText;
       const jsonMatch = rawText.match(/\[[\s\S]*\]/);
-      const jsonStr = jsonMatch ? jsonMatch[0] : rawText;
+      if (jsonMatch) jsonStr = jsonMatch[0];
       
-      const generatedCards = JSON.parse(jsonStr);
-      setAgentCards(generatedCards);
-        } catch (e: any) {
-      console.error("Match & Fuse v2 SDK Error:", e);
-      let errMsg = "Generado localmente porque el SDK de Antigravity fallo o no tiene claves validas.";
-      if (e instanceof SyntaxError) {
-        errMsg = "El modelo (Free.AI) no respondio con JSON valido o esta saturado. Por favor, reintenta.";
+      try {
+        const generatedCards = JSON.parse(jsonStr);
+        setAgentCards(generatedCards);
+      } catch (e: any) {
+        throw new Error(`Parse failed. Raw: ${rawText.substring(0, 120)}...`);
       }
-      setAgentCards([
-        {
-          id: "mf-fallback-1",
+      
+    } catch (e: any) {
+      console.error("Match & Fuse v2 SDK Error:", e);
+      
+      const fallbackCards = [{
+          id: "error-1",
           name: "Error de Sintesis",
           role: "FALLBACK",
-          description: errMsg,
+          description: `Falló la síntesis. Error: ${e.message}`,
           color: "#EF4444",
           noveltyScore: 0.1,
           evalStatus: "FAIL",
@@ -792,8 +794,8 @@ const CanvasTabs: React.FC = () => {
           requiredTools: [],
           health: "red",
           genes: []
-        }
-      ]);
+      }];
+      setAgentCards(fallbackCards);
     } finally {
       setIsSynthesizing(false);
     }
