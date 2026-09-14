@@ -8,7 +8,7 @@ import AgentOSInspector from './AgentOSInspector';
 import type { AgentItem, AtlasItem } from './AgentOSSelect';
 import type { Team } from './AgentOSTeams';
 
-type View = 'studio' | 'teams' | 'interact' | 'flowboard' | 'inspector';|type View = 'studio' | 'teams' | 'interact' | 'flowboard' | 'inspector';|type View = 'studio' | 'teams' | 'interact' | 'flowboard' | 'inspector';|type View = 'studio' | 'teams' | 'interact' | 'flowboard' | 'inspector';|type View = 'studio' | 'teams' | 'interact' | 'flowboard' | 'inspector';
+type View = 'studio' | 'teams' | 'interact' | 'flowboard' | 'inspector';
 
 export default function AgentOS() {
   const [view, setView] = useState<View>(() => (localStorage.getItem('agentos_view') as View) || 'studio');
@@ -67,7 +67,7 @@ export default function AgentOS() {
                 {selectedAgents.length}
               </span>
             )}
-            {tab.id ===type View = 'studio' | 'teams' | 'interact' | 'flowboard' | 'inspector';&& teams.length > 0 && (
+            {tab.id === 'teams' && teams.length > 0 && (
               <span className="text-[10px] bg-[#b060ff] text-[#fff] rounded-full px-1.5 font-extrabold ml-1">
                 {teams.length}
               </span>
@@ -78,18 +78,10 @@ export default function AgentOS() {
       
       {/* SCREENS */}
       <div className="flex-1 overflow-hidden relative">
-        <div className="absolute inset-0" style={{ display: view === 'select' ? 'block' : 'none' }}>
-          <AgentOSSelect
-            agents={agents}
-            atlasItems={atlasItems}
-            selectedAgents={selectedAgents}
-            setSelectedAgents={setSelectedAgents}
-            assignedKB={assignedKB}
-            setAssignedKB={setAssignedKB}
-            onGoToInteract={() => setView('interact')}
-          />
+        <div className="absolute inset-0" style={{ display: view === 'studio' ? 'block' : 'none' }}>
+          <AgentOSStudio />
         </div>
-        <div className="absolute inset-0" style={{ display: view ===type View = 'studio' | 'teams' | 'interact' | 'flowboard' | 'inspector';? 'block' : 'none' }}>
+        <div className="absolute inset-0" style={{ display: view === 'teams' ? 'block' : 'none' }}>
           <AgentOSTeams
             agents={agents}
             atlasItems={atlasItems}
@@ -101,7 +93,7 @@ export default function AgentOS() {
             }}
           />
         </div>
-        <div className="absolute inset-0" style={{ display: view ===type View = 'studio' | 'teams' | 'interact' | 'flowboard' | 'inspector';? 'block' : 'none' }}>
+        <div className="absolute inset-0" style={{ display: view === 'interact' ? 'block' : 'none' }}>
           <AgentOSInteract
             selectedAgents={selectedAgents}
             assignedKB={assignedKB}
@@ -111,7 +103,7 @@ export default function AgentOS() {
             onGoToTeams={() => setView('teams')}
           />
         </div>
-        <div className="absolute inset-0" style={{ display: view ===type View = 'studio' | 'teams' | 'interact' | 'flowboard' | 'inspector';? 'block' : 'none' }}>
+        <div className="absolute inset-0" style={{ display: view === 'flowboard' ? 'block' : 'none' }}>
           <AgentOSFlowboard />
         </div>
         <div className="absolute inset-0" style={{ display: view === 'inspector' ? 'block' : 'none' }}>
@@ -121,4 +113,3 @@ export default function AgentOS() {
     </div>
   );
 }
-
