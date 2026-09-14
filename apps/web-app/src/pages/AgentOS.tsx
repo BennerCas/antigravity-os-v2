@@ -99,7 +99,7 @@ export default function AgentOS() {
             assignedKB={assignedKB}
             teams={teams}
             agents={agents}
-            onGoToSelect={() => setView('select')}
+            onGoToSelect={() => setView('studio')}
             onGoToTeams={() => setView('teams')}
           />
         </div>
