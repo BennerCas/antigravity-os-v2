@@ -219,16 +219,17 @@ const FlowArchitect: React.FC = () => {
       `}</style>
       {/* Top Fixed Area */}
       <div className={`shrink-0 flex flex-col gap-3 pb-3 border-b ${t.border} transition-colors duration-500`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
             <Columns weight="duotone" size={26} className="text-[#F5A623]" />
             <h2 className="text-[20px] font-bold tracking-tight">AureliOS</h2>
-            
+        </div>
+
+        <div className="flex items-center gap-6 mt-1">
             {/* AI Model Selector */}
-            <div className={`flex items-center gap-1 ml-4 transition-colors duration-500`}>
+            <div className={`flex items-center gap-1 transition-colors duration-500`}>
               <span className={`text-[11px] font-bold mr-1 tracking-wider uppercase `}>Mod:</span>
               <select 
-                className={`bg-transparent ${t.primary} text-[13px] font-bold focus:outline-none cursor-pointer appearance-none max-w-[120px] truncate`}
+                className={`bg-transparent border-none outline-none ring-0 shadow-none ${t.primary} text-[13px] font-bold cursor-pointer appearance-none max-w-[120px] truncate`}
                 value={selectedModel}
                 onChange={e => setSelectedModel(e.target.value)}
               >
@@ -244,14 +245,12 @@ const FlowArchitect: React.FC = () => {
                 </optgroup>
               </select>
             </div>
-          </div>
 
-          <div className="flex items-center gap-2">
             {/* Theme Selector */}
             <div className={`flex items-center gap-1 transition-colors duration-500`}>
               <PaintBrush size={14} className=" mr-1.5" />
               <select 
-                className="bg-transparent text-[13px] font-medium focus:outline-none cursor-pointer appearance-none"
+                className="bg-transparent border-none outline-none ring-0 shadow-none text-[13px] font-medium cursor-pointer appearance-none"
                 value={currentThemeKey}
                 onChange={e => setCurrentThemeKey(e.target.value)}
               >
@@ -261,10 +260,9 @@ const FlowArchitect: React.FC = () => {
               </select>
             </div>
 
-            <button onClick={clearChat} className={`flex items-center gap-1.5 px-2 py-2 text-[13px] font-medium hover:brightness-125 transition-opacity shrink-0`}>
+            <button onClick={clearChat} className={`flex items-center gap-1.5 text-[13px] bg-transparent border-none outline-none ring-0 shadow-none font-medium hover:brightness-125 transition-opacity shrink-0`}>
               <Trash size={14} /> Limpiar
             </button>
-          </div>
         </div>
 
         {/* Fixed AI Tools */}
