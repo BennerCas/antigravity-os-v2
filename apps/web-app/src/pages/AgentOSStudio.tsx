@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStudioStore, TabId } from '../stores/useStudioStore';
-import { Robot, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain } from '@phosphor-icons/react';
+import { Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle } from '@phosphor-icons/react';
 
 const FlowArchitect: React.FC = () => {
   const { chatMessages, addChatMessage } = useStudioStore();
@@ -51,7 +51,10 @@ const FlowArchitect: React.FC = () => {
     { title: 'Forensic Inspector', icon: <MagnifyingGlass size={22} className="text-[#06b6d4]" weight="duotone" />, desc: 'Analizador de telemetría en vivo. Destripa cuellos de botella y audita el rendimiento e integraciones a nivel milisegundo.' },
     { title: 'Zero-Trust Gatekeeper', icon: <ShieldCheck size={22} className="text-[#f43f5e]" weight="duotone" />, desc: 'Auditor de ciberseguridad extremo. Detecta vulnerabilidades y exige políticas estrictas de autenticación y autorización.' },
     { title: 'Resource Optimizer', icon: <CurrencyDollar size={22} className="text-[#f5a623]" weight="duotone" />, desc: 'Estratega de infraestructuras. Balancea la carga entre modelos locales y en la nube minimizando costos y uso límite de VRAM.' },
-    { title: 'UX Psychologist', icon: <Brain size={22} className="text-[#d946ef]" weight="duotone" />, desc: 'Especialista en interfaces persuasivas. Aplica sesgos cognitivos e inyecta fricción positiva para dominar la experiencia del usuario.' }
+    { title: 'UX Psychologist', icon: <Brain size={18} className="text-[#d946ef]" weight="duotone" />, desc: 'Especialista en interfaces persuasivas. Aplica sesgos cognitivos e inyecta fricción positiva para dominar la experiencia del usuario.' },
+    { title: 'Infrastructure Titan', icon: <HardDrives size={18} className="text-[#64748b]" weight="duotone" />, desc: 'Ingeniero DevOps. Automatiza Docker, Kubernetes, CI/CD pipelines y configura servidores para despliegues a prueba de balas.' },
+    { title: 'API Nexus', icon: <Plugs size={18} className="text-[#14b8a6]" weight="duotone" />, desc: 'Especialista en integraciones. Diseña y audita pasarelas de pago, Webhooks, arquitecturas GraphQL y orquesta microservicios.' },
+    { title: 'Synthetic QA', icon: <BugBeetle size={18} className="text-[#facc15]" weight="duotone" />, desc: 'Simulador de caos. Genera edge cases y ataca tu código simulando enjambres de usuarios para quebrar la app antes de producción.' }
   ];
 
   return (
@@ -60,8 +63,8 @@ const FlowArchitect: React.FC = () => {
       <div className="shrink-0 flex flex-col gap-3 pb-3 border-b border-[#1A1A1A]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Robot weight="duotone" size={24} className="text-[#F5A623]" />
-            <h2 className="text-[19px] font-bold text-white tracking-tight">FlowArchitect</h2>
+            <Columns weight="duotone" size={26} className="text-[#F5A623]" />
+            <h2 className="text-[19px] font-bold text-white tracking-tight">AureliOS</h2>
             
             {/* AI Model Selector inline with title */}
             <div className="flex items-center bg-[#0A0A0A] px-2 py-1 rounded-md border border-[#222] ml-2">
@@ -126,7 +129,7 @@ const FlowArchitect: React.FC = () => {
       <div className="flex-1 overflow-y-auto py-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {chatMessages.length === 0 ? (
           <div className="flex h-full items-center justify-center text-center text-[#444] text-base px-8 font-medium leading-relaxed">
-            Selecciona un arquitecto de la forja o escribe tu idea para comenzar.
+            Selecciona un pilar de AureliOS o escribe tu visión arquitectónica para comenzar.
           </div>
         ) : (
           chatMessages.map(msg => (
@@ -167,7 +170,7 @@ const FlowArchitect: React.FC = () => {
           </button>
         </div>
         <div className="text-center mt-3">
-          <span className="text-[11px] text-[#555] font-bold tracking-widest uppercase">Antigravity OS • FlowArchitect Console</span>
+          <span className="text-[11px] text-[#555] font-bold tracking-widest uppercase">AURELIOS • STOIC AI ORCHESTRATOR</span>
         </div>
       </div>
     </div>
