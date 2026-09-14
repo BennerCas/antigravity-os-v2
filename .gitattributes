@@ -1,0 +1,16 @@
+# Normalizar finales de linea: LF en el repo, CRLF donde Windows lo necesita
+* text=auto
+
+# Lanzadores de Windows: deben salir del repo con CRLF
+*.bat text eol=crlf
+*.vbs text eol=crlf
+*.ps1 text eol=crlf
+
+# Binarios que no deben "normalizarse" jamas
+*.png binary
+*.jpg binary
+*.zip binary
+*.pdf binary
+*.sqlite3 binary
+*.db binary
+*.pickle binary
