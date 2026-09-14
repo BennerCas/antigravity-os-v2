@@ -4,88 +4,88 @@ import { Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Netwo
 
 const AURELIOS_THEMES: Record<string, any> = {
   obsidian: {
-    name: 'Obsidian Emperor', bg: 'bg-[#050505]', text: 'text-[#F3F4F6]', border: 'border-[#27272A]',
-    panelBg: 'bg-[#18181B]', panelBorder: 'border-[#3F3F46]', primary: 'text-[#22D3EE]',
-    toolBg: 'bg-[#27272A]', toolHover: 'hover:border-[#52525B]', aiBubble: 'bg-[#18181B] border-[#3F3F46] text-[#F3F4F6]',
-    humanBubble: 'bg-[#22D3EE] text-[#050505]', inputBg: 'bg-[#18181B] border-[#3F3F46]', inputFocus: 'focus:border-[#22D3EE]',
-    sendActive: 'bg-[#22D3EE] text-[#050505] hover:bg-[#06B6D4]', sendDisabled: 'bg-[#27272A] text-[#A1A1AA]'
+    name: 'Obsidian Emperor', bg: 'bg-zinc-950', text: 'text-zinc-100', border: 'border-zinc-800',
+    panelBg: 'bg-zinc-900', panelBorder: 'border-zinc-700', primary: 'text-cyan-400',
+    toolBg: 'bg-zinc-800', toolHover: 'hover:border-zinc-500', aiBubble: 'bg-zinc-900 border-zinc-700 text-zinc-100',
+    humanBubble: 'bg-cyan-400 text-black', inputBg: 'bg-zinc-900 border-zinc-700', inputFocus: 'focus:border-cyan-400',
+    sendActive: 'bg-cyan-400 text-black hover:bg-cyan-300', sendDisabled: 'bg-zinc-800 text-zinc-600'
   },
   marble: {
-    name: 'Marble Stoic', bg: 'bg-[#F8F9FA]', text: 'text-[#111827]', border: 'border-[#D1D5DB]',
-    panelBg: 'bg-[#FFFFFF]', panelBorder: 'border-[#9CA3AF]', primary: 'text-[#D97706]',
-    toolBg: 'bg-[#E5E7EB]', toolHover: 'hover:border-[#6B7280]', aiBubble: 'bg-[#FFFFFF] border-[#D1D5DB] text-[#111827]',
-    humanBubble: 'bg-[#1D4ED8] text-[#FFFFFF]', inputBg: 'bg-[#FFFFFF] border-[#D1D5DB]', inputFocus: 'focus:border-[#1D4ED8]',
-    sendActive: 'bg-[#1D4ED8] text-[#FFFFFF] hover:bg-[#1E40AF]', sendDisabled: 'bg-[#E5E7EB] text-[#6B7280]'
+    name: 'Marble Stoic', bg: 'bg-gray-50', text: 'text-gray-900', border: 'border-gray-300',
+    panelBg: 'bg-white', panelBorder: 'border-gray-400', primary: 'text-amber-600',
+    toolBg: 'bg-gray-200', toolHover: 'hover:border-gray-500', aiBubble: 'bg-white border-gray-300 text-gray-900',
+    humanBubble: 'bg-blue-700 text-white', inputBg: 'bg-white border-gray-300', inputFocus: 'focus:border-blue-700',
+    sendActive: 'bg-blue-700 text-white hover:bg-blue-600', sendDisabled: 'bg-gray-200 text-gray-500'
   },
   crimson: {
-    name: 'Crimson Forge', bg: 'bg-[#170505]', text: 'text-[#FEE2E2]', border: 'border-[#7F1D1D]',
-    panelBg: 'bg-[#2A0A0A]', panelBorder: 'border-[#991B1B]', primary: 'text-[#F87171]',
-    toolBg: 'bg-[#450A0A]', toolHover: 'hover:border-[#DC2626]', aiBubble: 'bg-[#2A0A0A] border-[#991B1B] text-[#FEE2E2]',
-    humanBubble: 'bg-[#DC2626] text-[#FFFFFF]', inputBg: 'bg-[#2A0A0A] border-[#7F1D1D]', inputFocus: 'focus:border-[#F87171]',
-    sendActive: 'bg-[#DC2626] text-[#FFFFFF] hover:bg-[#B91C1C]', sendDisabled: 'bg-[#450A0A] text-[#FCA5A5]'
+    name: 'Crimson Forge', bg: 'bg-red-950', text: 'text-red-100', border: 'border-red-800',
+    panelBg: 'bg-red-900', panelBorder: 'border-red-700', primary: 'text-red-400',
+    toolBg: 'bg-red-800', toolHover: 'hover:border-red-500', aiBubble: 'bg-red-900 border-red-700 text-red-100',
+    humanBubble: 'bg-red-600 text-white', inputBg: 'bg-red-900 border-red-800', inputFocus: 'focus:border-red-400',
+    sendActive: 'bg-red-600 text-white hover:bg-red-500', sendDisabled: 'bg-red-800 text-red-400'
   },
   legion: {
-    name: 'Cyber Legion', bg: 'bg-[#020F08]', text: 'text-[#D1FAE5]', border: 'border-[#065F46]',
-    panelBg: 'bg-[#064E3B]', panelBorder: 'border-[#059669]', primary: 'text-[#34D399]',
-    toolBg: 'bg-[#065F46]', toolHover: 'hover:border-[#10B981]', aiBubble: 'bg-[#064E3B] border-[#059669] text-[#D1FAE5]',
-    humanBubble: 'bg-[#10B981] text-[#050505]', inputBg: 'bg-[#064E3B] border-[#065F46]', inputFocus: 'focus:border-[#34D399]',
-    sendActive: 'bg-[#10B981] text-[#050505] hover:bg-[#059669]', sendDisabled: 'bg-[#065F46] text-[#A7F3D0]'
+    name: 'Cyber Legion', bg: 'bg-emerald-950', text: 'text-emerald-100', border: 'border-emerald-800',
+    panelBg: 'bg-emerald-900', panelBorder: 'border-emerald-700', primary: 'text-emerald-400',
+    toolBg: 'bg-emerald-800', toolHover: 'hover:border-emerald-500', aiBubble: 'bg-emerald-900 border-emerald-700 text-emerald-100',
+    humanBubble: 'bg-emerald-600 text-white', inputBg: 'bg-emerald-900 border-emerald-800', inputFocus: 'focus:border-emerald-400',
+    sendActive: 'bg-emerald-600 text-white hover:bg-emerald-500', sendDisabled: 'bg-emerald-800 text-emerald-500'
   },
   imperial: {
-    name: 'Imperial Purple', bg: 'bg-[#140524]', text: 'text-[#F3E8FF]', border: 'border-[#5B21B6]',
-    panelBg: 'bg-[#2E1065]', panelBorder: 'border-[#7C3AED]', primary: 'text-[#C084FC]',
-    toolBg: 'bg-[#3B0764]', toolHover: 'hover:border-[#9333EA]', aiBubble: 'bg-[#2E1065] border-[#7C3AED] text-[#F3E8FF]',
-    humanBubble: 'bg-[#9333EA] text-[#FFFFFF]', inputBg: 'bg-[#2E1065] border-[#5B21B6]', inputFocus: 'focus:border-[#C084FC]',
-    sendActive: 'bg-[#9333EA] text-[#FFFFFF] hover:bg-[#7E22CE]', sendDisabled: 'bg-[#3B0764] text-[#D8B4FE]'
+    name: 'Imperial Purple', bg: 'bg-purple-950', text: 'text-purple-100', border: 'border-purple-800',
+    panelBg: 'bg-purple-900', panelBorder: 'border-purple-700', primary: 'text-purple-400',
+    toolBg: 'bg-purple-800', toolHover: 'hover:border-purple-500', aiBubble: 'bg-purple-900 border-purple-700 text-purple-100',
+    humanBubble: 'bg-purple-600 text-white', inputBg: 'bg-purple-900 border-purple-800', inputFocus: 'focus:border-purple-400',
+    sendActive: 'bg-purple-600 text-white hover:bg-purple-500', sendDisabled: 'bg-purple-800 text-purple-500'
   },
   solar: {
-    name: 'Solar Flare', bg: 'bg-[#1E0F04]', text: 'text-[#FEF3C7]', border: 'border-[#92400E]',
-    panelBg: 'bg-[#451A03]', panelBorder: 'border-[#B45309]', primary: 'text-[#FBBF24]',
-    toolBg: 'bg-[#78350F]', toolHover: 'hover:border-[#D97706]', aiBubble: 'bg-[#451A03] border-[#B45309] text-[#FEF3C7]',
-    humanBubble: 'bg-[#F59E0B] text-[#050505]', inputBg: 'bg-[#451A03] border-[#92400E]', inputFocus: 'focus:border-[#FBBF24]',
-    sendActive: 'bg-[#F59E0B] text-[#050505] hover:bg-[#D97706]', sendDisabled: 'bg-[#78350F] text-[#FDE68A]'
+    name: 'Solar Flare', bg: 'bg-orange-950', text: 'text-orange-100', border: 'border-orange-800',
+    panelBg: 'bg-orange-900', panelBorder: 'border-orange-700', primary: 'text-amber-400',
+    toolBg: 'bg-orange-800', toolHover: 'hover:border-amber-500', aiBubble: 'bg-orange-900 border-orange-700 text-orange-100',
+    humanBubble: 'bg-amber-500 text-black', inputBg: 'bg-orange-900 border-orange-800', inputFocus: 'focus:border-amber-400',
+    sendActive: 'bg-amber-500 text-black hover:bg-amber-400', sendDisabled: 'bg-orange-800 text-orange-500'
   },
   abyssal: {
-    name: 'Abyssal Ocean', bg: 'bg-[#041222]', text: 'text-[#E0F2FE]', border: 'border-[#0369A1]',
-    panelBg: 'bg-[#0C4A6E]', panelBorder: 'border-[#0284C7]', primary: 'text-[#7DD3FC]',
-    toolBg: 'bg-[#075985]', toolHover: 'hover:border-[#0EA5E9]', aiBubble: 'bg-[#0C4A6E] border-[#0284C7] text-[#E0F2FE]',
-    humanBubble: 'bg-[#0EA5E9] text-[#050505]', inputBg: 'bg-[#0C4A6E] border-[#0369A1]', inputFocus: 'focus:border-[#7DD3FC]',
-    sendActive: 'bg-[#0EA5E9] text-[#050505] hover:bg-[#0284C7]', sendDisabled: 'bg-[#075985] text-[#BAE6FD]'
+    name: 'Abyssal Ocean', bg: 'bg-slate-950', text: 'text-sky-100', border: 'border-sky-900',
+    panelBg: 'bg-slate-900', panelBorder: 'border-sky-800', primary: 'text-sky-400',
+    toolBg: 'bg-slate-800', toolHover: 'hover:border-sky-500', aiBubble: 'bg-slate-900 border-sky-800 text-sky-100',
+    humanBubble: 'bg-sky-500 text-white', inputBg: 'bg-slate-900 border-sky-900', inputFocus: 'focus:border-sky-400',
+    sendActive: 'bg-sky-500 text-white hover:bg-sky-400', sendDisabled: 'bg-slate-800 text-sky-700'
   },
   toxic: {
-    name: 'Toxic Wasteland', bg: 'bg-[#0A120A]', text: 'text-[#ECFCCB]', border: 'border-[#4D7C0F]',
-    panelBg: 'bg-[#1A2E1A]', panelBorder: 'border-[#65A30D]', primary: 'text-[#BEF264]',
-    toolBg: 'bg-[#2C4A2C]', toolHover: 'hover:border-[#84CC16]', aiBubble: 'bg-[#1A2E1A] border-[#65A30D] text-[#ECFCCB]',
-    humanBubble: 'bg-[#84CC16] text-[#050505]', inputBg: 'bg-[#1A2E1A] border-[#4D7C0F]', inputFocus: 'focus:border-[#BEF264]',
-    sendActive: 'bg-[#84CC16] text-[#050505] hover:bg-[#65A30D]', sendDisabled: 'bg-[#2C4A2C] text-[#D9F99D]'
+    name: 'Toxic Wasteland', bg: 'bg-stone-950', text: 'text-lime-100', border: 'border-lime-900',
+    panelBg: 'bg-stone-900', panelBorder: 'border-lime-800', primary: 'text-lime-400',
+    toolBg: 'bg-stone-800', toolHover: 'hover:border-lime-500', aiBubble: 'bg-stone-900 border-lime-800 text-lime-100',
+    humanBubble: 'bg-lime-500 text-black', inputBg: 'bg-stone-900 border-lime-900', inputFocus: 'focus:border-lime-400',
+    sendActive: 'bg-lime-500 text-black hover:bg-lime-400', sendDisabled: 'bg-stone-800 text-lime-700'
   },
   midnight: {
-    name: 'Midnight Rose', bg: 'bg-[#1F0F19]', text: 'text-[#FCE7F3]', border: 'border-[#9D174D]',
-    panelBg: 'bg-[#40162F]', panelBorder: 'border-[#BE185D]', primary: 'text-[#F9A8D4]',
-    toolBg: 'bg-[#621A46]', toolHover: 'hover:border-[#DB2777]', aiBubble: 'bg-[#40162F] border-[#BE185D] text-[#FCE7F3]',
-    humanBubble: 'bg-[#DB2777] text-[#FFFFFF]', inputBg: 'bg-[#40162F] border-[#9D174D]', inputFocus: 'focus:border-[#F9A8D4]',
-    sendActive: 'bg-[#DB2777] text-[#FFFFFF] hover:bg-[#BE185D]', sendDisabled: 'bg-[#621A46] text-[#FBCFE8]'
+    name: 'Midnight Rose', bg: 'bg-rose-950', text: 'text-rose-100', border: 'border-rose-900',
+    panelBg: 'bg-rose-900', panelBorder: 'border-rose-800', primary: 'text-pink-400',
+    toolBg: 'bg-rose-800', toolHover: 'hover:border-pink-500', aiBubble: 'bg-rose-900 border-rose-800 text-rose-100',
+    humanBubble: 'bg-pink-600 text-white', inputBg: 'bg-rose-900 border-rose-900', inputFocus: 'focus:border-pink-400',
+    sendActive: 'bg-pink-600 text-white hover:bg-pink-500', sendDisabled: 'bg-rose-800 text-rose-500'
   },
   monochrome: {
-    name: 'Monochrome Terminal', bg: 'bg-[#000000]', text: 'text-[#FFFFFF]', border: 'border-[#444444]',
-    panelBg: 'bg-[#111111]', panelBorder: 'border-[#666666]', primary: 'text-[#FFFFFF]',
-    toolBg: 'bg-[#222222]', toolHover: 'hover:border-[#999999]', aiBubble: 'bg-[#111111] border-[#666666] text-[#FFFFFF]',
-    humanBubble: 'bg-[#FFFFFF] text-[#000000]', inputBg: 'bg-[#111111] border-[#444444]', inputFocus: 'focus:border-[#FFFFFF]',
-    sendActive: 'bg-[#FFFFFF] text-[#000000] hover:bg-[#CCCCCC]', sendDisabled: 'bg-[#222222] text-[#999999]'
+    name: 'Monochrome Terminal', bg: 'bg-black', text: 'text-white', border: 'border-zinc-800',
+    panelBg: 'bg-zinc-900', panelBorder: 'border-zinc-700', primary: 'text-white',
+    toolBg: 'bg-zinc-800', toolHover: 'hover:border-zinc-500', aiBubble: 'bg-zinc-900 border-zinc-700 text-white',
+    humanBubble: 'bg-zinc-700 text-white', inputBg: 'bg-zinc-900 border-zinc-800', inputFocus: 'focus:border-white',
+    sendActive: 'bg-white text-black hover:bg-zinc-200', sendDisabled: 'bg-zinc-800 text-zinc-600'
   },
   claude: {
-    name: 'Claude Elegance', bg: 'bg-[#F9F8F6]', text: 'text-[#2D2A26]', border: 'border-[#D4D0C5]',
-    panelBg: 'bg-[#FFFFFF]', panelBorder: 'border-[#C2BCAE]', primary: 'text-[#B45F45]',
-    toolBg: 'bg-[#EAE5D9]', toolHover: 'hover:border-[#B45F45]', aiBubble: 'bg-[#FFFFFF] border-[#C2BCAE] text-[#2D2A26]',
-    humanBubble: 'bg-[#B45F45] text-[#FFFFFF]', inputBg: 'bg-[#FFFFFF] border-[#D4D0C5]', inputFocus: 'focus:border-[#B45F45]',
-    sendActive: 'bg-[#B45F45] text-[#FFFFFF] hover:bg-[#9B4D36]', sendDisabled: 'bg-[#EAE5D9] text-[#7A7465]'
+    name: 'Claude Elegance', bg: 'bg-orange-50', text: 'text-stone-900', border: 'border-stone-300',
+    panelBg: 'bg-white', panelBorder: 'border-stone-400', primary: 'text-orange-700',
+    toolBg: 'bg-stone-200', toolHover: 'hover:border-orange-700', aiBubble: 'bg-white border-stone-300 text-stone-900',
+    humanBubble: 'bg-orange-700 text-white', inputBg: 'bg-white border-stone-300', inputFocus: 'focus:border-orange-700',
+    sendActive: 'bg-orange-700 text-white hover:bg-orange-600', sendDisabled: 'bg-stone-200 text-stone-400'
   },
   solargrid: {
-    name: 'Solar Grid (Retro)', bg: 'bg-[#140727]', text: 'text-[#FEF08A]', border: 'border-[#7C3AED]',
-    panelBg: 'bg-[#2E1065]', panelBorder: 'border-[#9333EA]', primary: 'text-[#F97316]',
-    toolBg: 'bg-[#4C1D95]', toolHover: 'hover:border-[#F97316]', aiBubble: 'bg-[#2E1065] border-[#9333EA] text-[#FEF08A]',
-    humanBubble: 'bg-[#F97316] text-[#050505]', inputBg: 'bg-[#2E1065] border-[#7C3AED]', inputFocus: 'focus:border-[#F97316]',
-    sendActive: 'bg-[#F97316] text-[#050505] hover:bg-[#EA580C]', sendDisabled: 'bg-[#4C1D95] text-[#FDE047]'
+    name: 'Solar Grid (Retro)', bg: 'bg-violet-950', text: 'text-yellow-200', border: 'border-violet-800',
+    panelBg: 'bg-violet-900', panelBorder: 'border-purple-700', primary: 'text-orange-500',
+    toolBg: 'bg-violet-800', toolHover: 'hover:border-orange-500', aiBubble: 'bg-violet-900 border-purple-700 text-yellow-200',
+    humanBubble: 'bg-orange-500 text-white', inputBg: 'bg-violet-900 border-violet-800', inputFocus: 'focus:border-orange-500',
+    sendActive: 'bg-orange-500 text-white hover:bg-orange-400', sendDisabled: 'bg-violet-800 text-violet-400'
   }
 };
 
@@ -149,16 +149,16 @@ const FlowArchitect: React.FC = () => {
         addChatMessage({ role: 'agent', content: data.message?.content || 'Respuesta vacía.' });
       } else {
         const modelName = selectedModel.replace('free.ai/', '');
-        const res = await fetch('https://api.free.ai/v1/chat/completions', {
+        const res = await fetch('https://text.pollinations.ai/openai/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model: modelName,
+            model: modelName === 'auto' ? 'openai' : modelName,
             messages: [{ role: 'user', content: textToSend }]
           })
         });
         
-        if (!res.ok) throw new Error('Error de conexión con Free.AI');
+        if (!res.ok) throw new Error('Error de conexión con la red global Free.AI');
         const data = await res.json();
         const text = data.choices?.[0]?.message?.content || 'Sin respuesta';
         addChatMessage({ role: 'agent', content: text });
