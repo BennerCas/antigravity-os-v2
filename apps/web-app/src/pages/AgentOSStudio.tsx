@@ -297,7 +297,7 @@ const FlowArchitect: React.FC = () => {
               <div className={`p-3 text-[15px] leading-relaxed border ${
                 msg.role === 'human' ? `${t.humanBubble} border-transparent rounded-xl rounded-tr-sm font-medium` : `${t.aiBubble} rounded-xl rounded-tl-sm shadow-sm`
               } transition-colors duration-500`}>
-                <div className={`prose prose-sm max-w-none ${msg.role === 'agent' ? t.text : 'text-inherit'} prose-headings:text-current prose-p:text-current prose-strong:text-current prose-a:text-current prose-ul:text-current prose-ol:text-current prose-li:text-current`}>
+                <div className={`markdown-body max-w-none ${msg.role === 'agent' ? t.text : 'text-inherit'}`}>
                   <ReactMarkdown>
                     {msg.content}
                   </ReactMarkdown>
