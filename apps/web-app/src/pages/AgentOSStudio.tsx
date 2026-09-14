@@ -1,9 +1,11 @@
 import ReactMarkdown from 'react-markdown';
 import { useEffect } from 'react';
 import React, { useState } from 'react';
-import { useStudioStore, TabId } from '../stores/useStudioStore';
+import { ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState } from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import { useStudioStore, TabId, parseAIResponseToFlow } from '../stores/useStudioStore';
 import { API_URL } from '../lib/api';
-import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush , Copy, ArrowsClockwise, Clock } from '@phosphor-icons/react';
+import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock } from '@phosphor-icons/react';
 
 
 const AURELIOS_THEMES: Record<string, any> = {
@@ -94,7 +96,7 @@ const AURELIOS_THEMES: Record<string, any> = {
 };
 
 const FlowArchitect: React.FC = () => {
-    const { chatMessages, addChatMessage } = useStudioStore();
+    const { chatMessages, addChatMessage, setFlow, setAgentCards, setBlueprintMd } = useStudioStore();
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [thinkingPhrase, setThinkingPhrase] = useState('');
@@ -169,7 +171,13 @@ const FlowArchitect: React.FC = () => {
         });
         if (!res.ok) throw new Error(`Backend Free.AI respondió ${res.status}`);
         const data = await res.json();
-        addChatMessage({ role: 'agent', content: data.response || 'Sin respuesta.', model: data.model_used || selectedModel });
+        const aiText = data.response || 'Sin respuesta.';
+        addChatMessage({ role: 'agent', content: aiText, model: data.model_used || selectedModel });
+        // Actualizar Flow Diagram + Agentes + Blueprint en tiempo real
+        const { nodes, edges, cards, md } = parseAIResponseToFlow(aiText);
+        setFlow(nodes, edges);
+        if (cards.length > 0) setAgentCards(cards);
+        setBlueprintMd(md);
       }
     } catch (err: any) {
       addChatMessage({ role: 'agent', content: `[ERROR] ${err.message}`, model: selectedModel });
@@ -396,47 +404,117 @@ const FlowArchitect: React.FC = () => {
   );
 };
 
-const FlowDiagram: React.FC = () => (
-  <div className="flex-1 flex items-center justify-center bg-gray-800 text-gray-400">
-    [Flow Diagram / React Flow Canvas]
-  </div>
-);
+const FlowDiagram: React.FC = () => {
+  const { flowNodes, flowEdges } = useStudioStore();
+  const [nodes, setNodes, onNodesChange] = useNodesState(flowNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(flowEdges);
 
-const AgentCarousel: React.FC = () => {
-  const { isFocusMode, setFocusMode } = useStudioStore();
+  // Sync store → local ReactFlow state whenever AI updates the flow
+  React.useEffect(() => { setNodes(flowNodes); }, [flowNodes]);
+  React.useEffect(() => { setEdges(flowEdges); }, [flowEdges]);
+
+  if (flowNodes.length === 0) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-[#050505] text-gray-600 gap-3">
+        <Network size={40} weight="light" className="opacity-30" />
+        <p className="text-sm font-medium">El diagrama aparecerá aquí en tiempo real</p>
+        <p className="text-xs opacity-50">Envía un mensaje describiendo tu sistema de agentes →</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center bg-gray-800 relative">
-      {!isFocusMode ? (
-        <div className="text-center">
-          <div className="text-gray-400 mb-4">[3D Agent Carousel View]</div>
-          <button
-            onClick={() => setFocusMode(true)}
-            className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-white transition-colors"
-          >
-            Enter Flip & Focus Mode
-          </button>
-        </div>
-      ) : (
-        <div className="absolute inset-0 bg-gray-900 bg-opacity-95 flex flex-col items-center justify-center p-8 backdrop-blur-sm z-10 transition-all duration-250">
-          <div className="bg-gray-800 border border-gray-700 rounded-xl p-8 w-full max-w-2xl shadow-2xl relative">
-            <button
-              onClick={() => setFocusMode(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white"
-            >
-              ✕ Close
-            </button>
-            <h3 className="text-xl font-bold mb-4 text-white">Focus Mode: Agent Details</h3>
-            <div className="space-y-4 text-gray-300">
-              <p><strong>I/O Contract:</strong> Defined</p>
-              <p><strong>Required Tools:</strong> vector_search, pdf_parse</p>
-              <p><strong>Evals:</strong> 5/5 Passing</p>
-              <div className="mt-6">
-                <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white transition-colors">
-                  Edit Prompt
-                </button>
+    <div className="flex-1 bg-[#050505]" style={{ height: '100%' }}>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        fitView
+        fitViewOptions={{ padding: 0.3 }}
+        minZoom={0.3}
+        attributionPosition="bottom-left"
+      >
+        <Background color="#1a1a2e" gap={20} size={1} />
+        <Controls className="!bg-[#111] !border-[#333]" />
+        <MiniMap nodeColor={(n) => (n.style?.border as string)?.match(/#[0-9a-f]{6}/i)?.[0] || '#3b82f6'} maskColor="rgba(0,0,0,0.8)" className="!bg-[#111]" />
+      </ReactFlow>
+    </div>
+  );
+};
+
+const AgentCarousel: React.FC = () => {
+  const { agentCards, focusedAgent, setFocusedAgent } = useStudioStore();
+
+  if (agentCards.length === 0) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-[#050505] text-gray-600 gap-3">
+        <Brain size={40} weight="light" className="opacity-30" />
+        <p className="text-sm font-medium">Las tarjetas de agentes aparecerán aquí</p>
+        <p className="text-xs opacity-50">Pide a AureliOS que diseñe un equipo de agentes →</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 bg-[#050505] overflow-y-auto p-4 relative">
+      <style>{`
+        .agent-card { perspective: 1000px; }
+        .agent-card-inner { transition: transform 0.5s; transform-style: preserve-3d; position: relative; }
+        .agent-card:hover .agent-card-inner { transform: rotateY(8deg) rotateX(-3deg); }
+        .agent-card-inner::before {
+          content: ''; position: absolute; inset: 0; border-radius: 12px;
+          background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.05), transparent 70%);
+          pointer-events: none;
+        }
+      `}</style>
+      <div className="grid grid-cols-2 gap-3">
+        {agentCards.map((card) => (
+          <div key={card.id} className="agent-card cursor-pointer" onClick={() => setFocusedAgent(card)}>
+            <div className="agent-card-inner rounded-xl p-4" style={{ background: '#0d1117', border: `1.5px solid ${card.color}33`, boxShadow: `0 4px 20px ${card.color}22` }}>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: card.color }} />
+                <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: card.color }}>{card.role}</span>
+              </div>
+              <h3 className="text-white font-bold text-sm mb-1 leading-tight">{card.name}</h3>
+              <p className="text-gray-400 text-xs leading-relaxed line-clamp-2">{card.description}</p>
+              {card.tools.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {card.tools.map(t => (
+                    <span key={t} className="px-1.5 py-0.5 rounded text-[9px] font-mono" style={{ background: `${card.color}22`, color: card.color }}>{t}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Focus Modal */}
+      {focusedAgent && (
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-20 p-6">
+          <div className="rounded-2xl p-6 w-full max-w-md relative" style={{ background: '#0d1117', border: `2px solid ${focusedAgent.color}`, boxShadow: `0 0 40px ${focusedAgent.color}44` }}>
+            <button onClick={() => setFocusedAgent(null)} style={{ all: 'unset', cursor: 'pointer', position: 'absolute', top: 16, right: 16, color: '#888' }}>✕</button>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: `${focusedAgent.color}22`, border: `2px solid ${focusedAgent.color}` }}>
+                <Brain size={20} style={{ color: focusedAgent.color }} />
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: focusedAgent.color }}>{focusedAgent.role}</p>
+                <h2 className="text-white font-bold text-lg">{focusedAgent.name}</h2>
               </div>
             </div>
+            <p className="text-gray-300 text-sm leading-relaxed mb-4">{focusedAgent.description}</p>
+            {focusedAgent.tools.length > 0 && (
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2">Herramientas</p>
+                <div className="flex flex-wrap gap-2">
+                  {focusedAgent.tools.map(t => (
+                    <span key={t} className="px-2 py-1 rounded-lg text-xs font-mono font-bold" style={{ background: `${focusedAgent.color}22`, color: focusedAgent.color }}>{t}</span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -444,11 +522,27 @@ const AgentCarousel: React.FC = () => {
   );
 };
 
-const ArchitectureBlueprint: React.FC = () => (
-  <div className="flex-1 flex items-center justify-center bg-gray-800 text-gray-400">
-    [Architecture Blueprint / Markdown Editor]
-  </div>
-);
+const ArchitectureBlueprint: React.FC = () => {
+  const { blueprintMd } = useStudioStore();
+
+  if (!blueprintMd) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-[#050505] text-gray-600 gap-3">
+        <Cube size={40} weight="light" className="opacity-30" />
+        <p className="text-sm font-medium">El blueprint aparecerá aquí</p>
+        <p className="text-xs opacity-50">La respuesta completa de la IA se renderiza como documento técnico →</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 bg-[#050505] overflow-y-auto p-6">
+      <div className="prose prose-invert prose-sm max-w-none text-gray-200">
+        <ReactMarkdown>{blueprintMd}</ReactMarkdown>
+      </div>
+    </div>
+  );
+};
 
 const CanvasTabs: React.FC = () => {
   const { activeTab, setActiveTab } = useStudioStore();
