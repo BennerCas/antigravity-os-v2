@@ -347,29 +347,20 @@ const FlowArchitect: React.FC = () => {
               <div className="flex flex-col gap-3">
                 <h4 className="font-bold flex items-center gap-2 text-[14px] uppercase tracking-wider mb-2"><Cpu size={16} /> Modelos IA</h4>
                 
-                <div className="text-[11px] font-bold uppercase tracking-wider text-white/50 mt-1 mb-1">Free.AI (Cascada Inteligente)</div>
-                {['free.ai/auto', 'free.ai/gemini-1.5-pro', 'free.ai/claude-3.5', 'free.ai/gpt-4o'].map(m => (
+                <div className="text-[11px] font-bold uppercase tracking-wider text-white/50 mt-1 mb-1">NUBE</div>
+                {['anthropic/claude-3.5-sonnet', 'openai/gpt-4o', 'meta-llama/llama-3.1-70b-instruct', 'qwen/qwen-2.5-72b-instruct'].map(m => (
                   <button 
                     key={m}
                     onClick={() => setSelectedModel(m)}
                     className={`flex items-center justify-between p-2 rounded-lg border ${selectedModel === m ? `border-current ${t.primary}` : 'border-transparent hover:bg-white/5'} transition-colors text-left`}
                   >
-                    <span className="text-[13px] font-medium">{m === 'free.ai/auto' ? 'Auto (Cascada)' : m.replace('free.ai/', '')}</span>
+                    <span className="text-[13px] font-medium">{m}</span>
                     {selectedModel === m && <Check size={14} weight="bold" />}
                   </button>
                 ))}
 
-                <div className="text-[11px] font-bold uppercase tracking-wider text-white/50 mt-3 mb-1">Ollama (Locales)</div>
-                {ollamaModels.length === 0 ? (
-                  <button 
-                    onClick={() => setSelectedModel('ollama/hermes3:8b')}
-                    className={`flex items-center justify-between p-2 rounded-lg border ${selectedModel === 'ollama/hermes3:8b' ? `border-current ${t.primary}` : 'border-transparent hover:bg-white/5'} transition-colors text-left`}
-                  >
-                    <span className="text-[13px] font-medium">hermes3 (Local)</span>
-                    {selectedModel === 'ollama/hermes3:8b' && <Check size={14} weight="bold" />}
-                  </button>
-                ) : (
-                  ollamaModels.map(m => (
+                <div className="text-[11px] font-bold uppercase tracking-wider text-white/50 mt-3 mb-1">LOCAL</div>
+                {(ollamaModels.length === 0 ? ['hermes3:8b', 'llama3.1:8b', 'mistral', 'qwen2.5:7b', 'phi3:3.8b'] : ollamaModels).map(m => (
                     <button 
                       key={m}
                       onClick={() => setSelectedModel(`ollama/${m}`)}
@@ -379,7 +370,7 @@ const FlowArchitect: React.FC = () => {
                       {selectedModel === `ollama/${m}` && <Check size={14} weight="bold" />}
                     </button>
                   ))
-                )}
+                }
               </div>
 
               {/* Themes Column */}
