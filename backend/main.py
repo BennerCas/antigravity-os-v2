@@ -50,6 +50,9 @@ app.include_router(agents_factory_router, prefix="/api/v1")
 app.include_router(authoring.router, prefix="/api/v1")
 app.include_router(flowboard.router)
 app.include_router(inspector.router)
+from routers.studio import router as studio_router
+app.include_router(studio_router)
+
 
 @app.on_event("startup")
 async def startup_event():

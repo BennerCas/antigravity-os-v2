@@ -135,54 +135,28 @@ const FlowArchitect: React.FC = () => {
     setIsTyping(true);
 
     try {
-      if (selectedModel.startsWith('ollama/')) {
-        const modelName = selectedModel.replace('ollama/', '');
-        const response = await fetch('http://127.0.0.1:11434/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: modelName,
-            messages: [{ role: 'user', content: textToSend }],
-            stream: false
-          })
-        });
-        
-        if (!response.ok) throw new Error('Error de conexión con Ollama');
-        const data = await response.json();
-        addChatMessage({ role: 'agent', content: data.message?.content || 'Respuesta vacía.', model: selectedModel });
-      } else {
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-        if (apiKey) {
-          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: textToSend }] }] })
-          });
-          if (!res.ok) throw new Error('Error de conexión con Gemini');
-          const data = await res.json();
-          const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sin respuesta';
-          addChatMessage({ role: 'agent', content: text, model: selectedModel });
-        } else {
-          // Free.AI – usa la API de Pollinations (sin llave, anónima y gratuita)
-          const modelLabel = selectedModel || 'openai';
-          const pollinationsModel = modelLabel.includes('claude') ? 'claude' :
-                                   modelLabel.includes('llama') ? 'mistral' :
-                                   modelLabel.includes('qwen') ? 'qwen' : 'openai';
-          const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(textToSend)}?model=${pollinationsModel}&seed=${Date.now()}&json=false`, {
-            method: 'GET',
-            headers: { 'Accept': 'text/plain' }
-          });
-          if (!res.ok) throw new Error(`Pollinations respondió ${res.status}`);
-          const text = await res.text();
-          addChatMessage({ role: 'agent', content: text.trim() || 'Sin respuesta', model: selectedModel });
-        }
-      }
+      // Motor Híbrido Real: Free.AI (nube) + Ollama (local) via backend
+      const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const res = await fetch(`${BACKEND}/api/v1/studio/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: textToSend,
+          model: selectedModel,
+          system: 'Eres AureliOS, un asistente de IA avanzado. Responde siempre en el idioma del usuario con formato Markdown claro: usa **negritas**, *cursivas*, listas, títulos y párrafos.'
+        })
+      });
+
+      if (!res.ok) throw new Error(`Backend respondió ${res.status}`);
+      const data = await res.json();
+      addChatMessage({ role: 'agent', content: data.response || 'Sin respuesta.', model: data.model_used || selectedModel });
     } catch (err: any) {
-      addChatMessage({ role: 'agent', content: `[ERROR] No se pudo contactar al motor de IA: ${err.message}`, model: selectedModel });
+      addChatMessage({ role: 'agent', content: `[ERROR] ${err.message}`, model: selectedModel });
     } finally {
       setIsTyping(false);
     }
   };
+
 
   const aiTools = [
     { title: 'Swarm Orchestrator', icon: <Network size={18} className="text-[#3b82f6]" weight="duotone" />, desc: 'Orquesta múltiples agentes autónomos. Asigna tareas complejas, gestiona el estado compartido y resuelve dependencias en paralelo.' },
