@@ -6,6 +6,7 @@ interface ChatMessage {
   id: string;
   role: 'human' | 'system' | 'agent';
   content: string;
+  model?: string;
 }
 
 interface StudioState {

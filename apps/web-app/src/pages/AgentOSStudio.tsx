@@ -2,7 +2,7 @@ import ReactMarkdown from 'react-markdown';
 import { useEffect } from 'react';
 import React, { useState } from 'react';
 import { useStudioStore, TabId } from '../stores/useStudioStore';
-import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush } from '@phosphor-icons/react';
+import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush , Copy, ArrowsClockwise, Clock } from '@phosphor-icons/react';
 
 const AURELIOS_THEMES: Record<string, any> = {
   obsidian: {
@@ -107,18 +107,7 @@ const FlowArchitect: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('aurelios_theme', currentThemeKey);
   }, [currentThemeKey]);
-  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
-  
   const t = AURELIOS_THEMES[currentThemeKey];
-
-  React.useEffect(() => {
-    fetch('http://127.0.0.1:11434/api/tags')
-      .then(res => res.json())
-      .then(data => {
-        if (data.models) setOllamaModels(data.models.map((m: any) => m.name));
-      })
-      .catch(() => {});
-  }, []);
 
   const speak = (text: string) => {
     if (!window.speechSynthesis) return;
@@ -160,7 +149,7 @@ const FlowArchitect: React.FC = () => {
         
         if (!response.ok) throw new Error('Error de conexión con Ollama');
         const data = await response.json();
-        addChatMessage({ role: 'agent', content: data.message?.content || 'Respuesta vacía.' });
+        addChatMessage({ role: 'agent', content: data.message?.content || 'Respuesta vacía.', model: selectedModel });
       } else {
         const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
         if (apiKey) {
@@ -172,7 +161,7 @@ const FlowArchitect: React.FC = () => {
           if (!res.ok) throw new Error('Error de conexión con Gemini');
           const data = await res.json();
           const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sin respuesta';
-          addChatMessage({ role: 'agent', content: text });
+          addChatMessage({ role: 'agent', content: text, model: selectedModel });
         } else {
           // Free.AI (Pollinations fallback)
           // Map to 'openai' which is fully supported for free anonymous queries
@@ -187,11 +176,11 @@ const FlowArchitect: React.FC = () => {
           if (!res.ok) throw new Error('Error de conexión con la red global Free.AI');
           const data = await res.json();
           const text = data.choices?.[0]?.message?.content || 'Sin respuesta';
-          addChatMessage({ role: 'agent', content: text });
+          addChatMessage({ role: 'agent', content: text, model: selectedModel });
         }
       }
     } catch (err: any) {
-      addChatMessage({ role: 'agent', content: `[ERROR] No se pudo contactar al motor de IA: ${err.message}` });
+      addChatMessage({ role: 'agent', content: `[ERROR] No se pudo contactar al motor de IA: ${err.message}`, model: selectedModel });
     } finally {
       setIsTyping(false);
     }
@@ -296,10 +285,24 @@ const FlowArchitect: React.FC = () => {
                 </div>
               </div>
               {msg.role === 'agent' && (
-                <div className="flex items-center gap-2 mt-1.5 px-1">
-                  <button onClick={() => speak(msg.content)} className={` hover:brightness-125 ${t.primary} flex items-center gap-1 text-[13px] font-semibold transition-opacity`}>
-                    <SpeakerHigh size={14} /> Escuchar
-                  </button>
+                <div className={`flex items-center gap-4 mt-2 px-1 text-[11px] font-bold ${t.primary} uppercase tracking-widest opacity-80`}>
+                  <div className="flex items-center gap-1.5">
+                    <Cpu size={14} /> {msg.model || 'AureliOS Core'}
+                  </div>
+                  <div className="flex items-center gap-1.5 opacity-60">
+                    <Clock size={14} /> {new Date(parseInt(msg.id) > 10000000000 ? parseInt(msg.id) : Date.now()).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}
+                  </div>
+                  <div className="flex items-center gap-3 ml-auto opacity-70">
+                    <button onClick={() => navigator.clipboard.writeText(msg.content)} title="Copiar" className="hover:opacity-100 transition-opacity border-none outline-none ring-0 bg-transparent flex items-center gap-1">
+                      <Copy size={14} /> Copiar
+                    </button>
+                    <button onClick={() => speak(msg.content)} title="Escuchar" className="hover:opacity-100 transition-opacity border-none outline-none ring-0 bg-transparent flex items-center gap-1">
+                      <SpeakerHigh size={14} /> Escuchar
+                    </button>
+                    <button title="Regenerar" className="hover:opacity-100 transition-opacity border-none outline-none ring-0 bg-transparent flex items-center gap-1">
+                      <ArrowsClockwise size={14} /> Regenerar
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
