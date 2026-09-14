@@ -28,7 +28,7 @@ const FlowArchitect: React.FC = () => {
     setInput('');
     // Fake AI response for testing
     setTimeout(() => {
-      addChatMessage({ role: 'ai', content: 'He recibido tu instrucción. Procederé a analizar la arquitectura del sistema y sugerir mejoras basadas en los patrones de diseño.' });
+      addChatMessage({ role: 'agent', content: 'He recibido tu instrucción. Procederé a analizar la arquitectura del sistema y sugerir mejoras basadas en los patrones de diseño.' });
     }, 600);
   };
 
@@ -90,7 +90,7 @@ const FlowArchitect: React.FC = () => {
               }`}>
                 {msg.content}
               </div>
-              {msg.role === 'ai' && (
+              {msg.role === 'agent' && (
                 <div className="flex items-center gap-2 mt-1.5 px-1">
                   <button onClick={() => speak(msg.content)} className="text-[#555] hover:text-[#00D9FF] flex items-center gap-1 text-xs font-semibold transition-colors">
                     <SpeakerHigh size={14} /> Escuchar
