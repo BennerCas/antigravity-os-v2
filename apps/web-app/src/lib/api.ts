@@ -4,10 +4,10 @@
  * Por defecto apunta al backend v2 local en el puerto 8001.
  */
 const BACKEND_ORIGIN: string =
-  (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? 'http://127.0.0.1:8001';
+  (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? '';
 
 export const API_URL = `${BACKEND_ORIGIN}/api/v1`;
 
 /** URL WebSocket del runtime de ejecución. */
 export const WS_EXECUTE_URL =
-  BACKEND_ORIGIN.replace(/^http/, 'ws') + '/api/v1/ws/execute';
+  (BACKEND_ORIGIN ? BACKEND_ORIGIN.replace(/^http/, 'ws') : `ws://${window.location.host}`) + '/api/v1/ws/execute';

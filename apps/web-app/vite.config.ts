@@ -9,4 +9,14 @@ const base = process.env.VITE_BASE_PATH ?? '/';
 export default defineConfig({
   base,
   plugins: [react(), refreshSkillsPlugin()],
+  server: {
+    allowedHosts: true,
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8001',
+        changeOrigin: true,
+        ws: true
+      }
+    }
+  }
 });

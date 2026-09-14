@@ -288,51 +288,6 @@ def get_architecture():
                 ],
             },
             {
-                "step": 6,
-                "id": "nexus",
-                "name": "Nexus de Memoria y RAG",
-                "page": "/nexus",
-                "what": "Base de datos vectorial y grafo de conocimiento. Procesa el historial, extrae memorias a largo plazo (Long-Term Memory) y recupera contexto relevante (RAG) antes de cada iteración del motor.",
-                "prompts": [
-                    {
-                        "key": "memory_compression",
-                        "used_at": "Nexus > Almacenamiento",
-                        "text": MEMORY_COMPRESSION_SYSTEM,
-                        "explanation": "Este prompt se usa cuando la memoria a corto plazo se llena. Toma toda la conversación reciente y la comprime en hechos estructurados que luego se guardan en la base de datos vectorial para recordarlos semanas o meses después sin consumir tokens innecesarios."
-                    },
-                    {
-                        "key": "rag_query_synthesizer",
-                        "used_at": "Nexus > Búsqueda",
-                        "text": RAG_QUERY_SYNTHESIZER_SYSTEM,
-                        "explanation": "Cuando haces una pregunta compleja, este prompt reescribe tu pregunta en múltiples formatos (sinónimos, conceptos técnicos) para asegurar que la búsqueda en la base de datos vectorial (RAG) encuentre la información correcta y no se le escape nada."
-                    },
-                    {
-                        "key": "knowledge_integration",
-                        "used_at": "Nexus > Inyección",
-                        "text": KNOWLEDGE_INTEGRATION_SYSTEM,
-                        "explanation": "Después de buscar en la base de datos, este prompt filtra y unifica todos los fragmentos encontrados en un solo bloque de contexto súper relevante. Así, el agente de código recibe exactamente lo que necesita saber sin distraerse con información inútil."
-                    },
-                    {
-                        "key": "context_librarian",
-                        "used_at": "Nexus > Almacenamiento",
-                        "text": CONTEXT_LIBRARIAN_SYSTEM,
-                        "explanation": "Guarda las reglas globales, documentos maestros y el historial de la conversación."
-                    },
-                    {
-                        "key": "feedback_analyst",
-                        "used_at": "Nexus > Almacenamiento",
-                        "text": FEEDBACK_ANALYST_SYSTEM,
-                        "explanation": "Aprende de los errores de curación pasados y actualiza la base de conocimientos."
-                    },
-                    {"key": "knowledge_pruner", "used_at": "Nexus > Mantenimiento", "text": KNOWLEDGE_PRUNER_SYSTEM, "explanation": "Detecta y elimina reglas o memorias obsoletas para que los agentes no sigan escribiendo código con versiones viejas del proyecto."},
-                    {"key": "vector_chunking_strategist", "used_at": "Nexus > Indexación", "text": VECTOR_CHUNKING_STRATEGIST_SYSTEM, "explanation": "Decide cómo dividir archivos gigantes y qué etiquetas ponerles antes de guardarlos en la BD Vectorial para maximizar la exactitud de búsqueda."},
-                    {"key": "cross_reference_engine", "used_at": "Nexus > Deducción", "text": CROSS_REFERENCE_ENGINE_SYSTEM, "explanation": "Conecta los puntos. Cruza información de errores actuales con decisiones tomadas hace meses para encontrar la raíz profunda de un problema."},
-                    {"key": "graphrag_architect", "used_at": "Nexus > Grafos", "text": GRAPHRAG_ARCHITECT_SYSTEM, "explanation": "Construye un mapa mental de relaciones (GraphRAG) para entender qué partes del código dependen de otras."},
-                    {"key": "confidence_scorer", "used_at": "Nexus > Anti-Alucinación", "text": CONFIDENCE_SCORER_SYSTEM, "explanation": "Audita la información recuperada. Si no hay certeza matemática de que sea correcta, bloquea la respuesta y pide intervención humana."},
-                    {"key": "semantic_router", "used_at": "Nexus > Enrutamiento", "text": SEMANTIC_ROUTER_SYSTEM, "explanation": "Analiza la intención del usuario y decide en qué base de datos buscar (historial, reglas, código o internet) para ahorrar tokens y tiempo."}
-                ]
-            },
-            {
                 "step": 7,
                 "id": "inspector",
                 "name": "Run Inspector — Diagnóstico y Auditoría",
@@ -812,7 +767,7 @@ async def evolve_prompt_endpoint(req: EvolvePromptRequest):
 @router.post("/evolve-batch")
 async def evolve_batch_prompts(req: EvolveBatchRequest, request: Request):
     """
-    Evoluciona una lista de prompts (o los 131 del catálogo de arquitectura) con el Motor Híbrido.
+    Evoluciona una lista de prompts (o los 179 del catálogo de arquitectura) con el Motor Híbrido.
     Soporta streaming SSE de progreso en tiempo real (stream=True o Header Accept: text/event-stream).
     Si stream=False, retorna el lote consolidado con métricas de cohesión y rendimiento.
     """
@@ -822,7 +777,7 @@ async def evolve_batch_prompts(req: EvolveBatchRequest, request: Request):
         for p in req.prompts:
             items.append((p.get_key(), p.get_category(), p.get_text()))
     else:
-        # Carga dinámica completa de los 131 prompts del ecosistema
+        # Carga dinámica completa de los 179 prompts del ecosistema
         arch = get_architecture()
         for section in arch.get("flow", []) + arch.get("apps", []):
             sec_id = section.get("id", "")
@@ -834,7 +789,7 @@ async def evolve_batch_prompts(req: EvolveBatchRequest, request: Request):
                     "architect" in pkey or "evaluator" in pkey or "verifier" in pkey or
                     "coordinator" in pkey or "planner" in pkey or "audit" in pkey or
                     "reviewer" in pkey or "generator" in pkey or
-                    sec_id in ["builder", "orchestrator", "runtime", "nexus", "coding", "automatizacion"]
+                    sec_id in ["builder", "orchestrator", "runtime", "coding", "automatizacion"]
                 )
                 items.append((pkey, "agent" if is_agent else "prompt", ptext))
 
@@ -1187,5 +1142,6 @@ async def judge_prompt_evaluation(req: JudgeEvaluationRequest):
         },
         "test_cases": eval_results
     }
+
 
 

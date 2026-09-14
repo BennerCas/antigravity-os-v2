@@ -20,7 +20,6 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { InteractiveTour } from './components/InteractiveTour';
 
 const AgentOS = lazy(() => import('./pages/AgentOS'));
-const Flows = lazy(() => import('./pages/Flows'));
 const Builder = lazy(() => import('./pages/Builder'));
 const Academy = lazy(() => import('./pages/Academy'));
 const Vault = lazy(() => import('./pages/Vault'));
@@ -39,9 +38,6 @@ function MainContent() {
       {path === '/' && <InitialRedirect />}
       <div style={{ display: path === '/agent-os' ? 'block' : 'none', height: '100%', width: '100%' }}>
         <AgentOS />
-      </div>
-      <div style={{ display: path === '/flows' ? 'block' : 'none', height: '100%', width: '100%' }}>
-        <Flows />
       </div>
       <div style={{ display: path === '/builder' ? 'block' : 'none', height: '100%', width: '100%' }}>
         <Builder />
