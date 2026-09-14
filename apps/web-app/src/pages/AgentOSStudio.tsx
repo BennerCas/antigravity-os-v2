@@ -360,7 +360,7 @@ const FlowArchitect: React.FC = () => {
                 ))}
 
                 <div className="text-[11px] font-bold uppercase tracking-wider text-white/50 mt-3 mb-1">LOCAL</div>
-                {(ollamaModels.length === 0 ? ['hermes3:8b', 'llama3.1:8b', 'mistral', 'qwen2.5:7b', 'phi3:3.8b'] : ollamaModels).map(m => (
+                {['hermes3:8b', 'llama3.1:8b', 'mistral', 'qwen2.5:7b', 'phi3:3.8b'].map(m => (
                     <button 
                       key={m}
                       onClick={() => setSelectedModel(`ollama/${m}`)}
