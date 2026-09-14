@@ -1,6 +1,6 @@
 import copy
 import jsonpatch
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional
 from schemas.authoring import CommandEnvelope
 
 class Conflict(Exception):
