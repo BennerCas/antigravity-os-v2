@@ -93,6 +93,7 @@ const FlowArchitect: React.FC = () => {
   const { chatMessages, addChatMessage } = useStudioStore();
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [thinkingPhrase, setThinkingPhrase] = useState('');
   const [selectedModel, setSelectedModel] = useState('free.ai/auto');
   const [currentThemeKey, setCurrentThemeKey] = useState('obsidian');
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
@@ -412,6 +413,16 @@ const CanvasTabs: React.FC = () => {
     </div>
   );
 };
+
+const THINKING_PHRASES = [
+  'Procesando directrices...',
+  'Analizando contexto...',
+  'Sintetizando vectores...',
+  'Calculando arquitectura...',
+  'Escribiendo respuesta...',
+  'Evaluando variables...',
+  'Consultando oráculos...'
+];
 
 export default function AgentOSStudio() {
   return (
