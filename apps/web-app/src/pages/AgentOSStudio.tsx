@@ -37,12 +37,48 @@ const AURELIOS_THEMES: Record<string, any> = {
     toolBg: 'bg-[#21103D]', toolHover: 'hover:border-[#6D28D9]', aiBubble: 'bg-[#170B2B] border-[#4C1D95] text-[#F3E8FF]',
     humanBubble: 'bg-[#7E22CE] text-white', inputBg: 'bg-[#170B2B] border-[#3B0764]', inputFocus: 'focus:border-[#6D28D9]',
     sendActive: 'bg-[#7E22CE] text-white hover:bg-[#9333EA]', sendDisabled: 'bg-[#21103D] text-[#3B0764]'
+  },
+  solar: {
+    name: 'Solar Flare', bg: 'bg-[#180A05]', text: 'text-[#FDE68A]', border: 'border-[#78350F]',
+    panelBg: 'bg-[#291008]', panelBorder: 'border-[#92400E]', primary: 'text-[#F59E0B]',
+    toolBg: 'bg-[#451A03]', toolHover: 'hover:border-[#B45309]', aiBubble: 'bg-[#291008] border-[#92400E] text-[#FEF3C7]',
+    humanBubble: 'bg-[#F59E0B] text-black', inputBg: 'bg-[#291008] border-[#78350F]', inputFocus: 'focus:border-[#B45309]',
+    sendActive: 'bg-[#F59E0B] text-black hover:bg-[#D97706]', sendDisabled: 'bg-[#451A03] text-[#78350F]'
+  },
+  abyssal: {
+    name: 'Abyssal Ocean', bg: 'bg-[#030B14]', text: 'text-[#BAE6FD]', border: 'border-[#0C4A6E]',
+    panelBg: 'bg-[#07172A]', panelBorder: 'border-[#0284C7]', primary: 'text-[#38BDF8]',
+    toolBg: 'bg-[#082F49]', toolHover: 'hover:border-[#0EA5E9]', aiBubble: 'bg-[#07172A] border-[#0284C7] text-[#E0F2FE]',
+    humanBubble: 'bg-[#38BDF8] text-black', inputBg: 'bg-[#07172A] border-[#0C4A6E]', inputFocus: 'focus:border-[#0EA5E9]',
+    sendActive: 'bg-[#38BDF8] text-black hover:bg-[#0284C7]', sendDisabled: 'bg-[#082F49] text-[#0C4A6E]'
+  },
+  toxic: {
+    name: 'Toxic Wasteland', bg: 'bg-[#111311]', text: 'text-[#D9F99D]', border: 'border-[#3F6212]',
+    panelBg: 'bg-[#1A1F1A]', panelBorder: 'border-[#4D7C0F]', primary: 'text-[#84CC16]',
+    toolBg: 'bg-[#222E22]', toolHover: 'hover:border-[#65A30D]', aiBubble: 'bg-[#1A1F1A] border-[#4D7C0F] text-[#ECFCCB]',
+    humanBubble: 'bg-[#84CC16] text-black', inputBg: 'bg-[#1A1F1A] border-[#3F6212]', inputFocus: 'focus:border-[#65A30D]',
+    sendActive: 'bg-[#84CC16] text-black hover:bg-[#65A30D]', sendDisabled: 'bg-[#222E22] text-[#3F6212]'
+  },
+  midnight: {
+    name: 'Midnight Rose', bg: 'bg-[#0F0A0D]', text: 'text-[#FBCFE8]', border: 'border-[#831843]',
+    panelBg: 'bg-[#1A1016]', panelBorder: 'border-[#9D174D]', primary: 'text-[#F472B6]',
+    toolBg: 'bg-[#2E1624]', toolHover: 'hover:border-[#BE185D]', aiBubble: 'bg-[#1A1016] border-[#9D174D] text-[#FCE7F3]',
+    humanBubble: 'bg-[#F472B6] text-black', inputBg: 'bg-[#1A1016] border-[#831843]', inputFocus: 'focus:border-[#BE185D]',
+    sendActive: 'bg-[#F472B6] text-black hover:bg-[#DB2777]', sendDisabled: 'bg-[#2E1624] text-[#831843]'
+  },
+  monochrome: {
+    name: 'Monochrome Terminal', bg: 'bg-[#000000]', text: 'text-[#FFFFFF]', border: 'border-[#333333]',
+    panelBg: 'bg-[#0A0A0A]', panelBorder: 'border-[#555555]', primary: 'text-[#FFFFFF]',
+    toolBg: 'bg-[#111111]', toolHover: 'hover:border-[#999999]', aiBubble: 'bg-[#0A0A0A] border-[#555555] text-[#FFFFFF]',
+    humanBubble: 'bg-[#FFFFFF] text-black', inputBg: 'bg-[#0A0A0A] border-[#333333]', inputFocus: 'focus:border-[#999999]',
+    sendActive: 'bg-[#FFFFFF] text-black hover:bg-[#CCCCCC]', sendDisabled: 'bg-[#111111] text-[#333333]'
   }
 };
 
 const FlowArchitect: React.FC = () => {
   const { chatMessages, addChatMessage } = useStudioStore();
   const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   const [selectedModel, setSelectedModel] = useState('free.ai/auto');
   const [currentThemeKey, setCurrentThemeKey] = useState('obsidian');
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
@@ -73,14 +109,57 @@ const FlowArchitect: React.FC = () => {
     useStudioStore.setState({ chatMessages: [] });
   };
 
-  const handleSend = (overrideInput?: string) => {
+  const handleSend = async (overrideInput?: string) => {
     const textToSend = (typeof overrideInput === 'string') ? overrideInput : input;
-    if (!textToSend.trim()) return;
+    if (!textToSend.trim() || isTyping) return;
+    
     addChatMessage({ role: 'human', content: textToSend });
     setInput('');
-    setTimeout(() => {
-      addChatMessage({ role: 'agent', content: `[${selectedModel}] Sistema en línea. Despliegue de subagentes iniciado...` });
-    }, 600);
+    setIsTyping(true);
+
+    try {
+      if (selectedModel.startsWith('ollama/')) {
+        const modelName = selectedModel.replace('ollama/', '');
+        const response = await fetch('http://127.0.0.1:11434/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: modelName,
+            messages: [{ role: 'user', content: textToSend }],
+            stream: false
+          })
+        });
+        
+        if (!response.ok) throw new Error('Error de conexión con Ollama');
+        const data = await response.json();
+        addChatMessage({ role: 'agent', content: data.message?.content || 'Respuesta vacía.' });
+      } else {
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+        if (!apiKey) {
+          addChatMessage({ role: 'agent', content: `[AURELIOS] Bloqueo de seguridad: No se detectó VITE_GEMINI_API_KEY en tu archivo .env local. Por favor, configura tu API Key de Google o selecciona un modelo local de Ollama en el panel superior.` });
+          setIsTyping(false);
+          return;
+        }
+        
+        // Use Gemini API directly as Free.AI cascade fallback
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: textToSend }] }]
+          })
+        });
+        
+        if (!res.ok) throw new Error('Error de conexión con la nube');
+        const data = await res.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sin respuesta';
+        addChatMessage({ role: 'agent', content: text });
+      }
+    } catch (err: any) {
+      addChatMessage({ role: 'agent', content: `[ERROR] No se pudo contactar al motor de IA: ${err.message}` });
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const aiTools = [
@@ -221,7 +300,7 @@ const FlowArchitect: React.FC = () => {
           />
           <button
             onClick={() => handleSend()}
-            className={`p-3 rounded-xl transition-all shadow-md flex items-center justify-center shrink-0 ${input.trim() ? `${t.sendActive} hover:scale-105` : `${t.sendDisabled} cursor-not-allowed`}`}
+            className={`p-3 rounded-xl transition-all shadow-md flex items-center justify-center shrink-0 ${input.trim() && !isTyping ? `${t.sendActive} hover:scale-105` : `${t.sendDisabled} cursor-not-allowed`}`}
           >
             <PaperPlaneRight weight="fill" size={22} />
           </button>
