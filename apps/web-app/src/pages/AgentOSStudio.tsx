@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import React, { useState } from 'react';
 import { ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { studioNodeTypes, KIND_META } from '../components/StudioNodes';
 import { useStudioStore, TabId, parseAIResponseToFlow } from '../stores/useStudioStore';
 import { API_URL } from '../lib/api';
 import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock } from '@phosphor-icons/react';
@@ -408,8 +409,8 @@ const FlowDiagram: React.FC = () => {
   const { flowNodes, flowEdges } = useStudioStore();
   const [nodes, setNodes, onNodesChange] = useNodesState(flowNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(flowEdges);
+  const [selectedNode, setSelectedNode] = useState<any>(null);
 
-  // Sync store → local ReactFlow state whenever AI updates the flow
   React.useEffect(() => { setNodes(flowNodes); }, [flowNodes]);
   React.useEffect(() => { setEdges(flowEdges); }, [flowEdges]);
 
@@ -418,27 +419,137 @@ const FlowDiagram: React.FC = () => {
       <div className="flex-1 flex flex-col items-center justify-center bg-[#050505] text-gray-600 gap-3">
         <Network size={40} weight="light" className="opacity-30" />
         <p className="text-sm font-medium">El diagrama aparecerá aquí en tiempo real</p>
-        <p className="text-xs opacity-50">Envía un mensaje describiendo tu sistema de agentes →</p>
+        <p className="text-xs opacity-50">Envía un mensaje describiendo tu sistema →</p>
       </div>
     );
   }
 
+  const meta = selectedNode ? (KIND_META[selectedNode.data?.kind || 'agent'] || KIND_META.agent) : null;
+
   return (
-    <div className="flex-1 bg-[#050505]" style={{ height: '100%' }}>
+    <div className="flex-1 bg-[#050505] relative" style={{ height: '100%' }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        nodeTypes={studioNodeTypes}
+        onNodeClick={(_, node) => setSelectedNode(node)}
+        onPaneClick={() => setSelectedNode(null)}
         fitView
         fitViewOptions={{ padding: 0.3 }}
-        minZoom={0.3}
+        minZoom={0.2}
         attributionPosition="bottom-left"
       >
-        <Background color="#1a1a2e" gap={20} size={1} />
-        <Controls className="!bg-[#111] !border-[#333]" />
-        <MiniMap nodeColor={(n) => (n.style?.border as string)?.match(/#[0-9a-f]{6}/i)?.[0] || '#3b82f6'} maskColor="rgba(0,0,0,0.8)" className="!bg-[#111]" />
+        <Background color="#0f172a" gap={24} size={1} />
+        <Controls className="!bg-[#0d1117] !border-[#1e293b] !rounded-xl" />
+        <MiniMap
+          nodeColor={(n) => {
+            const k = (n.data?.kind as string) || 'agent';
+            const colors: Record<string,string> = { agent:'#3b82f6', trigger:'#10b981', tool:'#f59e0b', router:'#a855f7', human:'#ec4899', sink:'#64748b' };
+            return colors[k] || '#3b82f6';
+          }}
+          maskColor="rgba(0,0,0,0.85)"
+          className="!bg-[#0d1117] !border-[#1e293b]"
+        />
       </ReactFlow>
+
+      {/* Panel lateral de detalle */}
+      {selectedNode && meta && (
+        <div
+          style={{
+            position: 'absolute', top: 0, right: 0, bottom: 0, width: 280,
+            background: 'rgba(10,12,20,0.97)',
+            borderLeft: `2px solid ${meta.color}44`,
+            backdropFilter: 'blur(12px)',
+            display: 'flex', flexDirection: 'column',
+            zIndex: 10,
+            animation: 'slideIn 0.2s ease',
+          }}
+        >
+          <style>{`@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}`}</style>
+
+          {/* Header */}
+          <div style={{ background: meta.color + '18', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${meta.color}33` }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: meta.color + '22', border: `1.5px solid ${meta.color}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <meta.Icon size={16} weight="bold" style={{ color: meta.color }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: meta.color, textTransform: 'uppercase' }}>{meta.label}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {selectedNode.data?.label}
+              </div>
+            </div>
+            <button onClick={() => setSelectedNode(null)} style={{ all: 'unset', cursor: 'pointer', color: '#475569', padding: 4 }}>
+              <X size={14} />
+            </button>
+          </div>
+
+          {/* Contenido */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+            {/* Descripción */}
+            {selectedNode.data?.fullDescription && (
+              <div>
+                <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#475569', textTransform: 'uppercase', marginBottom: 6 }}>Descripción</div>
+                <p style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
+                  {selectedNode.data.fullDescription}
+                </p>
+              </div>
+            )}
+
+            {/* I/O */}
+            <div>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#475569', textTransform: 'uppercase', marginBottom: 6 }}>Contrato E/S</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {selectedNode.data?.inputPort && (
+                  <div style={{ background: '#1e293b', borderRadius: 6, padding: '5px 8px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 9, color: '#64748b', fontWeight: 700 }}>IN</span>
+                    <span style={{ fontSize: 10, color: '#94a3b8', fontFamily: 'monospace' }}>{selectedNode.data.inputPort}</span>
+                  </div>
+                )}
+                {selectedNode.data?.outputPort && (
+                  <div style={{ background: '#1e293b', borderRadius: 6, padding: '5px 8px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 9, color: meta.color, fontWeight: 700 }}>OUT</span>
+                    <span style={{ fontSize: 10, color: '#94a3b8', fontFamily: 'monospace' }}>{selectedNode.data.outputPort}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Tools */}
+            {selectedNode.data?.allTools?.length > 0 && (
+              <div>
+                <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#475569', textTransform: 'uppercase', marginBottom: 6 }}>Herramientas</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                  {(selectedNode.data.allTools as string[]).map((t: string) => (
+                    <span key={t} style={{ fontSize: 10, fontFamily: 'monospace', background: meta.color + '18', color: meta.color, padding: '3px 8px', borderRadius: 5, fontWeight: 600 }}>{t}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Meta info */}
+            <div>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#475569', textTransform: 'uppercase', marginBottom: 6 }}>Info</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#475569' }}>
+                  <span>ID</span><span style={{ fontFamily: 'monospace', color: '#94a3b8' }}>{selectedNode.id}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#475569' }}>
+                  <span>Tipo</span><span style={{ color: meta.color, fontWeight: 700 }}>{meta.label}</span>
+                </div>
+                {selectedNode.data?.cost && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#475569' }}>
+                    <span>Costo est.</span><span style={{ color: '#94a3b8', fontFamily: 'monospace' }}>{selectedNode.data.cost}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -45,90 +45,90 @@ interface StudioState {
   setFocusedAgent: (agent: AgentCard | null) => void;
 }
 
-const COLORS = ['#3b82f6','#8b5cf6','#10b981','#f43f5e','#f5a623','#06b6d4','#d946ef','#14b8a6'];
+const KIND_COLORS: Record<string,string> = {
+  agent:'#3b82f6', trigger:'#10b981', tool:'#f59e0b',
+  router:'#a855f7', human:'#ec4899', sink:'#64748b',
+};
 
-/** Parse AI response text → ReactFlow nodes + edges + agent cards */
+function detectKind(name: string, desc: string): string {
+  const t = (name + ' ' + desc).toLowerCase();
+  if (/\b(trigger|webhook|cron|inicio|start|entrada|input|event|scheduler)\b/.test(t)) return 'trigger';
+  if (/\b(router|switch|decision|if|condition|branch|bifurc|selector|dispatch)\b/.test(t)) return 'router';
+  if (/\b(tool|api|fetch|search|buscar|scraper|database|db|query|http|call|request)\b/.test(t)) return 'tool';
+  if (/\b(human|humano|review|approval|aprobaci|manual|supervisor|yield)\b/.test(t)) return 'human';
+  if (/\b(sink|output|salida|end|final|notify|send|email|slack|webhook out|deliver)\b/.test(t)) return 'sink';
+  return 'agent';
+}
+
+function extractTools(desc: string): string[] {
+  const tools: string[] = [];
+  const inline = desc.match(/\b(vector_search|pdf_parse|web_search|sql_query|send_email|http_request|crm_api|slack|stripe|openai|pinecone|supabase)\b/ig);
+  if (inline) inline.forEach(t => { if (!tools.includes(t.toLowerCase())) tools.push(t.toLowerCase()); });
+  const listed = desc.match(/(?:usa:|tools?:|herramientas?:)\s*([^.\n]{3,80})/i);
+  if (listed) listed[1].split(/[,;]/).map(t => t.trim().replace(/\s+/g,'_').toLowerCase())
+    .filter(t => t.length > 2 && t.length < 25 && !tools.includes(t)).forEach(t => tools.push(t));
+  return tools.slice(0, 4);
+}
+
+/** Parse AI response text → rich ReactFlow nodes + edges + agent cards */
 export function parseAIResponseToFlow(text: string): { nodes: Node[]; edges: Edge[]; cards: AgentCard[]; md: string } {
-  const lines = text.split('\n').filter(l => l.trim());
+  const lines = text.split('\n');
   const cards: AgentCard[] = [];
   const nodes: Node[] = [];
   const edges: Edge[] = [];
+  const headingRe  = /^#{1,4}\s+(.{3,60})/;
+  const bulletRe   = /^[-*•]\s+\*{0,2}(.{3,60?})\*{0,2}[:—–]/;
+  const numberedRe = /^\d+[.)]\s+\*{0,2}(.{3,60})\*{0,2}/;
+  let count = 0, prevId: string | null = null;
 
-  // Extract agents: lines with "**Name**", "### Name", "- **Name**:", numbered items
-  const agentRegex = /^(?:#{1,3}\s+|[-*]\s+\*\*|[-*]\s+|\d+\.\s+\*\*)([A-Za-záéíóúÁÉÍÓÚñÑ\s]+?)(?:\*\*)?(?::|—|-|$)/;
-  const descRegex = /[:—-]\s*(.+)/;
+  for (let i = 0; i < lines.length && count < 10; i++) {
+    const line = lines[i].trim();
+    let name = '';
+    const hm = line.match(headingRe);
+    const bm = line.match(bulletRe);
+    const nm = line.match(numberedRe);
+    if (hm)      name = hm[1].replace(/\*\*/g,'').trim();
+    else if (bm) name = bm[1].replace(/\*\*/g,'').trim();
+    else if (nm) name = nm[1].replace(/\*\*/g,'').trim();
 
-  let agentCount = 0;
-  let prevId: string | null = null;
+    if (name.length >= 3 && name.length <= 60 && !/^(nota|note|resumen|summary|conclusi|intro)/i.test(name)) {
+      const ctx  = lines.slice(i+1, i+4).join(' ').replace(/[#*`]/g,'').trim();
+      const desc = ctx.slice(0, 180);
+      const kind  = detectKind(name, desc);
+      const color = KIND_COLORS[kind] || '#3b82f6';
+      const tools = extractTools(desc);
+      const id    = `node_${count}`;
+      const col   = count % 3, row = Math.floor(count / 3);
 
-  for (const line of lines) {
-    const match = line.match(agentRegex);
-    if (match && agentCount < 12) {
-      const name = match[1].replace(/\*/g, '').trim();
-      if (name.length < 3 || name.length > 50) continue;
-
-      const descMatch = line.match(descRegex);
-      const description = descMatch ? descMatch[1].replace(/\*\*/g, '').trim() : '';
-      const id = `agent_${agentCount}`;
-      const color = COLORS[agentCount % COLORS.length];
-
-      // Extract tools from description
-      const toolMatch = description.match(/\b(?:usa|use|tools?|herramientas?)[:;]?\s*([^.]+)/i);
-      const tools = toolMatch
-        ? toolMatch[1].split(/[,;]/).map(t => t.trim()).filter(Boolean).slice(0, 3)
-        : [];
-
-      cards.push({ id, name, role: `Agente ${agentCount + 1}`, description, tools, color });
-
-      // ReactFlow node
-      const col = agentCount % 3;
-      const row = Math.floor(agentCount / 3);
       nodes.push({
-        id,
-        type: 'default',
-        position: { x: 80 + col * 220, y: 60 + row * 140 },
-        data: { label: name },
-        style: {
-          background: '#0f172a',
-          color,
-          border: `2px solid ${color}`,
-          borderRadius: '10px',
-          padding: '10px 16px',
-          fontWeight: 700,
-          fontSize: '12px',
-          minWidth: '160px',
-          boxShadow: `0 0 12px ${color}44`,
+        id, type: kind,
+        position: { x: 60 + col * 270, y: 60 + row * 190 },
+        data: {
+          label: name, kind, description: desc.slice(0,100),
+          tools, inputPort: count > 0 ? 'input' : '', outputPort: 'output',
+          cost: '', status: '', fullDescription: desc, allTools: tools,
         },
       });
 
-      // Auto-connect sequentially
+      cards.push({ id, name, role: kind.charAt(0).toUpperCase() + kind.slice(1), description: desc.slice(0,180), tools, color });
+
       if (prevId) {
         edges.push({
-          id: `e_${prevId}_${id}`,
-          source: prevId,
-          target: id,
-          animated: true,
-          style: { stroke: color, strokeWidth: 2 },
+          id: `e_${prevId}_${id}`, source: prevId, target: id, animated: true,
+          style: { stroke: color, strokeWidth: 2, opacity: 0.8 },
+          markerEnd: { type: 'arrowclosed' as any, color },
         });
       }
-      prevId = id;
-      agentCount++;
+      prevId = id; count++;
     }
   }
 
-  // If no agents found, create a single summary node
-  if (nodes.length === 0 && text.length > 20) {
-    const summary = text.slice(0, 60).replace(/[#*`]/g, '').trim();
+  if (nodes.length === 0 && text.length > 30) {
+    const summary = text.replace(/[#*`]/g,'').trim().slice(0,70);
     nodes.push({
-      id: 'summary_0',
-      type: 'default',
-      position: { x: 200, y: 150 },
-      data: { label: summary + '...' },
-      style: {
-        background: '#0f172a', color: '#3b82f6', border: '2px solid #3b82f6',
-        borderRadius: '10px', padding: '12px 18px', fontWeight: 600, fontSize: '12px',
-        maxWidth: '260px', boxShadow: '0 0 16px #3b82f644',
-      },
+      id: 'summary_0', type: 'agent',
+      position: { x: 180, y: 140 },
+      data: { label: summary+'…', kind:'agent', description:'', tools:[], inputPort:'', outputPort:'output', cost:'', status:'', fullDescription: text.slice(0,400), allTools:[] },
     });
   }
 
