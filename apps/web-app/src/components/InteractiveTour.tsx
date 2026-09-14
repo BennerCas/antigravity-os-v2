@@ -21,7 +21,7 @@ export function InteractiveTour({ runTour, onComplete }: TourProps) {
           element: '.sidebar-container',
           popover: {
             title: 'Bienvenido a Antigravity OS',
-            description: 'Este es el panel lateral donde puedes navegar entre Atlas, Nexus, Builder y Vault.',
+            description: 'Este es el panel lateral donde puedes navegar entre AgentOS, Builder, Academy y Arquitectura.',
             side: 'right',
             align: 'start'
           }
