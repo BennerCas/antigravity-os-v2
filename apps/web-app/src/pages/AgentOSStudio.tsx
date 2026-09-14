@@ -204,7 +204,7 @@ const FlowArchitect: React.FC = () => {
   ];
 
   return (
-    <div className={`flex flex-col h-full ${t.bg} ${t.text} p-4 relative transition-colors duration-500`}>
+    <div className={`flex flex-col ${t.bg} ${t.text} p-4 relative transition-colors duration-500`} style={{ height: '100%', overflow: 'hidden' }}>
       
       <style>{`
         .markdown-body p:not(:last-child) { margin-bottom: 0.75rem; }
@@ -427,7 +427,7 @@ const FlowDiagram: React.FC = () => {
   const meta = selectedNode ? (KIND_META[selectedNode.data?.kind || 'agent'] || KIND_META.agent) : null;
 
   return (
-    <div className="flex-1 bg-[#050505] relative" style={{ height: '100%' }}>
+    <div style={{ flex: 1, minHeight: 0, position: 'relative', background: '#050505' }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -668,8 +668,8 @@ const CanvasTabs: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-800">
-      <div className="flex border-b border-gray-700 bg-gray-900">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#050505', minHeight: 0 }}>
+      <div className="flex border-b border-gray-700 bg-gray-900 shrink-0">
         {(['discovery', 'synthesis', 'blueprint'] as TabId[]).map((tab) => (
           <button
             key={tab}
@@ -686,7 +686,7 @@ const CanvasTabs: React.FC = () => {
           </button>
         ))}
       </div>
-      <div className="flex-1 flex flex-col relative">
+      <div className="flex-1 flex flex-col relative min-h-0">
         {renderContent()}
       </div>
     </div>
@@ -705,10 +705,26 @@ const THINKING_PHRASES = [
 
 export default function AgentOSStudio() {
   return (
-    <div className="flex h-screen w-full bg-gray-950 text-white overflow-hidden font-sans">
-      <div className="w-[35%] border-r border-gray-800 flex flex-col shrink-0">
-        <FlowArchitect />      </div>
-      <div className="w-[65%] flex flex-col shrink-0">
+    <div
+      style={{
+        height: '100vh',
+        width: '100vw',
+        paddingBottom: '0.5cm',
+        boxSizing: 'border-box',
+        display: 'flex',
+        overflow: 'hidden',
+        background: '#030712',
+        color: 'white',
+        fontFamily: 'inherit',
+      }}
+    >
+      {/* Columna 1 — 35% — Chat */}
+      <div style={{ width: '35%', height: '100%', display: 'flex', flexDirection: 'column', borderRight: '1px solid #1f2937', flexShrink: 0 }}>
+        <FlowArchitect />
+      </div>
+
+      {/* Columna 2 — 65% — Canvas */}
+      <div style={{ width: '65%', height: '100%', display: 'flex', flexDirection: 'column', flexShrink: 0, minHeight: 0 }}>
         <CanvasTabs />
       </div>
     </div>
