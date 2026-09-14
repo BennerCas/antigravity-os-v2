@@ -427,7 +427,7 @@ const FlowDiagram: React.FC = () => {
   const meta = selectedNode ? (KIND_META[selectedNode.data?.kind || 'agent'] || KIND_META.agent) : null;
 
   return (
-    <div style={{ flex: 1, minHeight: 0, position: 'relative', background: '#050505' }}>
+    <div style={{ flex: 1, minHeight: 0, position: 'relative', background: 'transparent' }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -687,7 +687,7 @@ const CanvasTabs: React.FC = () => {
         ))}
       </div>
       <div className="flex-1 flex flex-col relative min-h-0 p-4 md:p-5" style={{ background: '#030712' }}>
-        <div className="flex-1 flex flex-col relative rounded-xl overflow-hidden border border-gray-800/60 shadow-2xl bg-[#050505] ring-1 ring-white/5">
+        <div className="flex-1 flex flex-col relative rounded-xl overflow-hidden bg-transparent">
           {renderContent()}
         </div>
       </div>
