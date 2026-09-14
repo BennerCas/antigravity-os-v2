@@ -225,7 +225,7 @@ const FlowArchitect: React.FC = () => {
             <h2 className="text-[20px] font-bold tracking-tight">AureliOS</h2>
             
             {/* AI Model Selector */}
-            <div className={`flex items-center ${t.panelBg} px-2 py-1 rounded-md border ${t.panelBorder} ml-2 transition-colors duration-500`}>
+            <div className={`flex items-center gap-1 ml-4 transition-colors duration-500`}>
               <span className={`text-[11px] font-bold mr-1 tracking-wider uppercase `}>Mod:</span>
               <select 
                 className={`bg-transparent ${t.primary} text-[13px] font-bold focus:outline-none cursor-pointer appearance-none max-w-[120px] truncate`}
@@ -248,7 +248,7 @@ const FlowArchitect: React.FC = () => {
 
           <div className="flex items-center gap-2">
             {/* Theme Selector */}
-            <div className={`flex items-center ${t.panelBg} px-2 py-1.5 border ${t.panelBorder} rounded-md transition-colors duration-500`}>
+            <div className={`flex items-center gap-1 transition-colors duration-500`}>
               <PaintBrush size={14} className=" mr-1.5" />
               <select 
                 className="bg-transparent text-[13px] font-medium focus:outline-none cursor-pointer appearance-none"
@@ -261,7 +261,7 @@ const FlowArchitect: React.FC = () => {
               </select>
             </div>
 
-            <button onClick={clearChat} className={`flex items-center gap-1.5 px-4 py-2 border ${t.panelBorder} rounded-md text-[13px] font-medium hover: transition-opacity shrink-0`}>
+            <button onClick={clearChat} className={`flex items-center gap-1.5 px-2 py-2 text-[13px] font-medium hover:brightness-125 transition-opacity shrink-0`}>
               <Trash size={14} /> Limpiar
             </button>
           </div>
@@ -278,13 +278,13 @@ const FlowArchitect: React.FC = () => {
                 onClick={() => handleSend(tool.title)} 
                 className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
               >
-                <div className="flex items-center gap-1.5 overflow-hidden">
+                <div className="flex items-center gap-3 overflow-hidden ml-1">
                   <div className="shrink-0">{tool.icon}</div>
                   <span className="text-[11px] font-bold truncate group-hover:brightness-125 transition-all">{tool.title}</span>
                 </div>
                 <div 
                   onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
-                  className={` hover:brightness-125 ${t.primary} shrink-0 ml-1 p-0.5 cursor-pointer bg-black/20 rounded-sm transition-opacity`}
+                  className={` hover:brightness-125 ${t.primary} shrink-0 ml-2 cursor-pointer transition-opacity`}
                   title="Escuchar descripción"
                 >
                   <SpeakerHigh size={14} weight="fill" />
