@@ -1,12 +1,53 @@
 import React, { useState } from 'react';
 import { useStudioStore, TabId } from '../stores/useStudioStore';
-import { Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle } from '@phosphor-icons/react';
+import { Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush } from '@phosphor-icons/react';
+
+const AURELIOS_THEMES: Record<string, any> = {
+  obsidian: {
+    name: 'Obsidian Emperor', bg: 'bg-[#050505]', text: 'text-[#E0E0E0]', border: 'border-[#1A1A1A]',
+    panelBg: 'bg-[#0A0A0A]', panelBorder: 'border-[#222]', primary: 'text-[#00D9FF]',
+    toolBg: 'bg-[#111]', toolHover: 'hover:border-[#444]', aiBubble: 'bg-[#111] border-[#222] text-[#E0E0E0]',
+    humanBubble: 'bg-[#00D9FF] text-black', inputBg: 'bg-[#111] border-[#333]', inputFocus: 'focus:border-[#555]',
+    sendActive: 'bg-[#00D9FF] text-black hover:bg-[#00BFFF]', sendDisabled: 'bg-[#222] text-[#555]'
+  },
+  marble: {
+    name: 'Marble Stoic', bg: 'bg-[#F8F9FA]', text: 'text-[#1F2937]', border: 'border-[#E5E7EB]',
+    panelBg: 'bg-[#FFFFFF]', panelBorder: 'border-[#D1D5DB]', primary: 'text-[#F5A623]',
+    toolBg: 'bg-[#F3F4F6]', toolHover: 'hover:border-[#9CA3AF]', aiBubble: 'bg-[#FFFFFF] border-[#E5E7EB] text-[#1F2937]',
+    humanBubble: 'bg-[#1E3A8A] text-white', inputBg: 'bg-[#FFFFFF] border-[#D1D5DB]', inputFocus: 'focus:border-[#9CA3AF]',
+    sendActive: 'bg-[#1E3A8A] text-white hover:bg-[#1D4ED8]', sendDisabled: 'bg-[#E5E7EB] text-[#9CA3AF]'
+  },
+  crimson: {
+    name: 'Crimson Forge', bg: 'bg-[#110505]', text: 'text-[#FCA5A5]', border: 'border-[#3F1616]',
+    panelBg: 'bg-[#1A0A0A]', panelBorder: 'border-[#451A1A]', primary: 'text-[#EF4444]',
+    toolBg: 'bg-[#240F0F]', toolHover: 'hover:border-[#7F1D1D]', aiBubble: 'bg-[#1F1010] border-[#451A1A] text-[#FECACA]',
+    humanBubble: 'bg-[#B91C1C] text-white', inputBg: 'bg-[#1A0A0A] border-[#451A1A]', inputFocus: 'focus:border-[#7F1D1D]',
+    sendActive: 'bg-[#B91C1C] text-white hover:bg-[#DC2626]', sendDisabled: 'bg-[#240F0F] text-[#451A1A]'
+  },
+  legion: {
+    name: 'Cyber Legion', bg: 'bg-[#020C06]', text: 'text-[#6EE7B7]', border: 'border-[#064E3B]',
+    panelBg: 'bg-[#02180B]', panelBorder: 'border-[#065F46]', primary: 'text-[#10B981]',
+    toolBg: 'bg-[#032412]', toolHover: 'hover:border-[#047857]', aiBubble: 'bg-[#02180B] border-[#065F46] text-[#A7F3D0]',
+    humanBubble: 'bg-[#059669] text-white', inputBg: 'bg-[#02180B] border-[#064E3B]', inputFocus: 'focus:border-[#047857]',
+    sendActive: 'bg-[#059669] text-white hover:bg-[#10B981]', sendDisabled: 'bg-[#032412] text-[#064E3B]'
+  },
+  imperial: {
+    name: 'Imperial Purple', bg: 'bg-[#0D0518]', text: 'text-[#E9D5FF]', border: 'border-[#3B0764]',
+    panelBg: 'bg-[#170B2B]', panelBorder: 'border-[#4C1D95]', primary: 'text-[#A855F7]',
+    toolBg: 'bg-[#21103D]', toolHover: 'hover:border-[#6D28D9]', aiBubble: 'bg-[#170B2B] border-[#4C1D95] text-[#F3E8FF]',
+    humanBubble: 'bg-[#7E22CE] text-white', inputBg: 'bg-[#170B2B] border-[#3B0764]', inputFocus: 'focus:border-[#6D28D9]',
+    sendActive: 'bg-[#7E22CE] text-white hover:bg-[#9333EA]', sendDisabled: 'bg-[#21103D] text-[#3B0764]'
+  }
+};
 
 const FlowArchitect: React.FC = () => {
   const { chatMessages, addChatMessage } = useStudioStore();
   const [input, setInput] = useState('');
   const [selectedModel, setSelectedModel] = useState('free.ai/auto');
+  const [currentThemeKey, setCurrentThemeKey] = useState('obsidian');
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+  
+  const t = AURELIOS_THEMES[currentThemeKey];
 
   React.useEffect(() => {
     fetch('http://127.0.0.1:11434/api/tags')
@@ -43,14 +84,14 @@ const FlowArchitect: React.FC = () => {
   };
 
   const aiTools = [
-    { title: 'Swarm Orchestrator', icon: <Network size={22} className="text-[#3b82f6]" weight="duotone" />, desc: 'Orquesta múltiples agentes autónomos. Asigna tareas complejas, gestiona el estado compartido y resuelve dependencias en paralelo.' },
-    { title: 'Umpire Core', icon: <Scales size={22} className="text-[#e11d48]" weight="duotone" />, desc: 'Árbitro determinista. Somete el código y la arquitectura a pruebas de estrés implacables para asegurar escalabilidad y cero alucinaciones.' },
-    { title: 'State Reducer', icon: <Cube size={22} className="text-[#f5a623]" weight="duotone" />, desc: 'Diseña el flujo de datos unidireccional. Modela mutaciones de estado predecibles, inmutables y auditables en tiempo real.' },
-    { title: 'RAG Synthesizer', icon: <Strategy size={22} className="text-[#10b981]" weight="duotone" />, desc: 'Cerebro de memoria profunda. Fusiona bases de datos vectoriales y grafos de conocimiento para contextualizar decisiones al instante.' },
-    { title: 'Codebase Overlord', icon: <Cpu size={22} className="text-[#8b5cf6]" weight="duotone" />, desc: 'Maestro del código. Refactoriza, optimiza y ensambla piezas arquitectónicas masivas a nivel de repositorio completo.' },
-    { title: 'Forensic Inspector', icon: <MagnifyingGlass size={22} className="text-[#06b6d4]" weight="duotone" />, desc: 'Analizador de telemetría en vivo. Destripa cuellos de botella y audita el rendimiento e integraciones a nivel milisegundo.' },
-    { title: 'Zero-Trust Gatekeeper', icon: <ShieldCheck size={22} className="text-[#f43f5e]" weight="duotone" />, desc: 'Auditor de ciberseguridad extremo. Detecta vulnerabilidades y exige políticas estrictas de autenticación y autorización.' },
-    { title: 'Resource Optimizer', icon: <CurrencyDollar size={22} className="text-[#f5a623]" weight="duotone" />, desc: 'Estratega de infraestructuras. Balancea la carga entre modelos locales y en la nube minimizando costos y uso límite de VRAM.' },
+    { title: 'Swarm Orchestrator', icon: <Network size={18} className="text-[#3b82f6]" weight="duotone" />, desc: 'Orquesta múltiples agentes autónomos. Asigna tareas complejas, gestiona el estado compartido y resuelve dependencias en paralelo.' },
+    { title: 'Umpire Core', icon: <Scales size={18} className="text-[#e11d48]" weight="duotone" />, desc: 'Árbitro determinista. Somete el código y la arquitectura a pruebas de estrés implacables para asegurar escalabilidad y cero alucinaciones.' },
+    { title: 'State Reducer', icon: <Cube size={18} className="text-[#f5a623]" weight="duotone" />, desc: 'Diseña el flujo de datos unidireccional. Modela mutaciones de estado predecibles, inmutables y auditables en tiempo real.' },
+    { title: 'RAG Synthesizer', icon: <Strategy size={18} className="text-[#10b981]" weight="duotone" />, desc: 'Cerebro de memoria profunda. Fusiona bases de datos vectoriales y grafos de conocimiento para contextualizar decisiones al instante.' },
+    { title: 'Codebase Overlord', icon: <Cpu size={18} className="text-[#8b5cf6]" weight="duotone" />, desc: 'Maestro del código. Refactoriza, optimiza y ensambla piezas arquitectónicas masivas a nivel de repositorio completo.' },
+    { title: 'Forensic Inspector', icon: <MagnifyingGlass size={18} className="text-[#06b6d4]" weight="duotone" />, desc: 'Analizador de telemetría en vivo. Destripa cuellos de botella y audita el rendimiento e integraciones a nivel milisegundo.' },
+    { title: 'Zero-Trust Gatekeeper', icon: <ShieldCheck size={18} className="text-[#f43f5e]" weight="duotone" />, desc: 'Auditor de ciberseguridad extremo. Detecta vulnerabilidades y exige políticas estrictas de autenticación y autorización.' },
+    { title: 'Resource Optimizer', icon: <CurrencyDollar size={18} className="text-[#f5a623]" weight="duotone" />, desc: 'Estratega de infraestructuras. Balancea la carga entre modelos locales y en la nube minimizando costos y uso límite de VRAM.' },
     { title: 'UX Psychologist', icon: <Brain size={18} className="text-[#d946ef]" weight="duotone" />, desc: 'Especialista en interfaces persuasivas. Aplica sesgos cognitivos e inyecta fricción positiva para dominar la experiencia del usuario.' },
     { title: 'Infrastructure Titan', icon: <HardDrives size={18} className="text-[#64748b]" weight="duotone" />, desc: 'Ingeniero DevOps. Automatiza Docker, Kubernetes, CI/CD pipelines y configura servidores para despliegues a prueba de balas.' },
     { title: 'API Nexus', icon: <Plugs size={18} className="text-[#14b8a6]" weight="duotone" />, desc: 'Especialista en integraciones. Diseña y audita pasarelas de pago, Webhooks, arquitecturas GraphQL y orquesta microservicios.' },
@@ -58,19 +99,19 @@ const FlowArchitect: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col h-full bg-[#050505] text-[#E0E0E0] p-4 relative">
+    <div className={`flex flex-col h-full ${t.bg} ${t.text} p-4 relative transition-colors duration-500`}>
       {/* Top Fixed Area */}
-      <div className="shrink-0 flex flex-col gap-3 pb-3 border-b border-[#1A1A1A]">
+      <div className={`shrink-0 flex flex-col gap-3 pb-3 border-b ${t.border} transition-colors duration-500`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Columns weight="duotone" size={26} className="text-[#F5A623]" />
-            <h2 className="text-[19px] font-bold text-white tracking-tight">AureliOS</h2>
+            <h2 className="text-[20px] font-bold tracking-tight">AureliOS</h2>
             
-            {/* AI Model Selector inline with title */}
-            <div className="flex items-center bg-[#0A0A0A] px-2 py-1 rounded-md border border-[#222] ml-2">
-              <span className="text-[#888] text-[11px] font-bold mr-1 tracking-wider uppercase">Mod:</span>
+            {/* AI Model Selector */}
+            <div className={`flex items-center ${t.panelBg} px-2 py-1 rounded-md border ${t.panelBorder} ml-2 transition-colors duration-500`}>
+              <span className={`text-[11px] font-bold mr-1 tracking-wider uppercase opacity-70`}>Mod:</span>
               <select 
-                className="bg-transparent text-[#00D9FF] text-[13px] font-bold focus:outline-none cursor-pointer appearance-none max-w-[120px] truncate"
+                className={`bg-transparent ${t.primary} text-[13px] font-bold focus:outline-none cursor-pointer appearance-none max-w-[120px] truncate`}
                 value={selectedModel}
                 onChange={e => setSelectedModel(e.target.value)}
               >
@@ -88,13 +129,29 @@ const FlowArchitect: React.FC = () => {
             </div>
           </div>
 
-          <button onClick={clearChat} className="flex items-center gap-1.5 px-3 py-1.5 border border-[#333] rounded-md text-[13px] font-medium hover:bg-[#111] px-4 py-2 transition-colors shrink-0">
-            <Trash size={14} /> Limpiar
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Theme Selector */}
+            <div className={`flex items-center ${t.panelBg} px-2 py-1.5 border ${t.panelBorder} rounded-md transition-colors duration-500`}>
+              <PaintBrush size={14} className="opacity-70 mr-1.5" />
+              <select 
+                className="bg-transparent text-[13px] font-medium focus:outline-none cursor-pointer appearance-none"
+                value={currentThemeKey}
+                onChange={e => setCurrentThemeKey(e.target.value)}
+              >
+                {Object.entries(AURELIOS_THEMES).map(([key, theme]) => (
+                  <option key={key} value={key} className="bg-black text-white">{theme.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <button onClick={clearChat} className={`flex items-center gap-1.5 px-4 py-2 border ${t.panelBorder} rounded-md text-[13px] font-medium hover:opacity-70 transition-opacity shrink-0`}>
+              <Trash size={14} /> Limpiar
+            </button>
+          </div>
         </div>
 
-        {/* Fixed AI Tools (9 buttons, 3 columns) */}
-        <div className="flex items-center gap-2 mb-0.5 mt-1 text-[#888] text-[11px] font-bold tracking-wider uppercase">
+        {/* Fixed AI Tools */}
+        <div className="flex items-center gap-2 mb-0.5 mt-1 text-[11px] font-bold tracking-wider uppercase opacity-70">
           <Wrench size={14} /> God-Tier Master Prompts
         </div>
         <div className="grid grid-cols-3 gap-2">
@@ -102,15 +159,15 @@ const FlowArchitect: React.FC = () => {
             <div key={i} className="relative group">
               <button 
                 onClick={() => handleSend(tool.title)} 
-                className="w-full flex items-center justify-between p-1.5 bg-[#111] border border-[#222] hover:border-[#444] rounded text-left transition-colors"
+                className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
               >
                 <div className="flex items-center gap-1.5 overflow-hidden">
                   <div className="shrink-0">{tool.icon}</div>
-                  <span className="text-[11px] font-bold text-[#E0E0E0] truncate group-hover:text-white transition-colors">{tool.title}</span>
+                  <span className="text-[11px] font-bold truncate group-hover:brightness-125 transition-all">{tool.title}</span>
                 </div>
                 <div 
                   onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
-                  className="text-[#555] hover:text-[#00D9FF] shrink-0 ml-1 p-0.5 cursor-pointer bg-[#000] border border-[#333] rounded-sm"
+                  className={`opacity-70 hover:opacity-100 ${t.primary} shrink-0 ml-1 p-0.5 cursor-pointer bg-black/20 rounded-sm transition-opacity`}
                   title="Escuchar descripción"
                 >
                   <SpeakerHigh size={14} weight="fill" />
@@ -128,20 +185,20 @@ const FlowArchitect: React.FC = () => {
       {/* Chat History / Invisible Scroll */}
       <div className="flex-1 overflow-y-auto py-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {chatMessages.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-center text-[#444] text-base px-8 font-medium leading-relaxed">
+          <div className="flex h-full items-center justify-center text-center opacity-60 text-base px-8 font-medium leading-relaxed">
             Selecciona un pilar de AureliOS o escribe tu visión arquitectónica para comenzar.
           </div>
         ) : (
           chatMessages.map(msg => (
             <div key={msg.id} className={`flex flex-col max-w-[85%] ${msg.role === 'human' ? 'ml-auto' : 'mr-auto'}`}>
-              <div className={`p-3 rounded-xl text-[15px] leading-relaxed ${
-                msg.role === 'human' ? 'bg-[#00D9FF] text-black rounded-tr-sm font-medium' : 'bg-[#111] border border-[#222] text-[#E0E0E0] rounded-tl-sm'
-              }`}>
+              <div className={`p-3 text-[15px] leading-relaxed border ${
+                msg.role === 'human' ? `${t.humanBubble} border-transparent rounded-xl rounded-tr-sm font-medium` : `${t.aiBubble} rounded-xl rounded-tl-sm shadow-sm`
+              } transition-colors duration-500`}>
                 {msg.content}
               </div>
               {msg.role === 'agent' && (
                 <div className="flex items-center gap-2 mt-1.5 px-1">
-                  <button onClick={() => speak(msg.content)} className="text-[#555] hover:text-[#00D9FF] flex items-center gap-1 text-[13px] font-semibold transition-colors">
+                  <button onClick={() => speak(msg.content)} className={`opacity-60 hover:opacity-100 ${t.primary} flex items-center gap-1 text-[13px] font-semibold transition-opacity`}>
                     <SpeakerHigh size={14} /> Escuchar
                   </button>
                 </div>
@@ -151,12 +208,12 @@ const FlowArchitect: React.FC = () => {
         )}
       </div>
 
-      {/* Input Box - Split Layout, 0.5cm (mb-5) bottom margin */}
+      {/* Input Box */}
       <div className="shrink-0 pt-2 mb-5">
         <div className="flex items-center gap-2">
           <input
             type="text"
-            className="flex-1 bg-[#111] border border-[#333] rounded-xl px-4 py-3 text-base text-[#E0E0E0] placeholder-[#666] focus:outline-none focus:border-[#555] shadow-inner transition-colors"
+            className={`flex-1 ${t.inputBg} border rounded-xl px-4 py-3 text-base placeholder-opacity-50 focus:outline-none ${t.inputFocus} shadow-inner transition-colors duration-500`}
             placeholder="Comanda al enjambre..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -164,13 +221,13 @@ const FlowArchitect: React.FC = () => {
           />
           <button
             onClick={() => handleSend()}
-            className={`p-3 rounded-xl transition-all shadow-md flex items-center justify-center shrink-0 ${input.trim() ? 'bg-[#00D9FF] text-black hover:bg-[#00BFFF] hover:scale-105' : 'bg-[#222] text-[#555] cursor-not-allowed'}`}
+            className={`p-3 rounded-xl transition-all shadow-md flex items-center justify-center shrink-0 ${input.trim() ? `${t.sendActive} hover:scale-105` : `${t.sendDisabled} cursor-not-allowed`}`}
           >
             <PaperPlaneRight weight="fill" size={22} />
           </button>
         </div>
         <div className="text-center mt-3">
-          <span className="text-[11px] text-[#555] font-bold tracking-widest uppercase">AURELIOS • STOIC AI ORCHESTRATOR</span>
+          <span className="text-[11px] opacity-50 font-bold tracking-widest uppercase">AURELIOS • STOIC AI ORCHESTRATOR</span>
         </div>
       </div>
     </div>
