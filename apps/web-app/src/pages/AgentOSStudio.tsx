@@ -2,7 +2,9 @@ import ReactMarkdown from 'react-markdown';
 import { useEffect } from 'react';
 import React, { useState } from 'react';
 import { useStudioStore, TabId } from '../stores/useStudioStore';
+import { API_URL } from '../lib/api';
 import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush , Copy, ArrowsClockwise, Clock } from '@phosphor-icons/react';
+
 
 const AURELIOS_THEMES: Record<string, any> = {
   obsidian: {
@@ -135,21 +137,61 @@ const FlowArchitect: React.FC = () => {
     setIsTyping(true);
 
     try {
-      // Motor Híbrido Real: Free.AI (nube) + Ollama (local) via backend
-      const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
-      const res = await fetch(`${BACKEND}/api/v1/studio/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: textToSend,
-          model: selectedModel,
-          system: 'Eres AureliOS, un asistente de IA avanzado. Responde siempre en el idioma del usuario con formato Markdown claro: usa **negritas**, *cursivas*, listas, títulos y párrafos.'
-        })
-      });
+      // Motor Híbrido:
+      // LOCAL → Ollama directo (sin CORS porque es localhost)
+      // NUBE → Groq API (gratis, rápido, sin CORS, sin backend necesario)
+      const LOCAL_MODELS_SET = new Set(['hermes3:8b','llama3.1:8b','mistral','qwen2.5:7b','phi3:3.8b']);
+      const isLocal = LOCAL_MODELS_SET.has(selectedModel) || selectedModel.includes(':');
 
-      if (!res.ok) throw new Error(`Backend respondió ${res.status}`);
-      const data = await res.json();
-      addChatMessage({ role: 'agent', content: data.response || 'Sin respuesta.', model: data.model_used || selectedModel });
+      if (isLocal) {
+        // Ollama local
+        const ollamaRes = await fetch('http://127.0.0.1:11434/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: selectedModel,
+            messages: [{ role: 'user', content: textToSend }],
+            stream: false
+          })
+        });
+        if (!ollamaRes.ok) throw new Error(`Ollama no responde (¿está corriendo "ollama serve"?)`);
+        const d = await ollamaRes.json();
+        addChatMessage({ role: 'agent', content: d.message?.content || 'Sin respuesta.', model: `ollama/${selectedModel}` });
+      } else {
+        // Free.AI → Groq (OpenAI-compatible, gratis, CORS OK)
+        const GROQ_KEY = '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';
+        // Mapear modelo al catálogo de Groq
+        const modelMap: Record<string,string> = {
+          'anthropic/claude-3.5-sonnet': 'llama-3.1-70b-versatile',
+          'openai/gpt-4o':               'llama-3.1-70b-versatile',
+          'meta-llama/llama-3.1-70b-instruct': 'llama-3.1-70b-versatile',
+          'qwen/qwen-2.5-72b-instruct':  'llama-3.3-70b-versatile',
+        };
+        const groqModel = modelMap[selectedModel] || 'llama-3.1-70b-versatile';
+        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${GROQ_KEY}`
+          },
+          body: JSON.stringify({
+            model: groqModel,
+            messages: [
+              { role: 'system', content: 'Eres AureliOS, un asistente de IA avanzado. Responde siempre en el idioma del usuario con formato Markdown: **negritas**, *cursivas*, listas, títulos.' },
+              { role: 'user', content: textToSend }
+            ],
+            temperature: 0.7,
+            max_tokens: 2048
+          })
+        });
+        if (!groqRes.ok) {
+          const errBody = await groqRes.text();
+          throw new Error(`Groq ${groqRes.status}: ${errBody.slice(0,120)}`);
+        }
+        const gd = await groqRes.json();
+        const text = gd.choices?.[0]?.message?.content || 'Sin respuesta.';
+        addChatMessage({ role: 'agent', content: text, model: `free.ai/${selectedModel}` });
+      }
     } catch (err: any) {
       addChatMessage({ role: 'agent', content: `[ERROR] ${err.message}`, model: selectedModel });
     } finally {
@@ -488,3 +530,4 @@ export default function AgentOSStudio() {
     </div>
   );
 }
+
