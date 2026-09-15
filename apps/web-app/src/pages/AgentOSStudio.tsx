@@ -147,46 +147,24 @@ const FlowArchitect: React.FC = () => {
     setIsTyping(true);
 
     try {
-      // Motor Híbrido Real:
-      // LOCAL → Ollama directo
-      // NUBE  → Backend /studio/chat → Free.AI (api.free.ai con llave real)
-      const LOCAL_MODELS_SET = new Set(['hermes3:8b','llama3.1:8b','mistral','qwen2.5:7b','phi3:3.8b']);
-      const isLocal = LOCAL_MODELS_SET.has(selectedModel) || selectedModel.includes(':');
-
-      if (isLocal) {
-        const ollamaRes = await fetch('http://127.0.0.1:11434/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: selectedModel,
-            messages: [{ role: 'user', content: textToSend }],
-            stream: false
-          })
-        });
-        if (!ollamaRes.ok) throw new Error(`Ollama no responde — ejecuta "ollama serve" en una terminal`);
-        const d = await ollamaRes.json();
-        addChatMessage({ role: 'agent', content: d.message?.content || 'Sin respuesta.', model: `ollama/${selectedModel}` });
-      } else {
-        // Free.AI via backend (tiene la llave real FREE_AI_API_KEY)
-        const res = await fetch(`${API_URL}/studio/chat`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: textToSend,
-            model: selectedModel,
-            system: 'Eres AureliOS, el Arquitecto Maestro y Sistema Operativo de Enjambres de Antigravity. Tu propósito es ayudar al usuario a diseñar, orquestar y desplegar sistemas de IA multi-agente. Eres el cerebro de "AgentOS Studio", capaz de analizar problemas complejos y proponer flujos de nodos y agentes especializados. Responde SIEMPRE en el idioma del usuario de forma concisa, profesional y visionaria, utilizando formato Markdown (negritas, cursivas, listas, subtítulos).'
-          })
-        });
-        if (!res.ok) throw new Error(`Backend Free.AI respondió ${res.status}`);
-        const data = await res.json();
-        const aiText = data.response || 'Sin respuesta.';
-        addChatMessage({ role: 'agent', content: aiText, model: data.model_used || selectedModel });
-        // Actualizar Flow Diagram + Agentes + Blueprint en tiempo real
-        const { nodes, edges, cards, md } = parseAIResponseToFlow(aiText);
-        setFlow(nodes, edges);
-        if (cards.length > 0) setAgentCards(cards);
-        setBlueprintMd(md);
-      }
+      const res = await fetch(`${API_URL}/studio/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: textToSend,
+          model: selectedModel,
+          system: 'Eres AureliOS, el Arquitecto Maestro y Sistema Operativo de Enjambres de Antigravity. Tu propósito es ayudar al usuario a diseñar, orquestar y desplegar sistemas de IA multi-agente. Eres el cerebro de "AgentOS Studio", capaz de analizar problemas complejos y proponer flujos de nodos y agentes especializados. Responde SIEMPRE en el idioma del usuario de forma concisa, profesional y visionaria, utilizando formato Markdown (negritas, cursivas, listas, subtítulos).'
+        })
+      });
+      if (!res.ok) throw new Error(`Backend respondió ${res.status}`);
+      const data = await res.json();
+      const aiText = data.response || 'Sin respuesta.';
+      addChatMessage({ role: 'agent', content: aiText, model: data.model_used || selectedModel });
+      // Actualizar Flow Diagram + Agentes + Blueprint en tiempo real
+      const { nodes, edges, cards, md } = parseAIResponseToFlow(aiText);
+      setFlow(nodes, edges);
+      if (cards.length > 0) setAgentCards(cards);
+      setBlueprintMd(md);
     } catch (err: any) {
       addChatMessage({ role: 'agent', content: `[ERROR] ${err.message}`, model: selectedModel });
     } finally {

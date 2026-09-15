@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { API_URL } from '../lib/api';
 import ReactMarkdown from 'react-markdown';
-import { Star, Cpu, MagnifyingGlass, CheckCircle, Compass, Hammer, Brain, Gear, Rocket, Database, TerminalWindow, Lightning, LockKey, CaretRight, Sparkle, Check, Copy } from '@phosphor-icons/react';
+import { Star, Cpu, MagnifyingGlass, CheckCircle, Compass, Hammer, Brain, Gear, Rocket, Database, TerminalWindow, Lightning, LockKey, CaretRight, Sparkle, Check, Copy, CloudArrowDown } from '@phosphor-icons/react';
 import { logicTaskManager, LogicTaskState } from '../lib/logicTaskManager';
 import { sendToBuilderBridge } from '../lib/builderBridge';
 import { useNavigate } from 'react-router-dom';
@@ -617,6 +617,13 @@ export default function Architecture() {
               <span style={{fontSize:'13px', fontWeight:700, color:'#7B9C7F'}}>🤖 Agentes ({libAgents.length})</span>
               <input value={libAgentSearch} onChange={e=>setLibAgentSearch(e.target.value)} placeholder="Buscar agente..."
                 style={{flex:1, backgroundColor:'#0d0d0d', border:'1px solid #1a1a1a', borderRadius:'6px', padding:'5px 10px', fontSize:'12px', color:'#ccc', outline:'none'}} />
+              <button 
+                onClick={() => alert("Sincronizando con Antigravity Market Store...")}
+                title="Actualizar desde Market Store"
+                style={{backgroundColor:'#174A1F', border:'1px solid #7B9C7F', color:'#fff', padding:'5px 10px', borderRadius:'6px', cursor:'pointer', fontSize:'12px', fontWeight:600, display:'flex', alignItems:'center', gap:'4px'}}
+              >
+                <CloudArrowDown size={14} weight="bold" /> Sync
+              </button>
             </div>
             <div style={{flex:1, overflowY:'auto', padding:'8px'}}>
               {libAgents.filter(a=>(a.name||a.id).toLowerCase().includes(libAgentSearch.toLowerCase())||(a.category||'').toLowerCase().includes(libAgentSearch.toLowerCase())).map(agent=>(

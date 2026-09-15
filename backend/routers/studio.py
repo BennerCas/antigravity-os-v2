@@ -39,7 +39,7 @@ class ChatResponse(BaseModel):
 @router.post("/chat", response_model=ChatResponse)
 async def studio_chat(req: ChatRequest):
     model = req.model or "anthropic/claude-3.5-sonnet"
-    model = model.replace("free.ai/", "")
+    model = model.replace("free.ai/", "").replace("ollama/", "")
     is_local = model in LOCAL_MODELS or ":" in model
 
     if is_local:
@@ -78,14 +78,18 @@ async def _call_ollama(user: str, system: str, model: str) -> ChatResponse:
         "model": model,
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         "stream": False,
-        "options": {"temperature": 0.7, "num_predict": 2048, "num_ctx": 4096}
+        "temperature": 0.7, 
+        "max_tokens": 2048
     }
     try:
         async with httpx.AsyncClient(timeout=120) as client:
-            resp = await client.post(f"{OLLAMA_BASE}/api/chat", json=payload)
+            resp = await client.post(f"{OLLAMA_BASE.rstrip('/')}/v1/chat/completions", json=payload)
             resp.raise_for_status()
-            text = resp.json()["message"]["content"].strip()
+            text = resp.json()["choices"][0]["message"]["content"].strip()
             return ChatResponse(response=text, model_used=f"ollama/{model}", engine="ollama")
+    except httpx.HTTPStatusError as e:
+        error_body = e.response.text
+        return ChatResponse(response=f"[ERROR Ollama] Falló con estado {e.response.status_code}. Detalles: {error_body}", model_used=model, engine="error")
     except Exception as e:
         return ChatResponse(response=f"[ERROR Ollama] {str(e)}", model_used=model, engine="error")
 
@@ -126,50 +130,14 @@ INTERFACE:
     """
     
     model_name = req.model or "qwen3-8b"
-    model_name = model_name.replace("free.ai/", "")
+    model_name = model_name.replace("free.ai/", "").replace("ollama/", "")
     if model_name == "auto":
         model_name = "qwen3-8b"
         
-    is_local = model_name in LOCAL_MODELS or ":" in model_name
-    
     try:
-        if is_local:
-            base_url = OLLAMA_BASE.rstrip("/")
-            if not base_url.endswith("/v1"):
-                base_url += "/v1"
-            config = LocalOpenAIAgentConfig(
-                base_url=base_url,
-                model=model_name,
-                system_instructions="You are the Antigravity OS core logic. Respond ONLY with the requested JSON array.",
-                tools=[],
-                capabilities=CapabilitiesConfig(enable_subagents=False),
-                env={"OPENAI_API_KEY": "ollama"}
-            )
-            async with Agent(config) as agent:
-                response = await agent.chat(prompt)
-                text = await response.text()
-                return ChatResponse(response=text, model_used=model_name, engine="sdk")
-        else:
-            api_key = FREE_AI_KEY
-            if not api_key:
-                raise Exception("FREE_AI_API_KEY no configurada.")
-            headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-            payload = {
-                "model": "qwen3-8b", # Forzamos el modelo soportado por Free.AI en este endpoint
-                "messages": [
-                    {"role": "system", "content": "You are the Antigravity OS core logic. Respond ONLY with the requested JSON array."},
-                    {"role": "user", "content": prompt}
-                ],
-                "temperature": 0.2
-            }
-            import httpx
-            async with httpx.AsyncClient(timeout=60) as client:
-                resp = await client.post(f"{FREE_AI_BASE}/chat/completions", json=payload, headers=headers)
-                if resp.status_code != 200:
-                    raise Exception(f"Free.AI HTTP {resp.status_code}: {resp.text}")
-                data = resp.json()
-                text = data["choices"][0]["message"]["content"]
-                return ChatResponse(response=text, model_used=model_name, engine="httpx")
+        from backend.services.match_fuse_pipeline import run_match_fuse
+        new_agent = await run_match_fuse(req.nodes, model_name=model_name)
+        text = str(new_agent) if not isinstance(new_agent, str) else new_agent
+        return ChatResponse(response=text, model_used=model_name, engine="pipeline")
     except Exception as e:
         return ChatResponse(response=f"[ERROR] {str(e)}", model_used=model_name, engine="error")
-
