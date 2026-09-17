@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/v1/studio", tags=["Studio"])
 
 FREE_AI_BASE = os.getenv("FREE_AI_BASE_URL", "https://api.free.ai/v1")
 FREE_AI_KEY  = os.getenv("FREE_AI_API_KEY", "")
-OLLAMA_BASE  = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
+OLLAMA_BASE  = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:8080/v1")
 
 # Modelos NUBE (Free.AI)
 NUBE_MODELS = {
@@ -74,22 +74,17 @@ async def _call_free_ai(user: str, system: str, model: str) -> ChatResponse:
     return ChatResponse(response="[Free.AI] Todos los modelos fallaron, usando local...", model_used=model, engine="error")
 
 async def _call_ollama(user: str, system: str, model: str) -> ChatResponse:
-    payload = {
-        "model": model,
-        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-        "stream": False,
-        "temperature": 0.7, 
-        "max_tokens": 2048
-    }
+    config = LocalOpenAIAgentConfig(
+        model=model,
+        base_url=OLLAMA_BASE,
+        system_instructions=system,
+        env={"OPENAI_API_KEY": "localai"}
+    )
     try:
-        async with httpx.AsyncClient(timeout=120) as client:
-            resp = await client.post(f"{OLLAMA_BASE.rstrip('/')}/v1/chat/completions", json=payload)
-            resp.raise_for_status()
-            text = resp.json()["choices"][0]["message"]["content"].strip()
-            return ChatResponse(response=text, model_used=f"ollama/{model}", engine="ollama")
-    except httpx.HTTPStatusError as e:
-        error_body = e.response.text
-        return ChatResponse(response=f"[ERROR Ollama] Falló con estado {e.response.status_code}. Detalles: {error_body}", model_used=model, engine="error")
+        agent = Agent(config)
+        resp = await agent.chat(user)
+        text = resp.text.strip()
+        return ChatResponse(response=text, model_used=f"ollama/{model}", engine="ollama")
     except Exception as e:
         return ChatResponse(response=f"[ERROR Ollama] {str(e)}", model_used=model, engine="error")
 

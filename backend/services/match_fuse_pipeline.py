@@ -58,7 +58,7 @@ No incluyas markdown (```json), solo el raw JSON.
     is_local = model_name in LOCAL_MODELS or ":" in model_name
 
     if is_local:
-        base_url = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434").rstrip("/") + "/v1"
+        base_url = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:8080/v1")
         final_model = model_name
     else:
         base_url = "https://api.free.ai/v1"
@@ -69,37 +69,19 @@ No incluyas markdown (```json), solo el raw JSON.
         model=final_model,
         base_url=base_url,
         system_instructions=system_prompt,
-        env={"OPENAI_API_KEY": os.getenv("FREE_AI_API_KEY", "ollama")}
+        env={"OPENAI_API_KEY": os.getenv("FREE_AI_API_KEY", "localai")}
     )
     
     print("Sintetizando nuevo agente...")
     import asyncio
     max_retries = 3
     
+    agent = Agent(config)
+    
     for attempt in range(max_retries):
         try:
-            import httpx
-            
-            payload = {
-                "model": final_model,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": "Genera los agentes basados en el contexto y nodos proporcionados. SOLO DEVUELVE JSON."}
-                ],
-                "stream": False,
-                "temperature": 0.7,
-                "max_tokens": 2048
-            }
-            
-            headers = {"Content-Type": "application/json"}
-            if not is_local:
-                from backend.config import FREE_AI_API_KEY
-                headers["Authorization"] = f"Bearer {FREE_AI_API_KEY}"
-
-            async with httpx.AsyncClient(timeout=120) as client:
-                resp = await client.post(f"{base_url}/chat/completions", json=payload, headers=headers)
-                resp.raise_for_status()
-                raw_text = resp.json()["choices"][0]["message"]["content"].strip()
+            resp = await agent.chat("Genera los agentes basados en el contexto y nodos proporcionados. SOLO DEVUELVE JSON.")
+            raw_text = resp.text.strip()
             
             if raw_text.startswith("```json"):
                 raw_text = raw_text.replace("```json", "", 1)
