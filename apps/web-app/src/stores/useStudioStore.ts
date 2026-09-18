@@ -30,7 +30,21 @@ export interface AgentCard {
   health?: 'green' | 'yellow' | 'red';
 }
 
+export interface ActivityLog {
+  id: string;
+  source: string;
+  message: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'INFO';
+  timestamp: string;
+}
+
 interface StudioState {
+  // Zones 1 and 2
+  activityLogs: ActivityLog[];
+  addActivityLog: (log: Omit<ActivityLog, 'id' | 'timestamp'>) => void;
+  zone2ActiveTab: 'okr' | 'phase1' | 'phase2' | 'phase3';
+  setZone2ActiveTab: (tab: 'okr' | 'phase1' | 'phase2' | 'phase3') => void;
+
   // Chat
   activeTab: TabId;
   setActiveTab: (tab: TabId) => void;
@@ -155,6 +169,14 @@ export const useStudioStore = create<StudioState>()(
     (set) => ({
       activeTab: 'discovery',
       setActiveTab: (tab) => set({ activeTab: tab }),
+      activityLogs: [
+        { id: '0', source: 'AureliOS', message: 'Sistema Operativo inicializado. Esperando intenciones del usuario.', status: 'INFO', timestamp: new Date().toISOString() }
+      ],
+      addActivityLog: (log) => set((state) => ({
+        activityLogs: [...state.activityLogs, { ...log, id: Date.now().toString(), timestamp: new Date().toISOString() }]
+      })),
+      zone2ActiveTab: 'okr',
+      setZone2ActiveTab: (tab) => set({ zone2ActiveTab: tab }),
       isSynthesizing: false,
       setIsSynthesizing: (val) => set({ isSynthesizing: val }),
       theme: 'obsidian',

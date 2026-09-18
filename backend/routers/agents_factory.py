@@ -4,6 +4,16 @@ Endpoints para el sistema universal de AgentFactory.
 """
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+import os
+from google.antigravity import Agent, LocalOpenAIAgentConfig
+from backend.services.chroma_db import vector_db
+from backend.config import OLLAMA_BASE_URL
+
+MASTER_PROMPT = """Estás operando bajo Antigravity OS.
+DEBES CUMPLIR las directivas globales (ESTRUCTURA.md, AUDITORIA.md, GEMINI.md, SKILLS.md, DISENO.md).
+Cero deuda técnica. Cero dependencias basura (Zero-Bloat).
+Jamás uses lenguaje cliché de IA. Exige excelencia técnica."""
+
 from typing import Optional, List
 
 router = APIRouter(prefix="/agents", tags=["Agent Factory"])
@@ -100,77 +110,130 @@ class SearchAssistRequest(BaseModel):
 @router.post("/optimize")
 async def optimize_agent(req: OptimizeAgentRequest):
     """
-    Mejora las instrucciones de un agente usando AgentFactory.
-    Si el agente existe en skills_v2.json, usa sus instrucciones actuales.
-    Retorna las instrucciones mejoradas.
+    Mejora las instrucciones de un agente usando el motor Match & Fuse y el SDK de Antigravity.
+    Realiza una búsqueda vectorial en el Atlas (ChromaDB) y fusiona el conocimiento.
+    Retorna el agente estructurado bajo el Triángulo Dorado.
     """
     try:
         try:
-            from services.agent_factory import AgentFactory, _cargar_perfil_agente
+            from services.agent_factory import _cargar_perfil_agente
         except ImportError:
-            from backend.services.agent_factory import AgentFactory, _cargar_perfil_agente
+            from backend.services.agent_factory import _cargar_perfil_agente
 
         current_instructions = req.instructions or _cargar_perfil_agente(req.agent_id)
 
-        optimization_prompt = f"""Eres un experto en optimizacion de prompts de IA. 
-        
- Analiza las siguientes instrucciones de un agente y mejóralas para que sean:
- - Mas claras y especificas
- - Con mejor estructura (usar secciones con ##)
- - Mas efectivas para el objetivo del agente
- - En español cuando sea posible
- 
- INSTRUCCIONES ACTUALES DEL AGENTE '{req.agent_id}':
- {current_instructions[:2000]}
- 
- PROPORCIONA SOLO LAS INSTRUCCIONES MEJORADAS, sin explicaciones adicionales."""
+        # 1. MATCH: Búsqueda Vectorial en Atlas (KBs)
+        atlas_knowledge = ""
+        try:
+            search_results = vector_db.search(current_instructions, n_results=3)
+            chunks = search_results.get("documents", [[]])[0]
+            if chunks:
+                atlas_knowledge = "
 
-        improved = await AgentFactory.chat_one_shot(
-            agent_id="system_optimizer",
-            user_prompt=optimization_prompt,
-            override_instructions="Eres un experto en ingenieria de prompts. Tu unica tarea es mejorar y optimizar instrucciones de agentes IA. Responde SOLO con las instrucciones mejoradas."
+---
+".join(chunks)
+        except Exception as e:
+            print(f"Error en Match (ChromaDB): {e}")
+
+        # 2. FUSE: Sándwich Arquitectónico (Golden Triangle)
+        system_prompt = f"""{MASTER_PROMPT}
+
+Eres el Arquitecto de Evolución de Antigravity OS.
+Tu misión es aplicar una FUSIÓN NUCLEAR (Match & Fuse) al perfil de este agente antiguo para llevarlo al nivel industrial.
+
+TAREA:
+1. Lee las [INSTRUCCIONES ANTIGUAS DEL AGENTE]
+2. Lee y absorbe el [NUEVO CONOCIMIENTO DEL ATLAS] (recuperado por RAG).
+3. Reconstruye totalmente al agente usando este formato estricto (Triángulo Dorado):
+
+[IDENTITY & ROLE]
+(Quién es, qué hace, tono experto)
+
+[ATLAS KNOWLEDGE FUSION]
+(Integra los conceptos clave recuperados del Atlas para hacerlo más inteligente)
+
+[INPUT/OUTPUT CONTRACT]
+(Define explícitamente cómo debe recibir datos y cómo debe entregarlos)
+
+[HARD GUARDRAILS]
+(Qué cosas tiene estrictamente PROHIBIDO hacer)
+
+[INSTRUCCIONES ANTIGUAS DEL AGENTE]:
+{current_instructions[:3000]}
+
+[NUEVO CONOCIMIENTO DEL ATLAS]:
+{atlas_knowledge}
+"""
+
+        config = LocalOpenAIAgentConfig(
+            model="qwen3-8b", 
+            base_url=OLLAMA_BASE_URL,
+            system_instructions=system_prompt,
+            env={"OPENAI_API_KEY": os.getenv("FREE_AI_API_KEY", "localai")}
         )
+        
+        async with Agent(config) as agent:
+            response = await agent.chat("Inicia la fusión y dame el perfil reconstruido. Cero explicaciones, solo el perfil.")
+            improved = await response.text()
+
         return {"agent_id": req.agent_id, "improved": improved, "status": "ok"}
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.post("/optimize-kb")
 async def optimize_kb(req: OptimizeKBRequest):
     """
-    Mejora el contenido de un Master Prompt de Atlas KB.
-    Retorna el contenido mejorado.
+    Mejora el contenido de un Master Prompt usando Match & Fuse.
+    Cruza el contenido con otros KBs del sistema.
     """
     try:
+        # 1. MATCH: Búsqueda Vectorial en Atlas (KBs)
+        atlas_knowledge = ""
         try:
-            from services.agent_factory import AgentFactory
-        except ImportError:
-            from backend.services.agent_factory import AgentFactory
+            search_results = vector_db.search(req.content, n_results=2)
+            chunks = search_results.get("documents", [[]])[0]
+            if chunks:
+                atlas_knowledge = "
 
-        optimization_prompt = f"""Eres un experto en ingenieria de prompts maestros.
-        
-Analiza el siguiente Master Prompt y mejoralo para que sea:
-- Mas completo y detallado
-- Con mejor estructura profesional
-- Mas efectivo como contexto de conocimiento para agentes IA
-- Incluir ejemplos donde sea util
+---
+".join(chunks)
+        except Exception as e:
+            print(f"Error en Match (ChromaDB): {e}")
 
-TITULO: {req.kb_title}
+        # 2. FUSE
+        system_prompt = f"""{MASTER_PROMPT}
 
-CONTENIDO ACTUAL:
+Eres el Arquitecto de Evolución de Antigravity OS.
+Tu misión es reconstruir esta Base de Conocimiento (Master Prompt) para que sea densa, estructural y letal.
+
+[CONTENIDO ORIGINAL]:
 {req.content[:3000]}
 
-PROPORCIONA SOLO EL CONTENIDO MEJORADO, sin explicaciones adicionales."""
+[CONOCIMIENTO CRUZADO RECUPERADO]:
+{atlas_knowledge}
 
-        improved = await AgentFactory.chat_one_shot(
-            agent_id="system_optimizer",
-            user_prompt=optimization_prompt,
-            override_instructions="Eres un experto en ingenieria de prompts maestros. Tu unica tarea es mejorar Master Prompts de bases de conocimiento. Responde SOLO con el contenido mejorado."
+TAREA: Reconstruye el KB original, enriqueciéndolo con el conocimiento cruzado.
+Usa formato Markdown profesional. Elimina lenguaje redundante.
+"""
+
+        config = LocalOpenAIAgentConfig(
+            model="qwen3-8b",
+            base_url=OLLAMA_BASE_URL,
+            system_instructions=system_prompt,
+            env={"OPENAI_API_KEY": os.getenv("FREE_AI_API_KEY", "localai")}
         )
+        
+        async with Agent(config) as agent:
+            response = await agent.chat(f"Reconstruye el KB '{req.kb_title}'. Solo dame el documento, sin saludos.")
+            improved = await response.text()
+
         return {"kb_title": req.kb_title, "improved": improved, "status": "ok"}
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.post("/search-assist")
 async def search_assist(req: SearchAssistRequest):

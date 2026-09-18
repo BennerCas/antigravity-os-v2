@@ -26,10 +26,13 @@ LOCAL_MODELS = {
     "hermes3:8b", "llama3.1:8b", "mistral", "qwen2.5:7b", "phi3:3.8b"
 }
 
+from backend.services.agent_factory import _cargar_perfil_agente
+
 class ChatRequest(BaseModel):
     message: str
     model: Optional[str] = "anthropic/claude-3.5-sonnet"
-    system: Optional[str] = "Eres AureliOS, un asistente de IA avanzado. Responde siempre en el mismo idioma del usuario, con formato Markdown claro."
+    system: Optional[str] = None
+    agent_id: Optional[str] = "aurelios-core"
 
 class ChatResponse(BaseModel):
     response: str
@@ -42,12 +45,27 @@ async def studio_chat(req: ChatRequest):
     model = model.replace("free.ai/", "").replace("ollama/", "")
     is_local = model in LOCAL_MODELS or ":" in model
 
+    try:
+        from backend.services.agent_factory import _cargar_perfil_agente
+    except ImportError:
+        from services.agent_factory import _cargar_perfil_agente
+
+    # Load real system prompt from database or fallback to the provided system string
+    system_prompt = req.system
+    if not system_prompt and req.agent_id:
+        db_prompt = _cargar_perfil_agente(req.agent_id)
+        if db_prompt:
+            system_prompt = db_prompt
+
+    if not system_prompt:
+        system_prompt = "Eres AureliOS, el Arquitecto Maestro y Sistema Operativo de Enjambres de Antigravity."
+
     if is_local:
-        return await _call_ollama(req.message, req.system or "", model)
+        return await _call_ollama(req.message, system_prompt, model)
     else:
-        result = await _call_free_ai(req.message, req.system or "", model)
+        result = await _call_free_ai(req.message, system_prompt, model)
         if result.engine == "error":
-            result = await _call_ollama(req.message, req.system or "", "hermes3:8b")
+            result = await _call_ollama(req.message, system_prompt, "hermes3:8b")
         return result
 
 async def _call_free_ai(user: str, system: str, model: str) -> ChatResponse:

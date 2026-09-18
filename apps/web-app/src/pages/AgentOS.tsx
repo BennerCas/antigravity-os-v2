@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Brain, Target, HardDrives, ChatCircle, Graph, MagnifyingGlass } from '@phosphor-icons/react';
+import { Brain, Target, HardDrives, ChatCircle, Graph, MagnifyingGlass, Kanban } from '@phosphor-icons/react';
 import AgentOSStudio from './AgentOSStudio';
+import AgentOSInfinityBoard from './AgentOSInfinityBoard';
 import AgentOSAgentland from './AgentOSAgentland';
 
 import AgentOSInteract from './AgentOSInteract';
@@ -9,7 +10,7 @@ import AgentOSInspector from './AgentOSInspector';
 import type { AgentItem, AtlasItem } from './AgentOSSelect';
 import type { Team } from './AgentOSTeams';
 
-type View = 'studio' | 'agentland' | 'interact' | 'flowboard' | 'inspector';
+type View = 'studio' | 'infinityboard' | 'agentland' | 'interact' | 'flowboard' | 'inspector';
 
 export default function AgentOS() {
   const [view, setView] = useState<View>(() => (localStorage.getItem('agentos_view') as View) || 'studio');
@@ -40,7 +41,8 @@ export default function AgentOS() {
         
         {/* TAB NAVIGATION */}
         {[
-          { id:'studio', label:'Studio', icon:<Target size={15}/> },
+          { id:'studio', label:'The AureliOS', icon:<Target size={15}/> },
+          { id:'infinityboard', label:'InfinityBoard', icon:<Kanban size={15}/> },
           { id:'agentland', label:'Agentland', icon:<HardDrives size={15}/> },
           { id:'interact', label:'Interactuar', icon:<ChatCircle size={15}/> },
           { id:'flowboard', label:'Flowboard', icon:<Graph size={15}/> },
@@ -72,6 +74,9 @@ export default function AgentOS() {
       <div className="flex-1 overflow-hidden relative">
         <div className="absolute inset-0" style={{ display: view === 'studio' ? 'block' : 'none' }}>
           <AgentOSStudio />
+        </div>
+        <div className="absolute inset-0" style={{ display: view === 'infinityboard' ? 'block' : 'none' }}>
+          <AgentOSInfinityBoard />
         </div>
         <div className="absolute inset-0" style={{ display: view === 'agentland' ? 'block' : 'none' }}>
           <AgentOSAgentland />

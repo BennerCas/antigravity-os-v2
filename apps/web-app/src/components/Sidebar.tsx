@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Brain, Hammer, Code, TreeStructure, SpeakerHigh, PlayCircle, PauseCircle, StopCircle, FastForward, Rewind, GraduationCap } from '@phosphor-icons/react';
+import { Brain, Hammer, Code, TreeStructure, SpeakerHigh, PlayCircle, PauseCircle, StopCircle, FastForward, Rewind, GraduationCap, UserSwitch } from '@phosphor-icons/react';
 import { useTTSStore } from '../lib/ttsStore';
 import { useEffect } from 'react';
 
@@ -19,6 +19,7 @@ export function Sidebar() {
     { path: '/academy',       label: 'Academy',        icon: <GraduationCap size={20} weight="light" /> },
     { path: '/architecture',  label: 'Arquitectura',   icon: <TreeStructure size={20} weight="light" /> },
     { path: '/automations',   label: 'Automatización', icon: <Code          size={20} weight="light" /> },
+    { path: '/coautoria',     label: 'CoautorIA',      icon: <UserSwitch      size={20} weight="light" /> },
   ];
 
   return (

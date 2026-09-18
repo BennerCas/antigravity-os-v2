@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { studioNodeTypes, KIND_META } from '../components/StudioNodes';
+import { SwarmOrchestrationPanel } from '../components/studio/SwarmOrchestrationPanel';
 import { useStudioStore, TabId, parseAIResponseToFlow } from '../stores/useStudioStore';
 import { API_URL } from '../lib/api';
 import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock } from '@phosphor-icons/react';
@@ -102,8 +103,10 @@ const FlowArchitect: React.FC = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [thinkingPhrase, setThinkingPhrase] = useState('');
   const [showSetup, setShowSetup] = useState(false);
+  const [selectedAgentId, setSelectedAgentId] = useState('aurelios-core');
   const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem('aurelios_model') || 'free.ai/auto');
   const [currentThemeKey, setCurrentThemeKey] = useState(() => localStorage.getItem('aurelios_theme') || 'obsidian');
+  const [selectedChatAgentId, setSelectedChatAgentId] = useState('aurelios-core');
 
   useEffect(() => {
     localStorage.setItem('aurelios_model', selectedModel);
@@ -153,7 +156,7 @@ const FlowArchitect: React.FC = () => {
         body: JSON.stringify({
           message: textToSend,
           model: selectedModel,
-          system: 'Eres AureliOS, el Arquitecto Maestro y Sistema Operativo de Enjambres de Antigravity. Tu propósito es ayudar al usuario a diseñar, orquestar y desplegar sistemas de IA multi-agente. Eres el cerebro de "AgentOS Studio", capaz de analizar problemas complejos y proponer flujos de nodos y agentes especializados. Responde SIEMPRE en el idioma del usuario de forma concisa, profesional y visionaria, utilizando formato Markdown (negritas, cursivas, listas, subtítulos).'
+          agent_id: selectedChatAgentId
         })
       });
       if (!res.ok) throw new Error(`Backend respondió ${res.status}`);
@@ -174,19 +177,21 @@ const FlowArchitect: React.FC = () => {
 
 
   const aiTools = [
-    { title: 'Swarm Orchestrator', icon: <Network size={18} className="text-[#3b82f6]" weight="duotone" />, desc: 'Orquesta múltiples agentes autónomos. Asigna tareas complejas, gestiona el estado compartido y resuelve dependencias en paralelo.' },
-    { title: 'Umpire Core', icon: <Scales size={18} className="text-[#e11d48]" weight="duotone" />, desc: 'Árbitro determinista. Somete el código y la arquitectura a pruebas de estrés implacables para asegurar escalabilidad y cero alucinaciones.' },
-    { title: 'State Reducer', icon: <Cube size={18} className="text-[#f5a623]" weight="duotone" />, desc: 'Diseña el flujo de datos unidireccional. Modela mutaciones de estado predecibles, inmutables y auditables en tiempo real.' },
-    { title: 'RAG Synthesizer', icon: <Strategy size={18} className="text-[#10b981]" weight="duotone" />, desc: 'Cerebro de memoria profunda. Fusiona bases de datos vectoriales y grafos de conocimiento para contextualizar decisiones al instante.' },
-    { title: 'Codebase Overlord', icon: <Cpu size={18} className="text-[#8b5cf6]" weight="duotone" />, desc: 'Maestro del código. Refactoriza, optimiza y ensambla piezas arquitectónicas masivas a nivel de repositorio completo.' },
-    { title: 'Forensic Inspector', icon: <MagnifyingGlass size={18} className="text-[#06b6d4]" weight="duotone" />, desc: 'Analizador de telemetría en vivo. Destripa cuellos de botella y audita el rendimiento e integraciones a nivel milisegundo.' },
-    { title: 'Zero-Trust Gatekeeper', icon: <ShieldCheck size={18} className="text-[#f43f5e]" weight="duotone" />, desc: 'Auditor de ciberseguridad extremo. Detecta vulnerabilidades y exige políticas estrictas de autenticación y autorización.' },
-    { title: 'Resource Optimizer', icon: <CurrencyDollar size={18} className="text-[#f5a623]" weight="duotone" />, desc: 'Estratega de infraestructuras. Balancea la carga entre modelos locales y en la nube minimizando costos y uso límite de VRAM.' },
-    { title: 'UX Psychologist', icon: <Brain size={18} className="text-[#d946ef]" weight="duotone" />, desc: 'Especialista en interfaces persuasivas. Aplica sesgos cognitivos e inyecta fricción positiva para dominar la experiencia del usuario.' },
-    { title: 'Infrastructure Titan', icon: <HardDrives size={18} className="text-[#64748b]" weight="duotone" />, desc: 'Ingeniero DevOps. Automatiza Docker, Kubernetes, CI/CD pipelines y configura servidores para despliegues a prueba de balas.' },
-    { title: 'API Nexus', icon: <Plugs size={18} className="text-[#14b8a6]" weight="duotone" />, desc: 'Especialista en integraciones. Diseña y audita pasarelas de pago, Webhooks, arquitecturas GraphQL y orquesta microservicios.' },
-    { title: 'Synthetic QA', icon: <BugBeetle size={18} className="text-[#facc15]" weight="duotone" />, desc: 'Simulador de caos. Genera edge cases y ataca tu código simulando enjambres de usuarios para quebrar la app antes de producción.' }
+    { id: 'swarm-orchestrator', id: 'swarm-orchestrator', title: 'Swarm Orchestrator', icon: <Network size={18} className="text-[#3b82f6]" weight="duotone" />, desc: 'Orquesta múltiples agentes autónomos. Asigna tareas complejas, gestiona el estado compartido y resuelve dependencias en paralelo.' },
+    { id: 'umpire-core', id: 'umpire-core', title: 'Umpire Core', icon: <Scales size={18} className="text-[#e11d48]" weight="duotone" />, desc: 'Árbitro determinista. Somete el código y la arquitectura a pruebas de estrés implacables para asegurar escalabilidad y cero alucinaciones.' },
+    { id: 'state-reducer', id: 'state-reducer', title: 'State Reducer', icon: <Cube size={18} className="text-[#f5a623]" weight="duotone" />, desc: 'Diseña el flujo de datos unidireccional. Modela mutaciones de estado predecibles, inmutables y auditables en tiempo real.' },
+    { id: 'rag-synthesizer', id: 'rag-synthesizer', title: 'RAG Synthesizer', icon: <Strategy size={18} className="text-[#10b981]" weight="duotone" />, desc: 'Cerebro de memoria profunda. Fusiona bases de datos vectoriales y grafos de conocimiento para contextualizar decisiones al instante.' },
+    { id: 'codebase-overlord', id: 'codebase-overlord', title: 'Codebase Overlord', icon: <Cpu size={18} className="text-[#8b5cf6]" weight="duotone" />, desc: 'Maestro del código. Refactoriza, optimiza y ensambla piezas arquitectónicas masivas a nivel de repositorio completo.' },
+    { id: 'forensic-inspector', id: 'forensic-inspector', title: 'Forensic Inspector', icon: <MagnifyingGlass size={18} className="text-[#06b6d4]" weight="duotone" />, desc: 'Analizador de telemetría en vivo. Destripa cuellos de botella y audita el rendimiento e integraciones a nivel milisegundo.' },
+    { id: 'zero-trust-gatekeeper', id: 'zero-trust-gatekeeper', title: 'Zero-Trust Gatekeeper', icon: <ShieldCheck size={18} className="text-[#f43f5e]" weight="duotone" />, desc: 'Auditor de ciberseguridad extremo. Detecta vulnerabilidades y exige políticas estrictas de autenticación y autorización.' },
+    { id: 'resource-optimizer', id: 'resource-optimizer', title: 'Resource Optimizer', icon: <CurrencyDollar size={18} className="text-[#f5a623]" weight="duotone" />, desc: 'Estratega de infraestructuras. Balancea la carga entre modelos locales y en la nube minimizando costos y uso límite de VRAM.' },
+    { id: 'ux-psychologist', id: 'ux-psychologist', title: 'UX Psychologist', icon: <Brain size={18} className="text-[#d946ef]" weight="duotone" />, desc: 'Especialista en interfaces persuasivas. Aplica sesgos cognitivos e inyecta fricción positiva para dominar la experiencia del usuario.' },
+    { id: 'infrastructure-titan', id: 'infrastructure-titan', title: 'Infrastructure Titan', icon: <HardDrives size={18} className="text-[#64748b]" weight="duotone" />, desc: 'Ingeniero DevOps. Automatiza Docker, Kubernetes, CI/CD pipelines y configura servidores para despliegues a prueba de balas.' },
+    { id: 'api-nexus', id: 'api-nexus', title: 'API Nexus', icon: <Plugs size={18} className="text-[#14b8a6]" weight="duotone" />, desc: 'Especialista en integraciones. Diseña y audita pasarelas de pago, Webhooks, arquitecturas GraphQL y orquesta microservicios.' },
+    { id: 'synthetic-qa', id: 'synthetic-qa', title: 'Synthetic QA', icon: <BugBeetle size={18} className="text-[#facc15]" weight="duotone" />, desc: 'Simulador de caos. Genera edge cases y ataca tu código simulando enjambres de usuarios para quebrar la app antes de producción.' }
   ];
+
+  const selectedAgentData = aiTools.find(t => t.id === selectedChatAgentId) || { title: 'AureliOS Core' };
 
   return (
     <div className={`flex flex-col ${t.bg} ${t.text} relative transition-colors duration-500`} style={{ height: '100%', overflow: 'hidden' }}>
@@ -222,19 +227,20 @@ const FlowArchitect: React.FC = () => {
 
       <div className="px-4 pb-2 shrink-0 flex flex-col gap-3">
         {/* Fixed AI Tools */}
-        <div className="flex items-center gap-2 mb-0.5 mt-3 text-[11px] font-bold tracking-wider uppercase ">
-          <Wrench size={14} /> God-Tier Master Prompts
+        <div className="flex items-center justify-between mb-0.5 mt-3 text-[11px] font-bold tracking-wider uppercase">
+          <span className="flex items-center gap-2"><Wrench size={14} /> God-Tier Master Prompts</span>
+          <button onClick={() => setSelectedChatAgentId('aurelios-core')} className={`hover:underline ${selectedChatAgentId === 'aurelios-core' ? t.primary : 'opacity-50'}`}>[Reset to Core]</button>
         </div>
         <div className="grid grid-cols-3 gap-2">
           {aiTools.map((tool, i) => (
             <div key={i} className="relative group">
               <button 
-                onClick={() => handleSend(tool.title)} 
-                className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
+                onClick={() => setSelectedChatAgentId(tool.id)} 
+                className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${selectedChatAgentId === tool.id ? `border-current ${t.primary}` : t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
               >
                 <div className="flex items-center gap-3 overflow-hidden ml-1">
                   <div className="shrink-0">{tool.icon}</div>
-                  <span className="text-[11px] font-bold truncate group-hover:brightness-125 transition-all">{tool.title}</span>
+                  <span className={`text-[11px] font-bold truncate group-hover:brightness-125 transition-all ${selectedChatAgentId === tool.id ? t.primary : ''}`}>{tool.title}</span>
                 </div>
                 <div 
                   onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
@@ -307,7 +313,7 @@ const FlowArchitect: React.FC = () => {
           <input
             type="text"
             className={`flex-1 ${t.inputBg} border rounded-xl px-4 py-3 text-base placeholder- focus:outline-none ${t.inputFocus} shadow-inner transition-colors duration-500`}
-            placeholder="Comanda al enjambre..."
+            placeholder={`Comanda a ${selectedAgentData.title}...`}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
@@ -320,7 +326,7 @@ const FlowArchitect: React.FC = () => {
           </button>
         </div>
         <div className="text-center mt-3">
-          <span className="text-[11px]  font-bold tracking-widest uppercase">AURELIOS • STOIC AI ORCHESTRATOR</span>
+          <span className="text-[11px]  font-bold tracking-widest uppercase">{selectedAgentData.title} • STOIC AI ORCHESTRATOR</span>
         </div>
       </div>
       {/* Setup Modal */}
@@ -721,7 +727,7 @@ const ArchitectureBlueprint: React.FC = () => {
   );
 };
 
-const CanvasTabs: React.FC = () => {
+export const CanvasTabs: React.FC = () => {
   const { activeTab, setActiveTab } = useStudioStore();
 
   const runMatchAndFusePipeline = async () => {
@@ -855,9 +861,12 @@ export default function AgentOSStudio() {
         <FlowArchitect />
       </div>
 
-      {/* Columna 2 — 70% — Canvas */}
-      <div style={{ width: '70%', height: '100%', display: 'flex', flexDirection: 'column', flexShrink: 0, minHeight: 0, minWidth: 0 }}>
-        <CanvasTabs />
+      {/* Columna 2 — 70% — Placeholder */}
+      <div style={{ width: '70%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0, minHeight: 0, minWidth: 0 }}>
+        <div className="opacity-40 text-center flex flex-col items-center gap-3">
+          <Columns size={48} weight="duotone" />
+          <p className="text-sm font-medium tracking-widest uppercase">Canvas trasladado a InfinityBoard</p>
+        </div>
       </div>
     </div>
   );
