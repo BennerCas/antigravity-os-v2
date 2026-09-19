@@ -1,15 +1,14 @@
-import { BuilderFlow, BuilderNode, BuilderEdge } from '../types/builder-flow';
 import { v4 as uuidv4 } from 'uuid';
 
 export class LegacyFlowAdapter {
   /**
-   * Converts a legacy React Flow JSON object to a BuilderFlow v1 object.
+   * Converts a legacy React Flow JSON object to a any v1 object.
    */
-  static normalize(legacyFlow: any): BuilderFlow {
+  static normalize(legacyFlow: any): any {
     const nodes = legacyFlow.nodes || [];
     const edges = legacyFlow.edges || [];
     
-    const normalizedNodes: BuilderNode[] = [];
+    const normalizedNodes: any[] = [];
     const uiAnnotations: any[] = [];
     
     nodes.forEach((node: any) => {
@@ -77,10 +76,10 @@ export class LegacyFlowAdapter {
           builderNode.config = { ...data };
       }
       
-      normalizedNodes.push(builderNode as BuilderNode);
+      normalizedNodes.push(builderNode as any);
     });
     
-    const normalizedEdges: BuilderEdge[] = edges.map((edge: any) => {
+    const normalizedEdges: any[] = edges.map((edge: any) => {
       const sourceNode = normalizedNodes.find(n => n.id === edge.source);
       let kind = 'route';
       

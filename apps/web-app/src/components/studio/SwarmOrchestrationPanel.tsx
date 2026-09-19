@@ -1,9 +1,32 @@
 import React from 'react';
 import { useStudioStore } from '../../stores/useStudioStore';
-import { CheckCircle, XCircle, Clock, Info, ListChecks, ArrowRight, Target, Brain, Robot } from '@phosphor-icons/react';
+import { CheckCircle, XCircle, Clock, Info, ListChecks, Target, Brain, Robot } from '@phosphor-icons/react';
 
 export const SwarmOrchestrationPanel: React.FC = () => {
-  const { activityLogs, zone2ActiveTab, setZone2ActiveTab } = useStudioStore();
+  const { activityLogs, addActivityLog, zone2ActiveTab, setZone2ActiveTab } = useStudioStore();
+
+  React.useEffect(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.hostname}:8000/api/v1/studio/ws/activity`;
+    const ws = new WebSocket(wsUrl);
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'ACTIVITY_LOG' && data.log) {
+          addActivityLog(data.log);
+        } else if (data.type === 'STATE_UPDATE' && data.tab) {
+          setZone2ActiveTab(data.tab);
+        }
+      } catch (e) {
+        console.error("Error parsing WS message", e);
+      }
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [addActivityLog, setZone2ActiveTab]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {

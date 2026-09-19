@@ -102,7 +102,7 @@ class FlowPolicies(BaseModel):
     default_timeout_ms: int = 30000
     default_retry_policy_ref: Optional[str] = None
 
-class BuilderFlow(BaseModel):
+class Flow(BaseModel):
     schema_version: Literal["builder/v1"] = "builder/v1"
     id: str
     revision: int = 1

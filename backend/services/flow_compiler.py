@@ -2,7 +2,7 @@ import hashlib
 import json
 from datetime import datetime
 from typing import Dict, Any
-from backend.schemas.builder_flow import BuilderFlow, RuntimeGraph
+from backend.schemas.builder_flow import Flow, RuntimeGraph
 from backend.services.flow_validator import FlowValidator
 
 class CompilerError(Exception):
@@ -10,11 +10,11 @@ class CompilerError(Exception):
 
 class FlowCompiler:
     """
-    Deterministically compiles a BuilderFlow v1 into a RuntimeGraph v1.
+    Deterministically compiles a Flow v1 into a RuntimeGraph v1.
     """
     
     @staticmethod
-    def compile(flow: BuilderFlow, revision: int) -> RuntimeGraph:
+    def compile(flow: Flow, revision: int) -> RuntimeGraph:
         # 1. Run validation
         findings = FlowValidator.validate_topology(flow)
         blocking_findings = [f for f in findings if f.severity == "blocking"]

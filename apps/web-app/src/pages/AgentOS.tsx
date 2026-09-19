@@ -19,9 +19,9 @@ export default function AgentOS() {
   const [assignedKB] = useState<AtlasItem | null>(null);
   const [teams] = useState<Team[]>([]);
   useEffect(() => {
-    fetch((import.meta.env.BASE_URL || '/') + 'skills_v2.json')
+    fetch((import.meta.env.BASE_URL || '/') + 'skills_v2.json?t=' + Date.now())
       .then(r => r.json()).then(setAgents).catch(() => {});
-    fetch((import.meta.env.BASE_URL || '/') + 'prompts_db.json')
+    fetch((import.meta.env.BASE_URL || '/') + 'prompts_db.json?t=' + Date.now())
       .then(r => r.json()).then((()=>{})).catch(() => {});
   }, []);
 

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Network, Play, DotsThreeOutlineVertical, Books, SquaresFour, Plus, DownloadSimple, SpeakerHigh, GraduationCap, ShieldCheck, Brain, Rocket, Cpu, Clock, PuzzlePiece, Target, Lightning, GitBranch } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
-import type { SavedFlow } from '../types/builder';
 import { API_URL } from '../lib/api';
 import { flowTemplates } from '../data/flowsTemplates';
 
@@ -14,7 +13,7 @@ export default function Flows() {
     return localStorage.getItem('flows_active_level') || 'Basico';
   });
   const [playingTTS, setPlayingTTS] = useState<string | null>(null);
-  const [savedFlows, setSavedFlows] = useState<SavedFlow[]>([]);
+  const [savedFlows, setanys] = useState<any[]>([]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -28,14 +27,14 @@ export default function Flows() {
   useEffect(() => {
     fetch(`${API_URL}/flows`)
       .then(res => res.json())
-      .then(data => setSavedFlows(Array.isArray(data) ? data : (data.flows || [])))
+      .then(data => setanys(Array.isArray(data) ? data : (data.flows || [])))
       .catch(err => console.error('Failed to fetch flows:', err));
   }, []);
   const handleDeleteFlow = async (id: string) => {
     if (!window.confirm("¿Seguro que deseas eliminar este ecosistema?")) return;
     try {
       await fetch(`${API_URL}/flows/${id}`, { method: 'DELETE' });
-      setSavedFlows(prev => prev.filter(f => f.id !== id));
+      setanys(prev => prev.filter(f => f.id !== id));
       setOpenMenuId(null);
     } catch (e) {
       console.error(e);
@@ -65,7 +64,7 @@ export default function Flows() {
     { id: '3', name: 'Desarrollador Fullstack Auto', engine: 'AutoGen', nodes: 5, lastActive: 'Hace 3 dias', status: 'draft' },
   ];
 
-  const allFlows: SavedFlow[] = [...mockFlows, ...savedFlows];
+  const allFlows: any[] = [...mockFlows, ...savedFlows];
 
   const getEngineColor = (engine?: string) => {
     switch (engine) {

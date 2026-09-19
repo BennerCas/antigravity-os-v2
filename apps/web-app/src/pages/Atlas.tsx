@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { BuilderNodeData } from '../types/builder';
-import { sendToBuilderBridge } from '../lib/builderBridge';
 import { API_URL } from '../lib/api';
 import {
   SpeakerHigh, ArrowLeft, MagnifyingGlass, MagicWand,
@@ -102,7 +100,7 @@ const Atlas = () => {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [allPrompts, setAllPrompts] = useState<Prompt[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [generatedVariants, setGeneratedVariants] = useState<BuilderNodeData[]>([]);
+  const [generatedVariants, setGeneratedVariants] = useState<any[]>([]);
 
   // Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -666,35 +664,6 @@ ${inspectedPrompt.content}
 
   // Convierte el flujo sugerido (formato plano) a nodos/edges ReactFlow y abre el Builder
   const launchFlowInBuilder = (flow: SuggestedFlow) => {
-    const rfNodes = flow.nodes.map((n, i) => ({
-      id: n.id || `n${i + 1}`,
-      type: 'mainPrompt',
-      position: { x: 100 + i * 420, y: 200 },
-      data: {
-        title: n.title,
-        content: n.content,
-        role: n.role,
-        framework: n.framework || 'auto',
-        llm_model: n.llm_model || 'hermes3:8b',
-        temperature: n.temperature ?? 0.7,
-        variables: n.variables || ''
-      }
-    }));
-    const rfEdges = flow.edges.map((e, i) => ({
-      id: `e-${i}`,
-      source: e.source,
-      target: e.target,
-      animated: true,
-      style: { stroke: '#a855f7', strokeWidth: 3 }
-    }));
-    navigate('/builder', {
-      state: {
-        templateFlow: { nodes: rfNodes, edges: rfEdges },
-        promptKey: `flow_${Date.now()}`,
-        restoreCanvas: false,
-        flowName: flow.name
-      }
-    });
   };
 
   // Guardar el flujo recomendado directamente en Nexus (Flows) sin abrir el Builder
@@ -725,14 +694,6 @@ ${inspectedPrompt.content}
 
   // "Mejorar" — sends the raw text directly to Builder as a new prompt to work on
   const handleImprove = () => {
-    if (!searchQuery.trim()) return;
-    navigate('/builder', {
-      state: {
-        prompt: { title: 'Mi Prompt', content: searchQuery },
-        promptKey: `custom_${Date.now()}`,
-        restoreCanvas: false
-      }
-    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -753,42 +714,10 @@ ${inspectedPrompt.content}
 
   // Launch all selected prompts as a chained workflow in the Builder
   const launchChain = () => {
-    if (selectedForChain.length === 0) return;
-    const chainKey = `chain_${Date.now()}`;
-    sendToBuilderBridge(navigate, {
-      promptChain: selectedForChain.map(p => ({
-        title: p.title || 'Paso del Flujo',
-        content: p.content || '',
-        role: p.category || 'General',
-        framework: 'auto',
-        llm_model: 'hermes3:8b',
-        temperature: 0.7,
-        key: makePromptKey(p)
-      })),
-      promptKey: chainKey
-    });
   };
 
   // ─── SINGLE SET ───────────────────────────────────────────────────────────
   const handleSetPrompt = (e: React.MouseEvent, prompt: Prompt) => {
-    e.stopPropagation();
-    const key = makePromptKey(prompt);
-    const now = new Date().toISOString();
-    setPromptHistoryEntry(key, now);
-    setPromptHistory(prev => ({ ...prev, [key]: now }));
-
-    sendToBuilderBridge(navigate, {
-      prompt: {
-        title: prompt.title || 'Prompt',
-        content: prompt.content || '',
-        role: prompt.category || 'General',
-        framework: 'auto',
-        llm_model: 'hermes3:8b',
-        temperature: 0.7,
-        key: key
-      },
-      promptKey: key
-    });
   };
 
   // ─── TTS ──────────────────────────────────────────────────────────────────
@@ -1016,12 +945,7 @@ ${inspectedPrompt.content}
                       </div>
                     </div>
                     <div className="flex flex-col gap-2 flex-shrink-0">
-                      <button
- onClick={() => launchFlowInBuilder(recommendedFlow)}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
-                      >
-                        Abrir en Builder →
-                      </button>
+                      <></>
                       <button
  onClick={() => saveFlowToNexus(recommendedFlow)}
                         className="bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-bold px-4 py-2 rounded-lg transition-colors whitespace-nowrap border border-cyan-400"
@@ -1338,22 +1262,14 @@ ${inspectedPrompt.content}
                       <button
  onClick={(e) => {
                           e.stopPropagation();
-                          sendToBuilderBridge(navigate, {
-                            promptChain: prompt.chain,
-                            promptKey: `chain_${Date.now()}`
-                          });
+                          console.log("Builder removed");
                         }}
                         className=" border border-cyan-400 text-cyan-400 hover:bg-cyan-900/30 font-bold py-2 px-4 rounded-lg transition-colors w-full flex items-center justify-center gap-2"
                       >
                         <Sparkle size={18} /> Enviar Flujo a Builder
                       </button>
                     ) : (
-                      <button
- onClick={(e) => handleSetPrompt(e, prompt)}
-                        className=" border border-cyan-400 text-cyan-400 hover:bg-cyan-900/30 font-bold py-2 px-4 rounded-lg transition-colors w-full cursor-pointer"
-                      >
-                        {lastOpened ? '🔁 Continuar en Builder' : 'Abrir en Builder'}
-                      </button>
+                      <></>
                     )}
                   </div>
                 </div>
@@ -1479,12 +1395,7 @@ ${inspectedPrompt.content}
               </div>
 
               <div className="panel-footer">
-                <button
- onClick={(e) => handleSetPrompt(e as any, inspectedPrompt)}
-                  
-                >
-                  Abrir en el Builder →
-                </button>
+                <></>
               </div>
 
             </div>

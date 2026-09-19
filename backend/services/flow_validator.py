@@ -1,5 +1,5 @@
 from typing import Dict, Any, List, Set
-from backend.schemas.builder_flow import BuilderFlow
+from backend.schemas.builder_flow import Flow
 
 class ValidationFinding:
     def __init__(self, code: str, severity: str, category: str, entity_ref: str, message: str):
@@ -11,11 +11,11 @@ class ValidationFinding:
 
 class FlowValidator:
     """
-    Deterministically validates a BuilderFlow topology and contracts.
+    Deterministically validates a Flow topology and contracts.
     """
     
     @staticmethod
-    def validate_topology(flow: BuilderFlow) -> List[ValidationFinding]:
+    def validate_topology(flow: Flow) -> List[ValidationFinding]:
         findings = []
         
         node_ids = {node.id: node for node in flow.nodes}
@@ -57,7 +57,7 @@ class FlowValidator:
             dfs(start_node.id)
             
         for node in flow.nodes:
-            # We ignore presentation nodes for reachability if they got into BuilderFlow by mistake,
+            # We ignore presentation nodes for reachability if they got into Flow by mistake,
             # but ideally normalizer stripped them.
             if node.id not in reachable_nodes and node.kind not in ["postIt", "note", "drawing", "ruler"]:
                 findings.append(ValidationFinding(

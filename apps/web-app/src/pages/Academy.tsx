@@ -53,20 +53,11 @@ import type {
   ValidationFinding
 } from '../types/academy';
 
-import { MainPromptNode, ActionNode, PostItNode } from '../components/BuilderNodes';
-import { ConditionNode } from '../components/builder/nodes/ConditionNode';
-import { HumanNode } from '../components/builder/nodes/HumanNode';
 import { EngineIndicator } from '../components/EngineIndicator';
 import { KnowledgeGraph3D } from '../components/academy/KnowledgeGraph3D';
 
 
-const nodeTypes = {
-  mainPrompt: MainPromptNode,
-  action: ActionNode,
-  postIt: PostItNode,
-  condition: ConditionNode,
-  human: HumanNode,
-};
+const nodeTypes = {};
 
 type AcademyTab = 'hub' | 'tracks' | 'sandbox' | 'graph' | 'drift' | 'certifications' | 'portfolio';
 

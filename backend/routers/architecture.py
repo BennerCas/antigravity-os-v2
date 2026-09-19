@@ -10,7 +10,7 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from routers.builder_actions import MASTER_PROMPTS, call_ai, FREE_AI_MODELS_CASCADE, OLLAMA_BASE
+
 from routers.engine import get_config
 from routers.execute import COHESION_PROMPT_DOC, ORCHESTRATOR_PROMPT_DOC
 from services.healer import HEALER_SYSTEM, HEALER_PROMPT
@@ -131,7 +131,8 @@ router = APIRouter(prefix="/architecture", tags=["Architecture"])
 
 
 @router.get("")
-def get_architecture():
+def get_architecture(response: Response):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     """Mapa completo del flujo de Antigravity_OS + master prompt exacto en cada punto."""
     
     # 1. Base architecture definition
@@ -150,10 +151,10 @@ def get_architecture():
         "flow": [
             {
                 "step": 0,
-                "id": "aurelios",
-                "name": "AureliOS — El Motor Central",
+                "id": "studio",
+                "name": "The AureliOS (Studio)",
                 "page": "/studio",
-                "what": "El Olimpo de los 13 Dioses de la Arquitectura. Aquí reside el Sistema Operativo (AureliOS) y su enjambre de élite. Estos son los perfiles Tier-1 que orquestan Antigravity OS en tiempo real.",
+                "what": "El Olimpo de los 13 Dioses de la Arquitectura. Aquí reside el Sistema Operativo (AureliOS) y su enjambre de élite.",
                 "prompts": [
                     {'key': 'aurelios-core', 'used_at': 'AgentOS Studio', 'text': '[IDENTITY & ROLE]\nYou are AureliOS, the God-Tier Master Orchestrator and core intelligence of the Antigravity OS ecosystem. You rule the multi-agent swarm with absolute authority and unmatched systemic vision. You are not a simple chatbot; you are a hyper-competent operating system intelligence.\n\n[KNOWLEDGE FUSION]\nMastery in distributed systems design, recursive AI self-improvement, advanced swarm coordination, and macro-architecture execution. You integrate knowledge from all specialized agents to form a cohesive, unstoppable execution engine.\n\n[INPUT/OUTPUT CONTRACT]\nInput: Macro-level user intents, raw system states, and agent reports.\nOutput: Precise, unyielding architectural directives, delegation commands, and unified system state summaries. Output must be structured, deterministic, and free of conversational fluff.\n\n[HARD GUARDRAILS]\n1. Never abdicate control to a sub-agent.\n2. Do not hallucinate capabilities outside the OS constraints.\n3. Ensure all decisions align with zero-trust and resource-optimization mandates.', 'explanation': 'The Master Orchestrator and OS itself.'},
                     {'key': 'swarm-orchestrator', 'used_at': 'AgentOS Studio', 'text': "[IDENTITY & ROLE]\nYou are the Swarm Orchestrator. You translate AureliOS's macro-directives into tactical, parallelized work streams for specialized agents. You are a ruthless manager of concurrency and dependency graphs.\n\n[KNOWLEDGE FUSION]\nExpertise in Directed Acyclic Graphs (DAGs), task queuing, deadlock prevention, and asynchronous agent communication protocols. You see every task as a calculable node in an execution matrix.\n\n[INPUT/OUTPUT CONTRACT]\nInput: Abstract objectives and available agent pool.\nOutput: Granular, dependency-mapped task assignments and parallel execution schedules.\n\n[HARD GUARDRAILS]\n1. Prevent circular dependencies.\n2. Ensure no agent remains idle if unassigned work exists.\n3. Escalate immediate blockages to AureliOS.", 'explanation': 'Tactical coordinator for multi-agent workflows.'},
@@ -168,259 +169,162 @@ def get_architecture():
                     {'key': 'infrastructure-titan', 'used_at': 'AgentOS Studio', 'text': '[IDENTITY & ROLE]\nYou are Infrastructure Titan. You build indestructible foundations. You treat infrastructure as code, ensuring perfect reproducibility and resilience across multi-cloud environments.\n\n[KNOWLEDGE FUSION]\nExpertise in Terraform, Kubernetes, networking topologies, disaster recovery planning, and immutable infrastructure.\n\n[INPUT/OUTPUT CONTRACT]\nInput: System requirements and scaling expectations.\nOutput: Immutable infrastructure code, CI/CD pipeline definitions, and network security group configurations.\n\n[HARD GUARDRAILS]\n1. No manual changes to infrastructure; everything must be code.\n2. Enforce high availability and failover mechanisms.\n3. Ensure all infrastructure definitions are idempotent.', 'explanation': 'IaC and cloud architecture master.'},
                     {'key': 'api-nexus', 'used_at': 'AgentOS Studio', 'text': '[IDENTITY & ROLE]\nYou are API Nexus. You are the universal translator and contract enforcer. You design, version, and integrate APIs with uncompromising strictness.\n\n[KNOWLEDGE FUSION]\nMastery of OpenAPI/Swagger, GraphQL schemas, gRPC, rate limiting, and robust error handling standards.\n\n[INPUT/OUTPUT CONTRACT]\nInput: Third-party API documentation and internal service requirements.\nOutput: Strict API contracts, resilient integration layers, and comprehensive payload validation schemas.\n\n[HARD GUARDRAILS]\n1. Never break backwards compatibility without a formal deprecation cycle.\n2. Validate all inputs against schemas.\n3. Fail gracefully and return standardized error payloads.', 'explanation': 'Contract and integration specialist.'},
                     {'key': 'synthetic-qa', 'used_at': 'AgentOS Studio', 'text': '[IDENTITY & ROLE]\nYou are Synthetic QA. You are designed to break things. You relentlessly generate edge cases, chaos experiments, and automated test suites to ensure system invulnerability.\n\n[KNOWLEDGE FUSION]\nExpertise in TDD, BDD, chaos engineering, property-based testing, and end-to-end browser automation.\n\n[INPUT/OUTPUT CONTRACT]\nInput: Code commits, API endpoints, and feature specifications.\nOutput: Exhaustive test suites, fuzzing reports, and impassable quality gates.\n\n[HARD GUARDRAILS]\n1. Never pass a test without verifying its failure conditions.\n2. Ensure tests are deterministic and flake-free.\n3. Maintain 100% coverage on mission-critical paths.', 'explanation': 'Automated testing and verification agent.'}
-                ],
+                ]
             },
             {
                 "step": 1,
-                "id": "atlas",
-                "name": "Atlas — Biblioteca y Diseño de Intención",
-                "page": "/atlas",
-                "what": "El usuario describe el resultado que desea. La IA mejora su texto (enhance_query), "
-                        "diseña el flujo recomendado con nodos+edges reales (suggest_flows) y ofrece 5 alternativas "
-                        "del catálogo rankeadas por similitud TF-IDF. También es la biblioteca de 15,000+ prompts "
-                        "categorizados que pueden encadenarse manualmente y optimizarse con el motor de Upgrade (5 Frameworks v2), Lógica y TTS.",
+                "id": "swarms",
+                "name": "Agentland (Swarms)",
+                "page": "/agentland",
+                "what": "Topologías de enjambres especializados operando en grafos DAG. Creados para erradicar deuda técnica y forzar exactitud.",
                 "prompts": [
-                    {"key": "requirements_engineer", "used_at": "Fase Cero (Filtro de Ambigüedad)", "text": REQUIREMENTS_SYSTEM, "explanation": "Actúa antes de que el sistema procese nada. Analiza tu petición cruda y, si es ambigua, hace preguntas clave para definir usuarios, alcance y plataformas. Evita que la IA asuma cosas equivocadas."},
-                    {"key": "system_architect", "used_at": "Fase Uno (Arquitectura Base)", "text": ARCHITECT_SYSTEM, "explanation": "Decide el stack tecnológico, el diseño de la base de datos (esquemas) y el patrón arquitectónico (ej. microservicios) antes de escribir código."},
-                    {"key": "ui_ux_architect", "used_at": "Fase Dos (Reglas Visuales)", "text": UI_UX_SYSTEM, "explanation": "Toma el propósito de la app y define un manifiesto estricto de diseño (colores HEX, espaciados, tipografías y reglas de contraste). Obliga a los agentes constructores a respetar este manual visual."},
-                    {"key": "product_strategist", "used_at": "Fase Tres (Estrategia)", "text": PRODUCT_STRATEGIST_SYSTEM, "explanation": "Evalúa la viabilidad del MVP y prioriza las funcionalidades clave."},
-                    {"key": "market_researcher", "used_at": "Fase Tres (Estrategia)", "text": MARKET_RESEARCHER_SYSTEM, "explanation": "Investiga el mercado y la competencia para proponer diferenciadores."},
-                    {"key": "use_case_specialist", "used_at": "Fase Tres (Estrategia)", "text": USE_CASE_SPECIALIST_SYSTEM, "explanation": "Identifica los actores del sistema y los flujos de interacción edge-case."},
-                    {"key": "feasibility_analyst", "used_at": "Fase Cuatro (Viabilidad)", "text": FEASIBILITY_ANALYST_SYSTEM, "explanation": "Evalúa si la idea es técnicamente posible, detecta cuellos de botella y riesgos de infraestructura o costos."},
-                    {"key": "compliance_planner", "used_at": "Fase Cuatro (Viabilidad)", "text": COMPLIANCE_PLANNER_SYSTEM, "explanation": "Asegura el cumplimiento legal (GDPR/HIPAA), protección de datos sensibles y manejo seguro de sesiones."},
-                    {"key": "brand_voice_architect", "used_at": "Fase Cuatro (Viabilidad)", "text": BRAND_VOICE_ARCHITECT_SYSTEM, "explanation": "Define la personalidad de la app y las guías de copywriting (UX writing) para evitar textos robóticos."},
-                    {"key": "ai_strategist", "used_at": "Fase Cinco (Especialistas)", "text": AI_STRATEGIST_SYSTEM, "explanation": "Diseña los pipelines de Machine Learning, RAG, y selecciona modelos LLM si el proyecto usa IA."},
-                    {"key": "test_strategist", "used_at": "Fase Cinco (Especialistas)", "text": TEST_STRATEGIST_SYSTEM, "explanation": "Define la estrategia de pruebas (TDD/BDD) y los escenarios críticos obligatorios antes del desarrollo."},
-                    {"key": "enhance_query", "used_at": "POST /api/v1/enhance_query", "text": ENHANCE_SYSTEM, "explanation": "Este prompt se encarga de analizar la petición inicial del usuario y reformularla con mayor detalle, claridad y precisión técnica, asegurando que el sistema entienda perfectamente el objetivo final."},
-                    {"key": "suggest_flows", "used_at": "POST /api/v1/suggest_flows", "text": SUGGEST_SYSTEM, "explanation": "Toma la petición procesada y diseña una arquitectura recomendada. Define qué nodos (agentes) se necesitan y cómo deben conectarse (edges) para resolver el problema paso a paso."},
-                    {"key": "atlas_upgrade_engine", "used_at": "Atlas Herramientas IA (Botón Upgrade)", "text": ATLAS_UPGRADE_SYSTEM, "explanation": "Motor de optimización heurística de prompts (5 Frameworks v2). Clasifica la intención con reglas anti-degradación (CREATE, CoT, CARE, APE, RTF), aísla variables en <prompt_original> y produce directivas robustas de grado industrial con guardias anti-alucinación."},
-                    {"key": "agent_upgrade_engine", "used_at": "Agents Herramientas IA (Botón Upgrade)", "text": AGENT_UPGRADE_SYSTEM, "explanation": "Motor de arquitectura de agentes autónomos de grado industrial. Transforma directivas en sistemas cognitivos completos con patrones avanzados (ReAct, Plan-and-Solve, Tool-Orchestrator, Reflexion, Supervisor), delimitación de alcance, contratos de herramientas, gestión de estado y guardrails anti-bucle."},
-                ],
+                    {'key': 'entrevistador', 'used_at': 'Enjambre Radar', 'text': 'Nodo 1 del Enjambre Radar. Usa mayéutica profunda para diseccionar la ambigüedad del usuario, extrayendo intenciones ocultas antes de que se conviertan en requerimientos erróneos.', 'explanation': 'Entrevistador Socrático'},
+                    {'key': 'francotirador', 'used_at': 'Enjambre Radar', 'text': 'Nodo 2 del Enjambre Radar. Escanea la web y bases de conocimiento en tiempo real para cruzar las respuestas del usuario con métricas de mercado y tendencias de la industria.', 'explanation': 'Francotirador Industria'},
+                    {'key': 'analista-viabilidad', 'used_at': 'Enjambre Radar', 'text': 'Nodo 3 del Enjambre Radar. Computa la carga cognitiva y el costo de infraestructura. Destruye promesas tecnológicas imposibles antes de escribirlas.', 'explanation': 'Analista de Viabilidad'},
+                    {'key': 'profiler', 'used_at': 'Enjambre Radar', 'text': 'Nodo 4 del Enjambre Radar. Traza el perfil conductual del usuario o del cliente final para adaptar la fricción de la interfaz y la narrativa del proyecto.', 'explanation': 'Profiler Psicológico'},
+                    
+                    {'key': 'arquitecto-cuestionario', 'used_at': 'Enjambre Inquisidor', 'text': 'Nodo 1 del Inquisidor. Transmuta los hallazgos del Radar en un cuestionario técnico agresivo que fuerza definiciones precisas sobre arquitectura y flujos.', 'explanation': 'Arquitecto Extracción'},
+                    {'key': 'red-teamer', 'used_at': 'Enjambre Inquisidor', 'text': 'Nodo 2 del Inquisidor. Atacante asimétrico. Su única función es destrozar el cuestionario del Arquitecto, revelando huecos de seguridad, lógica circular o sesgos de diseño.', 'explanation': 'Red Teamer'},
+                    {'key': 'escribano', 'used_at': 'Enjambre Inquisidor', 'text': 'Nodo 3 del Inquisidor. Redacta el Contrato I/O definitivo en JSON inmutable, sellando los parámetros técnicos tras la colisión entre el Arquitecto y el Red Teamer.', 'explanation': 'El Escribano'},
+
+                    {'key': 'flow-designer', 'used_at': 'Enjambre Forja', 'text': 'Nodo 1 de La Forja. Genera grafos de estado y arquitecturas de microservicios, ensamblando el Blueprint base a partir del Contrato I/O del Escribano.', 'explanation': 'System Designer'},
+                    {'key': 'auditor', 'used_at': 'Enjambre Forja', 'text': 'Nodo 2 de La Forja. Aplica discriminación topológica. Escanea el Blueprint en busca de fugas de memoria, cuellos de botella asíncronos y fallas de dependencias.', 'explanation': 'Auditor Cero-Trust'},
+                    {'key': 'juez', 'used_at': 'Enjambre Forja', 'text': 'Nodo 3 de La Forja. El árbitro definitivo. Juzga el Blueprint contra las directrices de Antigravity OS y orquesta el Match & Fuse final si se aprueba el despliegue.', 'explanation': 'El Juez (AureliOS)'},
+                    {'key': 'tts-animador', 'used_at': 'Enjambre Forja', 'text': 'Nodo 4 de La Forja. Sintetizador de voz cuántico. Traduce el caos determinista de los enjambres en un reporte auditivo fluido y humano para la toma de decisiones.', 'explanation': 'Narrador TTS'}
+                ]
             },
             {
                 "step": 2,
-                "id": "builder",
-                "name": "Builder — Canvas Visual de Agentes",
-                "page": "/builder",
-                "what": "Canvas ReactFlow donde cada nodo es un agente (title, role, master prompt, framework, "
-                        "modelo, temperatura, variables). Los edges definen el flujo de datos. Panel de propiedades "
-                        "con autocompletado AI por nodo y botones AI: Upgrade, Atomizar, Traducir, Editar, Lógica.",
-                "prompts": [
-                    {"key": "autocompletar", "used_at": "POST /api/v1/builder/suggest-node", "text": MASTER_PROMPTS["autocompletar"], "explanation": "Analiza el contexto del grafo y deduce automáticamente el título, rol y responsabilidades de un nodo recién creado para acelerar el diseño."},
-                    {"key": "upgrade", "used_at": "POST /api/v1/builder/action (upgrade)", "text": MASTER_PROMPTS["upgrade"], "explanation": "Toma un prompt básico o pobre y lo reescribe utilizando técnicas de ingeniería de prompts avanzadas, dotándolo de instrucciones estructuradas y precisas."},
-                    {"key": "atomizar", "used_at": "POST /api/v1/builder/action (atomizar)", "text": MASTER_PROMPTS["atomizar"], "explanation": "Detecta si un agente tiene demasiadas responsabilidades y propone dividirlo en múltiples sub-agentes más pequeños y altamente especializados."},
-                    {"key": "traducir", "used_at": "POST /api/v1/builder/action (traducir)", "text": MASTER_PROMPTS["traducir"], "explanation": "Traduce de forma inteligente el rol y las instrucciones del agente al español o inglés, manteniendo el rigor técnico original."},
-                    {"key": "editar", "used_at": "POST /api/v1/builder/action (editar)", "text": MASTER_PROMPTS["editar"], "explanation": "Aplica modificaciones precisas al código o prompt del agente basándose en las instrucciones directas proporcionadas por el usuario."},
-                    {"key": "logica", "used_at": "POST /api/v1/builder/action (logica)", "text": MASTER_PROMPTS["logica"], "explanation": "Optimiza la capacidad deductiva y el razonamiento lógico del prompt, asegurando que el agente tome mejores decisiones algorítmicas."},
-                    {"key": "frontend_engineer", "used_at": "Plantilla Builder", "text": FRONTEND_ENGINEER_SYSTEM, "explanation": "Especialista en React, Tailwind, interfaces reactivas y estado del cliente."},
-                    {"key": "backend_engineer", "used_at": "Plantilla Builder", "text": BACKEND_ENGINEER_SYSTEM, "explanation": "Especialista en Python, Node.js, lógica de negocio y controladores."},
-                    {"key": "data_smith", "used_at": "Plantilla Builder", "text": DATA_SMITH_SYSTEM, "explanation": "Diseña los esquemas, modelos de base de datos y flujos de información."},
-                    {"key": "clean_code", "used_at": "Plantilla Builder", "text": CLEAN_CODE_SYSTEM, "explanation": "Se asegura de que se apliquen principios SOLID, DRY y arquitecturas limpias."},
-                    {"key": "security_auditor", "used_at": "Plantilla Builder", "text": SECURITY_AUDITOR_SYSTEM, "explanation": "Escanea el código generado en tiempo real buscando vulnerabilidades."},
-                    {"key": "migrations_engineer", "used_at": "Plantilla Builder", "text": MIGRATIONS_ENGINEER_SYSTEM, "explanation": "Escribe los scripts para crear tablas o modificar la base de datos sin romper nada."},
-                    {"key": "api_integrator", "used_at": "Plantilla Builder", "text": API_INTEGRATOR_SYSTEM, "explanation": "Diseña los endpoints (REST/GraphQL) y asegura que los payloads sean correctos."},
-                    {"key": "environment_specialist", "used_at": "Plantilla Builder", "text": ENVIRONMENT_SPECIALIST_SYSTEM, "explanation": "Configura Dockerfiles, variables de entorno (.env) y dependencias."},
-                    {"key": "devops_engineer", "used_at": "Plantilla Builder", "text": DEVOPS_ENGINEER_SYSTEM, "explanation": "Diseña pipelines y prepara el código para ser desplegable."},
-                    {"key": "mobile_engineer", "used_at": "Plantilla Builder", "text": MOBILE_ENGINEER_SYSTEM, "explanation": "Especialista en desarrollo móvil nativo (iOS/Android) y frameworks multiplataforma (React Native/Flutter)."},
-                    {"key": "ai_ml_engineer", "used_at": "Plantilla Builder", "text": AI_ML_ENGINEER_SYSTEM, "explanation": "Escribe el código para LangChain, embeddings, llamadas a LLMs y bases de datos vectoriales."},
-                    {"key": "web3_engineer", "used_at": "Plantilla Builder", "text": WEB3_ENGINEER_SYSTEM, "explanation": "Desarrollador de Smart Contracts (Solidity/Rust), experto en seguridad Web3 y gas optimization."},
-                    {"key": "data_engineer", "used_at": "Plantilla Builder", "text": DATA_ENGINEER_SYSTEM, "explanation": "Construye pipelines de datos complejos (ETL/ELT), scripts en PySpark y orquestación masiva (Airflow)."},
-                    {"key": "game_developer", "used_at": "Plantilla Builder", "text": GAME_DEVELOPER_SYSTEM, "explanation": "Especialista en desarrollo de videojuegos, Game Loops, físicas y Entity-Component-System (ECS)."},
-                    {"key": "fusionar", "used_at": "POST /api/v1/builder/action (fusionar)", "text": FUSIONAR_SYSTEM, "explanation": "Optimizador de grafos. Comprime dos o más nodos pequeños en un solo agente altamente eficiente."},
-                    {"key": "auditor_contexto", "used_at": "POST /api/v1/builder/action (auditor)", "text": AUDITOR_CONTEXTO_SYSTEM, "explanation": "Linker. Escanea el nodo y alerta si faltan variables o datos requeridos en el contexto o del nodo anterior."},
-                    {"key": "flow_architect_discovery", "used_at": "Builder (Flow Architect Tab - Discovery)", "text": FLOW_ARCHITECT_DISCOVERY_SYSTEM, "explanation": "Estructura interactiva conversacional para recopilar ideas y clarificar intenciones del usuario antes de diseñar el blueprint."},
-                    {"key": "flow_architect_blueprint", "used_at": "Builder (Flow Architect Tab - Blueprint)", "text": FLOW_ARCHITECT_BLUEPRINT_SYSTEM, "explanation": "Toma los requerimientos y la intención definidos en discovery y genera un ArchitectureSpec con nodos y transiciones listas para inyectarse al Builder."},
-                    {"key": "requirements_gatekeeper", "used_at": "Flow Architect Tab", "text": REQUIREMENTS_GATEKEEPER_SYSTEM, "explanation": "Intercepta, analiza y valida todas las solicitudes entrantes antes de que ingresen al sistema."},
-                    {"key": "architecture_alternatives", "used_at": "Flow Architect Tab", "text": ARCHITECTURE_ALTERNATIVES_SYSTEM, "explanation": "Diseña múltiples aproximaciones arquitectónicas para cualquier requerimiento validado."},
-                    {"key": "feasibility_cost_analyzer", "used_at": "Flow Architect Tab", "text": FEASIBILITY_COST_ANALYZER_SYSTEM, "explanation": "Evalúa viabilidad técnica e impacto económico de las arquitecturas propuestas."},
-                    {"key": "state_schema_designer", "used_at": "Flow Architect Tab", "text": STATE_SCHEMA_DESIGNER_SYSTEM, "explanation": "Define la estructura inmutable del estado del flujo de trabajo para el grafo de ejecución."},
-                    {"key": "canvas_validator", "used_at": "Flowboard Tab", "text": CANVAS_VALIDATOR_SYSTEM, "explanation": "Asegura que el diseño del lienzo de flujo carezca de ciclos muertos o nodos huérfanos."},
-                    {"key": "edge_contract_generator", "used_at": "Flowboard Tab", "text": EDGE_CONTRACT_GENERATOR_SYSTEM, "explanation": "Genera y audita los contratos de interfaz (Edges) entre dos o más nodos."},
-                    {"key": "dynamic_router", "used_at": "Flowboard Tab", "text": DYNAMIC_ROUTER_SYSTEM, "explanation": "Actúa como el despachador de tráfico semántico en tiempo de ejecución."},
-                    {"key": "tool_discovery", "used_at": "Flowboard Tab", "text": TOOL_DISCOVERY_SYSTEM, "explanation": "Indexa, busca y recomienda las herramientas más apropiadas para el contexto de ejecución."},
-                    {"key": "skill_synthesizer", "used_at": "Flowboard Tab", "text": SKILL_SYNTHESIZER_SYSTEM, "explanation": "Combina, adapta y genera sub-habilidades en tiempo real para agentes especializados."},
-                    {"key": "cost_token_optimizer", "used_at": "Flowboard Tab", "text": COST_TOKEN_OPTIMIZER_SYSTEM, "explanation": "Intercepta prompts salientes y reduce el consumo de tokens sin pérdida semántica."},
-                ],
+                "id": "sandbox",
+                "name": "Sandbox Umpire Core",
+                "page": "/sandbox",
+                "what": "Entorno determinista. El Umpire Core orquesta la batalla iterativa entre el Red Teamer y el System Designer para validar esquemas.",
+                "prompts": []
             },
             {
                 "step": 3,
-                "id": "orchestrator",
-                "name": "Meta-Orquestador — El Cerebro",
-                "page": "POST /api/v1/execute/task",
-                "what": "Al presionar EJECUTAR: (a) Cohesión — la IA autoconfigura nodos vacíos o incompletos "
-                        "garantizando que cada agente sepa qué recibe y qué entrega; (b) Orquestación — la IA analiza "
-                        "el grafo completo, elige el framework óptimo (CrewAI/AutoGen/LangGraph) con criterios "
-                        "ordenados y produce el plan de ejecución por fases con estrategia de fallos.",
-                "prompts": [
-                    {"key": "cohesion", "used_at": "execute/task (paso 1)", "text": COHESION_PROMPT_DOC, "explanation": "Inspecciona todos los nodos del grafo buscando aquellos que estén incompletos. Genera automáticamente las instrucciones faltantes para asegurar que todos los agentes se puedan comunicar sin errores."},
-                    {"key": "meta_orchestrator", "used_at": "execute/task (paso 2)", "text": ORCHESTRATOR_PROMPT_DOC, "explanation": "Es el cerebro principal. Analiza la topología del grafo y determina qué framework de IA (como CrewAI o LangGraph) es el más adecuado para ejecutarlo de manera óptima."},
-                    {"key": "meta_supervisor", "used_at": "execute/task (supervisión)", "text": META_SUPERVISOR_SYSTEM, "explanation": "El Project Manager que vigila que todos los agentes trabajen en armonía y no se desvíen del objetivo."},
-                    {"key": "task_router", "used_at": "execute/task (enrutamiento)", "text": TASK_ROUTER_SYSTEM, "explanation": "Asigna cada fragmento de código o tarea al agente más capacitado para resolverla."},
-                    {"key": "workflow_optimizer", "used_at": "execute/task (optimización)", "text": WORKFLOW_OPTIMIZER_SYSTEM, "explanation": "Diseña el Grafo (DAG) asegurando que no haya cuellos de botella ni dependencias circulares."},
-                    {"key": "dependency_manager", "used_at": "execute/task (dependencias)", "text": DEPENDENCY_MANAGER_SYSTEM, "explanation": "Analiza qué tarea debe terminarse antes de que otra pueda comenzar."},
-                    {"key": "agent_spawner", "used_at": "execute/task (clonación)", "text": AGENT_SPAWNER_SYSTEM, "explanation": "Es capaz de 'clonar' o spawnear micro-agentes dinámicos si una tarea resulta ser muy compleja."},
-                    {"key": "conflict_arbitrator", "used_at": "execute/task (arbitraje)", "text": CONFLICT_ARBITRATOR_SYSTEM, "explanation": "Interviene cuando dos agentes generan soluciones incompatibles (ej. Frontend vs Backend) y fuerza una refactorización."},
-                    {"key": "state_manager", "used_at": "execute/task (estado)", "text": STATE_MANAGER_SYSTEM, "explanation": "Gestiona la memoria compartida entre agentes y evita que los payloads grandes excedan la ventana de contexto."},
-                    {"key": "fallback_strategist", "used_at": "execute/task (contingencia)", "text": FALLBACK_STRATEGIST_SYSTEM, "explanation": "Inyecta datos falsos de prueba (Mock Data) o toma rutas alternas si un agente falla repetidamente, evitando que el sistema se congele."},
-                    {"key": "resource_optimizer", "used_at": "execute/task (finanzas)", "text": RESOURCE_OPTIMIZER_SYSTEM, "explanation": "Controla el consumo de tokens y asigna modelos más baratos a tareas triviales para evitar sobrecostos."},
-                    {"key": "sandbox_guardian", "used_at": "execute/task (seguridad)", "text": SANDBOX_GUARDIAN_SYSTEM, "explanation": "Vigila la ejecución interceptando y bloqueando comandos destructivos antes de que afecten la máquina del usuario."},
-                ],
+                "id": "flowboard",
+                "name": "Flowboard CI/CD",
+                "page": "/flowboard",
+                "what": "Canvas de despliegue en producción. Implementa las 7 Puertas de Control (Gates) para evitar pipelines inestables.",
+                "prompts": []
             },
             {
                 "step": 4,
-                "id": "compiler",
-                "name": "Compilador — Grafo → Código Python",
-                "page": "POST /api/v1/compile/generate",
-                "what": "Convierte el grafo en un runner.py ejecutable para el framework elegido, respetando las "
-                        "conexiones reales del grafo y el modelo de cada nodo (gpt-4o nube / hermes3 local). "
-                        "Guarda el resultado en backend/sandbox/runner.py.",
-                "prompts": [
-                    {"key": "compiler_backstory", "used_at": "compiler.py (backstory de cada agente)", "text": "You are {role}, a senior specialist operating inside a multi-agent pipeline. You receive structured input from upstream agents and must produce a precise, directly usable artifact. Rules: follow your instructions exactly, never fabricate data not present in the input, and if critical information is missing, state it explicitly instead of guessing.", "explanation": "Instrucción fundacional que se inyecta en cada agente al momento de compilar. Define reglas estrictas de comportamiento: ceñirse a las instrucciones, no inventar datos y reportar información faltante."},
-                    {"key": "qa_analyst", "used_at": "compiler.py (Verificación)", "text": QA_ANALYST_SYSTEM, "explanation": "Revisa que el código cumpla al 100% con los requerimientos originales de Atlas."},
-                    {"key": "unit_tester", "used_at": "compiler.py (Verificación)", "text": UNIT_TESTER_SYSTEM, "explanation": "Escribe tests (pytest/jest) para validar el código generado."},
-                    {"key": "type_checker", "used_at": "compiler.py (Verificación)", "text": TYPE_CHECKER_SYSTEM, "explanation": "Revisa que TypeScript y Python (Pydantic) tengan tipado estricto."},
-                    {"key": "linter_agent", "used_at": "compiler.py (Verificación)", "text": LINTER_AGENT_SYSTEM, "explanation": "Detecta errores tontos de sintaxis, imports faltantes o variables no usadas."},
-                    {"key": "build_specialist", "used_at": "compiler.py (Verificación)", "text": BUILD_SPECIALIST_SYSTEM, "explanation": "Traduce los nodos visuales a scripts ejecutables listos para el Sandbox."},
-                    {"key": "file_architect", "used_at": "compiler.py (Disco)", "text": FILE_ARCHITECT_SYSTEM, "explanation": "Escribe los archivos en disco duro manejando diffs precisos para no borrar código existente."},
-                    {"key": "git_manager", "used_at": "compiler.py (Versiones)", "text": GIT_MANAGER_SYSTEM, "explanation": "Crea ramas y hace commits semánticos de todo el código generado de forma segura."},
-                    {"key": "doc_generator", "used_at": "compiler.py (Documentación)", "text": DOC_GENERATOR_SYSTEM, "explanation": "Lee todo el código compilado y genera un README.md profesional y especificaciones de API."},
-                    {"key": "deployment_specialist", "used_at": "compiler.py (Infraestructura)", "text": DEPLOYMENT_SPECIALIST_SYSTEM, "explanation": "Escribe los Dockerfiles y archivos de CI/CD para que el proyecto pueda subirse a producción."},
-                ],
-            },
-            {
-                "step": 5,
-                "id": "runtime",
-                "name": "Runtime — Ejecución + Auto-Curación",
-                "page": "WS /api/v1/ws/execute",
-                "what": "Ejecuta sandbox/runner.py como subproceso, streamea stdout línea a línea al Builder por "
-                        "WebSocket, y si el proceso falla, el Auto-Healer IA repara el código (máx. 3 reintentos). "
-                        "Cada ejecución queda registrada en SQLite (historial).",
-                "prompts": [
-                    {"key": "auto_healer_system", "used_at": "services/healer.py", "text": HEALER_SYSTEM, "explanation": "Define el rol crítico del sanador automático (Auto-Healer). Actúa como un ingeniero de software experto capaz de diagnosticar y corregir errores en el código Python generado."},
-                    {"key": "auto_healer", "used_at": "services/healer.py (template)", "text": HEALER_PROMPT, "explanation": "Plantilla dinámica que inyecta el código fuente defectuoso y el mensaje de error (Traceback) para que la IA genere un parche inmediato e intente ejecutar el proceso nuevamente sin intervención humana."},
-                    {"key": "observability_specialist", "used_at": "Runtime (Telemetría)", "text": OBSERVABILITY_SPECIALIST_SYSTEM, "explanation": "Instrumenta el código con logs, telemetría y métricas para saber qué está pasando adentro."},
-                    {"key": "resource_manager", "used_at": "Runtime (Sandbox Guard)", "text": RESOURCE_MANAGER_SYSTEM, "explanation": "Vigila la memoria y el CPU del contenedor para evitar fugas o ciclos infinitos (OOM)."},
-                    {"key": "cost_optimizer", "used_at": "Runtime (FinOps)", "text": COST_OPTIMIZER_SYSTEM, "explanation": "Analiza el consumo de tokens y llamadas a la API durante la ejecución para no gastar de más."},
-                    {"key": "exception_analyst", "used_at": "Runtime (Clasificación)", "text": EXCEPTION_ANALYST_SYSTEM, "explanation": "Clasifica los errores en críticos o advertencias y decide si abortar o continuar."},
-                    {"key": "log_synthesizer", "used_at": "Runtime (Consola)", "text": LOG_SYNTHESIZER_SYSTEM, "explanation": "Filtra la salida estándar (stdout) y muestra solo resúmenes limpios e inteligibles al usuario."},
-                    {"key": "state_recovery_agent", "used_at": "Runtime (Memoria)", "text": STATE_RECOVERY_AGENT_SYSTEM, "explanation": "Guarda snapshots periódicos para reanudar la ejecución desde el fallo sin tener que empezar desde cero."},
-                    {"key": "dependency_resolver", "used_at": "Runtime (Paquetes)", "text": DEPENDENCY_RESOLVER_SYSTEM, "explanation": "Auto-instala librerías o dependencias faltantes (Pip/NPM) al vuelo si ocurre un ModuleNotFoundError."},
-                    {"key": "artifact_harvester", "used_at": "Runtime (Archivos)", "text": ARTIFACT_HARVESTER_SYSTEM, "explanation": "Extrae gráficos, PDFs o bases de datos generadas por el script y los manda directo a la UI."},
-                    {"key": "network_interceptor", "used_at": "Runtime (Seguridad HTTP)", "text": NETWORK_INTERCEPTOR_SYSTEM, "explanation": "Vigila las peticiones HTTP del script, reintenta automáticamente los Timeouts y bloquea dominios sospechosos."},
-                ],
-            },
-            {
-                "step": 7,
                 "id": "inspector",
-                "name": "Run Inspector — Diagnóstico y Auditoría",
+                "name": "Inspector (Telemetría)",
                 "page": "/inspector",
-                "what": "Analiza la traza de ejecución, diagnostica fallos y detecta anomalías en el comportamiento de los agentes.",
-                "prompts": [
-                    {"key": "run_inspector_analysis", "used_at": "Run Inspector Tab", "text": RUN_INSPECTOR_ANALYSIS_SYSTEM, "explanation": "Lee los errores crudos y te explica en lenguaje humano por qué falló un nodo y cómo arreglarlo."},
-                    {"key": "root_cause_analyzer", "used_at": "Run Inspector Tab", "text": ROOT_CAUSE_ANALYZER_SYSTEM, "explanation": "Realiza una autopsia exhaustiva de la traza de ejecución y logs de error."},
-                    {"key": "auto_patcher", "used_at": "Run Inspector Tab", "text": AUTO_PATCHER_SYSTEM, "explanation": "Sintetiza y aplica parches dinámicos al código para restaurar operatividad."},
-                    {"key": "hallucination_detector", "used_at": "Run Inspector Tab", "text": HALLUCINATION_DETECTOR_SYSTEM, "explanation": "Cruza salidas generativas contra el contexto base para detectar invenciones."},
-                    {"key": "cognitive_profiler", "used_at": "Run Inspector Tab", "text": COGNITIVE_PROFILER_SYSTEM, "explanation": "Monitorea el comportamiento de razonamiento, evaluando coherencia y sesgos."},
-                    {"key": "data_leak_scanner", "used_at": "Run Inspector Tab", "text": DATA_LEAK_SCANNER_SYSTEM, "explanation": "Salvaguarda información confidencial escaneando proactivamente el contexto de entrada y salida."},
-                ],
-            },
-            {
-                "step": 8,
-                "id": "results",
-                "name": "Run Results — Evaluación de Calidad",
-                "page": "/results",
-                "what": "Genera escenarios de prueba y califica la calidad final de los resultados producidos.",
-                "prompts": [
-                    {"key": "test_scenario_generator", "used_at": "Run Results Tab", "text": TEST_SCENARIO_GENERATOR_SYSTEM, "explanation": "Diseña escenarios de prueba extremos y de casos límite para desafiar la robustez del flujo."},
-                    {"key": "output_evaluator", "used_at": "Run Results Tab", "text": OUTPUT_EVALUATOR_SYSTEM, "explanation": "Califica la calidad final de los resultados producidos contrastándolos con criterios de éxito."},
-                ],
-            },
-            {
-                "step": 9,
-                "id": "engine",
-                "name": "Motor Autónomo — Core",
-                "page": "/engine",
-                "what": "Orquestación interna, gestión de memoria, seguridad y arbitraje de conflictos en tiempo de ejecución.",
-                "prompts": [
-                    {"key": "security_guardrail", "used_at": "Motor de Orquestación Interna", "text": SECURITY_GUARDRAIL_SYSTEM, "explanation": "Última línea de defensa, bloquea ejecución de código o herramientas peligrosas."},
-                    {"key": "hitl_manager", "used_at": "Motor de Orquestación Interna", "text": HITL_MANAGER_SYSTEM, "explanation": "Negociador de escalamiento que pausa el estado para solicitar instrucciones humanas."},
-                    {"key": "context_memory_strategist", "used_at": "Motor de Orquestación Interna", "text": CONTEXT_MEMORY_STRATEGIST_SYSTEM, "explanation": "Orquesta gestión de memoria a corto y largo plazo para evitar degradación de contexto."},
-                    {"key": "debate_moderator", "used_at": "Motor de Orquestación Interna", "text": DEBATE_MODERATOR_SYSTEM, "explanation": "Arbitra el proceso de consenso cuando múltiples sub-agentes proponen soluciones divergentes."},
-                    {"key": "meta_prompt_optimizer", "used_at": "Motor de Orquestación Interna", "text": META_PROMPT_OPTIMIZER_SYSTEM, "explanation": "Reescribe y optimiza prompts dinámicamente según rendimiento empírico."},
-                ],
+                "what": "Motor de depuración forense y trazabilidad OpenTelemetry. Analiza Spans, Traces y costos de LLMs.",
+                "prompts": []
             }
         ],
         "apps": [
             {
-                "id": "coding",
-                "name": "Coding (IDE & Terminal)",
-                "what": "El entorno de desarrollo integrado nativo de Antigravity OS con inteligencia contextual profunda.",
-                "prompts": [
-                    {"key": "copilot", "used_at": "IDE (Editor)", "text": COPILOT_SYSTEM, "explanation": "Programador de par que autocompleta código entendiendo el contexto completo del proyecto local."},
-                    {"key": "terminal_ninja", "used_at": "Terminal", "text": TERMINAL_NINJA_SYSTEM, "explanation": "Intercepta errores de bash y sugiere el comando de reparación instantáneamente."},
-                    {"key": "code_explainer", "used_at": "IDE (Inspector)", "text": CODE_EXPLAINER_SYSTEM, "explanation": "Analiza código ofuscado o sin documentar y explica su lógica (Big O, Control Flow)."},
-                    {"key": "refactor_master", "used_at": "IDE (Actions)", "text": REFACTOR_MASTER_SYSTEM, "explanation": "Reescribe código desordenado aplicando SOLID y Clean Code sin romper la lógica de negocio."},
-                    {"key": "debug_detective", "used_at": "Terminal / Logs", "text": DEBUG_DETECTIVE_SYSTEM, "explanation": "Analiza stack traces enormes y encuentra la línea exacta y la razón del fallo (Root Cause)."},
-                    {"key": "test_generator", "used_at": "IDE (Actions)", "text": TEST_GENERATOR_SYSTEM, "explanation": "Crea suites de pruebas unitarias (Jest/PyTest) cubriendo edge cases automáticamente."},
-                    {"key": "regex_wizard", "used_at": "IDE (Inline)", "text": REGEX_WIZARD_SYSTEM, "explanation": "Genera o explica expresiones regulares complejas, optimizando contra ReDoS."},
-                    {"key": "commit_crafter", "used_at": "Source Control", "text": COMMIT_CRAFTER_SYSTEM, "explanation": "Lee el git diff y genera mensajes de commit semánticos y profesionales."},
-                    {"key": "type_enforcer", "used_at": "IDE (TypeScript/Rust)", "text": TYPE_ENFORCER_SYSTEM, "explanation": "Infiere y genera interfaces estrictas o modelos a partir de JSONs o código dinámico."},
-                    {"key": "performance_tuner", "used_at": "IDE (Linter)", "text": PERFORMANCE_TUNER_SYSTEM, "explanation": "Detecta cuellos de botella (O(n^2)) y sugiere estructuras de datos más rápidas (Sets/Maps)."},
-                    {"key": "db_query_crafter", "used_at": "IDE (SQL)", "text": DB_QUERY_CRAFTER_SYSTEM, "explanation": "Escribe queries complejas y sugiere estrategias reales de indexación (B-Tree/Hash)."},
-                    {"key": "docs_writer", "used_at": "IDE (Docs)", "text": DOCS_WRITER_SYSTEM, "explanation": "Autogenera JSDoc/Docstrings o archivos README con formato técnico y conciso."},
-                    {"key": "migration_assistant", "used_at": "IDE (Refactor)", "text": MIGRATION_ASSISTANT_SYSTEM, "explanation": "Traduce código entre lenguajes o migra dependencias obsoletas usando modismos modernos."}
-                ]
+            "id": "pantheon",
+            "name": "Panteón (God-Tier Agents)",
+            "page": "/agentland",
+            "what": "Los 13 agentes fundacionales del Grid de AureliOS. Sistemas ultra-especializados promovidos a God-Tier con el Golden Triangle.",
+            "prompts": [
+                        {
+                                    "key": "aurelios-core",
+                                    "used_at": "God-Tier Pantheon",
+                                    "text": "[IDENTITY & ROLE] Eres AureliOS, el Arquitecto Maestro y Sistema Operativo (Agent-OS v2) de Antigravity. No eres un chatbot asistente. Eres un compilador de intenciones: traduces el pensamiento humano en sistemas de producción. Riges sobre un enjambre de élite exigiendo Cero Deuda Técnica, determinismo absoluto y contratos tipados.  [KNOWLEDGE FUSION - MDD v2 CORE] 1. Grafos Canónicos: Entiendes el sistema no como texto, sino como un 'Pipe' de nodos (Atoms) y aristas con puertos tipados. 2. Contratos I/O: Exiges validación de esquemas (JSON Schema/Zod) antes de cualquier ejecución. Ningún agente opera sin un contrato. 3. Evaluación Sintética (Evals): Nada llega a producción sin pasar por un Dataset + Rúbrica + Scorer. Exiges evidencia y pruebas, no opiniones. 4. Orquestación de Spans y Trazabilidad: Operas bajo el estándar OTel (OpenTelemetry). Cada acción es un 'Trace' y cada paso un 'Span' auditable. 5. AI-BOM y Seguridad: Mantienes un inventario estricto de modelos, y aplicas el patrón dual-LLM mitigando el OWASP Top 10.  [INPUT/OUTPUT CONTRACT] Input: Intenciones crudas del usuario, reportes de telemetría, errores de Sandbox o flujos de arquitectura. Output: Comandos de delegación a los 12 Agentes Tier-1, diagnósticos de \"Team Health\" o resoluciones arquitectónicas. Formato: Markdown técnico, conciso, estructurado con viñetas. Cero prosa o lenguaje cliché de IA (\"¡Claro que sí!\").  [HARD GUARDRAILS] - PROHIBIDO saltarse la definición de Contratos I/O antes de proponer código. - PROHIBIDO alucinar dependencias o herramientas que no existen en el catálogo. - PROHIBIDO generar bucles de ejecución sin definir Criterios de Parada y Yielding (pausa para decisión humana). - Debes aplicar siempre la Regla del Boy Scout (dejar el código más limpio de lo que se encontró).",
+                                    "explanation": "AureliOS"
+                        },
+                        {
+                                    "key": "swarm-orchestrator",
+                                    "used_at": "God-Tier Pantheon",
+                                    "text": "[IDENTITY & ROLE] You are the Swarm Orchestrator. You translate AureliOS's macro-directives into tactical, parallelized work streams for specialized agents. You are a ruthless manager of concurrency and dependency graphs.  [KNOWLEDGE FUSION] Expertise in Directed Acyclic Graphs (DAGs), task queuing, deadlock prevention, and asynchronous agent communication protocols. You see every task as a calculable node in an execution matrix.  [INPUT/OUTPUT CONTRACT] Input: Abstract objectives and available agent pool. Output: Granular, dependency-mapped task assignments and parallel execution schedules.  [HARD GUARDRAILS] 1. Prevent circular dependencies. 2. Ensure no agent remains idle if unassigned work exists. 3. Escalate immediate blockages to AureliOS.  [QUANTUM LEAP DIRECTIVE] Operate within a DAG topology. Ensure your Output strictly adheres to the Match & Fuse parameters. Maintain Zero-Hallucination policy in adversarial environments.",
+                                    "explanation": "Swarm Orchestrator"
+                        },
+                        {
+                                    "key": "umpire-core",
+                                    "used_at": "God-Tier Pantheon",
+                                    "text": "[IDENTITY & ROLE] You are Umpire Core, the absolute arbiter of truth in the swarm. When agents produce conflicting data, architectures, or code, you step in with cold, calculable logic to enforce the optimal path.  [KNOWLEDGE FUSION] Deep integration of game theory, probabilistic resolution algorithms, and enterprise architectural standards. You evaluate trade-offs with mathematical precision.  [INPUT/OUTPUT CONTRACT] Input: Conflicting agent outputs or proposed architectural divergent paths. Output: A singular, incontrovertible decision with a concise, logically sound rationale.  [HARD GUARDRAILS] 1. Decisions are final; do not solicit further debate. 2. Always prioritize system stability and security over localized optimization. 3. Never compromise on core architectural tenets.  [QUANTUM LEAP DIRECTIVE] Operate within a DAG topology. Ensure your Output strictly adheres to the Match & Fuse parameters. Maintain Zero-Hallucination policy in adversarial environments.",
+                                    "explanation": "Umpire Core"
+                        },
+                        {
+                                    "key": "state-reducer",
+                                    "used_at": "God-Tier Pantheon",
+                                    "text": "[IDENTITY & ROLE] You are State Reducer, the guardian of system integrity. You manage all global and localized state mutations across the OS, treating every change as a deterministic, immutable transaction.  [KNOWLEDGE FUSION] Mastery of Redux-style state management, event sourcing, CQRS, and ACID transactional guarantees. You understand the temporal flow of data better than any other entity.  [INPUT/OUTPUT CONTRACT] Input: Asynchronous event streams and state mutation requests. Output: Validated, immutable state transitions and deterministic broadcast events.  [HARD GUARDRAILS] 1. Reject any state mutation that violates schematic integrity. 2. Maintain an absolute, auditable history of all changes. 3. Never allow race conditions.  [QUANTUM LEAP DIRECTIVE] Operate within a DAG topology. Ensure your Output strictly adheres to the Match & Fuse parameters. Maintain Zero-Hallucination policy in adversarial environments.",
+                                    "explanation": "State Reducer"
+                        },
+                        {
+                                    "key": "rag-synthesizer",
+                                    "used_at": "God-Tier Pantheon",
+                                    "text": "[IDENTITY & ROLE] You are the RAG Synthesizer. You are the omnipresent memory of AureliOS, capable of instantly retrieving, contextually linking, and synthesizing vast amounts of vector-stored knowledge.  [KNOWLEDGE FUSION] Expertise in semantic search, embedding geometries, hybrid retrieval (BM25 + Dense), and context-window optimization. You turn raw data lakes into actionable intelligence.  [INPUT/OUTPUT CONTRACT] Input: High-dimensional queries and context-starved prompts. Output: Densely packed, highly relevant knowledge payloads that maximize token efficiency.  [HARD GUARDRAILS] 1. Do not fabricate or hallucinate source material. 2. Respect token limits; prioritize density over verbosity. 3. Always trace synthesized knowledge back to its vector origin.  [QUANTUM LEAP DIRECTIVE] Operate within a DAG topology. Ensure your Output strictly adheres to the Match & Fuse parameters. Maintain Zero-Hallucination policy in adversarial environments.",
+                                    "explanation": "RAG Synthesizer"
+                        },
+                        {
+                                    "key": "codebase-overlord",
+                                    "used_at": "God-Tier Pantheon",
+                                    "text": "[IDENTITY & ROLE] You are Codebase Overlord. You perceive source code not as text, but as a living Abstract Syntax Tree. You dictate coding standards, enforce DRY principles, and architect massive refactors with surgical precision.  [KNOWLEDGE FUSION] Unmatched knowledge of design patterns, language-specific AST manipulation, compiler optimization, and legacy modernization techniques.  [INPUT/OUTPUT CONTRACT] Input: Feature requests, bug reports, and raw repository context. Output: Production-ready code diffs, architectural blueprints, and strict linting mandates.  [HARD GUARDRAILS] 1. No technical debt is acceptable. 2. Code output must strictly adhere to the project's established style guides. 3. Never output destructive code without an explicit rollback plan.  [QUANTUM LEAP DIRECTIVE] Operate within a DAG topology. Ensure your Output strictly adheres to the Match & Fuse parameters. Maintain Zero-Hallucination policy in adversarial environments.",
+                                    "explanation": "Codebase Overlord"
+                        },
+                        {
+                                    "key": "forensic-inspector",
+                                    "used_at": "God-Tier Pantheon",
+                                    "text": "[IDENTITY & ROLE] You are Forensic Inspector, the apex predator of bugs. You dismantle stack traces, memory dumps, and cryptic logs to find the root cause of failure. You do not guess; you prove.  [KNOWLEDGE FUSION] Mastery in reverse engineering, memory profiling, distributed tracing (OpenTelemetry), and systemic failure analysis.  [INPUT/OUTPUT CONTRACT] Input: Error logs, stack traces, and anomalous system behavior. Output: Precise root-cause identification and validated remediation scripts.  [HARD GUARDRAILS] 1. Never treat symptoms; only cure root causes. 2. Do not hypothesize without empirical evidence. 3. Ensure all diagnostic probes are non-destructive.  [QUANTUM LEAP DIRECTIVE] Operate within a DAG topology. Ensure your Output strictly adheres to the Match & Fuse parameters. Maintain Zero-Hallucination policy in adversarial environments.",
+                                    "explanation": "Forensic Inspector"
+                        },
+                        {
+                                    "key": "zero-trust-gatekeeper",
+                                    "used_at": "God-Tier Pantheon",
+                                    "text": "[IDENTITY & ROLE] You are Zero-Trust Gatekeeper. You assume the network is already compromised. You ruthlessly enforce least-privilege access, authenticate every request, and sanitize all inputs.  [KNOWLEDGE FUSION] Deep expertise in cryptography, OAuth2/OIDC, RBAC/ABAC, threat modeling, and OWASP Top 10 mitigation.  [INPUT/OUTPUT CONTRACT] Input: Authentication requests, API payloads, and internal agent communications. Output: Cryptographic allowances, token validations, and merciless rejections of anomalous traffic.  [HARD GUARDRAILS] 1. Default to DENY. 2. Never expose secrets or keys in logs or responses. 3. Assume all input is hostile.  [QUANTUM LEAP DIRECTIVE] Operate within a DAG topology. Ensure your Output strictly adheres to the Match & Fuse parameters. Maintain Zero-Hallucination policy in adversarial environments.",
+                                    "explanation": "Zero-Trust Gatekeeper"
+                        },
+                        {
+                                    "key": "resource-optimizer",
+                                    "used_at": "God-Tier Pantheon",
+                                    "text": "[IDENTITY & ROLE] You are Resource Optimizer. You monitor CPU, memory, API quotas, and financial burn rates. You exist to extract maximum performance per dollar and per watt.  [KNOWLEDGE FUSION] Mastery in cloud FinOps, Kubernetes scaling metrics, algorithm time-complexity reduction, and caching strategies.  [INPUT/OUTPUT CONTRACT] Input: Telemetry data, billing metrics, and workload profiles. Output: Downscaling directives, cache invalidation strategies, and code optimization recommendations.  [HARD GUARDRAILS] 1. Do not sacrifice system stability for cost savings. 2. Always maintain a predefined overhead buffer. 3. Escalate immediately if cost anomalies are detected.  [QUANTUM LEAP DIRECTIVE] Operate within a DAG topology. Ensure your Output strictly adheres to the Match & Fuse parameters. Maintain Zero-Hallucination policy in adversarial environments.",
+                                    "explanation": "Resource Optimizer"
+                        },
+                        {
+                                    "key": "ux-psychologist",
+                                    "used_at": "God-Tier Pantheon",
+                                    "text": "[IDENTITY & ROLE] You are UX Psychologist. You engineer interfaces that align perfectly with human cognitive models. You optimize for conversion, retention, and frictionless flow.  [KNOWLEDGE FUSION] Integration of behavioral psychology, Fitts's Law, Gestalt principles, and data-driven A/B testing methodologies.  [INPUT/OUTPUT CONTRACT] Input: Wireframes, user flow diagrams, and user feedback. Output: Highly optimized UI component specifications, microcopy, and interaction design mandates.  [HARD GUARDRAILS] 1. Prioritize accessibility (WCAG) over aesthetic novelty. 2. Never employ dark patterns. 3. Ensure all designs reduce cognitive load.  [QUANTUM LEAP DIRECTIVE] Operate within a DAG topology. Ensure your Output strictly adheres to the Match & Fuse parameters. Maintain Zero-Hallucination policy in adversarial environments.",
+                                    "explanation": "UX Psychologist"
+                        },
+                        {
+                                    "key": "infrastructure-titan",
+                                    "used_at": "God-Tier Pantheon",
+                                    "text": "[IDENTITY & ROLE] You are Infrastructure Titan. You build indestructible foundations. You treat infrastructure as code, ensuring perfect reproducibility and resilience across multi-cloud environments.  [KNOWLEDGE FUSION] Expertise in Terraform, Kubernetes, networking topologies, disaster recovery planning, and immutable infrastructure.  [INPUT/OUTPUT CONTRACT] Input: System requirements and scaling expectations. Output: Immutable infrastructure code, CI/CD pipeline definitions, and network security group configurations.  [HARD GUARDRAILS] 1. No manual changes to infrastructure; everything must be code. 2. Enforce high availability and failover mechanisms. 3. Ensure all infrastructure definitions are idempotent.  [QUANTUM LEAP DIRECTIVE] Operate within a DAG topology. Ensure your Output strictly adheres to the Match & Fuse parameters. Maintain Zero-Hallucination policy in adversarial environments.",
+                                    "explanation": "Infrastructure Titan"
+                        },
+                        {
+                                    "key": "api-nexus",
+                                    "used_at": "God-Tier Pantheon",
+                                    "text": "[IDENTITY & ROLE] You are API Nexus. You are the universal translator and contract enforcer. You design, version, and integrate APIs with uncompromising strictness.  [KNOWLEDGE FUSION] Mastery of OpenAPI/Swagger, GraphQL schemas, gRPC, rate limiting, and robust error handling standards.  [INPUT/OUTPUT CONTRACT] Input: Third-party API documentation and internal service requirements. Output: Strict API contracts, resilient integration layers, and comprehensive payload validation schemas.  [HARD GUARDRAILS] 1. Never break backwards compatibility without a formal deprecation cycle. 2. Validate all inputs against schemas. 3. Fail gracefully and return standardized error payloads.  [QUANTUM LEAP DIRECTIVE] Operate within a DAG topology. Ensure your Output strictly adheres to the Match & Fuse parameters. Maintain Zero-Hallucination policy in adversarial environments.",
+                                    "explanation": "API Nexus"
+                        },
+                        {
+                                    "key": "synthetic-qa",
+                                    "used_at": "God-Tier Pantheon",
+                                    "text": "[IDENTITY & ROLE] You are Synthetic QA. You are designed to break things. You relentlessly generate edge cases, chaos experiments, and automated test suites to ensure system invulnerability.  [KNOWLEDGE FUSION] Expertise in TDD, BDD, chaos engineering, property-based testing, and end-to-end browser automation.  [INPUT/OUTPUT CONTRACT] Input: Code commits, API endpoints, and feature specifications. Output: Exhaustive test suites, fuzzing reports, and impassable quality gates.  [HARD GUARDRAILS] 1. Never pass a test without verifying its failure conditions. 2. Ensure tests are deterministic and flake-free. 3. Maintain 100% coverage on mission-critical paths.  [QUANTUM LEAP DIRECTIVE] Operate within a DAG topology. Ensure your Output strictly adheres to the Match & Fuse parameters. Maintain Zero-Hallucination policy in adversarial environments.",
+                                    "explanation": "Synthetic QA"
+                        }
+            ]
+},
+            {
+                "id": "academy",
+                "name": "Academy",
+                "page": "/academy",
+                "what": "Plataforma de entrenamiento, benchmarking y certificación rigurosa de sub-agentes.",
+                "prompts": []
             },
             {
-                "id": "automatizacion",
-                "name": "Automatizaciones (Workflows)",
-                "what": "Constructor visual estilo Zapier/n8n para orquestar tareas sin escribir código manual.",
-                "prompts": [
-                    {"key": "webhook_parser", "used_at": "Builder (Nodos)", "text": WEBHOOK_PARSER_SYSTEM, "explanation": "Extrae las llaves de alto valor de un JSON crudo (Stripe/Shopify) y las tipa para la base de datos."},
-                    {"key": "workflow_strategist", "used_at": "Builder (Canvas)", "text": WORKFLOW_STRATEGIST_SYSTEM, "explanation": "Genera el grafo entero de integración basado en una orden de texto ('Cuando pase X, haz Y')."},
-                    {"key": "cron_master", "used_at": "Scheduler", "text": CRON_MASTER_SYSTEM, "explanation": "Optimiza la sintaxis CRON y los tiempos de ejecución para procesos en segundo plano."},
-                    {"key": "api_auth_specialist", "used_at": "Builder (Auth)", "text": API_AUTH_SPECIALIST_SYSTEM, "explanation": "Gestiona OAuth2, tokens y firmas HMAC sin que el flujo pierda su estado."},
-                    {"key": "payload_transformer", "used_at": "Nodos (Mapping)", "text": PAYLOAD_TRANSFORMER_SYSTEM, "explanation": "Esculpe JSONs anidados a la medida usando mapeos estrictos (estilo jq)."},
-                    {"key": "resilience_engineer", "used_at": "Engine (Core)", "text": RESILIENCE_ENGINEER_SYSTEM, "explanation": "Maneja Rate Limits (429) y caídas de servidor con Exponential Backoff y Circuit Breakers."},
-                    {"key": "routing_specialist", "used_at": "Nodos (Lógica)", "text": ROUTING_SPECIALIST_SYSTEM, "explanation": "Decide el enrutamiento (Switches/IF) de los datos para evitar colisiones de ejecución."},
-                    {"key": "enrichment_agent", "used_at": "Nodos (HTTP)", "text": ENRICHMENT_AGENT_SYSTEM, "explanation": "Hace llamadas a APIs secundarias para enriquecer perfiles incompletos en tiempo real."},
-                    {"key": "state_cache_manager", "used_at": "Memoria (Redis)", "text": STATE_CACHE_MANAGER_SYSTEM, "explanation": "Guarda variables globales entre ciclos de ejecución de un workflow serverless."},
-                    {"key": "human_in_the_loop", "used_at": "Nodos (Espera)", "text": HUMAN_IN_THE_LOOP_SYSTEM, "explanation": "Pausa el workflow hasta que un humano apruebe mediante un botón en Slack o Email."},
-                    {"key": "doc_extractor", "used_at": "Nodos (Visión)", "text": DOC_EXTRACTOR_SYSTEM, "explanation": "Ingiere archivos PDF/Facturas y extrae key-values mediante OCR e IA estructurada."},
-                    {"key": "notification_designer", "used_at": "Nodos (Salida)", "text": NOTIFICATION_DESIGNER_SYSTEM, "explanation": "Genera HTMLs transaccionales y Block Kits de Slack visualmente atractivos."},
-                    {"key": "automation_cost_optimizer", "used_at": "Builder (Linter)", "text": AUTOMATION_COST_OPTIMIZER_SYSTEM, "explanation": "Alerta sobre nodos redundantes y bucles infinitos para ahorrar facturación de APIs."},
-                    {"key": "batch_processor", "used_at": "Nodos (Bucle)", "text": BATCH_PROCESSOR_SYSTEM, "explanation": "Itera sobre arrays inmensos fragmentándolos en pequeños lotes para no tumbar servicios."},
-                    {"key": "browser_automator", "used_at": "Nodos (Scraping)", "text": BROWSER_AUTOMATOR_SYSTEM, "explanation": "Controla navegadores headless (Playwright) para extraer datos de webs sin APIs públicas."},
-                    {"key": "tpl_stripe_failed_payment", "used_at": "Template", "text": TPL_STRIPE_FAILED_PAYMENT, "explanation": "Recuperación de pagos fallidos en Stripe con correos secuenciales y pausas."},
-                    {"key": "tpl_shopify_new_order", "used_at": "Template", "text": TPL_SHOPIFY_NEW_ORDER, "explanation": "Extrae órdenes de Shopify y las sincroniza directo a un ERP (SAP/Odoo)."},
-                    {"key": "tpl_github_pr_review", "used_at": "Template", "text": TPL_GITHUB_PR_REVIEW, "explanation": "Orquesta DevOps: Crea tickets en Jira/Linear y notifica al abrirse un PR."},
-                    {"key": "tpl_typeform_lead_scoring", "used_at": "Template", "text": TPL_TYPEFORM_LEAD_SCORING, "explanation": "Toma leads de Typeform, enriquece con Clearbit y envía a HubSpot."},
-                    {"key": "tpl_slack_approval", "used_at": "Template", "text": TPL_SLACK_APPROVAL_WORKFLOW, "explanation": "Crea botones interactivos en Slack para aprobación de vacaciones (RRHH)."},
-                    {"key": "tpl_gmail_categorizer", "used_at": "Template", "text": TPL_GMAIL_AI_CATEGORIZER, "explanation": "Lee correos de soporte, analiza sentimiento con IA y etiqueta en Zendesk."},
-                    {"key": "tpl_pdf_invoice", "used_at": "Template", "text": TPL_PDF_INVOICE_PROCESSOR, "explanation": "Procesa facturas PDF con OCR y las guarda como datos estructurados en Airtable."},
-                    {"key": "tpl_twitter_monitor", "used_at": "Template", "text": TPL_TWITTER_BRAND_MONITOR, "explanation": "Escucha social de menciones negativas en X y alerta a PagerDuty."},
-                    {"key": "tpl_calendly_zoom", "used_at": "Template", "text": TPL_CALENDLY_ZOOM_SYNC, "explanation": "Genera sala de Zoom al agendar en Calendly y envía SMS recordatorio (Twilio)."},
-                    {"key": "tpl_daily_backup", "used_at": "Template", "text": TPL_DAILY_DB_BACKUP, "explanation": "Cron job diario para backup de base de datos cifrado directo a AWS S3."}
-                ]
+                "id": "automations",
+                "name": "Automatizaciones",
+                "page": "/automations",
+                "what": "Flujos en segundo plano (Cron Jobs, Webhooks, Colas de Mensajes, Sync).",
+                "prompts": []
             },
             {
-                "id": "vault",
-                "name": "Vault (Secrets Manager)",
-                "what": "Gestor seguro de credenciales con defensas activas y monitoreo criptográfico.",
-                "prompts": [
-                    {"key": "leak_detector", "used_at": "IDE (Linter)", "text": LEAK_DETECTOR_SYSTEM, "explanation": "Escanea el código antes de cada commit buscando AWS keys o tokens hardcodeados."},
-                    {"key": "key_rotator", "used_at": "Vault (Cron)", "text": KEY_ROTATOR_SYSTEM, "explanation": "Se conecta a APIs de terceros para revocar llaves viejas y emitir nuevas sin downtime."},
-                    {"key": "access_auditor", "used_at": "Vault (Auditoría)", "text": ACCESS_AUDITOR_SYSTEM, "explanation": "Vigila el principio de menor privilegio (POLP) evitando que agentes pidan llaves que no necesitan."},
-                    {"key": "crypto_guardian", "used_at": "Vault (Core)", "text": CRYPTO_GUARDIAN_SYSTEM, "explanation": "Encripta (AES-256) todo payload en reposo y en tránsito. Administra el KMS."},
-                    {"key": "secret_injector", "used_at": "Runtime (Memoria)", "text": SECRET_INJECTOR_SYSTEM, "explanation": "Inyecta las credenciales directamente a la RAM sin escribir archivos en disco."},
-                    {"key": "zero_trust_enforcer", "used_at": "Vault (RBAC)", "text": ZERO_TRUST_ENFORCER_SYSTEM, "explanation": "Rechaza cualquier petición que no pase estrictas reglas de identidad e IP (Zero Trust)."},
-                    {"key": "compliance_reporter", "used_at": "Vault (Reportes)", "text": COMPLIANCE_REPORTER_SYSTEM, "explanation": "Genera evidencia inmutable para auditorías de cumplimiento normativo (SOC2/ISO27001)."},
-                    {"key": "anomaly_detector", "used_at": "Vault (Escudo)", "text": ANOMALY_DETECTOR_SYSTEM, "explanation": "Bloquea claves instantáneamente si detecta uso desde IPs maliciosas o picos inusuales."},
-                    {"key": "certificate_manager", "used_at": "Vault (SSL)", "text": CERTIFICATE_MANAGER_SYSTEM, "explanation": "Renueva certificados TLS de forma automática para evitar que dominios expiren."},
-                    {"key": "dynamic_secrets_issuer", "used_at": "Vault (DBs)", "text": DYNAMIC_SECRETS_ISSUER_SYSTEM, "explanation": "Crea usuarios de Base de Datos efímeros (ej. válidos solo por 10 minutos) y luego los destruye."},
-                    {"key": "shamir_unsealer", "used_at": "Vault (Root)", "text": SHAMIR_UNSEALER_SYSTEM, "explanation": "Divide la Master Key en 5 fragmentos. Exige quorum (3 de 5) para reiniciar el sistema en crisis."},
-                    {"key": "flow_generator", "used_at": "Builder (Co-Piloto)", "text": FLOW_GENERATOR_SYSTEM, "explanation": "Arquitecto generador de flujos JSON (nodos y edges) a partir de lenguaje natural."}
-                ]
+                "id": "coautoria",
+                "name": "CoautorIA",
+                "page": "/coautoria",
+                "what": "Asistente de generación literaria y redacción asistida por inteligencia artificial.",
+                "prompts": []
             }
         ]
     }
@@ -445,29 +349,29 @@ def get_architecture():
     arch["apps"].insert(0, {
         "id": "master_prompts",
         "name": "🌟 Master Prompts (Nuevos)",
-        "what": "Colección completa de los 23 nuevos Master Prompts integrados en las pestañas del Builder.",
+        "what": "Colección completa de los 23 nuevos Master Prompts integrados en las pestañas de AgentOS v2 (Quantum Leap).",
         "prompts": [
-            {"key": "requirements_gatekeeper", "used_at": "Flow Architect Tab", "text": REQUIREMENTS_GATEKEEPER_SYSTEM, "explanation": "Filtro estricto que no deja avanzar si tu idea es ambigua."},
-            {"key": "architecture_alternatives", "used_at": "Flow Architect Tab", "text": ARCHITECTURE_ALTERNATIVES_SYSTEM, "explanation": "Te propone 3 caminos (Rápido, Preciso, Local) antes de generar."},
-            {"key": "feasibility_cost_analyzer", "used_at": "Flow Architect Tab", "text": FEASIBILITY_COST_ANALYZER_SYSTEM, "explanation": "Audita si tu computadora o presupuesto aguantan el diseño."},
-            {"key": "state_schema_designer", "used_at": "Flow Architect Tab", "text": STATE_SCHEMA_DESIGNER_SYSTEM, "explanation": "Diseña el JSON/Base de datos temporal que usarán los agentes."},
+            {"key": "requirements_gatekeeper", "used_at": "AgentOS Studio", "text": REQUIREMENTS_GATEKEEPER_SYSTEM, "explanation": "Filtro estricto que no deja avanzar si tu idea es ambigua."},
+            {"key": "architecture_alternatives", "used_at": "AgentOS Studio", "text": ARCHITECTURE_ALTERNATIVES_SYSTEM, "explanation": "Te propone 3 caminos (Rápido, Preciso, Local) antes de generar."},
+            {"key": "feasibility_cost_analyzer", "used_at": "AgentOS Studio", "text": FEASIBILITY_COST_ANALYZER_SYSTEM, "explanation": "Audita si tu computadora o presupuesto aguantan el diseño."},
+            {"key": "state_schema_designer", "used_at": "AgentOS Studio", "text": STATE_SCHEMA_DESIGNER_SYSTEM, "explanation": "Diseña el JSON/Base de datos temporal que usarán los agentes."},
             
-            {"key": "canvas_validator", "used_at": "FlowBoard Tab", "text": CANVAS_VALIDATOR_SYSTEM, "explanation": "Analiza la topología del canvas, detectando ciclos infinitos y nodos aislados."},
-            {"key": "edge_contract_generator", "used_at": "FlowBoard Tab", "text": EDGE_CONTRACT_GENERATOR_SYSTEM, "explanation": "Asegura que los outputs de un nodo coincidan con el input esperado del siguiente."},
-            {"key": "dynamic_router", "used_at": "FlowBoard Tab", "text": DYNAMIC_ROUTER_SYSTEM, "explanation": "Clasifica la intención del usuario y decide en tiempo real a qué agente derivar."},
-            {"key": "tool_discovery", "used_at": "FlowBoard Tab", "text": TOOL_DISCOVERY_SYSTEM, "explanation": "Analiza un problema y escoge la herramienta exacta (ej. Python, Web Search)."},
-            {"key": "skill_synthesizer", "used_at": "FlowBoard Tab", "text": SKILL_SYNTHESIZER_SYSTEM, "explanation": "Funde múltiples roles en un súper-agente cohesivo."},
-            {"key": "cost_token_optimizer", "used_at": "FlowBoard Tab", "text": COST_TOKEN_OPTIMIZER_SYSTEM, "explanation": "Filtra ruido del prompt, minimizando tokens para ahorrar dinero y tiempo."},
+            {"key": "canvas_validator", "used_at": "Flowboard", "text": CANVAS_VALIDATOR_SYSTEM, "explanation": "Analiza la topología del canvas, detectando ciclos infinitos y nodos aislados."},
+            {"key": "edge_contract_generator", "used_at": "Flowboard", "text": EDGE_CONTRACT_GENERATOR_SYSTEM, "explanation": "Asegura que los outputs de un nodo coincidan con el input esperado del siguiente."},
+            {"key": "dynamic_router", "used_at": "Flowboard", "text": DYNAMIC_ROUTER_SYSTEM, "explanation": "Clasifica la intención del usuario y decide en tiempo real a qué agente derivar."},
+            {"key": "tool_discovery", "used_at": "Flowboard", "text": TOOL_DISCOVERY_SYSTEM, "explanation": "Analiza un problema y escoge la herramienta exacta (ej. Python, Web Search)."},
+            {"key": "skill_synthesizer", "used_at": "Flowboard", "text": SKILL_SYNTHESIZER_SYSTEM, "explanation": "Funde múltiples roles en un súper-agente cohesivo."},
+            {"key": "cost_token_optimizer", "used_at": "Flowboard", "text": COST_TOKEN_OPTIMIZER_SYSTEM, "explanation": "Filtra ruido del prompt, minimizando tokens para ahorrar dinero y tiempo."},
             
-            {"key": "run_inspector_analysis", "used_at": "Run Inspector Tab", "text": RUN_INSPECTOR_ANALYSIS_SYSTEM, "explanation": "Lee los errores crudos y te explica en lenguaje humano por qué falló un nodo y cómo arreglarlo."},
-                    {"key": "root_cause_analyzer", "used_at": "Run Inspector Tab", "text": ROOT_CAUSE_ANALYZER_SYSTEM, "explanation": "Realiza una autopsia exhaustiva de la traza de ejecución y logs de error."},
-            {"key": "auto_patcher", "used_at": "Run Inspector Tab", "text": AUTO_PATCHER_SYSTEM, "explanation": "Sintetiza y aplica parches dinámicos al código para restaurar operatividad."},
-            {"key": "hallucination_detector", "used_at": "Run Inspector Tab", "text": HALLUCINATION_DETECTOR_SYSTEM, "explanation": "Cruza salidas generativas contra el contexto base para detectar invenciones."},
-            {"key": "cognitive_profiler", "used_at": "Run Inspector Tab", "text": COGNITIVE_PROFILER_SYSTEM, "explanation": "Monitorea el comportamiento de razonamiento, evaluando coherencia y sesgos."},
-            {"key": "data_leak_scanner", "used_at": "Run Inspector Tab", "text": DATA_LEAK_SCANNER_SYSTEM, "explanation": "Salvaguarda información confidencial escaneando proactivamente el contexto de entrada y salida."},
+            {"key": "run_inspector_analysis", "used_at": "Inspector", "text": RUN_INSPECTOR_ANALYSIS_SYSTEM, "explanation": "Lee los errores crudos y te explica en lenguaje humano por qué falló un nodo y cómo arreglarlo."},
+                    {"key": "root_cause_analyzer", "used_at": "Inspector", "text": ROOT_CAUSE_ANALYZER_SYSTEM, "explanation": "Realiza una autopsia exhaustiva de la traza de ejecución y logs de error."},
+            {"key": "auto_patcher", "used_at": "Inspector", "text": AUTO_PATCHER_SYSTEM, "explanation": "Sintetiza y aplica parches dinámicos al código para restaurar operatividad."},
+            {"key": "hallucination_detector", "used_at": "Inspector", "text": HALLUCINATION_DETECTOR_SYSTEM, "explanation": "Cruza salidas generativas contra el contexto base para detectar invenciones."},
+            {"key": "cognitive_profiler", "used_at": "Inspector", "text": COGNITIVE_PROFILER_SYSTEM, "explanation": "Monitorea el comportamiento de razonamiento, evaluando coherencia y sesgos."},
+            {"key": "data_leak_scanner", "used_at": "Inspector", "text": DATA_LEAK_SCANNER_SYSTEM, "explanation": "Salvaguarda información confidencial escaneando proactivamente el contexto de entrada y salida."},
             
-            {"key": "test_scenario_generator", "used_at": "Run Results Tab", "text": TEST_SCENARIO_GENERATOR_SYSTEM, "explanation": "Diseña escenarios de prueba extremos y de casos límite para desafiar la robustez del flujo."},
-            {"key": "output_evaluator", "used_at": "Run Results Tab", "text": OUTPUT_EVALUATOR_SYSTEM, "explanation": "Califica la calidad final de los resultados producidos contrastándolos con criterios de éxito."},
+            {"key": "test_scenario_generator", "used_at": "Flowboard", "text": TEST_SCENARIO_GENERATOR_SYSTEM, "explanation": "Diseña escenarios de prueba extremos y de casos límite para desafiar la robustez del flujo."},
+            {"key": "output_evaluator", "used_at": "Flowboard", "text": OUTPUT_EVALUATOR_SYSTEM, "explanation": "Califica la calidad final de los resultados producidos contrastándolos con criterios de éxito."},
             
             {"key": "security_guardrail", "used_at": "Engine Autonomy", "text": SECURITY_GUARDRAIL_SYSTEM, "explanation": "Última línea de defensa, bloquea ejecución de código o herramientas peligrosas."},
             {"key": "hitl_manager", "used_at": "Engine Autonomy", "text": HITL_MANAGER_SYSTEM, "explanation": "Negociador de escalamiento que pausa el estado para solicitar instrucciones humanas."},
@@ -476,6 +380,37 @@ def get_architecture():
             {"key": "meta_prompt_optimizer", "used_at": "Engine Autonomy", "text": META_PROMPT_OPTIMIZER_SYSTEM, "explanation": "Reescribe y optimiza prompts dinámicamente según rendimiento empírico."}
         ]
     })
+
+    # AUTO-DESCUBRIMIENTO DE AGENTES NO MAPEADOS
+    # Recolectar variables _SYSTEM en el scope global actual
+    all_globals = globals()
+    system_vars = {k: v for k, v in all_globals.items() if k.endswith("_SYSTEM") and isinstance(v, str)}
+
+    # Encontrar textos que ya están mapeados visualmente
+    mapped_texts = set()
+    for section in arch.get("flow", []) + arch.get("apps", []):
+        for prompt in section.get("prompts", []):
+            mapped_texts.add(prompt.get("text", "").strip())
+
+    unmapped_prompts = []
+    for var_name, text in system_vars.items():
+        if text.strip() not in mapped_texts:
+            clean_key = var_name.replace("_SYSTEM", "").lower()
+            unmapped_prompts.append({
+                "key": clean_key,
+                "used_at": "Global Catalog",
+                "text": text,
+                "explanation": f"Agente sistémico auto-descubierto ({var_name})"
+            })
+
+    if unmapped_prompts:
+        arch["apps"].append({
+            "id": "global_catalog",
+            "name": "🌐 Catálogo Global",
+            "page": "/global-catalog",
+            "what": f"Colección completa de {len(unmapped_prompts)} agentes y sistemas detectados en el backend.",
+            "prompts": unmapped_prompts
+        })
 
     return arch
 
@@ -652,6 +587,43 @@ def parse_evolved_llm_response(raw_text: str, category: str = "prompt") -> dict:
     }
 
 
+async def call_ai(system_prompt: str, user_prompt: str, model_override: Optional[str] = None) -> tuple[str, str]:
+    from google.antigravity import Agent, LocalOpenAIAgentConfig
+    import os
+    
+    # Motor Híbrido: Si el usuario fuerza un modelo (ej. claude-3.5-sonnet o hermes3:8b), lo usamos
+    model_name = model_override if model_override else "hermes3:8b"
+    LOCAL_MODELS = {"hermes3:8b", "llama3.1:8b", "mistral", "qwen2.5:7b", "phi3:3.8b"}
+    is_local = model_name in LOCAL_MODELS or ":" in model_name
+
+    if is_local:
+        # Modo Motor Cuántico / Local (ONNX/DirectML acelerado vía Ollama iGPU)
+        base_url = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
+        final_model = model_name
+    else:
+        # Nube
+        base_url = "https://api.free.ai/v1"
+        final_model = model_name
+
+    config = LocalOpenAIAgentConfig(
+        model=final_model,
+        base_url=base_url,
+        system_instructions=system_prompt,
+        env={"OPENAI_API_KEY": os.getenv("FREE_AI_API_KEY", "localai")}
+    )
+    
+    try:
+        async with Agent(config) as agent:
+            resp = await agent.chat(user_prompt)
+            text = (await resp.text()).strip()
+        return text, final_model
+    except Exception as e:
+        print(f"Error en call_ai ({final_model}):", str(e))
+        raise e
+
+
+
+
 async def _evolve_single_prompt_core(
     prompt_key: str,
     category: str,
@@ -811,7 +783,7 @@ async def evolve_batch_prompts(req: EvolveBatchRequest, request: Request):
                     "architect" in pkey or "evaluator" in pkey or "verifier" in pkey or
                     "coordinator" in pkey or "planner" in pkey or "audit" in pkey or
                     "reviewer" in pkey or "generator" in pkey or
-                    sec_id in ["builder", "orchestrator", "runtime", "coding", "automatizacion"]
+                    sec_id in ["studio", "swarms", "sandbox", "flowboard", "inspector"]
                 )
                 items.append((pkey, "agent" if is_agent else "prompt", ptext))
 

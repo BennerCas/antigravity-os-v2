@@ -27,7 +27,6 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { InteractiveTour } from './components/InteractiveTour';
 
 const AgentOS = lazy(() => import('./pages/AgentOS'));
-const Builder = lazy(() => import('./pages/Builder'));
 const Academy = lazy(() => import('./pages/Academy'));
 const Architecture = lazy(() => import('./pages/Architecture'));
 const Automations = lazy(() => import('./pages/Automations'));
@@ -44,9 +43,6 @@ function MainContent() {
       {path === '/' && <InitialRedirect />}
       <div style={{ display: path === '/agent-os' ? 'block' : 'none', height: '100%', width: '100%' }}>
         <AgentOS />
-      </div>
-      <div style={{ display: path === '/builder' ? 'block' : 'none', height: '100%', width: '100%' }}>
-        <Builder />
       </div>
       <div style={{ display: path === '/academy' ? 'block' : 'none', height: '100%', width: '100%' }}>
         <Academy />

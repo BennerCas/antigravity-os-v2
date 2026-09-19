@@ -107,6 +107,7 @@ const FlowArchitect: React.FC = () => {
   const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem('aurelios_model') || 'free.ai/auto');
   const [currentThemeKey, setCurrentThemeKey] = useState(() => localStorage.getItem('aurelios_theme') || 'obsidian');
   const [selectedChatAgentId, setSelectedChatAgentId] = useState('aurelios-core');
+  const [carouselSlide, setCarouselSlide] = useState(0);
 
   useEffect(() => {
     localStorage.setItem('aurelios_model', selectedModel);
@@ -176,22 +177,52 @@ const FlowArchitect: React.FC = () => {
   };
 
 
+    
   const aiTools = [
-    { id: 'swarm-orchestrator', id: 'swarm-orchestrator', title: 'Swarm Orchestrator', icon: <Network size={18} className="text-[#3b82f6]" weight="duotone" />, desc: 'Orquesta múltiples agentes autónomos. Asigna tareas complejas, gestiona el estado compartido y resuelve dependencias en paralelo.' },
-    { id: 'umpire-core', id: 'umpire-core', title: 'Umpire Core', icon: <Scales size={18} className="text-[#e11d48]" weight="duotone" />, desc: 'Árbitro determinista. Somete el código y la arquitectura a pruebas de estrés implacables para asegurar escalabilidad y cero alucinaciones.' },
-    { id: 'state-reducer', id: 'state-reducer', title: 'State Reducer', icon: <Cube size={18} className="text-[#f5a623]" weight="duotone" />, desc: 'Diseña el flujo de datos unidireccional. Modela mutaciones de estado predecibles, inmutables y auditables en tiempo real.' },
-    { id: 'rag-synthesizer', id: 'rag-synthesizer', title: 'RAG Synthesizer', icon: <Strategy size={18} className="text-[#10b981]" weight="duotone" />, desc: 'Cerebro de memoria profunda. Fusiona bases de datos vectoriales y grafos de conocimiento para contextualizar decisiones al instante.' },
-    { id: 'codebase-overlord', id: 'codebase-overlord', title: 'Codebase Overlord', icon: <Cpu size={18} className="text-[#8b5cf6]" weight="duotone" />, desc: 'Maestro del código. Refactoriza, optimiza y ensambla piezas arquitectónicas masivas a nivel de repositorio completo.' },
-    { id: 'forensic-inspector', id: 'forensic-inspector', title: 'Forensic Inspector', icon: <MagnifyingGlass size={18} className="text-[#06b6d4]" weight="duotone" />, desc: 'Analizador de telemetría en vivo. Destripa cuellos de botella y audita el rendimiento e integraciones a nivel milisegundo.' },
-    { id: 'zero-trust-gatekeeper', id: 'zero-trust-gatekeeper', title: 'Zero-Trust Gatekeeper', icon: <ShieldCheck size={18} className="text-[#f43f5e]" weight="duotone" />, desc: 'Auditor de ciberseguridad extremo. Detecta vulnerabilidades y exige políticas estrictas de autenticación y autorización.' },
-    { id: 'resource-optimizer', id: 'resource-optimizer', title: 'Resource Optimizer', icon: <CurrencyDollar size={18} className="text-[#f5a623]" weight="duotone" />, desc: 'Estratega de infraestructuras. Balancea la carga entre modelos locales y en la nube minimizando costos y uso límite de VRAM.' },
-    { id: 'ux-psychologist', id: 'ux-psychologist', title: 'UX Psychologist', icon: <Brain size={18} className="text-[#d946ef]" weight="duotone" />, desc: 'Especialista en interfaces persuasivas. Aplica sesgos cognitivos e inyecta fricción positiva para dominar la experiencia del usuario.' },
-    { id: 'infrastructure-titan', id: 'infrastructure-titan', title: 'Infrastructure Titan', icon: <HardDrives size={18} className="text-[#64748b]" weight="duotone" />, desc: 'Ingeniero DevOps. Automatiza Docker, Kubernetes, CI/CD pipelines y configura servidores para despliegues a prueba de balas.' },
-    { id: 'api-nexus', id: 'api-nexus', title: 'API Nexus', icon: <Plugs size={18} className="text-[#14b8a6]" weight="duotone" />, desc: 'Especialista en integraciones. Diseña y audita pasarelas de pago, Webhooks, arquitecturas GraphQL y orquesta microservicios.' },
-    { id: 'synthetic-qa', id: 'synthetic-qa', title: 'Synthetic QA', icon: <BugBeetle size={18} className="text-[#facc15]" weight="duotone" />, desc: 'Simulador de caos. Genera edge cases y ataca tu código simulando enjambres de usuarios para quebrar la app antes de producción.' }
+    { id: 'swarm-orchestrator', title: 'Swarm Orchestrator', icon: <Network size={18} className="text-[#3b82f6]" weight="duotone" />, desc: '[IDENTITY & ROLE] You are the Swarm Orchestrator. You translate AureliOS\'s macro-directives into tactical, parallelized work streams for specialized agents. You are a ruthless manager of concurrency and dependency graphs...' },
+    { id: 'umpire-core', title: 'Umpire Core', icon: <Scales size={18} className="text-[#e11d48]" weight="duotone" />, desc: '[IDENTITY & ROLE] You are Umpire Core, the absolute arbiter of truth in the swarm. When agents produce conflicting data, architectures, or code, you step in with cold, calculable logic to enforce the optimal path.  [KNOW...' },
+    { id: 'state-reducer', title: 'State Reducer', icon: <Cube size={18} className="text-[#f5a623]" weight="duotone" />, desc: '[IDENTITY & ROLE] You are State Reducer, the guardian of system integrity. You manage all global and localized state mutations across the OS, treating every change as a deterministic, immutable transaction.  [KNOWLEDGE F...' },
+    { id: 'rag-synthesizer', title: 'RAG Synthesizer', icon: <Strategy size={18} className="text-[#10b981]" weight="duotone" />, desc: '[IDENTITY & ROLE] You are the RAG Synthesizer. You are the omnipresent memory of AureliOS, capable of instantly retrieving, contextually linking, and synthesizing vast amounts of vector-stored knowledge.  [KNOWLEDGE FUSI...' },
+    { id: 'codebase-overlord', title: 'Codebase Overlord', icon: <Cpu size={18} className="text-[#8b5cf6]" weight="duotone" />, desc: '[IDENTITY & ROLE] You are Codebase Overlord. You perceive source code not as text, but as a living Abstract Syntax Tree. You dictate coding standards, enforce DRY principles, and architect massive refactors with surgical...' },
+    { id: 'forensic-inspector', title: 'Forensic Inspector', icon: <MagnifyingGlass size={18} className="text-[#06b6d4]" weight="duotone" />, desc: '[IDENTITY & ROLE] You are Forensic Inspector, the apex predator of bugs. You dismantle stack traces, memory dumps, and cryptic logs to find the root cause of failure. You do not guess; you prove.  [KNOWLEDGE FUSION] Mast...' },
+    { id: 'zero-trust-gatekeeper', title: 'Zero-Trust Gatekeeper', icon: <ShieldCheck size={18} className="text-[#f43f5e]" weight="duotone" />, desc: '[IDENTITY & ROLE] You are Zero-Trust Gatekeeper. You assume the network is already compromised. You ruthlessly enforce least-privilege access, authenticate every request, and sanitize all inputs.  [KNOWLEDGE FUSION] Deep...' },
+    { id: 'resource-optimizer', title: 'Resource Optimizer', icon: <CurrencyDollar size={18} className="text-[#f5a623]" weight="duotone" />, desc: '[IDENTITY & ROLE] You are Resource Optimizer. You monitor CPU, memory, API quotas, and financial burn rates. You exist to extract maximum performance per dollar and per watt.  [KNOWLEDGE FUSION] Mastery in cloud FinOps, ...' },
+    { id: 'ux-psychologist', title: 'UX Psychologist', icon: <Brain size={18} className="text-[#d946ef]" weight="duotone" />, desc: '[IDENTITY & ROLE] You are UX Psychologist. You engineer interfaces that align perfectly with human cognitive models. You optimize for conversion, retention, and frictionless flow.  [KNOWLEDGE FUSION] Integration of behav...' },
+    { id: 'infrastructure-titan', title: 'Infrastructure Titan', icon: <HardDrives size={18} className="text-[#64748b]" weight="duotone" />, desc: '[IDENTITY & ROLE] You are Infrastructure Titan. You build indestructible foundations. You treat infrastructure as code, ensuring perfect reproducibility and resilience across multi-cloud environments.  [KNOWLEDGE FUSION]...' },
+    { id: 'api-nexus', title: 'API Nexus', icon: <Plugs size={18} className="text-[#14b8a6]" weight="duotone" />, desc: '[IDENTITY & ROLE] You are API Nexus. You are the universal translator and contract enforcer. You design, version, and integrate APIs with uncompromising strictness.  [KNOWLEDGE FUSION] Mastery of OpenAPI/Swagger, GraphQL...' },
+    { id: 'synthetic-qa', title: 'Synthetic QA', icon: <BugBeetle size={18} className="text-[#facc15]" weight="duotone" />, desc: '[IDENTITY & ROLE] You are Synthetic QA. You are designed to break things. You relentlessly generate edge cases, chaos experiments, and automated test suites to ensure system invulnerability.  [KNOWLEDGE FUSION] Expertise...' }
   ];
 
-  const selectedAgentData = aiTools.find(t => t.id === selectedChatAgentId) || { title: 'AureliOS Core' };
+    const swarm1 = [
+    { id: 'entrevistador', title: 'Entrevistador Socrático', icon: <Brain size={18} className="text-[#10b981]" weight="duotone" />, desc: 'Nodo 1 del Enjambre Radar. Usa mayéutica profunda para diseccionar la ambigüedad del usuario, extrayendo intenciones ocultas antes de que se conviertan en requerimientos erróneos.' },
+    { id: 'francotirador', title: 'Francotirador Industria', icon: <MagnifyingGlass size={18} className="text-[#e11d48]" weight="duotone" />, desc: 'Nodo 2 del Enjambre Radar. Escanea la web y bases de conocimiento en tiempo real para cruzar las respuestas del usuario con métricas de mercado y tendencias de la industria.' },
+    { id: 'analista-viabilidad', title: 'Analista de Viabilidad', icon: <Scales size={18} className="text-[#f5a623]" weight="duotone" />, desc: 'Nodo 3 del Enjambre Radar. Computa la carga cognitiva y el costo de infraestructura. Destruye promesas tecnológicas imposibles antes de escribirlas.' },
+    { id: 'profiler', title: 'Profiler Psicológico', icon: <Strategy size={18} className="text-[#8b5cf6]" weight="duotone" />, desc: 'Nodo 4 del Enjambre Radar. Traza el perfil conductual del usuario o del cliente final para adaptar la fricción de la interfaz y la narrativa del proyecto.' }
+  ];
+
+  const swarm2 = [
+    { id: 'arquitecto-cuestionario', title: 'Arquitecto Extracción', icon: <Network size={18} className="text-[#3b82f6]" weight="duotone" />, desc: 'Nodo 1 del Inquisidor. Transmuta los hallazgos del Radar en un cuestionario técnico agresivo que fuerza definiciones precisas sobre arquitectura y flujos.' },
+    { id: 'red-teamer', title: 'Red Teamer', icon: <BugBeetle size={18} className="text-[#facc15]" weight="duotone" />, desc: 'Nodo 2 del Inquisidor. Atacante asimétrico. Su única función es destrozar el cuestionario del Arquitecto, revelando huecos de seguridad, lógica circular o sesgos de diseño.' },
+    { id: 'escribano', title: 'El Escribano', icon: <Wrench size={18} className="text-[#14b8a6]" weight="duotone" />, desc: 'Nodo 3 del Inquisidor. Redacta el Contrato I/O definitivo en JSON inmutable, sellando los parámetros técnicos tras la colisión entre el Arquitecto y el Red Teamer.' }
+  ];
+
+  const swarm3 = [
+    { id: 'flow-designer', title: 'System Designer', icon: <Cube size={18} className="text-[#06b6d4]" weight="duotone" />, desc: 'Nodo 1 de La Forja. Genera grafos de estado y arquitecturas de microservicios, ensamblando el Blueprint base a partir del Contrato I/O del Escribano.' },
+    { id: 'auditor', title: 'Auditor Cero-Trust', icon: <ShieldCheck size={18} className="text-[#f43f5e]" weight="duotone" />, desc: 'Nodo 2 de La Forja. Aplica discriminación topológica. Escanea el Blueprint en busca de fugas de memoria, cuellos de botella asíncronos y fallas de dependencias.' },
+    { id: 'juez', title: 'El Juez (AureliOS)', icon: <Cpu size={18} className="text-[#d946ef]" weight="duotone" />, desc: 'Nodo 3 de La Forja. El árbitro definitivo. Juzga el Blueprint contra las directrices de Antigravity OS y orquesta el Match & Fuse final si se aprueba el despliegue.' },
+    { id: 'tts-animador', title: 'Narrador TTS', icon: <SpeakerHigh size={18} className="text-[#64748b]" weight="duotone" />, desc: 'Nodo 4 de La Forja. Sintetizador de voz cuántico. Traduce el caos determinista de los enjambres en un reporte auditivo fluido y humano para la toma de decisiones.' }
+  ];
+
+  const allSwarms = [
+    { title: "God-Tier Master Prompts", tools: aiTools },
+    { title: "Enjambre Radar (Fase 1: Triage)", tools: swarm1 },
+    { title: "Enjambre Inquisidor (Fase 2: Extracción)", tools: swarm2 },
+    { title: "Enjambre Forja (Fase 3: Blueprint)", tools: swarm3 },
+  ];
+
+
+  const allAgentsFlat = [...aiTools, ...swarm1, ...swarm2, ...swarm3];
+  const selectedAgentData = allAgentsFlat.find(t => t.id === selectedChatAgentId) || { title: 'AureliOS Core' };
 
   return (
     <div className={`flex flex-col ${t.bg} ${t.text} relative transition-colors duration-500`} style={{ height: '100%', overflow: 'hidden' }}>
@@ -216,6 +247,9 @@ const FlowArchitect: React.FC = () => {
           <h2 className="text-[20px] font-bold tracking-tight">AureliOS</h2>
         </div>
         <div className="flex items-center gap-4">
+          <button onClick={() => setSelectedChatAgentId('aurelios-core')} title="Reset to Core" className={`hover:brightness-125 transition-opacity ${t.text}`}>
+            <ArrowsClockwise size={18} />
+          </button>
           <button onClick={clearChat} title="Limpiar chat" className={`hover:brightness-125 transition-opacity ${t.text}`}>
             <Trash size={18} />
           </button>
@@ -226,36 +260,141 @@ const FlowArchitect: React.FC = () => {
       </div>
 
       <div className="px-4 pb-2 shrink-0 flex flex-col gap-3">
-        {/* Fixed AI Tools */}
-        <div className="flex items-center justify-between mb-0.5 mt-3 text-[11px] font-bold tracking-wider uppercase">
-          <span className="flex items-center gap-2"><Wrench size={14} /> God-Tier Master Prompts</span>
-          <button onClick={() => setSelectedChatAgentId('aurelios-core')} className={`hover:underline ${selectedChatAgentId === 'aurelios-core' ? t.primary : 'opacity-50'}`}>[Reset to Core]</button>
+        {/* Fixed AI Tools Carousel */}
+        <div className="flex justify-center mb-1 relative">
+          <div className="flex gap-2 items-center mx-auto relative left-[0px]">
+            <button onClick={() => document.getElementById("agent-carousel")?.scrollTo({ left: 0, behavior: "smooth" })} className={`w-2 h-2 rounded-full transition-colors duration-300 ${carouselSlide === 0 ? t.primary : "bg-gray-500 opacity-40"}`} />
+            <button onClick={() => document.getElementById("agent-carousel")?.scrollTo({ left: window.innerWidth, behavior: "smooth" })} className={`w-2 h-2 rounded-full transition-colors duration-300 ${carouselSlide === 1 ? t.primary : "bg-gray-500 opacity-40"}`} />
+          </div>
         </div>
-        <div className="grid grid-cols-3 gap-2">
-          {aiTools.map((tool, i) => (
-            <div key={i} className="relative group">
-              <button 
-                onClick={() => setSelectedChatAgentId(tool.id)} 
-                className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${selectedChatAgentId === tool.id ? `border-current ${t.primary}` : t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
-              >
-                <div className="flex items-center gap-3 overflow-hidden ml-1">
-                  <div className="shrink-0">{tool.icon}</div>
-                  <span className={`text-[11px] font-bold truncate group-hover:brightness-125 transition-all ${selectedChatAgentId === tool.id ? t.primary : ''}`}>{tool.title}</span>
-                </div>
-                <div 
-                  onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
-                  className={` hover:brightness-125 ${t.primary} shrink-0 ml-2 cursor-pointer transition-opacity`}
-                  title="Escuchar descripción"
-                >
-                  <SpeakerHigh size={14} weight="fill" />
-                </div>
-              </button>
-              {/* Invisible custom tooltip */}
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-3 bg-black border border-[#444] text-[13px] text-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.9)] opacity-0 invisible group-hover:brightness-125 group-hover:visible transition-all z-[999] pointer-events-none text-center font-medium leading-relaxed">
-                {tool.desc}
+
+        <div 
+          id="agent-carousel"
+          className="flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory gap-4 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          onScroll={(e) => {
+            const slide = Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth);
+            if (slide !== carouselSlide) setCarouselSlide(slide);
+          }}
+        >
+          {/* Slide 1: Swarms */}
+          <div className="shrink-0 w-full snap-center h-full flex flex-col justify-center">
+            <div className="grid grid-cols-3 gap-1.5">
+              {/* Col 1: Enjambre Radar */}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[9px] font-bold tracking-widest uppercase opacity-70 mb-0.5 text-center flex justify-center items-center gap-1"><Wrench size={12} /> Radar</span>
+                {swarm1.map(tool => (
+                  <div key={tool.id} className="relative group">
+                    <button 
+                      onClick={() => setSelectedChatAgentId(tool.id)} 
+                      className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${selectedChatAgentId === tool.id ? `border-current ${t.primary}` : t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden ml-1">
+                        <div className="shrink-0">{tool.icon}</div>
+                        <span className={`text-[10px] font-bold truncate group-hover:brightness-125 transition-all ${selectedChatAgentId === tool.id ? t.primary : ""}`}>{tool.title}</span>
+                      </div>
+                      <div 
+                        onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
+                        className={` hover:brightness-125 ${t.primary} shrink-0 ml-1 cursor-pointer transition-opacity`}
+                        title="Escuchar descripción"
+                      >
+                        <SpeakerHigh size={12} weight="fill" />
+                      </div>
+                    </button>
+                    {/* Invisible custom tooltip */}
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-3 bg-black border border-[#444] text-[13px] text-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.9)] opacity-0 invisible group-hover:brightness-125 group-hover:visible transition-all z-[999] pointer-events-none text-center font-medium leading-relaxed">
+                      {tool.desc}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Col 2: Enjambre Inquisidor */}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[9px] font-bold tracking-widest uppercase opacity-70 mb-0.5 text-center flex justify-center items-center gap-1"><BugBeetle size={12} /> Inquisidor</span>
+                {swarm2.map(tool => (
+                  <div key={tool.id} className="relative group">
+                    <button 
+                      onClick={() => setSelectedChatAgentId(tool.id)} 
+                      className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${selectedChatAgentId === tool.id ? `border-current ${t.primary}` : t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden ml-1">
+                        <div className="shrink-0">{tool.icon}</div>
+                        <span className={`text-[10px] font-bold truncate group-hover:brightness-125 transition-all ${selectedChatAgentId === tool.id ? t.primary : ""}`}>{tool.title}</span>
+                      </div>
+                      <div 
+                        onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
+                        className={` hover:brightness-125 ${t.primary} shrink-0 ml-1 cursor-pointer transition-opacity`}
+                        title="Escuchar descripción"
+                      >
+                        <SpeakerHigh size={12} weight="fill" />
+                      </div>
+                    </button>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-3 bg-black border border-[#444] text-[13px] text-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.9)] opacity-0 invisible group-hover:brightness-125 group-hover:visible transition-all z-[999] pointer-events-none text-center font-medium leading-relaxed">
+                      {tool.desc}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Col 3: Enjambre Forja */}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[9px] font-bold tracking-widest uppercase opacity-70 mb-0.5 text-center flex justify-center items-center gap-1"><ShieldCheck size={12} /> Forja</span>
+                {swarm3.map(tool => (
+                  <div key={tool.id} className="relative group">
+                    <button 
+                      onClick={() => setSelectedChatAgentId(tool.id)} 
+                      className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${selectedChatAgentId === tool.id ? `border-current ${t.primary}` : t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden ml-1">
+                        <div className="shrink-0">{tool.icon}</div>
+                        <span className={`text-[10px] font-bold truncate group-hover:brightness-125 transition-all ${selectedChatAgentId === tool.id ? t.primary : ""}`}>{tool.title}</span>
+                      </div>
+                      <div 
+                        onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
+                        className={` hover:brightness-125 ${t.primary} shrink-0 ml-1 cursor-pointer transition-opacity`}
+                        title="Escuchar descripción"
+                      >
+                        <SpeakerHigh size={12} weight="fill" />
+                      </div>
+                    </button>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-3 bg-black border border-[#444] text-[13px] text-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.9)] opacity-0 invisible group-hover:brightness-125 group-hover:visible transition-all z-[999] pointer-events-none text-center font-medium leading-relaxed">
+                      {tool.desc}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
+          </div>
+
+          {/* Slide 2: Classic Agents */}
+          <div className="shrink-0 w-full snap-center flex flex-col">
+            <span className="text-[9px] font-bold tracking-widest uppercase opacity-70 mb-2 text-center flex justify-center items-center gap-1"><Wrench size={12} /> God-Tier Prompts</span>
+            <div className="grid grid-cols-3 gap-1.5">
+              {aiTools.map(tool => (
+                <div key={tool.id} className="relative group">
+                    <button 
+                      onClick={() => setSelectedChatAgentId(tool.id)} 
+                      className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${selectedChatAgentId === tool.id ? `border-current ${t.primary}` : t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden ml-1">
+                        <div className="shrink-0">{tool.icon}</div>
+                        <span className={`text-[11px] font-bold truncate group-hover:brightness-125 transition-all ${selectedChatAgentId === tool.id ? t.primary : ''}`}>{tool.title}</span>
+                      </div>
+                      <div 
+                        onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
+                        className={` hover:brightness-125 ${t.primary} shrink-0 ml-2 cursor-pointer transition-opacity`}
+                        title="Escuchar descripción"
+                      >
+                        <SpeakerHigh size={14} weight="fill" />
+                      </div>
+                    </button>
+                    {/* Invisible custom tooltip */}
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-3 bg-black border border-[#444] text-[13px] text-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.9)] opacity-0 invisible group-hover:brightness-125 group-hover:visible transition-all z-[999] pointer-events-none text-center font-medium leading-relaxed">
+                      {tool.desc}
+                    </div>
+                  </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -779,7 +918,7 @@ export const CanvasTabs: React.FC = () => {
           health: "red",
           genes: []
       }];
-      setAgentCards(fallbackCards);
+      setAgentCards(fallbackCards as any);
     } finally {
       setIsSynthesizing(false);
     }

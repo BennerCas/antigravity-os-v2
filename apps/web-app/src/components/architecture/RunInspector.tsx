@@ -1,4 +1,3 @@
-import { TooltipButton } from '../builder/TooltipButton';
 
 interface RunEvent {
   id: string;
@@ -194,12 +193,9 @@ export const RunInspector: React.FC<{ runId: string }> = ({ runId }) => {
             { id: 'cognitive', label: 'Cognitive Profiler', icon: '🧠', desc: 'Evalúa la capacidad de razonamiento y entendimiento contextual del agente.' },
             { id: 'dataleak', label: 'Data Leak Scanner', icon: '🔐', desc: 'Revisa y detecta posible filtración de datos sensibles en el output.' }
           ].map(p => (
-            <TooltipButton
+            <button
               key={p.id}
               className="whitespace-nowrap text-[10px] px-2 py-1 bg-gray-800 border border-gray-700 rounded text-gray-300 hover:bg-purple-900/40 hover:text-purple-300 hover:border-purple-700 transition-all"
-              icon={p.icon}
-              label={p.label}
-              description={p.desc}
               onClick={() => {}}
             />
           ))}

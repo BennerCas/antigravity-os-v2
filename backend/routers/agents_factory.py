@@ -128,10 +128,7 @@ async def optimize_agent(req: OptimizeAgentRequest):
             search_results = vector_db.search(current_instructions, n_results=3)
             chunks = search_results.get("documents", [[]])[0]
             if chunks:
-                atlas_knowledge = "
-
----
-".join(chunks)
+                atlas_knowledge = "\n---\n".join(chunks)
         except Exception as e:
             print(f"Error en Match (ChromaDB): {e}")
 
@@ -195,10 +192,7 @@ async def optimize_kb(req: OptimizeKBRequest):
             search_results = vector_db.search(req.content, n_results=2)
             chunks = search_results.get("documents", [[]])[0]
             if chunks:
-                atlas_knowledge = "
-
----
-".join(chunks)
+                atlas_knowledge = "\n---\n".join(chunks)
         except Exception as e:
             print(f"Error en Match (ChromaDB): {e}")
 

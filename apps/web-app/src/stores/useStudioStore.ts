@@ -192,14 +192,302 @@ export const useStudioStore = create<StudioState>()(
       clearMessages: () =>
         set({
           chatMessages: [{ id: Date.now().toString(), role: 'system', content: 'Chat limpiado. ¿Qué sistema quieres construir?' }],
-          flowNodes: [], flowEdges: [], agentCards: [], blueprintMd: '',
+          flowNodes: [], flowEdges: [], agentCards: [
+  {
+    "id": "aurelios-core",
+    "name": "AureliOS",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] Eres AureliOS, el Arquitecto Maestro y Sistema Operativo (Agent-OS v2) de Antigrav...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "swarm-orchestrator",
+    "name": "Swarm Orchestrator",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are the Swarm Orchestrator. You translate AureliOS's macro-directives into tac...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "umpire-core",
+    "name": "Umpire Core",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are Umpire Core, the absolute arbiter of truth in the swarm. When agents produ...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "state-reducer",
+    "name": "State Reducer",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are State Reducer, the guardian of system integrity. You manage all global and...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "rag-synthesizer",
+    "name": "RAG Synthesizer",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are the RAG Synthesizer. You are the omnipresent memory of AureliOS, capable o...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "codebase-overlord",
+    "name": "Codebase Overlord",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are Codebase Overlord. You perceive source code not as text, but as a living A...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "forensic-inspector",
+    "name": "Forensic Inspector",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are Forensic Inspector, the apex predator of bugs. You dismantle stack traces,...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "zero-trust-gatekeeper",
+    "name": "Zero-Trust Gatekeeper",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are Zero-Trust Gatekeeper. You assume the network is already compromised. You ...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "resource-optimizer",
+    "name": "Resource Optimizer",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are Resource Optimizer. You monitor CPU, memory, API quotas, and financial bur...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "ux-psychologist",
+    "name": "UX Psychologist",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are UX Psychologist. You engineer interfaces that align perfectly with human c...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "infrastructure-titan",
+    "name": "Infrastructure Titan",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are Infrastructure Titan. You build indestructible foundations. You treat infr...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "api-nexus",
+    "name": "API Nexus",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are API Nexus. You are the universal translator and contract enforcer. You des...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "synthetic-qa",
+    "name": "Synthetic QA",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are Synthetic QA. You are designed to break things. You relentlessly generate ...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  }
+], blueprintMd: '',
         }),
 
       flowNodes: [],
       flowEdges: [],
       setFlow: (flowNodes, flowEdges) => set({ flowNodes, flowEdges }),
 
-      agentCards: [],
+      agentCards: [
+  {
+    "id": "aurelios-core",
+    "name": "AureliOS",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] Eres AureliOS, el Arquitecto Maestro y Sistema Operativo (Agent-OS v2) de Antigrav...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "swarm-orchestrator",
+    "name": "Swarm Orchestrator",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are the Swarm Orchestrator. You translate AureliOS's macro-directives into tac...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "umpire-core",
+    "name": "Umpire Core",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are Umpire Core, the absolute arbiter of truth in the swarm. When agents produ...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "state-reducer",
+    "name": "State Reducer",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are State Reducer, the guardian of system integrity. You manage all global and...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "rag-synthesizer",
+    "name": "RAG Synthesizer",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are the RAG Synthesizer. You are the omnipresent memory of AureliOS, capable o...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "codebase-overlord",
+    "name": "Codebase Overlord",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are Codebase Overlord. You perceive source code not as text, but as a living A...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "forensic-inspector",
+    "name": "Forensic Inspector",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are Forensic Inspector, the apex predator of bugs. You dismantle stack traces,...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "zero-trust-gatekeeper",
+    "name": "Zero-Trust Gatekeeper",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are Zero-Trust Gatekeeper. You assume the network is already compromised. You ...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "resource-optimizer",
+    "name": "Resource Optimizer",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are Resource Optimizer. You monitor CPU, memory, API quotas, and financial bur...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "ux-psychologist",
+    "name": "UX Psychologist",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are UX Psychologist. You engineer interfaces that align perfectly with human c...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "infrastructure-titan",
+    "name": "Infrastructure Titan",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are Infrastructure Titan. You build indestructible foundations. You treat infr...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "api-nexus",
+    "name": "API Nexus",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are API Nexus. You are the universal translator and contract enforcer. You des...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  },
+  {
+    "id": "synthetic-qa",
+    "name": "Synthetic QA",
+    "role": "God-Tier Agent",
+    "description": "[IDENTITY & ROLE] You are Synthetic QA. You are designed to break things. You relentlessly generate ...",
+    "genes": [],
+    "noveltyScore": 99,
+    "evalStatus": "PASS",
+    "color": "#00D9FF",
+    "health": "green"
+  }
+],
       setAgentCards: (agentCards) => set({ agentCards }),
 
       blueprintMd: '',

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
-import { sendToBuilderBridge } from '../lib/builderBridge';
 import { API_URL } from '../lib/api';
 import { logicTaskManager, LogicTaskState } from '../lib/logicTaskManager';
 import {
@@ -215,7 +214,7 @@ const Agents = () => {
   const fetchCategories = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch((import.meta.env.BASE_URL || '/') + 'skills_v2.json');
+      const res = await fetch((import.meta.env.BASE_URL || '/') + 'skills_v2.json?t=' + Date.now());
       if (!res.ok) throw new Error('Failed to load JSON');
       const rawData = await res.json();
       const data: Agent[] = rawData.map((item: any) => ({
@@ -579,35 +578,6 @@ ${inspectedAgent.instructions || inspectedAgent.content}
 
   // Convierte el flujo sugerido (formato plano) a nodos/edges ReactFlow y abre el Builder
   const launchFlowInBuilder = (flow: SuggestedFlow) => {
-    const rfNodes = flow.nodes.map((n, i) => ({
-      id: n.id || `n${i + 1}`,
-      type: 'mainAgent',
-      position: { x: 100 + i * 420, y: 200 },
-      data: {
-        title: n.title,
-        content: n.content,
-        role: n.role,
-        framework: n.framework || 'auto',
-        llm_model: n.llm_model || 'hermes3:8b',
-        temperature: n.temperature ?? 0.7,
-        variables: n.variables || ''
-      }
-    }));
-    const rfEdges = flow.edges.map((e, i) => ({
-      id: `e-${i}`,
-      source: e.source,
-      target: e.target,
-      animated: true,
-      style: { stroke: '#a855f7', strokeWidth: 3 }
-    }));
-    navigate('/builder', {
-      state: {
-        templateFlow: { nodes: rfNodes, edges: rfEdges },
-        agentKey: `flow_${Date.now()}`,
-        restoreCanvas: false,
-        flowName: flow.name
-      }
-    });
   };
 
   // Guardar el flujo recomendado directamente en Nexus (Flows) sin abrir el Builder
@@ -638,14 +608,6 @@ ${inspectedAgent.instructions || inspectedAgent.content}
 
   // "Mejorar" — sends the raw text directly to Builder as a new agent to work on
   const handleImprove = () => {
-    if (!searchQuery.trim()) return;
-    navigate('/builder', {
-      state: {
-        agent: { title: 'Mi Agent', content: searchQuery },
-        agentKey: `custom_${Date.now()}`,
-        restoreCanvas: false
-      }
-    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -666,42 +628,10 @@ ${inspectedAgent.instructions || inspectedAgent.content}
 
   // Launch all selected agentes as a chained workflow in the Builder
   const launchChain = () => {
-    if (selectedForChain.length === 0) return;
-    const chainKey = `chain_${Date.now()}`;
-    sendToBuilderBridge(navigate, {
-      agentChain: selectedForChain.map(a => ({
-        title: a.title || 'Agente',
-        content: a.instructions || a.content || a.objective || '',
-        role: a.category || 'Agente Autónomo',
-        framework: 'auto',
-        llm_model: 'hermes3:8b',
-        temperature: 0.7,
-        key: makeAgentKey(a)
-      })),
-      agentKey: chainKey
-    });
   };
 
   // ─── SINGLE SET ───────────────────────────────────────────────────────────
   const handleSetAgent = (e: React.MouseEvent, agent: Agent) => {
-    e.stopPropagation();
-    const key = makeAgentKey(agent);
-    const now = new Date().toISOString();
-    setAgentHistoryEntry(key, now);
-    setAgentHistory(prev => ({ ...prev, [key]: now }));
-
-    sendToBuilderBridge(navigate, {
-      agent: {
-        title: agent.title || 'Agente',
-        content: agent.instructions || agent.content || agent.objective || '',
-        role: agent.category || 'Agente Autónomo',
-        framework: 'auto',
-        llm_model: 'hermes3:8b',
-        temperature: 0.7,
-        key: key
-      },
-      agentKey: key
-    });
   };
 
   // ─── TTS ──────────────────────────────────────────────────────────────────
@@ -1150,27 +1080,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                   )}
 
                   <div className="mt-4">
-                    {agent.isMultiAgent ? (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          sendToBuilderBridge(navigate, {
-                            agentChain: agent.chain,
-                            agentKey: `chain_${Date.now()}`
-                          });
-                        }}
-                        className="border-orange-400 text-orange-400 hover:bg-orange-900/30 font-bold py-2 px-4 rounded-lg transition-colors w-full flex items-center justify-center gap-2"
-                      >
-                        <Sparkle size={18} /> Enviar Flujo a Builder
-                      </button>
-                    ) : (
-                      <button
-                        onClick={(e) => handleSetAgent(e, agent)}
-                        className="border-orange-400 text-orange-400 hover:bg-orange-900/30 font-bold py-2 px-4 rounded-lg transition-colors w-full"
-                      >
-                        {lastOpened ? '🔁 Continuar en Builder' : 'Abrir en Builder'}
-                      </button>
-                    )}
+                    <></>
                   </div>
                 </div>
               );
@@ -1200,12 +1110,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                 ))}
               </div>
             </div>
-            <button
-              onClick={launchChain}
-              className="bg-transparent border border-orange-500 text-orange-400 hover:bg-orange-500/20 font-bold py-3 px-6 rounded-xl flex items-center gap-2 whitespace-nowrap transition-colors"
-            >
-              <Sparkle size={18} /> Lanzar Flujo
-            </button>
+            <></>
             <button onClick={() => setSelectedForChain([])} className="text-gray-500 hover:text-white p-2">
               <X size={18} />
             </button>
@@ -1402,29 +1307,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
 
               {/* Footer — flex sibling, always visible at bottom */}
               <div className="panel-footer">
-                <button
-                  onClick={(e) => handleSetAgent(e as any, inspectedAgent)}
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    backgroundColor: 'rgba(0,0,0,0.4)',
-                    borderTop: '1px solid #22d3ee',
-                    boxShadow: '0 -5px 15px rgba(34,211,238,0.3)',
-                    borderRadius: '0',
-                    color: '#22d3ee',
-                    fontWeight: 700,
-                    fontSize: '14px',
-                    letterSpacing: '0.04em',
-                    padding: '18px 24px',
-                    cursor: 'pointer',
-                    transition: 'background-color 150ms ease',
-                    textAlign: 'center',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(34,211,238,0.1)')}
-                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.4)')}
-                >
-                  Abrir en el Builder →
-                </button>
+                <></>
               </div>
 
             </div>

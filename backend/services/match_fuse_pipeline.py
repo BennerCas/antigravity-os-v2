@@ -9,14 +9,10 @@ async def run_match_fuse(nodes_or_prompt, model_name="qwen3-8b") -> str:
     1. Parseo de intención
     2. Retrieval en Agents DNA y Atlas KB
     3. Síntesis (Fusión) usando el SDK
-    Devuelve un JSON array (string) para que el frontend lo parsee como AgentCards.
     """
     prompt = str(nodes_or_prompt)
     print("Iniciando Match & Fuse pipeline...")
 
-    # ==========================================
-    # 1. RETRIEVAL (Búsqueda Vectorial)
-    # ==========================================
     print("Recuperando genes y conocimientos...")
     agent_genes = vector_db.search_agents(prompt, n_results=3)
     atlas_knowledge = vector_db.search_atlas(prompt, n_results=3)
@@ -24,9 +20,6 @@ async def run_match_fuse(nodes_or_prompt, model_name="qwen3-8b") -> str:
     context_agents = "\n---\n".join(agent_genes) if agent_genes else "Sin agentes base."
     context_atlas = "\n---\n".join(atlas_knowledge) if atlas_knowledge else "Sin conocimiento extra."
 
-    # ==========================================
-    # 2. DEFINICIÓN DEL AGENTE SINTETIZADOR
-    # ==========================================
     system_prompt = f"""Eres el Motor de Síntesis de Antigravity OS (Match & Fuse).
 Tu objetivo es crear nuevos Agentes Autónomos Especializados cruzando los siguientes genes locales.
 
@@ -36,7 +29,7 @@ GENES BASE ENCONTRADOS (ADN):
 CONOCIMIENTO DEL ATLAS (FRAMEWORKS):
 {context_atlas}
 
-A partir de la petición del usuario (nodos/prompt): "{prompt}"
+A partir de la petición del usuario: "{prompt}"
 Debes devolver UNICAMENTE un JSON ARRAY válido que contenga 1 o más objetos AgentCard:
 [{{
   "id": "identificador",
@@ -62,7 +55,6 @@ No incluyas markdown (```json), solo el raw JSON.
         final_model = model_name
     else:
         base_url = "https://api.free.ai/v1"
-        # Forzamos qwen3-8b porque Free.AI no soporta los premium (como Claude o qwen-72b) en su endpoint OpenAI-compatible /v1/chat/completions
         final_model = "qwen3-8b"
 
     config = LocalOpenAIAgentConfig(
@@ -72,40 +64,78 @@ No incluyas markdown (```json), solo el raw JSON.
         env={"OPENAI_API_KEY": os.getenv("FREE_AI_API_KEY", "localai")}
     )
     
-    print("Sintetizando nuevo agente...")
+    print("Iniciando Match & Fuse pipeline cuántico...")
     import asyncio
+    
     max_retries = 3
     
-    agent = Agent(config)
+    print("Etapa 1: Descomposición (Decomposer)")
+    decomposer_prompt = f"""
+    Analiza el siguiente requerimiento y descompón la intención en genes lógicos.
+    Requerimiento: {prompt}
+    Extrae: 'reasoning', 'domain', 'format', 'tool', 'policy'.
+    """
     
-    for attempt in range(max_retries):
-        try:
-            resp = await agent.chat("Genera los agentes basados en el contexto y nodos proporcionados. SOLO DEVUELVE JSON.")
-            raw_text = resp.text.strip()
-            
-            if raw_text.startswith("```json"):
-                raw_text = raw_text.replace("```json", "", 1)
-            if raw_text.endswith("```"):
-                raw_text = raw_text[:-3]
+    async with Agent(config) as agent:
+        decomposer_resp = await agent.chat(decomposer_prompt)
+        genes_analysis = (await decomposer_resp.text()).strip()
+        
+        print("Etapa 2: Síntesis (Synthesizer)")
+        synthesizer_prompt = f"""
+        {system_prompt}
+        
+        ANÁLISIS DE GENES PREVIO:
+        {genes_analysis}
+        
+        Instrucción: Genera el JSON ARRAY de los agentes usando los genes extraídos.
+        """
+        synth_resp = await agent.chat(synthesizer_prompt)
+        raw_text = (await synth_resp.text()).strip()
+        
+        print("Etapa 3: Evaluación Rigurosa (Evaluator)")
+        eval_prompt = f"""
+        Eres el Sandbox Umpire. Evalúa el siguiente JSON de agentes generados.
+        
+        JSON PROPUESTO:
+        {raw_text}
+        
+        Verifica:
+        1. Que sea un JSON ARRAY válido.
+        2. Que el noveltyScore tenga sentido comparado con los genes base.
+        3. Que evalStatus y health sean correctos según las políticas.
+        
+        Si hay errores semánticos o de sintaxis, CORRÍGELOS y devuelve ÚNICAMENTE el JSON ARRAY corregido. 
+        NO incluyas markdown, solo empieza con [ y termina con ].
+        """
+        
+        for attempt in range(max_retries):
+            try:
+                eval_resp = await agent.chat(eval_prompt)
+                final_text = (await eval_resp.text()).strip()
                 
-            raw_text = raw_text.strip()
-            
-            # Intentar validar que sea un JSON array
-            parsed = json.loads(raw_text)
-            if isinstance(parsed, list):
-                return raw_text
-            else:
-                raise ValueError("La respuesta no es una lista JSON válida")
+                if final_text.startswith("```json"):
+                    final_text = final_text.replace("```json", "", 1)
+                if final_text.endswith("```"):
+                    final_text = final_text[:-3]
+                    
+                final_text = final_text.strip()
                 
-        except Exception as e:
-            print(f"Intento {attempt + 1} falló en síntesis RRF: {e}")
-            if attempt < max_retries - 1:
-                print("Reintentando en 3 segundos...")
-                await asyncio.sleep(3)
-            else:
-                return json.dumps([{
-                    "id": "error_agent", "name": "Fallback Agent", "role": "Error",
-                    "description": f"Falló tras {max_retries} intentos. Último error: {e}", "color": "#ff0000", "noveltyScore": 0,
-                    "evalStatus": "FAIL", "inputOutputContract": "None", "requiredTools": [],
-                    "health": "red", "genes": []
-                }])
+                parsed = json.loads(final_text)
+                if isinstance(parsed, list):
+                    print("Pipeline completado con éxito.")
+                    return final_text
+                else:
+                    raise ValueError("La respuesta evaluada no es una lista JSON válida")
+                    
+            except Exception as e:
+                print(f"Intento {attempt + 1} falló en validación cuántica: {e}")
+                if attempt < max_retries - 1:
+                    print("Reintentando en 3 segundos...")
+                    await asyncio.sleep(3)
+                else:
+                    return json.dumps([{
+                        "id": "error_agent", "name": "Fallback Agent", "role": "Error",
+                        "description": f"Falló tras {max_retries} intentos. Último error: {e}", "color": "#ff0000", "noveltyScore": 0,
+                        "evalStatus": "FAIL", "inputOutputContract": "None", "requiredTools": [],
+                        "health": "red", "genes": []
+                    }])

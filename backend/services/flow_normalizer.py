@@ -3,13 +3,13 @@ import uuid
 
 class LegacyFlowAdapter:
     """
-    Adapter to migrate legacy React Flow JSON representations into BuilderFlow v1.
+    Adapter to migrate legacy React Flow JSON representations into Flow v1.
     """
     
     @staticmethod
     def normalize(legacy_flow: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Converts a legacy flow to a BuilderFlow v1 dictionary.
+        Converts a legacy flow to a Flow v1 dictionary.
         """
         nodes = legacy_flow.get("nodes", [])
         edges = legacy_flow.get("edges", [])

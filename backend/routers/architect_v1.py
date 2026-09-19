@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from backend.schemas.architecture import ArchitectureSpec
 from backend.services.architect_engine import ArchitectEngine
 from backend.services.flow_normalizer import LegacyFlowAdapter
-from backend.schemas.builder_flow import BuilderFlow
+from backend.schemas.builder_flow import Flow
 
 router = APIRouter(prefix="/architect", tags=["FlowArchitect V1"])
 
@@ -46,12 +46,12 @@ class PublishBlueprintRequest(BaseModel):
 @router.post("/publish")
 async def publish_blueprint_to_builder(req: PublishBlueprintRequest):
     """
-    Converts ArchitectureSpec v1 to BuilderFlow v1 (BuilderPatches)
+    Converts ArchitectureSpec v1 to Flow v1 (BuilderPatches)
     so the Builder UX can load it.
     """
     try:
         # For Phase 2, this does a 1:1 translation for scaffolding.
-        # It's an initial BuilderFlow draft.
+        # It's an initial Flow draft.
         spec = ArchitectureSpec(**req.spec_data)
         
         # We translate ArchitectureStep -> BuilderNode
@@ -86,7 +86,7 @@ async def publish_blueprint_to_builder(req: PublishBlueprintRequest):
             "ui": {"viewport": {"x": 0, "y": 0, "zoom": 1}}
         }
         
-        builder_flow = BuilderFlow(**builder_flow_raw)
+        builder_flow = Flow(**builder_flow_raw)
         
         return {
             "status": "success",

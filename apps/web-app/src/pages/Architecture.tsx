@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { API_URL } from '../lib/api';
 import ReactMarkdown from 'react-markdown';
-import { Star, Cpu, MagnifyingGlass, CheckCircle, Compass, Hammer, Brain, Gear, Rocket, Database, TerminalWindow, Lightning, LockKey, CaretRight, Sparkle, Check, Copy, CloudArrowDown } from '@phosphor-icons/react';
+import { Star, Cpu, MagnifyingGlass, CheckCircle, Compass, Hammer, Brain, Gear, Rocket, Database, TerminalWindow, Lightning, LockKey, CaretRight, Sparkle, Check, Copy, CloudArrowDown , Target, Users, ShieldCheck, Graph, GraduationCap, PenNib} from '@phosphor-icons/react';
 import { logicTaskManager, LogicTaskState } from '../lib/logicTaskManager';
-import { sendToBuilderBridge } from '../lib/builderBridge';
 import { useNavigate } from 'react-router-dom';
 import { SystemEvolutionPanel } from '../components/architecture/SystemEvolutionPanel';
 
@@ -32,8 +31,15 @@ interface ArchitectureData {
 
 const STEP_ICONS: Record<string, React.ReactNode> = {
   master_prompts: <Star size={22} weight="fill" className="text-yellow-500" />,
-  engine: <Cpu size={22} weight="light" />,
+  studio: <Target size={22} weight="light" />,
+  swarms: <Users size={22} weight="light" />,
+  sandbox: <ShieldCheck size={22} weight="light" />,
+  flowboard: <Graph size={22} weight="light" />,
   inspector: <MagnifyingGlass size={22} weight="light" />,
+  academy: <GraduationCap size={22} weight="light" />,
+  automations: <Lightning size={22} weight="light" />,
+  coautoria: <PenNib size={22} weight="light" />,
+  engine: <Cpu size={22} weight="light" />,
   results: <CheckCircle size={22} weight="light" />,
   atlas: <Compass size={22} weight="light" />,
   builder: <Hammer size={22} weight="light" />,
@@ -122,18 +128,18 @@ export default function Architecture() {
   useEffect(() => {
     if (mainTab === 'library') {
       if (libAgents.length === 0) {
-        fetch((import.meta.env.BASE_URL || '/') + 'skills_v2.json')
+        fetch((import.meta.env.BASE_URL || '/') + 'skills_v2.json?t=' + Date.now())
           .then(r => r.json()).then(setLibAgents).catch(() => {});
       }
       if (libPrompts.length === 0) {
-        fetch((import.meta.env.BASE_URL || '/') + 'prompts_db.json')
+        fetch((import.meta.env.BASE_URL || '/') + 'prompts_db.json?t=' + Date.now())
           .then(r => r.json()).then(setLibPrompts).catch(() => {});
       }
     }
   }, [mainTab]);
 
   useEffect(() => {
-    fetch(`${API_URL}/architecture`)
+    fetch(`${API_URL}/architecture?_t=${Date.now()}`)
       .then((r) => r.json())
       .then((archData: ArchitectureData) => {
         setData(archData);
@@ -220,7 +226,7 @@ export default function Architecture() {
         if (mod.prompts.find(p => p.key === selectedPrompt.key)) {
           moduleName = mod.name;
           const k = selectedPrompt.key;
-          if (k.includes('agent') || k.includes('executor') || k.includes('engine') || k.includes('architect') || ['builder', 'orchestrator', 'runtime'].includes(mod.id)) {
+          if (k.includes('agent') || k.includes('executor') || k.includes('engine') || k.includes('architect') || ['studio', 'swarms', 'sandbox', 'flowboard', 'inspector'].includes(mod.id)) {
             category = 'agent';
           }
           break;
@@ -324,7 +330,7 @@ export default function Architecture() {
                promptsToOptimize.push({
                    key: p.key,
                    moduleName: mod.name,
-                   category: (p.key.includes('agent') || p.key.includes('executor') || p.key.includes('engine') || p.key.includes('architect') || ['builder', 'orchestrator', 'runtime'].includes(mod.id)) ? 'agent' : 'prompt',
+                   category: (p.key.includes('agent') || p.key.includes('executor') || p.key.includes('engine') || p.key.includes('architect') || ['studio', 'swarms', 'sandbox', 'flowboard', 'inspector'].includes(mod.id)) ? 'agent' : 'prompt',
                    text: p.text,
                    explanation: p.explanation || ''
                });
@@ -535,7 +541,7 @@ export default function Architecture() {
               }`}
             >
               <Sparkle size={18} className={mainTab === 'evolution' ? 'text-[#7B9C7F]' : ''} />
-              Evolución & Auto-Mejora (131)
+              Evolución & Auto-Mejora ({data ? [...data.flow, ...(data.apps || [])].reduce((acc, section) => acc + (section.prompts?.length || 0), 0) : 131})
             </button>
             <button
               onClick={() => setMainTab('library')}
@@ -927,18 +933,7 @@ export default function Architecture() {
                         {/* Botón Enviar a Builder */}
                         <button
                           onClick={() => {
-                            sendToBuilderBridge(navigate, {
-                              prompt: {
-                                title: selectedPrompt.key,
-                                content: selectedPrompt.text,
-                                role: selectedPrompt.used_at || 'Core Architecture',
-                                framework: 'auto',
-                                llm_model: 'hermes3:8b',
-                                temperature: 0.7,
-                                key: selectedPrompt.key
-                              },
-                              promptKey: selectedPrompt.key
-                            });
+                            console.log("Builder removed");
                           }}
                           className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg bg-blue-900/40 hover:bg-blue-800 text-blue-300 border border-blue-700/50 transition-colors shadow-sm cursor-pointer"
                           title="Enviar este prompt al Builder para orquestación y canvas"

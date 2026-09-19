@@ -6,7 +6,6 @@ import {
   History as HistoryIcon, Scale, Award, LayoutGrid, List, Volume2
 } from 'lucide-react';
 import { API_URL } from '../../lib/api';
-import { sendToBuilderBridge } from '../../lib/builderBridge';
 import { useNavigate } from 'react-router-dom';
 import { useTTSStore } from '../../lib/ttsStore';
 
@@ -329,7 +328,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
 
     setIsUpgrading(false);
     setProgressPercent(100);
-    setCurrentlyProcessing('¡Optimización del Ecosistema de 131 Prompts Completada con Éxito!');
+    setCurrentlyProcessing(`¡Optimización del Ecosistema de ${totalCount} Prompts Completada con Éxito!`);
     setUpdatePopupOpen(true);
   };
 
@@ -1275,18 +1274,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                 </button>
                 <button
                   onClick={() => {
-                    sendToBuilderBridge(navigate, {
-                      prompt: {
-                        title: selectedPrompt.key,
-                        content: selectedPrompt.optimizedContent || selectedPrompt.text,
-                        role: selectedPrompt.moduleName,
-                        framework: selectedPrompt.recommendedFramework,
-                        llm_model: 'hermes3:8b',
-                        temperature: 0.7,
-                        key: selectedPrompt.key
-                      },
-                      promptKey: selectedPrompt.key
-                    });
+                    console.log("Builder removed");
                   }}
                   className="px-3 py-1 text-xs font-bold bg-[#142332] hover:bg-[#1E3A57] text-[#64B5F6] border border-[#2B4B6F] rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
                   title="Enviar versión optimizada al Builder"
@@ -1521,7 +1509,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
             </div>
             <h3 className="text-xl font-bold text-white">¡Evolución Completada!</h3>
             <p className="text-sm text-[#A0A0A0]">
-              Todos los 131 prompts han sido procesados y optimizados correctamente. Haz clic en "Actualizar Sistema" para aplicar todos los cambios en el ecosistema (Atlas, Agentes, Builder, etc.).
+              Todos los {totalCount} prompts han sido procesados y optimizados correctamente. Haz clic en "Actualizar Sistema" para aplicar todos los cambios en el ecosistema (Atlas, Agentes, Builder, etc.).
             </p>
             <button 
               onClick={() => {
