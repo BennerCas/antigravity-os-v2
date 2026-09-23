@@ -1,6 +1,5 @@
 import ReactMarkdown from 'react-markdown';
-import { useEffect } from 'react';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { studioNodeTypes, KIND_META } from '../components/StudioNodes';
@@ -108,7 +107,17 @@ const FlowArchitect: React.FC = () => {
   const [currentThemeKey, setCurrentThemeKey] = useState(() => localStorage.getItem('aurelios_theme') || 'obsidian');
   const [selectedChatAgentId, setSelectedChatAgentId] = useState('aurelios-core');
   const [carouselSlide, setCarouselSlide] = useState(0);
+  const [quantumPhase, setQuantumPhase] = useState<'phase1_triage' | 'phase2_extraction' | 'phase3_blueprint'>('phase1_triage');
+  const abortControllerRef = useRef<AbortController | null>(null);
 
+  const handleStop = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsTyping(false);
+    useStudioStore.getState().addChatMessage({ role: 'agent', content: '> [AureliOS] Interacción detenida manualmente por el usuario.', model: 'Orchestrator' });
+  };
   useEffect(() => {
     localStorage.setItem('aurelios_model', selectedModel);
   }, [selectedModel]);
@@ -140,8 +149,31 @@ const FlowArchitect: React.FC = () => {
     });
   };
 
+  const handleRegenerate = () => {
+    if (isTyping) return;
+    const store = useStudioStore.getState();
+    const messages = [...store.chatMessages];
+    if (messages.length === 0) return;
+    
+    // Quitar el último mensaje si es del agente (para poder regenerarlo)
+    if (messages[messages.length - 1].role === 'agent') {
+      messages.pop();
+    }
+    
+    // Extraer el último mensaje del usuario para reenviarlo
+    let lastHumanText = "";
+    if (messages.length > 0 && messages[messages.length - 1].role === 'human') {
+      lastHumanText = messages.pop()!.content;
+    }
+    
+    if (lastHumanText) {
+      store.setChatMessages(messages);
+      handleSend(lastHumanText);
+    }
+  };
+
   const handleSend = async (overrideInput?: string) => {
-    const textToSend = (typeof overrideInput === 'string') ? overrideInput : input;
+    const textToSend = overrideInput ? overrideInput : input;
     if (!textToSend.trim() || isTyping) return;
     
     addChatMessage({ role: 'human', content: textToSend });
@@ -150,29 +182,102 @@ const FlowArchitect: React.FC = () => {
     setThinkingPhrase(THINKING_PHRASES[Math.floor(Math.random() * THINKING_PHRASES.length)]);
     setIsTyping(true);
 
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
     try {
-      const res = await fetch(`${API_URL}/studio/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: textToSend,
-          model: selectedModel,
-          agent_id: selectedChatAgentId
-        })
-      });
-      if (!res.ok) throw new Error(`Backend respondió ${res.status}`);
-      const data = await res.json();
-      const aiText = data.response || 'Sin respuesta.';
-      addChatMessage({ role: 'agent', content: aiText, model: data.model_used || selectedModel });
-      // Actualizar Flow Diagram + Agentes + Blueprint en tiempo real
-      const { nodes, edges, cards, md } = parseAIResponseToFlow(aiText);
-      setFlow(nodes, edges);
-      if (cards.length > 0) setAgentCards(cards);
-      setBlueprintMd(md);
+      const { setZone2ActiveTab, chatMessages, setFlow, setAgentCards, setBlueprintMd } = useStudioStore.getState();
+      
+      // Pasar todo el historial para que el enjambre tenga el contexto de la conversación
+      const historyStr = chatMessages.map(m => `${m.role}: ${m.content}`).join('\n') + `\nhuman: ${textToSend}`;
+
+      let currentPhase = quantumPhase;
+      let currentData = historyStr;
+
+      while (true) {
+        if (currentPhase === 'phase1_triage') {
+          setZone2ActiveTab('phase1');
+          if (quantumPhase === 'phase1_triage') addChatMessage({ role: 'agent', content: '> [AureliOS] Ejecutando Triage...', model: 'Orchestrator' });
+          
+          const res = await fetch(`${API_URL}/studio/state/transition`, { method: 'POST', body: JSON.stringify({ phase: currentPhase, data: currentData }), headers: { 'Content-Type': 'application/json' }, signal });
+          if (!res.ok) throw new Error(`Fallo Triage: ${res.status}`);
+          const data = await res.json();
+          let text = typeof data.result === 'string' ? data.result : (data.result?.triage_result || data.result?.extraction_result || data.result?.blueprint_result || data.result?.final_output || JSON.stringify(data.result));
+          
+          if (text.includes('[READY_FOR_EXTRACTION]')) {
+            text = text.replace('[READY_FOR_EXTRACTION]', '').trim();
+            if (text) {
+              addChatMessage({ role: 'agent', content: `**[Aprobado por Triage]**\n${text}`, model: selectedModel });
+            } else {
+              addChatMessage({ role: 'agent', content: `**[Aprobado por Triage]** (El agente avanzó sin resumen. Analizando requerimientos directos...)`, model: selectedModel });
+              text = currentData; // Evita enviar un string vacío a la Fase 2
+            }
+            currentPhase = 'phase2_extraction';
+            currentData = text; // Pasa el output pulido a la siguiente fase
+            // El bucle continuará automáticamente a Extraction
+          } else {
+            // El agente necesita información. Pausar la máquina.
+            addChatMessage({ role: 'agent', content: text, model: selectedModel });
+            setQuantumPhase('phase1_triage');
+            break; 
+          }
+        }
+
+        if (currentPhase === 'phase2_extraction') {
+          setZone2ActiveTab('phase2');
+          addChatMessage({ role: 'agent', content: '> [AureliOS] Ejecutando Extracción...', model: 'Orchestrator' });
+          
+          const res = await fetch(`${API_URL}/studio/state/transition`, { method: 'POST', body: JSON.stringify({ phase: currentPhase, data: currentData }), headers: { 'Content-Type': 'application/json' }, signal });
+          if (!res.ok) throw new Error(`Fallo Extraction: ${res.status}`);
+          const data = await res.json();
+          let text = typeof data.result === 'string' ? data.result : (data.result?.triage_result || data.result?.extraction_result || data.result?.blueprint_result || data.result?.final_output || JSON.stringify(data.result));
+          
+          if (text.includes('[READY_FOR_BLUEPRINT]')) {
+            text = text.replace('[READY_FOR_BLUEPRINT]', '').trim();
+            if (text) {
+              addChatMessage({ role: 'agent', content: `**[Arquitectura Aprobada]**\n${text}`, model: selectedModel });
+            }
+            currentPhase = 'phase3_blueprint';
+            currentData = text;
+            // El bucle continuará automáticamente a Forja
+          } else {
+            // El agente arquitecto tiene dudas. Pausar.
+            addChatMessage({ role: 'agent', content: text, model: selectedModel });
+            setQuantumPhase('phase2_extraction');
+            break;
+          }
+        }
+
+        if (currentPhase === 'phase3_blueprint') {
+          setZone2ActiveTab('phase3');
+          addChatMessage({ role: 'agent', content: '> [AureliOS] Ejecutando Forja...', model: 'Orchestrator' });
+          
+          const res = await fetch(`${API_URL}/studio/state/transition`, { method: 'POST', body: JSON.stringify({ phase: currentPhase, data: currentData }), headers: { 'Content-Type': 'application/json' }, signal });
+          if (!res.ok) throw new Error(`Fallo Blueprint: ${res.status}`);
+          const data = await res.json();
+          let text = typeof data.result === 'string' ? data.result : (data.result?.triage_result || data.result?.extraction_result || data.result?.blueprint_result || data.result?.final_output || JSON.stringify(data.result));
+          
+          setZone2ActiveTab('okr');
+          addChatMessage({ role: 'agent', content: text, model: selectedModel });
+          setQuantumPhase('phase1_triage'); // Resetear para el siguiente requerimiento nuevo
+          
+          const { nodes, edges, cards, md } = parseAIResponseToFlow(text);
+          setFlow(nodes, edges);
+          if (cards.length > 0) setAgentCards(cards);
+          setBlueprintMd(md);
+          break; // Fin del flujo
+        }
+      }
+
     } catch (err: any) {
-      addChatMessage({ role: 'agent', content: `[ERROR] ${err.message}`, model: selectedModel });
+      if (err.name === 'AbortError') {
+        console.log('Interacción detenida por el usuario.');
+      } else {
+        addChatMessage({ role: 'agent', content: `[ERROR] ${err.message}`, model: selectedModel });
+      }
     } finally {
       setIsTyping(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -425,7 +530,7 @@ const FlowArchitect: React.FC = () => {
                   <div className="flex items-center gap-2 ml-auto shrink-0">
                     <button onClick={() => navigator.clipboard.writeText(msg.content)} title="Copiar" style={{all:'unset',cursor:'pointer'}} className="hover:opacity-100 opacity-60 transition-opacity"><Copy size={13} /></button>
                     <button onClick={() => speak(msg.content)} title="Escuchar" style={{all:'unset',cursor:'pointer'}} className="hover:opacity-100 opacity-60 transition-opacity"><SpeakerHigh size={13} /></button>
-                    <button title="Regenerar" style={{all:'unset',cursor:'pointer'}} className="hover:opacity-100 opacity-60 transition-opacity"><ArrowsClockwise size={13} /></button>
+                    <button onClick={handleRegenerate} title="Regenerar" style={{all:'unset',cursor:'pointer'}} className="hover:opacity-100 opacity-60 transition-opacity"><ArrowsClockwise size={13} /></button>
                   </div>
                 </div>
               )}
@@ -457,12 +562,22 @@ const FlowArchitect: React.FC = () => {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
           />
-          <button
-            onClick={() => handleSend()}
-            className={`p-3 rounded-xl transition-all shadow-md flex items-center justify-center shrink-0 ${input.trim() && !isTyping ? `${t.sendActive} hover:scale-105` : `${t.sendDisabled} cursor-not-allowed`}`}
-          >
-            <PaperPlaneRight weight="fill" size={22} />
-          </button>
+          {isTyping ? (
+            <button
+              onClick={handleStop}
+              className={`px-4 py-3 rounded-xl transition-all shadow-md flex items-center justify-center shrink-0 bg-red-600/20 text-red-500 hover:bg-red-600/30 border border-red-500/50`}
+              title="Detener ejecución"
+            >
+              <span className="text-sm font-bold uppercase tracking-wider">Detener</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => handleSend()}
+              className={`p-3 rounded-xl transition-all shadow-md flex items-center justify-center shrink-0 ${input.trim() && !isTyping ? `${t.sendActive} hover:scale-105` : `${t.sendDisabled} cursor-not-allowed`}`}
+            >
+              <PaperPlaneRight weight="fill" size={22} />
+            </button>
+          )}
         </div>
         <div className="text-center mt-3">
           <span className="text-[11px]  font-bold tracking-widest uppercase">{selectedAgentData.title} • STOIC AI ORCHESTRATOR</span>

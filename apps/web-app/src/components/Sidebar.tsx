@@ -2,6 +2,8 @@ import { NavLink } from 'react-router-dom';
 import { Brain, Code, TreeStructure, SpeakerHigh, PlayCircle, PauseCircle, StopCircle, FastForward, Rewind, GraduationCap, UserSwitch } from '@phosphor-icons/react';
 import { useTTSStore } from '../lib/ttsStore';
 import { useEffect } from 'react';
+import PomodoroTimer from './PomodoroTimer';
+import { GlobalAudioPlayer } from './GlobalAudioPlayer';
 
 export function Sidebar() {
   const { 
@@ -124,9 +126,17 @@ export function Sidebar() {
         </div>
       )}
 
+      {/* Spacing to push tools to the bottom */}
+      <div className="flex-1"></div>
+
+      <div className="flex flex-col items-center px-4 w-full gap-4 mb-4">
+        <PomodoroTimer />
+        <GlobalAudioPlayer />
+      </div>
+
       {/* User footer */}
       <div
-        className="p-5"
+        className="p-5 w-full"
         style={{ borderTop: '1px solid #2A2A2A' }}
       >
         <div className="flex flex-col justify-center w-full">

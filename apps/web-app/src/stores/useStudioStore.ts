@@ -54,6 +54,7 @@ interface StudioState {
   setTheme: (theme: string) => void;
   chatMessages: ChatMessage[];
   addChatMessage: (msg: Omit<ChatMessage, 'id'>) => void;
+  setChatMessages: (messages: ChatMessage[]) => void;
   clearMessages: () => void;
 
   // Flow Diagram (ReactFlow)
@@ -72,6 +73,16 @@ interface StudioState {
   // Focus mode (AgentCarousel)
   focusedAgent: AgentCard | null;
   setFocusedAgent: (agent: AgentCard | null) => void;
+
+  // Global TTS Player
+  audioText: string;
+  setAudioText: (text: string) => void;
+  isPlaying: boolean;
+  setIsPlaying: (playing: boolean) => void;
+  audioRate: number;
+  setAudioRate: (rate: number) => void;
+  selectedVoiceURI: string | null;
+  setSelectedVoiceURI: (uri: string | null) => void;
 }
 
 const KIND_COLORS: Record<string,string> = {
@@ -189,6 +200,7 @@ export const useStudioStore = create<StudioState>()(
         set((state) => ({
           chatMessages: [...state.chatMessages, { ...msg, id: Date.now().toString() }],
         })),
+      setChatMessages: (messages) => set({ chatMessages: messages }),
       clearMessages: () =>
         set({
           chatMessages: [{ id: Date.now().toString(), role: 'system', content: 'Chat limpiado. ¿Qué sistema quieres construir?' }],
@@ -495,6 +507,15 @@ export const useStudioStore = create<StudioState>()(
 
       focusedAgent: null,
       setFocusedAgent: (focusedAgent) => set({ focusedAgent }),
+
+      audioText: '',
+      setAudioText: (audioText) => set({ audioText }),
+      isPlaying: false,
+      setIsPlaying: (isPlaying) => set({ isPlaying }),
+      audioRate: 1.0,
+      setAudioRate: (audioRate) => set({ audioRate }),
+      selectedVoiceURI: null,
+      setSelectedVoiceURI: (selectedVoiceURI) => set({ selectedVoiceURI }),
     }),
     {
       name: 'agentos-studio-storage',
