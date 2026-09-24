@@ -99,8 +99,7 @@ const AURELIOS_THEMES: Record<string, any> = {
 const FlowArchitect: React.FC = () => {
     const { chatMessages, addChatMessage, setFlow, setAgentCards, setBlueprintMd, setTriggerChatSend } = useStudioStore();
   const [input, setInput] = useState('');
-  const [gpuActive, setGpuActive] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
+    const [isTyping, setIsTyping] = useState(false);
   const [thinkingPhrase, setThinkingPhrase] = useState('');
   const [showSetup, setShowSetup] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState('aurelios-core');
@@ -144,20 +143,7 @@ const FlowArchitect: React.FC = () => {
   };
 
 
-  const activateAmdGpu = async () => {
-    try {
-      const res = await fetch(`${API_URL}/studio/amd-gpu/activate`, { method: 'POST' });
-      const data = await res.json();
-      if(data.status === 'success') {
-        setGpuActive(true);
-        alert('Ollama reiniciado exitosamente con aceleracion AMD RDNA3.\n¡Listo para procesar enjambres cuanticos!');
-      } else {
-        alert('Error: ' + data.message);
-      }
-    } catch(e) {
-      alert('Error de red al activar GPU: ' + e);
-    }
-  };
+
 
   const clearChat = () => {
     useStudioStore.setState({ 
@@ -417,13 +403,7 @@ const FlowArchitect: React.FC = () => {
             <Trash size={18} />
           </button>
 
-          <button 
-            onClick={activateAmdGpu} 
-            title="Activar Aceleración GPU AMD (RDNA3)" 
-            className={`transition-all duration-500 ${gpuActive ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)] scale-110' : `hover:text-yellow-400 ${t.text}`}`}
-          >
-            <Brain size={18} weight={gpuActive ? 'fill' : 'regular'} className={gpuActive ? 'animate-pulse' : ''} />
-          </button>
+          
           <button onClick={() => setShowSetup(true)} title="Configuración de Modelo y Tema" className={`hover:brightness-125 transition-opacity ${t.text}`}>
             <Gear size={18} />
           </button>
