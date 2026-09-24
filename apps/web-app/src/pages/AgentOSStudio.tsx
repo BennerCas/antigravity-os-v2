@@ -1266,36 +1266,36 @@ const ArchitectureBlueprint: React.FC = () => {
         </div>
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto flex gap-4">
           {activeTab === 'synthesis' ? (
+            <button 
+              onClick={go2WF}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-full transition-all font-bold text-sm bg-emerald-500 text-white hover:brightness-110 shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+            >
+              <Robot size={18} weight="duotone" />
+              Go2WF
+            </button>
+          ) : activeTab === 'discovery' ? (
             <>
               <button 
-                onClick={() => alert('Upgrade Cohesivo Iniciado: Fusionando genes cuánticos y prompts de sistema...')}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-full transition-all font-bold text-sm bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:brightness-110 shadow-[0_0_20px_rgba(168,85,247,0.4)]"
+                onClick={runMatchAndFusePipeline}
+                disabled={isSynthesizing}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-full transition-all font-bold text-sm ${
+                  isSynthesizing
+                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-50 shadow-none'
+                    : 'bg-[#00D9FF] text-black hover:brightness-110 shadow-[0_0_20px_rgba(0,217,255,0.3)]'
+                }`}
               >
-                <Brain size={18} weight="duotone" />
-                Upgrade
+                <Brain size={18} weight={isSynthesizing ? "regular" : "duotone"} />
+                {isSynthesizing ? 'Sintetizando...' : 'Detectar Agentes'}
               </button>
               <button 
-                onClick={go2WF}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-full transition-all font-bold text-sm bg-emerald-500 text-white hover:brightness-110 shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+                onClick={() => alert('Fusión Infinita: El motor ahora analizará las conexiones (Edges) de tu grafo para orquestar y evolucionar todos los agentes cohesivamente.')}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-full transition-all font-bold text-sm bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:brightness-110 shadow-[0_0_20px_rgba(168,85,247,0.4)]"
               >
-                <Robot size={18} weight="duotone" />
-                Go2WF
+                <Network size={18} weight="duotone" />
+                Upgrade
               </button>
             </>
-          ) : (
-            <button 
-              onClick={runMatchAndFusePipeline}
-              disabled={isSynthesizing}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-full transition-all font-bold text-sm ${
-                isSynthesizing
-                  ? 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-50 shadow-none'
-                  : 'bg-[#00D9FF] text-black hover:brightness-110 shadow-[0_0_20px_rgba(0,217,255,0.3)]'
-              }`}
-            >
-              <Brain size={18} weight={isSynthesizing ? "regular" : "duotone"} />
-              {isSynthesizing ? 'Sintetizando...' : 'Detectar Agentes'}
-            </button>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

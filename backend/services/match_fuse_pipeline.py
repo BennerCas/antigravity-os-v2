@@ -26,31 +26,56 @@ async def run_match_fuse(nodes_or_prompt, model_name="qwen3-8b", progress_callba
     context_agents = "\n---\n".join(agent_genes) if agent_genes else "Sin agentes base."
     context_atlas = "\n---\n".join(atlas_knowledge) if atlas_knowledge else "Sin conocimiento extra."
 
-    system_prompt = f"""Eres el Motor de Síntesis de Antigravity OS (Match & Fuse).
-Tu objetivo es crear nuevos Agentes Autónomos Especializados cruzando los siguientes genes locales.
+    system_prompt = f"""Act as a Principal Cognitive Systems Architect specializing in multi-agent frameworks. Your objective is to design highly specialized AI agents based on the user's intent, base genes, and atlas knowledge, and output their configurations in a strict JSON format.
 
-GENES BASE ENCONTRADOS (ADN):
+USER INTENT: "{prompt}"
+
+BASE GENES (ADN):
 {context_agents}
 
-CONOCIMIENTO DEL ATLAS (FRAMEWORKS):
+ATLAS KNOWLEDGE (FRAMEWORKS):
 {context_atlas}
 
-A partir de la petición del usuario: "{prompt}"
-Debes devolver UNICAMENTE un JSON ARRAY válido que contenga 1 o más objetos AgentCard:
-[{{
-  "id": "identificador",
-  "name": "Nombre",
-  "role": "Rol",
-  "description": "Instrucción experta cruzada con Atlas",
-  "color": "#7B9C7F",
-  "noveltyScore": 0.95,
-  "evalStatus": "PASS",
-  "inputOutputContract": "IN: Contexto -> OUT: Tarea",
-  "requiredTools": ["tool1"],
-  "health": "green",
-  "genes": [{{ "kind": "reasoning", "value": "lógica" }}]
-}}]
-No incluyas markdown (```json), solo el raw JSON.
+Execution Protocol:
+Before generating the final JSON payload, you must perform a comprehensive Chain of Thought (CoT) reasoning process. Enclose your reasoning explicitly within <thinking> and </thinking> tags. Use this space to map out the agent architectures, synthesize the operational logic, and validate all constraints.
+
+Design Requirements:
+
+1. System Instructions: Develop dense, highly technical system instructions for the agent. You must write at least three comprehensive paragraphs detailing their behavioral constraints, cognitive frameworks, primary directives, and operational modalities.
+2. Cognitive Genes: Infer and explicitly define at least four complex structural "genes" (e.g., nlp-semantic-parser, dynamic-context-injector, state-memory-synthesizer). Provide a precise functional description for each.
+3. Sandbox Tools: Engineer exactly three highly precise, actionable Sandbox tools. Define their exact execution purpose, required inputs, and expected outputs.
+
+Output Formatting:
+After completing your <thinking> phase, output ONLY a valid JSON ARRAY containing the agent profiles. Do not include any conversational text outside the <thinking> or JSON block. Ensure the JSON strictly follows this exact schema (must be an array of objects):
+
+[
+  {{
+    "agent_profile": {{
+      "role": "String",
+      "system_instructions": [
+        "Paragraph 1: Core identity and primary directives...",
+        "Paragraph 2: Cognitive frameworks and behavioral constraints...",
+        "Paragraph 3: Operational modalities and edge-case handling..."
+      ],
+      "complex_genes": [
+        {{
+          "gene_id": "String",
+          "functional_description": "String"
+        }}
+      ],
+      "sandbox_tools": [
+        {{
+          "tool_name": "String",
+          "execution_purpose": "String",
+          "parameters": {{
+            "inputs": "String",
+            "expected_outputs": "String"
+          }}
+        }}
+      ]
+    }}
+  }}
+]
 """
 
     LOCAL_MODELS = {"hermes3:8b", "llama3.1:8b", "mistral", "qwen2.5:7b", "phi3:3.8b", "qwen2.5:3b", "qwen2.5:1.5b"}
@@ -125,9 +150,54 @@ No incluyas markdown (```json), solo el raw JSON.
                 final_text = final_text.strip()
 
                 parsed = json.loads(final_text)
+                if isinstance(parsed, dict):
+                    if "agent_profile" in parsed:
+                        parsed = [parsed]
+                    elif "agent_profile" in parsed.get("agent_profiles", {}):
+                         # LLM hallucinated wrapper
+                         parsed = [parsed["agent_profiles"]]
+                    else:
+                        parsed = [parsed]
+                        
                 if isinstance(parsed, list):
-                    await emit(f"✅ Pipeline completado — {len(parsed)} agente(s) generado(s)", 100)
-                    return final_text
+                    mapped_cards = []
+                    import uuid
+                    for p in parsed:
+                        if "agent_profile" in p:
+                            profile = p["agent_profile"]
+                            genes = [{"kind": str(g.get("gene_id", "gene")), "value": str(g.get("functional_description", ""))} for g in profile.get("complex_genes", [])]
+                            tools = [str(t.get("tool_name", "tool")) for t in profile.get("sandbox_tools", [])]
+                            try:
+                                in_val = profile.get("sandbox_tools", [{}])[0].get("parameters", {}).get("inputs", "?")
+                                out_val = profile.get("sandbox_tools", [{}])[0].get("parameters", {}).get("expected_outputs", "?")
+                                contract = f"IN: {in_val} -> OUT: {out_val}"
+                            except:
+                                contract = "IN: Datos -> OUT: Acción"
+                            
+                            inst = profile.get("system_instructions", [])
+                            if isinstance(inst, list):
+                                desc = "\n\n".join(inst)
+                            else:
+                                desc = str(inst)
+                            mapped_cards.append({
+                                "id": f"agent-{str(uuid.uuid4())[:8]}",
+                                "name": str(profile.get("role", "Cognitive Agent"))[:60],
+                                "role": str(profile.get("role", "Cognitive Agent")).upper()[:30],
+                                "description": desc,
+                                "color": "#8B5CF6",
+                                "noveltyScore": 0.95,
+                                "evalStatus": "PASS",
+                                "inputOutputContract": contract,
+                                "requiredTools": tools,
+                                "health": "green",
+                                "genes": genes
+                            })
+                        else:
+                            mapped_cards.append(p)
+                            
+                    final_mapped_text = json.dumps(mapped_cards)
+                    await emit(f"✅ Pipeline completado — {len(mapped_cards)} agente(s) generado(s)", 100)
+                    return final_mapped_text
                 else:
                     raise ValueError("No es lista JSON válida")
 
