@@ -30,6 +30,20 @@ export default function AgentOS() {
   useEffect(() => { try { localStorage.setItem('agentos_assigned_kb', assignedKB ? JSON.stringify(assignedKB) : 'null'); } catch {} }, [assignedKB]);
   useEffect(() => { try { localStorage.setItem('agentos_teams', JSON.stringify(teams)); } catch {} }, [teams]);
 
+  // Escuchar eventos de navegación cross-component (ej: tarjeta Ensamblaje → InfinityBoard)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.view) setView(detail.view as View);
+      // fitView se maneja en InfinityBoard al montar/mostrar
+      if (detail?.fitView) {
+        window.dispatchEvent(new CustomEvent('infinityboard:fitView'));
+      }
+    };
+    window.addEventListener('agentos:navigate', handler);
+    return () => window.removeEventListener('agentos:navigate', handler);
+  }, []);
+
   return (
     <div className="flex flex-col h-full w-full bg-[var(--surface-canvas)] text-[var(--text-primary)] overflow-hidden font-sans">
       

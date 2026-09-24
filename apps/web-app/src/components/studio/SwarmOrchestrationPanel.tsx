@@ -180,23 +180,24 @@ export const SwarmOrchestrationPanel: React.FC = () => {
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-semibold text-white tracking-wide flex items-center gap-3">
-                    <Target size={28} style={{ color: 'var(--accent-solid)' }} weight="duotone" />
+                    <Target size={28} style={{ color: 'var(--theme-border)' }} weight="duotone" />
                     Radar de Arquitectura
                   </h2>
                   <div className="text-right">
-                    <div className="text-xs font-mono tracking-widest uppercase mb-1" style={{ color: 'var(--accent-solid)', opacity: 0.6 }}>Progreso Global</div>
-                    <div className="text-xl font-bold" style={{ color: 'var(--accent-solid)' }}>
+                    <div className="text-xs font-mono tracking-widest uppercase mb-1" style={{ color: 'var(--theme-border)', opacity: 0.7 }}>Progreso Global</div>
+                    <div className="text-xl font-bold" style={{ color: 'var(--theme-border)' }}>
                       {phase3Complete ? '100%' : phase2Complete ? '75%' : phase1Complete ? '50%' : phase1Interview ? '25%' : '0%'}
                     </div>
                   </div>
                 </div>
-                {/* Progress Bar */}
-                <div className="h-2 w-full rounded-full overflow-hidden" style={{ background: 'var(--accent-soft)', border: '1px solid var(--stroke-subtle)' }}>
+                {/* Progress Bar — usa el color del tema activo */}
+                <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--stroke-subtle)' }}>
                   <div 
                     className="h-full transition-all duration-1000 ease-out"
                     style={{ 
                       width: phase3Complete ? '100%' : phase2Complete ? '75%' : phase1Complete ? '50%' : phase1Interview ? '25%' : '0%',
-                      background: 'linear-gradient(to right, var(--accent-solid), var(--accent-cyan))'
+                      background: 'var(--theme-border)',
+                      boxShadow: '0 0 8px var(--theme-border)'
                     }}
                   />
                 </div>
@@ -254,8 +255,10 @@ export const SwarmOrchestrationPanel: React.FC = () => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   
-                  {/* Step 1 */}
-                  <div className={`p-6 rounded-2xl border transition-all ${
+                  {/* Step 1 — click → pestaña Fase 1 */}
+                  <div 
+                    onClick={() => setZone2ActiveTab('phase1')}
+                    className={`p-6 rounded-2xl border transition-all cursor-pointer hover:scale-[1.01] ${
                     phase1Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 
                     phase1Interview ? 'border-blue-500/50 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.1)]' : 
                     'border-zinc-800/50 bg-zinc-900/30 opacity-60'
@@ -277,8 +280,10 @@ export const SwarmOrchestrationPanel: React.FC = () => {
                     </p>
                   </div>
 
-                  {/* Step 2 */}
-                  <div className={`p-6 rounded-2xl border transition-all ${
+                  {/* Step 2 — click → pestaña Fase 2 */}
+                  <div 
+                    onClick={() => setZone2ActiveTab('phase2')}
+                    className={`p-6 rounded-2xl border transition-all cursor-pointer hover:scale-[1.01] ${
                     phase2Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 
                     (phase1Complete && !phase2Complete) ? 'border-purple-500/50 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.1)]' : 
                     'border-zinc-800/50 bg-zinc-900/30 opacity-60'
@@ -300,8 +305,10 @@ export const SwarmOrchestrationPanel: React.FC = () => {
                     </p>
                   </div>
 
-                  {/* Step 3 */}
-                  <div className={`p-6 rounded-2xl border transition-all ${
+                  {/* Step 3 — click → pestaña Fase 3 */}
+                  <div 
+                    onClick={() => setZone2ActiveTab('phase3')}
+                    className={`p-6 rounded-2xl border transition-all cursor-pointer hover:scale-[1.01] ${
                     phase3Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 
                     (phase2Complete && !phase3Complete) ? 'border-amber-500/50 bg-amber-500/10 shadow-[0_0_20px_rgba(245,158,11,0.1)]' : 
                     'border-zinc-800/50 bg-zinc-900/30 opacity-60'
@@ -323,8 +330,15 @@ export const SwarmOrchestrationPanel: React.FC = () => {
                     </p>
                   </div>
 
-                  {/* Step 4 */}
-                  <div className={`p-6 rounded-2xl border transition-all ${
+                  {/* Step 4 — click → InfinityBoard con flujo centrado */}
+                  <div 
+                    onClick={() => {
+                      if (phase3Complete) {
+                        // Navegar a InfinityBoard y emitir evento para centrar el canvas
+                        window.dispatchEvent(new CustomEvent('agentos:navigate', { detail: { view: 'infinityboard', fitView: true } }));
+                      }
+                    }}
+                    className={`p-6 rounded-2xl border transition-all ${phase3Complete ? 'cursor-pointer hover:scale-[1.01]' : 'cursor-not-allowed'} ${
                     phase3Complete ? 'border-cyan-500/50 bg-cyan-500/10 shadow-[0_0_20px_rgba(6,182,212,0.2)]' : 
                     'border-zinc-800/50 bg-zinc-900/30 opacity-60'
                   }`}>
