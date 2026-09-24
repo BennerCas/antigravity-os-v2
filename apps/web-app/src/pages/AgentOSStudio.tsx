@@ -108,6 +108,7 @@ const FlowArchitect: React.FC = () => {
   const [selectedChatAgentId, setSelectedChatAgentId] = useState('aurelios-core');
   const [carouselSlide, setCarouselSlide] = useState(0);
   const [quantumPhase, setQuantumPhase] = useState<'phase1_triage' | 'phase2_extraction' | 'phase3_blueprint'>('phase1_triage');
+  const [showSwarmSlider, setShowSwarmSlider] = useState(true);
   const abortControllerRef = useRef<AbortController | null>(null);
   // Ref mutable para que el trigger del store siempre llame a la versión más reciente de handleSend
   // (evita stale closure cuando quantumPhase cambia entre renders)
@@ -139,6 +140,21 @@ const FlowArchitect: React.FC = () => {
     const spanishVoice = voices.find(v => v.lang.startsWith('es'));
     if (spanishVoice) utterance.voice = spanishVoice;
     window.speechSynthesis.speak(utterance);
+  };
+
+
+  const activateAmdGpu = async () => {
+    try {
+      const res = await fetch('http://localhost:8000/api/v1/studio/amd-gpu/activate', { method: 'POST' });
+      const data = await res.json();
+      if(data.status === 'success') {
+        alert('Ollama reiniciado exitosamente con aceleracion AMD RDNA3.\n¡Listo para procesar enjambres cuanticos!');
+      } else {
+        alert('Error: ' + data.message);
+      }
+    } catch(e) {
+      alert('Error de red al activar GPU: ' + e);
+    }
   };
 
   const clearChat = () => {
@@ -347,7 +363,8 @@ const FlowArchitect: React.FC = () => {
   const swarm2 = [
     { id: 'arquitecto-cuestionario', title: 'Arquitecto Extracción', icon: <Network size={18} className="text-[#3b82f6]" weight="duotone" />, desc: 'Nodo 1 del Inquisidor. Transmuta los hallazgos del Radar en un cuestionario técnico agresivo que fuerza definiciones precisas sobre arquitectura y flujos.' },
     { id: 'red-teamer', title: 'Red Teamer', icon: <BugBeetle size={18} className="text-[#facc15]" weight="duotone" />, desc: 'Nodo 2 del Inquisidor. Atacante asimétrico. Su única función es destrozar el cuestionario del Arquitecto, revelando huecos de seguridad, lógica circular o sesgos de diseño.' },
-    { id: 'escribano', title: 'El Escribano', icon: <Wrench size={18} className="text-[#14b8a6]" weight="duotone" />, desc: 'Nodo 3 del Inquisidor. Redacta el Contrato I/O definitivo en JSON inmutable, sellando los parámetros técnicos tras la colisión entre el Arquitecto y el Red Teamer.' }
+    { id: 'escribano', title: 'El Escribano', icon: <Wrench size={18} className="text-[#14b8a6]" weight="duotone" />, desc: 'Nodo 3 del Inquisidor. Redacta el Contrato I/O definitivo en JSON inmutable, sellando los parámetros técnicos tras la colisión entre el Arquitecto y el Red Teamer.' },
+    { id: 'modelador-mental', title: 'Modelador Mental', icon: <Brain size={18} className="text-[#8b5cf6]" weight="duotone" />, desc: 'Nodo 4 del Inquisidor. Estructura ontologías complejas y diseña los esquemas mentales base para que el Blueprint tenga una lógica coherente y escalable.' }
   ];
 
   const swarm3 = [
@@ -397,13 +414,20 @@ const FlowArchitect: React.FC = () => {
           <button onClick={clearChat} title="Limpiar chat" className={`hover:brightness-125 transition-opacity ${t.text}`}>
             <Trash size={18} />
           </button>
+
+          <button onClick={activateAmdGpu} title="Activar Aceleracion GPU AMD (RDNA3)" className={`hover:text-green-400 transition-colors ${t.text}`}>
+            <Cpu size={18} />
+          </button>
           <button onClick={() => setShowSetup(true)} title="Configuración de Modelo y Tema" className={`hover:brightness-125 transition-opacity ${t.text}`}>
             <Gear size={18} />
+          </button>
+          <button onClick={() => setShowSwarmSlider(!showSwarmSlider)} title="Ocultar/Mostrar herramientas" className={`hover:brightness-125 transition-opacity ${t.text} ${!showSwarmSlider ? 'opacity-50' : ''}`}>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M21.5,13.5C21.5,12.12 20.38,11 19,11C18.67,11 18.36,11.07 18.07,11.18L16,8H17C18.1,8 19,7.1 19,6C19,4.9 18.1,4 17,4H14V5C14,6.1 13.1,7 12,7C10.9,7 10,6.1 10,5V4H7C5.9,4 5,4.9 5,6C5,7.1 5.9,8 7,8H8L5.93,11.18C5.64,11.07 5.33,11 5,11C3.62,11 2.5,12.12 2.5,13.5C2.5,14.88 3.62,16 5,16H7.13L8.54,19.31C8.28,19.68 8.12,20.12 8.12,20.6C8.12,21.93 9.19,23 10.52,23C11.6,23 12.52,22.28 12.82,21.28L15.46,19.31C15.87,19.74 16.45,20 17.1,20C18.35,20 19.37,19.04 19.49,17.8L21.5,13.5Z" /></svg>
           </button>
         </div>
       </div>
 
-      <div className="px-4 pb-2 shrink-0 flex flex-col gap-3">
+      <div className={`px-4 pt-[1.5cm] pb-[0.5cm] shrink-0 flex flex-col gap-6 transition-all duration-300 overflow-hidden ${showSwarmSlider ? 'h-[260px] opacity-100' : 'h-0 opacity-0 !pb-0'}`}>
         {/* Fixed AI Tools Carousel */}
         <div className="flex justify-center mb-1 relative">
           <div className="flex gap-2 items-center mx-auto relative left-[0px]">

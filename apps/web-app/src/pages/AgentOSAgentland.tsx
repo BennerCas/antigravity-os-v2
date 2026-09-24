@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Brain, MagnifyingGlass, Funnel, Trash, Heartbeat, ShieldCheck, PaintBrush } from '@phosphor-icons/react';
+import { Brain, MagnifyingGlass, Funnel, Trash, Heartbeat, ShieldCheck, PaintBrush, BugBeetle, Cube, Strategy } from '@phosphor-icons/react';
 import { useStudioStore } from '../stores/useStudioStore';
 
 export default function AgentOSAgentland() {
@@ -51,14 +51,6 @@ export default function AgentOSAgentland() {
           <button className="bg-[#0f1115] border border-[#222] p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
             <Funnel size={18} />
           </button>
-          
-          <button 
-            onClick={() => setMemoryEnabled(!memoryEnabled)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold tracking-widest transition-all ${memoryEnabled ? 'bg-[#0f1115] border-green-500/50 text-green-400 shadow-[0_0_10px_rgba(34,197,94,0.2)]' : 'bg-[#0f1115] border-[#222] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
-          >
-            <div className={`w-1.5 h-1.5 rounded-full ${memoryEnabled ? 'bg-green-400 animate-pulse' : 'bg-gray-600'}`} />
-            PERSISTENCIA DE MEMORIA
-          </button>
         </div>
       </div>
 
@@ -71,21 +63,21 @@ export default function AgentOSAgentland() {
             <ShieldCheck size={20} className="text-yellow-500" weight="duotone" />
             <h2 className="text-sm font-bold text-yellow-400 uppercase tracking-widest">Pantheon: God-Tier Agents & AureliOS</h2>
           </div>
-          <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded border border-yellow-500/20">ESTADO: PENDIENTE DE SNTESIS</span>
+          <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded border border-yellow-500/20">SINTETIZADO</span>
         </div>
         
-        <div className="flex gap-4 overflow-x-auto custom-scrollbar pb-2 relative z-10">
-          {/* AureliOS Placeholder */}
-          <div className="min-w-[220px] h-[100px] border border-blue-500/30 bg-blue-500/10 rounded-lg flex items-center justify-center flex-col gap-2 opacity-60 border-dashed">
-            <Brain size={24} className="text-blue-400" />
-            <span className="text-xs text-blue-400 font-bold tracking-wider">AureliOS (Core)</span>
-          </div>
-
-          {/* God-Tier Placeholders */}
-          {[...Array(12)].map((_, i) => (
-            <div key={i} className="min-w-[140px] h-[100px] border border-white/10 bg-white/5 rounded-lg flex items-center justify-center flex-col gap-2 opacity-40 border-dashed">
-              <span className="text-[10px] text-[var(--text-secondary)] font-mono">SLOT-{String(i+1).padStart(2, '0')}</span>
-              <span className="text-xs text-[var(--text-secondary)] font-bold">God-Tier Agent</span>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 relative z-10">
+          {[
+            { id: 'aurelios', name: 'AureliOS (Core)', role: 'El Juez Definitivo', color: '#3b82f6', icon: <Brain size={24} />, desc: 'Juzga el Blueprint contra las directrices de Antigravity OS y orquesta el despliegue final.' },
+            { id: 'radar', name: 'Enjambre Radar', role: 'Fase 1: Triage', color: '#10b981', icon: <ShieldCheck size={24} />, desc: 'Entrevistador Socrático, Francotirador de Industria, Analista de Viabilidad, Profiler.' },
+            { id: 'inquisidor', name: 'Enjambre Inquisidor', role: 'Fase 2: Extracción', color: '#e11d48', icon: <BugBeetle size={24} />, desc: 'Escribano del Caos, Arquitecto de Ontologías, Detective de Fricción, Modelador Mental.' },
+            { id: 'forja', name: 'Enjambre Forja', role: 'Fase 3: Blueprint', color: '#f5a623', icon: <Cube size={24} />, desc: 'System Designer, Auditor Cero-Trust, Narrador TTS, El Juez.' },
+            { id: 'godtier', name: 'God-Tier Prompts', role: 'Master Context', color: '#d946ef', icon: <Strategy size={24} />, desc: 'Reglas absolutas, matrices de evaluación y control de calidad.' }
+          ].map(agent => (
+            <div key={agent.id} onClick={() => alert(`Perfil de ${agent.name}:\nRol: ${agent.role}\n\n${agent.desc}`)} className="cursor-pointer border border-white/10 bg-white/5 hover:bg-white/10 transition-colors rounded-lg flex items-center justify-center flex-col gap-2 p-4">
+              <div style={{ color: agent.color }}>{agent.icon}</div>
+              <span className="text-xs text-white font-bold">{agent.name}</span>
+              <span className="text-[10px] text-gray-400 text-center">{agent.role}</span>
             </div>
           ))}
         </div>
