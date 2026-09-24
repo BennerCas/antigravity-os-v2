@@ -20,6 +20,16 @@ param(
     [string]$Root = $PSScriptRoot
 )
 
+
+# --- AUTO-ELEVACION A ADMINISTRADOR ---
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    $argsString = ""
+    if ($NoOllamaReset) { $argsString += " -NoOllamaReset" }
+    if ($Root) { $argsString += " -Root `"$Root`"" }
+    Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$PSCommandPath`"$argsString" -Verb RunAs
+    exit
+}
+
 $ErrorActionPreference = "SilentlyContinue"
 
 # --- Rutas (todo relativo a donde vive este script) ---
@@ -90,6 +100,7 @@ function OllamaUp {
 
 if (-not $NoOllamaReset) {
     # Matar cualquier instancia previa limpiamente (incluso las sin escudo)
+    taskkill /F /IM "ollama app.exe"         2>$null | Out-Null
     taskkill /F /IM ollama_llama_server.exe 2>$null | Out-Null
     taskkill /F /IM ollama.exe               2>$null | Out-Null
     Start-Sleep -Seconds 2
@@ -97,7 +108,7 @@ if (-not $NoOllamaReset) {
     Log "Iniciando Ollama con escudo AMD RDNA3 (ROCm + iGPU)..."
     # Variables OBLIGATORIAS para AMD Radeon 860M - sin estas la GPU colapsa (TDR)
     $env:OLLAMA_IGPU_ENABLE       = "1"
-    $env:HSA_OVERRIDE_GFX_VERSION = "11.0.0"
+    # $env:HSA_OVERRIDE_GFX_VERSION = "11.0.0" # <- REMOVIDO: Causa crash de ROCm (device kernel image invalid) en 860M
     $env:OLLAMA_NUM_PARALLEL      = "1"
 
     # Arrancar SIN ventana de consola visible

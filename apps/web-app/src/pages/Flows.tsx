@@ -1,3 +1,4 @@
+import { useTTSStore } from '../lib/ttsStore';
 import { useState, useEffect } from 'react';
 import { Network, Play, DotsThreeOutlineVertical, Books, SquaresFour, Plus, DownloadSimple, SpeakerHigh, GraduationCap, ShieldCheck, Brain, Rocket, Cpu, Clock, PuzzlePiece, Target, Lightning, GitBranch } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
@@ -46,12 +47,10 @@ export default function Flows() {
     if (playingTTS) return;
     setPlayingTTS(id);
     try {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'es-ES';
-      utterance.rate = 1.0;
-      utterance.onend = () => setPlayingTTS(null);
-      utterance.onerror = () => setPlayingTTS(null);
-      window.speechSynthesis.speak(utterance);
+      useTTSStore.getState().play(text, 'Workflows');
+      // Set a timeout to clear playingTTS visually, or simply rely on store.
+      // Since play doesn't return a promise, we just toggle it.
+      setTimeout(() => setPlayingTTS(null), 3000);
     } catch (e) {
       console.error(e);
       setPlayingTTS(null);

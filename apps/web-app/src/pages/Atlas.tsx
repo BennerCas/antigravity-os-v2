@@ -1,3 +1,4 @@
+import { useTTSStore } from '../lib/ttsStore';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../lib/api';
@@ -352,22 +353,10 @@ const Atlas = () => {
         }
       }
       
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(textToSpeak);
-        utterance.lang = 'es-ES';
-        utterance.rate = 1.05;
-        window.speechSynthesis.speak(utterance);
-      }
+      useTTSStore.getState().play(textToSpeak, 'Atlas Info');
     } catch (err) {
       console.error(err);
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(currentText);
-        utterance.lang = 'es-ES';
-        utterance.rate = 1.05;
-        window.speechSynthesis.speak(utterance);
-      }
+      useTTSStore.getState().play(currentText, 'Atlas Info');
     } finally {
       setIsTranslating(false);
     }
@@ -723,19 +712,13 @@ ${inspectedPrompt.content}
   // ─── TTS ──────────────────────────────────────────────────────────────────
   const handleSpeak = async (e: React.MouseEvent, text: string) => {
     e.stopPropagation();
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
     try {
       const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.slice(0, 400))}&langpair=en|es`);
       const data = await res.json();
       const translated = data?.responseData?.translatedText || text;
-      const msg = new SpeechSynthesisUtterance(translated);
-      msg.lang = 'es-ES';
-      window.speechSynthesis.speak(msg);
+      useTTSStore.getState().play(translated, 'Atlas Traducción');
     } catch {
-      const msg = new SpeechSynthesisUtterance(text);
-      msg.lang = 'es-ES';
-      window.speechSynthesis.speak(msg);
+      useTTSStore.getState().play(text, 'Atlas Info');
     }
   };
 
@@ -1432,13 +1415,7 @@ ${inspectedPrompt.content}
               <button
  onClick={(e) => {
                   e.stopPropagation();
-                  if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                    const utterance = new SpeechSynthesisUtterance(explanationPopup.text);
-                    utterance.lang = 'es-ES';
-                    utterance.rate = 1.05;
-                    window.speechSynthesis.speak(utterance);
-                  }
+                  useTTSStore.getState().play(explanationPopup.text, 'Explicación');
                 }}
                 className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center gap-2 border  hover:border-gray-500 px-4 py-2 rounded-full transition-colors bg-[var(--surface-card)] border border-[var(--theme-border)]"
               >

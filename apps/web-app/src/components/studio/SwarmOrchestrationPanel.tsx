@@ -16,6 +16,16 @@ export const SwarmOrchestrationPanel: React.FC = () => {
   const [isSpeaking, setIsSpeaking] = React.useState(false);
   const [isEditingObjective, setIsEditingObjective] = React.useState(false);
   const [editedObjective, setEditedObjective] = React.useState(triageSummary || '');
+  const [activeModel, setActiveModel] = React.useState(() => localStorage.getItem('aurelios_model') || 'free.ai/auto');
+  const [explainProgress, setExplainProgress] = React.useState<number | null>(null);
+  const [explainText, setExplainText] = React.useState<string | null>(null);
+  const [isRegeneratingObjective, setIsRegeneratingObjective] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleModelChange = () => setActiveModel(localStorage.getItem('aurelios_model') || 'free.ai/auto');
+    window.addEventListener('aurelios_model_changed', handleModelChange);
+    return () => window.removeEventListener('aurelios_model_changed', handleModelChange);
+  }, []);
 
   React.useEffect(() => {
     // Auto-corrección si el objetivo guardado se contaminó con mensajes de error
@@ -28,31 +38,88 @@ export const SwarmOrchestrationPanel: React.FC = () => {
     }
   }, [triageSummary]);
 
-  const handleExplainFlow = async () => {
-    if (!triageSummary || isSpeaking) {
-      if (isSpeaking) {
-        window.speechSynthesis.cancel();
-        setIsSpeaking(false);
-      }
-      return;
-    }
-    setIsSpeaking(true);
-
+  const generateExplanation = async () => {
+    if (!phase3Content || !triageSummary) return;
+    setExplainProgress(0);
+    setExplainText(null);
     try {
       const modelName = activeModel.includes('hermes') ? 'hermes3:8b' : 'qwen2.5:3b';
-      
-      let prompt = "";
-      if (phase3Complete && phase3Content) {
-        const cleanBlueprint = phase3Content.replace(/```/g, '').substring(0, 2000);
-        prompt = `Actúa como AureliOS, el Arquitecto del Sistema. 
+      const cleanBlueprint = phase3Content.replace(/```/g, '').substring(0, 2000);
+      const prompt = `Actúa como AureliOS, el Arquitecto del Sistema. 
 OBJETIVO DEL USUARIO: "${triageSummary}"
 BLUEPRINT DE AGENTES:
 ${cleanBlueprint}
 
 Analizando el Blueprint anterior, redacta un discurso robusto, cohesivo, profundo y entendible (2 a 3 párrafos fluidos, sin usar listas ni viñetas) explicando de manera detallada cómo este enjambre de agentes que has diseñado logrará cumplir el objetivo del usuario. Habla con confianza técnica y directa. Cero clichés.`;
-      } else {
-        prompt = `Actúa como AureliOS. Explica de forma coherente en 3 oraciones robustas cómo un flujo multi-agente logrará el objetivo: "${triageSummary}"`;
+
+      const res = await fetch('http://127.0.0.1:11434/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: modelName,
+          prompt: prompt,
+          stream: true
+        })
+      });
+
+      if (!res.body) return;
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let done = false;
+      let fullText = '';
+      let tokensCount = 0;
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        if (value) {
+          const chunkStr = decoder.decode(value, { stream: true });
+          const lines = chunkStr.split('\n').filter(Boolean);
+          for (const line of lines) {
+            try {
+              const data = JSON.parse(line);
+              fullText += data.response;
+              tokensCount++;
+              setExplainProgress(Math.min(100, Math.round((tokensCount / 250) * 100)));
+            } catch (e) {}
+          }
+        }
       }
+      setExplainText(fullText);
+      setExplainProgress(100);
+    } catch (e) {
+      console.error(e);
+      setExplainProgress(null);
+    }
+  };
+
+  React.useEffect(() => {
+    if (phase3Complete && explainProgress === null && !explainText) {
+      generateExplanation();
+    }
+  }, [phase3Complete, phase3Content]);
+
+  const handleExplainFlow = () => {
+    if (!explainText) return;
+    const tts = useTTSStore.getState();
+    if (tts.isActive && tts.currentSection === 'AureliOS Explicación') {
+      tts.stop();
+      setIsSpeaking(false);
+    } else {
+      setIsSpeaking(true);
+      tts.play(explainText, 'AureliOS Explicación');
+      setTimeout(() => setIsSpeaking(false), 5000); // Fallback UI state
+    }
+  };
+
+  const handleRegenerateObjective = async () => {
+    if (!triageSummary || isRegeneratingObjective) return;
+    setIsRegeneratingObjective(true);
+    try {
+      const modelName = activeModel.includes('hermes') ? 'hermes3:8b' : 'qwen2.5:3b';
+      const prompt = `Actúa como AureliOS, Arquitecto de Sistemas. 
+Tienes el siguiente objetivo de usuario: "${triageSummary}"
+Reescribe y mejora este objetivo de manera profesional, clara y directa en una sola oración concisa. Debe ser accionable y técnico, ideal para dárselo a un enjambre de agentes de IA. Solo responde con el objetivo mejorado, sin preámbulos, sin comillas y sin explicaciones adicionales.`;
       
       const res = await fetch('http://127.0.0.1:11434/api/generate', {
         method: 'POST',
@@ -64,26 +131,14 @@ Analizando el Blueprint anterior, redacta un discurso robusto, cohesivo, profund
         })
       });
       const data = await res.json();
-      const text = data.response;
-
-      const synth = window.speechSynthesis;
-      const utterance = new SpeechSynthesisUtterance(text);
+      const newObj = data.response.trim().replace(/^"|"$/g, '');
       
-      // Intentar forzar voces españolas locales de Windows (Cortana, Helena, etc.)
-      const voices = synth.getVoices();
-      const esVoice = voices.find(v => v.lang.startsWith('es') && v.localService) || voices.find(v => v.lang.startsWith('es')) || voices[0];
-      if (esVoice) utterance.voice = esVoice;
-      utterance.lang = 'es-ES';
-      utterance.rate = 1.05;
-      utterance.pitch = 1.0;
-      
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
-      
-      synth.speak(utterance);
+      useStudioStore.getState().setTriageSummary(newObj);
+      setEditedObjective(newObj);
     } catch (e) {
-      console.error('Error TTS:', e);
-      setIsSpeaking(false);
+      console.error(e);
+    } finally {
+      setIsRegeneratingObjective(false);
     }
   };
 
@@ -92,15 +147,8 @@ Analizando el Blueprint anterior, redacta un discurso robusto, cohesivo, profund
     setIsEditingObjective(false);
   };
 
-  const [activeModel, setActiveModel] = React.useState(() => localStorage.getItem('aurelios_model') || 'free.ai/auto');
-
   const activeAgentLog = activityLogs.filter(log => log.status === 'PENDING').pop();
   const activeAgentName = activeAgentLog ? activeAgentLog.source : null;
-  React.useEffect(() => {
-    const handleModelChange = () => setActiveModel(localStorage.getItem('aurelios_model') || 'free.ai/auto');
-    window.addEventListener('aurelios_model_changed', handleModelChange);
-    return () => window.removeEventListener('aurelios_model_changed', handleModelChange);
-  }, []);
 
   React.useEffect(() => {
     let ws: WebSocket;
@@ -216,13 +264,7 @@ Analizando el Blueprint anterior, redacta un discurso robusto, cohesivo, profund
                 const contentEl = document.getElementById('zone2-content');
                 const text = contentEl?.innerText || '';
                 if (!text.trim()) return;
-                window.speechSynthesis.cancel();
-                const utt = new SpeechSynthesisUtterance(text);
-                const voices = window.speechSynthesis.getVoices();
-                const esVoice = voices.find(v => v.lang.startsWith('es'));
-                if (esVoice) utt.voice = esVoice;
-                utt.rate = 1.1;
-                window.speechSynthesis.speak(utt);
+                useTTSStore.getState().play(text, 'Resultados de Fase');
               }}
               className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all"
             >
@@ -315,22 +357,43 @@ Analizando el Blueprint anterior, redacta un discurso robusto, cohesivo, profund
                             </div>
                             <div className="flex flex-col gap-2 shrink-0">
                               {phase3Complete && (
-                                <button 
-                                  onClick={handleExplainFlow}
-                                  className={`px-3 py-2 rounded-xl flex items-center gap-2 text-sm font-medium transition-all ${
-                                    isSpeaking 
-                                      ? 'bg-emerald-500 text-zinc-950 shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse' 
-                                      : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
-                                  }`}
-                                  title="Explicar cómo lograr el objetivo usando el Blueprint"
-                                >
-                                  {isSpeaking ? <Square size={16} weight="fill" /> : <SpeakerHigh size={16} />}
-                                  {isSpeaking ? "Detener" : "Explicar"}
-                                </button>
+                                <>
+                                  <button 
+                                    onClick={handleExplainFlow}
+                                    disabled={explainProgress !== null && explainProgress < 100}
+                                    className={`px-3 py-2 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all ${
+                                      (explainProgress !== null && explainProgress < 100)
+                                        ? 'bg-zinc-800 text-zinc-400 border border-zinc-700 cursor-wait'
+                                        : isSpeaking 
+                                          ? 'bg-emerald-500 text-zinc-950 shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse' 
+                                          : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
+                                    }`}
+                                    title="Explicar cómo lograr el objetivo usando el Blueprint"
+                                  >
+                                    {isSpeaking ? <Square size={16} weight="fill" /> : <SpeakerHigh size={16} />}
+                                    {(explainProgress !== null && explainProgress < 100) 
+                                      ? `Creando ${explainProgress}%` 
+                                      : isSpeaking ? "Detener" : "Explicar"}
+                                  </button>
+                                  
+                                  <button
+                                    onClick={handleRegenerateObjective}
+                                    disabled={isRegeneratingObjective}
+                                    className={`px-3 py-2 rounded-xl flex items-center justify-center gap-2 text-xs font-medium transition-all ${
+                                      isRegeneratingObjective
+                                        ? 'bg-zinc-800 text-zinc-400 border border-zinc-700 animate-pulse'
+                                        : 'bg-zinc-800/50 text-zinc-400 hover:text-emerald-400 hover:bg-zinc-700 border border-transparent'
+                                    }`}
+                                    title="Regenerar y mejorar el objetivo"
+                                  >
+                                    <Lightning size={14} />
+                                    {isRegeneratingObjective ? "Regenerando..." : "Regenerar"}
+                                  </button>
+                                </>
                               )}
                               <button 
                                 onClick={() => setIsEditingObjective(!isEditingObjective)}
-                                className="p-2 rounded-xl bg-zinc-800/50 hover:bg-zinc-700 text-zinc-400 hover:text-emerald-400 transition-colors opacity-0 group-hover:opacity-100 flex items-center justify-center self-end"
+                                className="p-2 rounded-xl bg-zinc-800/50 hover:bg-zinc-700 text-zinc-400 hover:text-emerald-400 transition-colors opacity-0 group-hover:opacity-100 flex items-center justify-center self-end mt-1"
                                 title="Editar Objetivo"
                               >
                                 <PaintBrush size={16} />

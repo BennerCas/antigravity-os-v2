@@ -1,3 +1,4 @@
+import { useTTSStore } from '../lib/ttsStore';
 import React, { useState, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
@@ -332,22 +333,10 @@ const Agents = () => {
         }
       }
       
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(textToSpeak);
-        utterance.lang = 'es-ES';
-        utterance.rate = 1.05;
-        window.speechSynthesis.speak(utterance);
-      }
+      useTTSStore.getState().play(textToSpeak, 'Agente Info');
     } catch (err) {
       console.error(err);
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(currentText);
-        utterance.lang = 'es-ES';
-        utterance.rate = 1.05;
-        window.speechSynthesis.speak(utterance);
-      }
+      useTTSStore.getState().play(currentText, 'Agente Info');
     } finally {
       setIsTranslating(false);
     }
@@ -637,19 +626,13 @@ ${inspectedAgent.instructions || inspectedAgent.content}
   // ─── TTS ──────────────────────────────────────────────────────────────────
   const handleSpeak = async (e: React.MouseEvent, text: string) => {
     e.stopPropagation();
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
     try {
       const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.slice(0, 400))}&langpair=en|es`);
       const data = await res.json();
       const translated = data?.responseData?.translatedText || text;
-      const msg = new SpeechSynthesisUtterance(translated);
-      msg.lang = 'es-ES';
-      window.speechSynthesis.speak(msg);
+      useTTSStore.getState().play(translated, 'Agente Traducción');
     } catch {
-      const msg = new SpeechSynthesisUtterance(text);
-      msg.lang = 'es-ES';
-      window.speechSynthesis.speak(msg);
+      useTTSStore.getState().play(text, 'Agente Info');
     }
   };
 
@@ -1336,7 +1319,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
           <div className="bg-[var(--surface-canvas)] border border-orange-400 rounded-2xl p-6 max-w-md w-full relative">
             <button 
               onClick={() => {
-                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                useTTSStore.getState().stop();
                 setExplanationPopup(null);
               }}
               className="absolute top-4 right-4 text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--surface-elevated)] rounded-full p-1 transition-colors"
@@ -1356,13 +1339,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
             <div className="mt-6 flex justify-between items-center">
               <button 
                 onClick={() => {
-                  if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                    const utterance = new SpeechSynthesisUtterance(explanationPopup.text);
-                    utterance.lang = 'es-ES';
-                    utterance.rate = 1.05;
-                    window.speechSynthesis.speak(utterance);
-                  }
+                  useTTSStore.getState().play(explanationPopup.text, 'Explicación de Concepto');
                 }}
                 className="bg-transparent border border-orange-400 text-orange-400 hover:bg-[var(--theme-border)]/20 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
               >
@@ -1370,7 +1347,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
               </button>
               <button 
                 onClick={() => {
-                  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                  useTTSStore.getState().stop();
                   setExplanationPopup(null);
                 }}
                 className="bg-transparent border border-orange-400 text-orange-400 hover:bg-[var(--theme-border)]/20 px-6 py-2 rounded-lg font-medium transition-colors"

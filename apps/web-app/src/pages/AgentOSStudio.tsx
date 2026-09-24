@@ -1,3 +1,4 @@
+import { useTTSStore } from '../lib/ttsStore';
 import ReactMarkdown from 'react-markdown';
 import React, { useState, useEffect, useRef } from 'react';
 import { ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState } from '@xyflow/react';
@@ -136,14 +137,7 @@ const FlowArchitect: React.FC = () => {
   const t = AURELIOS_THEMES[currentThemeKey];
 
   const speak = (text: string) => {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'es-ES';
-    const voices = window.speechSynthesis.getVoices();
-    const spanishVoice = voices.find(v => v.lang.startsWith('es'));
-    if (spanishVoice) utterance.voice = spanishVoice;
-    window.speechSynthesis.speak(utterance);
+    useTTSStore.getState().play(text, 'AureliOS');
   };
 
 
@@ -913,7 +907,7 @@ const AgentCarousel: React.FC = () => {
     // Calculo inicial
     const calcTime = () => {
       const elapsed = Math.floor((Date.now() - synthStartTime) / 1000);
-      return Math.max(0, 300 - elapsed);
+      return Math.max(0, 900 - elapsed);
     };
     
     setTimeLeft(calcTime());
@@ -1204,9 +1198,9 @@ export const CanvasTabs: React.FC = () => {
     const { setPipelineProgress } = useStudioStore.getState();
     setPipelineProgress("🔍 Despertando motor cuántico...", 5);
 
-    // AbortController con 5 minutos — el pipeline SDK tiene 3 etapas y puede tardar ~90s en Ollama
+    // AbortController con 15 minutos — el pipeline SDK tiene 3 etapas y puede tardar ~90s en Ollama, pero con contexto largo y iGPU puede llegar a 8-10 min
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+    const timeoutId = setTimeout(() => controller.abort(), 15 * 60 * 1000);
 
     try {
       const selectedModel = localStorage.getItem('aurelios_model') || 'ollama/hermes3:8b';

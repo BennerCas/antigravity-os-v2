@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { API_URL } from '../lib/api';
+import { useTTSStore } from '../lib/ttsStore';
 import ReactMarkdown from 'react-markdown';
 import { Star, Cpu, MagnifyingGlass, CheckCircle, Compass, Hammer, Brain, Gear, Rocket, Database, TerminalWindow, Lightning, LockKey, CaretRight, Sparkle, Check, Copy, CloudArrowDown , Target, Users, ShieldCheck, Graph, GraduationCap, PenNib} from '@phosphor-icons/react';
 import { logicTaskManager, LogicTaskState } from '../lib/logicTaskManager';
@@ -432,12 +433,10 @@ export default function Architecture() {
   };
 
   const handleLibTTS = (text: string) => {
-    if (libSpeaking) { window.speechSynthesis.cancel(); setLibSpeaking(false); return; }
-    const utt = new SpeechSynthesisUtterance(text.slice(0, 1000));
-    utt.lang = 'es-ES'; utt.rate = 0.9;
-    utt.onend = () => setLibSpeaking(false);
+    const tts = useTTSStore.getState();
+    if (libSpeaking) { tts.stop(); setLibSpeaking(false); return; }
     setLibSpeaking(true);
-    window.speechSynthesis.speak(utt);
+    tts.play(text.slice(0, 1000), 'Librería de Componentes');
   };
 
   const handleLibTranslate = async (text: string, key: string) => {

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface TTSState {
   isActive: boolean;
@@ -34,107 +35,123 @@ const cleanTextForTTS = (text: string) => {
     .trim();
 };
 
-export const useTTSStore = create<TTSState>((set, get) => ({
-  isActive: false,
-  isPaused: false,
-  currentSection: '',
-  currentText: '',
-  volume: 1,
-  speed: 1,
-  voices: [],
-  selectedVoiceURI: null,
-  isRestarting: false,
+export const useTTSStore = create<TTSState>()(
+  persist(
+    (set, get) => ({
+      isActive: false,
+      isPaused: false,
+      currentSection: '',
+      currentText: '',
+      volume: 1,
+      speed: 1,
+      voices: [],
+      selectedVoiceURI: null,
+      isRestarting: false,
 
-  initVoices: () => {
-    const updateVoices = () => {
-      const allVoices = window.speechSynthesis.getVoices();
-      const esVoices = allVoices.filter(v => v.lang.startsWith('es'));
-      const voices = esVoices.length > 0 ? esVoices : allVoices;
-      set({ voices, selectedVoiceURI: voices[0]?.voiceURI || null });
-    };
-    
-    updateVoices();
-    if (window.speechSynthesis.onvoiceschanged !== undefined) {
-      window.speechSynthesis.onvoiceschanged = updateVoices;
-    }
-  },
+      initVoices: () => {
+        const updateVoices = () => {
+          const allVoices = window.speechSynthesis.getVoices();
+          const esVoices = allVoices.filter(v => v.lang.startsWith('es'));
+          const voices = esVoices.length > 0 ? esVoices : allVoices;
+          
+          const currentVoice = get().selectedVoiceURI;
+          const voiceToSelect = voices.find(v => v.voiceURI === currentVoice) ? currentVoice : (voices[0]?.voiceURI || null);
 
-  play: (text: string, section: string = 'Texto General', isRestart = false) => {
-    const { volume, speed, voices, selectedVoiceURI } = get();
-    if (!('speechSynthesis' in window)) return;
-    
-    if (isRestart) {
-      set({ isRestarting: true });
-    }
-    window.speechSynthesis.cancel();
-    
-    const cleaned = cleanTextForTTS(text);
-    if (!cleaned) return;
+          set({ voices, selectedVoiceURI: voiceToSelect });
+        };
+        
+        updateVoices();
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+          window.speechSynthesis.onvoiceschanged = updateVoices;
+        }
+      },
 
-    const utterance = new SpeechSynthesisUtterance(cleaned);
-    utterance.volume = volume;
-    utterance.rate = speed;
-    utterance.lang = 'es-ES';
-    
-    if (selectedVoiceURI) {
-      const voice = voices.find(v => v.voiceURI === selectedVoiceURI);
-      if (voice) utterance.voice = voice;
-    }
+      play: (text: string, section: string = 'Texto General', isRestart = false) => {
+        const { volume, speed, voices, selectedVoiceURI } = get();
+        if (!('speechSynthesis' in window)) return;
+        
+        if (isRestart) {
+          set({ isRestarting: true });
+        }
+        window.speechSynthesis.cancel();
+        
+        const cleaned = cleanTextForTTS(text);
+        if (!cleaned) return;
 
-    utterance.onstart = () => {
-      set({ isActive: true, isPaused: false, currentSection: section, currentText: text, isRestarting: false });
-    };
-    
-    utterance.onend = () => {
-      if (!get().isRestarting) {
-        set({ isActive: false, isPaused: false, currentSection: '', currentText: '' });
+        const utterance = new SpeechSynthesisUtterance(cleaned);
+        utterance.volume = volume;
+        utterance.rate = speed;
+        utterance.lang = 'es-ES';
+        
+        if (selectedVoiceURI) {
+          const voice = voices.find(v => v.voiceURI === selectedVoiceURI);
+          if (voice) utterance.voice = voice;
+        }
+
+        utterance.onstart = () => {
+          set({ isActive: true, isPaused: false, currentSection: section, currentText: text, isRestarting: false });
+        };
+        
+        utterance.onend = () => {
+          if (!get().isRestarting) {
+            set({ isActive: false, isPaused: false, currentSection: '', currentText: '' });
+          }
+        };
+        
+        utterance.onerror = () => {
+          if (!get().isRestarting) {
+            set({ isActive: false, isPaused: false, currentSection: '', currentText: '' });
+          }
+        };
+
+        window.speechSynthesis.speak(utterance);
+        set({ isActive: true, isPaused: false, currentSection: section, currentText: text });
+      },
+
+      pause: () => {
+        window.speechSynthesis.pause();
+        set({ isPaused: true });
+      },
+
+      resume: () => {
+        window.speechSynthesis.resume();
+        set({ isPaused: false });
+      },
+
+      stop: () => {
+        window.speechSynthesis.cancel();
+        set({ isActive: false, isPaused: false, currentSection: '', currentText: '', isRestarting: false });
+      },
+
+      setVolume: (v: number) => {
+        set({ volume: v });
+        const { isActive, currentText, currentSection, play } = get();
+        if (isActive && currentText) {
+          clearTimeout((window as any)._ttsRestartTimer);
+          (window as any)._ttsRestartTimer = setTimeout(() => play(currentText, currentSection, true), 300);
+        }
+      },
+      
+      setSpeed: (s: number) => {
+        set({ speed: s });
+        const { isActive, currentText, currentSection, play } = get();
+        if (isActive && currentText) {
+          clearTimeout((window as any)._ttsRestartTimer);
+          (window as any)._ttsRestartTimer = setTimeout(() => play(currentText, currentSection, true), 300);
+        }
+      },
+
+      setVoice: (uri: string) => {
+        set({ selectedVoiceURI: uri });
       }
-    };
-    
-    utterance.onerror = () => {
-      if (!get().isRestarting) {
-        set({ isActive: false, isPaused: false, currentSection: '', currentText: '' });
-      }
-    };
-
-    window.speechSynthesis.speak(utterance);
-    set({ isActive: true, isPaused: false, currentSection: section, currentText: text });
-  },
-
-  pause: () => {
-    window.speechSynthesis.pause();
-    set({ isPaused: true });
-  },
-
-  resume: () => {
-    window.speechSynthesis.resume();
-    set({ isPaused: false });
-  },
-
-  stop: () => {
-    window.speechSynthesis.cancel();
-    set({ isActive: false, isPaused: false, currentSection: '', currentText: '', isRestarting: false });
-  },
-
-  setVolume: (v: number) => {
-    set({ volume: v });
-    const { isActive, currentText, currentSection, play } = get();
-    if (isActive && currentText) {
-      clearTimeout((window as any)._ttsRestartTimer);
-      (window as any)._ttsRestartTimer = setTimeout(() => play(currentText, currentSection, true), 300);
+    }),
+    {
+      name: 'antigravity-tts-storage',
+      partialize: (state) => ({
+        volume: state.volume,
+        speed: state.speed,
+        selectedVoiceURI: state.selectedVoiceURI
+      }),
     }
-  },
-  
-  setSpeed: (s: number) => {
-    set({ speed: s });
-    const { isActive, currentText, currentSection, play } = get();
-    if (isActive && currentText) {
-      clearTimeout((window as any)._ttsRestartTimer);
-      (window as any)._ttsRestartTimer = setTimeout(() => play(currentText, currentSection, true), 300);
-    }
-  },
-
-  setVoice: (uri: string) => {
-    set({ selectedVoiceURI: uri });
-  }
-}));
+  )
+);
