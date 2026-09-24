@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 ENV_PATH = os.path.join(os.path.dirname(__file__), "..", ".env")
 load_dotenv(ENV_PATH)
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY_1", "")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "dummy_key_for_ollama")
 os.environ["GEMINI_API_KEY"] = GEMINI_API_KEY
 
 # Remove GEMINI_API_BASE_URL if it was set to free.ai to ensure we hit the real Google API
