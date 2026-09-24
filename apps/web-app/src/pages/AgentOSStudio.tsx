@@ -5,7 +5,7 @@ import '@xyflow/react/dist/style.css';
 import { studioNodeTypes, KIND_META } from '../components/StudioNodes';
 import { SwarmOrchestrationPanel } from '../components/studio/SwarmOrchestrationPanel';
 import { useStudioStore, TabId, parseAIResponseToFlow } from '../stores/useStudioStore';
-import { API_URL } from '../lib/api';
+import { API_URL, WS_STUDIO_ACTIVITY_URL } from '../lib/api';
 import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock } from '@phosphor-icons/react';
 
 
@@ -745,13 +745,27 @@ const FlowArchitect: React.FC = () => {
 };
 
 const FlowDiagram: React.FC = () => {
-  const { flowNodes, flowEdges } = useStudioStore();
+  const { flowNodes, flowEdges, isSynthesizing, setPipelineProgress, pipelineStage, pipelineProgress } = useStudioStore();
   const [nodes, setNodes, onNodesChange] = useNodesState(flowNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(flowEdges);
   const [selectedNode, setSelectedNode] = useState<any>(null);
 
   React.useEffect(() => { setNodes(flowNodes); }, [flowNodes]);
   React.useEffect(() => { setEdges(flowEdges); }, [flowEdges]);
+
+  // WebSocket — escucha progreso en tiempo real del pipeline Match & Fuse
+  React.useEffect(() => {
+    const ws = new WebSocket(WS_STUDIO_ACTIVITY_URL);
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'match_fuse_progress') {
+          setPipelineProgress(msg.stage || '', msg.pct ?? 0);
+        }
+      } catch {}
+    };
+    return () => ws.close();
+  }, []);
 
   if (flowNodes.length === 0) {
     return (
@@ -794,6 +808,88 @@ const FlowDiagram: React.FC = () => {
           className="!bg-[#0d1117] !border-[#1e293b]"
         />
       </ReactFlow>
+
+      {/* ── Overlay de progreso Match & Fuse ── */}
+      {isSynthesizing && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 50,
+          background: 'rgba(3,7,18,0.92)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', gap: 24,
+        }}>
+          {/* Icono animado */}
+          <div style={{ position: 'relative', width: 80, height: 80 }}>
+            <div style={{
+              position: 'absolute', inset: 0, borderRadius: '50%',
+              border: '2px solid var(--theme-border)',
+              animation: 'spin 2s linear infinite', opacity: 0.4
+            }} />
+            <div style={{
+              position: 'absolute', inset: 8, borderRadius: '50%',
+              border: '2px solid var(--theme-border)',
+              animation: 'spin 1.4s linear infinite reverse', opacity: 0.6
+            }} />
+            <div style={{
+              position: 'absolute', inset: 0, display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+              color: 'var(--theme-border)', fontSize: 28
+            }}>⚛</div>
+          </div>
+
+          {/* Título */}
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 11, fontFamily: 'monospace', letterSpacing: '0.2em', color: 'var(--theme-border)', opacity: 0.6, marginBottom: 6 }}>
+              MATCH & FUSE — TRIÁNGULO DORADO
+            </div>
+            <div style={{ fontSize: 14, color: '#ffffff', fontWeight: 600, maxWidth: 380, textAlign: 'center', minHeight: 22 }}>
+              {pipelineStage || 'Inicializando pipeline cuántico...'}
+            </div>
+          </div>
+
+          {/* Barra de progreso */}
+          <div style={{ width: 360 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 10, fontFamily: 'monospace', color: 'rgba(255,255,255,0.4)' }}>PROGRESO</span>
+              <span style={{ fontSize: 12, fontFamily: 'monospace', fontWeight: 700, color: 'var(--theme-border)' }}>
+                {pipelineProgress}%
+              </span>
+            </div>
+            <div style={{ height: 4, borderRadius: 9999, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+              <div style={{
+                height: '100%', borderRadius: 9999,
+                width: `${pipelineProgress}%`,
+                background: 'var(--theme-border)',
+                boxShadow: '0 0 12px var(--theme-border)',
+                transition: 'width 0.6s cubic-bezier(0.4,0,0.2,1)'
+              }} />
+            </div>
+            {/* Indicadores de etapa */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12 }}>
+              {[
+                { label: 'Genes', pct: 15 },
+                { label: 'Síntesis', pct: 45 },
+                { label: 'Evaluador', pct: 75 },
+                { label: 'Listo', pct: 100 },
+              ].map(({ label, pct }) => (
+                <div key={label} style={{ textAlign: 'center' }}>
+                  <div style={{
+                    width: 8, height: 8, borderRadius: '50%', margin: '0 auto 4px',
+                    background: pipelineProgress >= pct ? 'var(--theme-border)' : 'rgba(255,255,255,0.15)',
+                    boxShadow: pipelineProgress >= pct ? '0 0 8px var(--theme-border)' : 'none',
+                    transition: 'background 0.3s, box-shadow 0.3s'
+                  }} />
+                  <div style={{ fontSize: 9, fontFamily: 'monospace', color: pipelineProgress >= pct ? 'var(--theme-border)' : 'rgba(255,255,255,0.3)' }}>
+                    {label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+        </div>
+      )}
 
       {/* Panel lateral de detalle */}
       {selectedNode && meta && (

@@ -50,6 +50,9 @@ interface StudioState {
   setActiveTab: (tab: TabId) => void;
   isSynthesizing: boolean;
   setIsSynthesizing: (val: boolean) => void;
+  pipelineStage: string;
+  pipelineProgress: number; // 0-100
+  setPipelineProgress: (stage: string, pct: number) => void;
   theme: string;
   setTheme: (theme: string) => void;
   chatMessages: ChatMessage[];
@@ -214,6 +217,9 @@ export const useStudioStore = create<StudioState>()(
       setZone2ActiveTab: (tab) => set({ zone2ActiveTab: tab }),
       isSynthesizing: false,
       setIsSynthesizing: (val) => set({ isSynthesizing: val }),
+      pipelineStage: '',
+      pipelineProgress: 0,
+      setPipelineProgress: (stage, pct) => set({ pipelineStage: stage, pipelineProgress: pct }),
       theme: 'obsidian',
       setTheme: (theme) => set({ theme }),
 

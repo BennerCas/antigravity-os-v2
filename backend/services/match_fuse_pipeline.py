@@ -3,17 +3,23 @@ import json
 from google.antigravity import Agent, LocalOpenAIAgentConfig
 from backend.services.chroma_db import vector_db
 
-async def run_match_fuse(nodes_or_prompt, model_name="qwen3-8b") -> str:
+async def run_match_fuse(nodes_or_prompt, model_name="qwen3-8b", progress_callback=None) -> str:
     """
-    Ejecuta el pipeline RRF completo:
-    1. Parseo de intención
-    2. Retrieval en Agents DNA y Atlas KB
-    3. Síntesis (Fusión) usando el SDK
+    Pipeline Match & Fuse — Triángulo Dorado (3 etapas):
+    1. Decomposer  — extrae genes lógicos
+    2. Synthesizer — cruza ADN + Atlas KB
+    3. Evaluator   — valida y corrige JSON (Sandbox Umpire)
     """
-    prompt = str(nodes_or_prompt)
-    print("Iniciando Match & Fuse pipeline...")
+    async def emit(stage: str, pct: int):
+        if progress_callback:
+            try:
+                await progress_callback({"type": "match_fuse_progress", "stage": stage, "pct": pct})
+            except Exception:
+                pass
 
-    print("Recuperando genes y conocimientos...")
+    prompt = str(nodes_or_prompt)
+
+    await emit("🔍 Recuperando genes y conocimientos del Atlas...", 5)
     agent_genes = vector_db.search_agents(prompt, n_results=3)
     atlas_knowledge = vector_db.search_atlas(prompt, n_results=3)
 
@@ -51,8 +57,7 @@ No incluyas markdown (```json), solo el raw JSON.
     is_local = model_name in LOCAL_MODELS or ":" in model_name
 
     if is_local:
-        # Ollama expone OpenAI-compatible en el puerto 11434/v1
-        # El 8080 es Open WebUI (HTML, no compatible con el SDK)
+        # Ollama OpenAI-compatible en 11434/v1 (8080 = Open WebUI, NO compatible)
         base_url = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
         final_model = model_name
     else:
@@ -65,79 +70,76 @@ No incluyas markdown (```json), solo el raw JSON.
         system_instructions=system_prompt,
         env={"OPENAI_API_KEY": os.getenv("FREE_AI_API_KEY", "localai")}
     )
-    
-    print("Iniciando Match & Fuse pipeline cuántico...")
+
     import asyncio
-    
     max_retries = 3
-    
-    print("Etapa 1: Descomposición (Decomposer)")
+
+    await emit("🧬 Etapa 1/3 — Descomposición de genes (Decomposer)...", 15)
     decomposer_prompt = f"""
     Analiza el siguiente requerimiento y descompón la intención en genes lógicos.
     Requerimiento: {prompt}
     Extrae: 'reasoning', 'domain', 'format', 'tool', 'policy'.
     """
-    
+
     async with Agent(config) as agent:
         decomposer_resp = await agent.chat(decomposer_prompt)
         genes_analysis = (await decomposer_resp.text()).strip()
-        
-        print("Etapa 2: Síntesis (Synthesizer)")
+
+        await emit("⚗️ Etapa 2/3 — Síntesis cuántica (Synthesizer)...", 45)
         synthesizer_prompt = f"""
         {system_prompt}
-        
+
         ANÁLISIS DE GENES PREVIO:
         {genes_analysis}
-        
+
         Instrucción: Genera el JSON ARRAY de los agentes usando los genes extraídos.
         """
         synth_resp = await agent.chat(synthesizer_prompt)
         raw_text = (await synth_resp.text()).strip()
-        
-        print("Etapa 3: Evaluación Rigurosa (Evaluator)")
+
+        await emit("🔬 Etapa 3/3 — Evaluación rigurosa (Sandbox Umpire)...", 75)
         eval_prompt = f"""
         Eres el Sandbox Umpire. Evalúa el siguiente JSON de agentes generados.
-        
+
         JSON PROPUESTO:
         {raw_text}
-        
+
         Verifica:
         1. Que sea un JSON ARRAY válido.
         2. Que el noveltyScore tenga sentido comparado con los genes base.
         3. Que evalStatus y health sean correctos según las políticas.
-        
-        Si hay errores semánticos o de sintaxis, CORRÍGELOS y devuelve ÚNICAMENTE el JSON ARRAY corregido. 
+
+        Si hay errores semánticos o de sintaxis, CORRÍGELOS y devuelve ÚNICAMENTE el JSON ARRAY corregido.
         NO incluyas markdown, solo empieza con [ y termina con ].
         """
-        
+
         for attempt in range(max_retries):
             try:
                 eval_resp = await agent.chat(eval_prompt)
                 final_text = (await eval_resp.text()).strip()
-                
+
                 if final_text.startswith("```json"):
                     final_text = final_text.replace("```json", "", 1)
                 if final_text.endswith("```"):
                     final_text = final_text[:-3]
-                    
                 final_text = final_text.strip()
-                
+
                 parsed = json.loads(final_text)
                 if isinstance(parsed, list):
-                    print("Pipeline completado con éxito.")
+                    await emit(f"✅ Pipeline completado — {len(parsed)} agente(s) generado(s)", 100)
                     return final_text
                 else:
-                    raise ValueError("La respuesta evaluada no es una lista JSON válida")
-                    
+                    raise ValueError("No es lista JSON válida")
+
             except Exception as e:
-                print(f"Intento {attempt + 1} falló en validación cuántica: {e}")
                 if attempt < max_retries - 1:
-                    print("Reintentando en 3 segundos...")
+                    await emit(f"⚠️ Reintento {attempt+2}/3 — corrigiendo JSON...", 80 + attempt * 5)
                     await asyncio.sleep(3)
                 else:
+                    await emit("❌ Pipeline fallido tras 3 intentos", 0)
                     return json.dumps([{
                         "id": "error_agent", "name": "Fallback Agent", "role": "Error",
-                        "description": f"Falló tras {max_retries} intentos. Último error: {e}", "color": "#ff0000", "noveltyScore": 0,
-                        "evalStatus": "FAIL", "inputOutputContract": "None", "requiredTools": [],
-                        "health": "red", "genes": []
+                        "description": f"Falló tras {max_retries} intentos. Error: {e}",
+                        "color": "#ff0000", "noveltyScore": 0, "evalStatus": "FAIL",
+                        "inputOutputContract": "None", "requiredTools": [], "health": "red", "genes": []
                     }])

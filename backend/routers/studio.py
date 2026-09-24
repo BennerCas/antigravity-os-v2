@@ -175,7 +175,7 @@ INTERFACE:
         
     try:
         from backend.services.match_fuse_pipeline import run_match_fuse
-        new_agent = await run_match_fuse(req.nodes, model_name=model_name)
+        new_agent = await run_match_fuse(req.nodes, model_name=model_name, progress_callback=manager.broadcast)
         text = str(new_agent) if not isinstance(new_agent, str) else new_agent
         return ChatResponse(response=text, model_used=model_name, engine="pipeline")
     except Exception as e:
