@@ -11,7 +11,11 @@ router = APIRouter(prefix="/api/v1/studio", tags=["Studio"])
 
 FREE_AI_BASE = os.getenv("FREE_AI_BASE_URL", "https://api.free.ai/v1")
 FREE_AI_KEY  = os.getenv("FREE_AI_API_KEY", "")
-OLLAMA_BASE  = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
+# Normaliza OLLAMA_BASE: el .env puede definirlo con o sin /v1 al final
+_raw_ollama  = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
+OLLAMA_BASE  = _raw_ollama.rstrip("/")
+if not OLLAMA_BASE.endswith("/v1"):
+    OLLAMA_BASE += "/v1"
 
 # Modelos NUBE (Free.AI)
 NUBE_MODELS = {
