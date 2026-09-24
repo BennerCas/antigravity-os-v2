@@ -245,6 +245,7 @@ const FlowArchitect: React.FC = () => {
             useStudioStore.getState().setTriageSummary(text);
             currentPhase = 'phase2_extraction';
             currentData = text; // Pasa el output pulido a la siguiente fase
+          } else if (text.includes('[ES_ENTREVISTA]')) {
             // El agente necesita información o está charlando. Pausar la máquina.
             const cleanText = text.replace('[ES_ENTREVISTA]', '').trim();
             // Mostrar la respuesta del agente también en el chat para que el usuario pueda "charlar" y leer las aclaraciones
@@ -259,6 +260,10 @@ const FlowArchitect: React.FC = () => {
             useStudioStore.getState().setZone2ActiveTab('phase1');
             setQuantumPhase('phase1_triage');
             break; 
+          } else {
+            // Fallback si no hay tag
+            addChatMessage({ role: 'agent', content: text, model: selectedModel });
+            break;
           }
         }
 
