@@ -213,6 +213,7 @@ class AgentFactory:
                     {"role": "user", "content": user_prompt}
                 ],
                 "temperature": 0.7,
+                "options": {"num_ctx": 2048},
             }
             try:
                 async with httpx.AsyncClient(timeout=120.0) as client:

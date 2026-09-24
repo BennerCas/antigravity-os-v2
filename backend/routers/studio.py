@@ -359,12 +359,15 @@ async def run_triage_swarm(data: Any):
                     "REGLAS CERO: PROHIBIDO inventar respuestas. Tu rol es entrevistar, aclarar dudas o aprobar. Habla directo a Benner siempre poniendo la etiqueta en la ÚLTIMA LÍNEA de tu respuesta."
                 )
 
+        is_final_node = (idx == len(agent_ids) - 1)
+        target_model = None if is_final_node else "minicpm-v4.6:1b"
+
         try:
             resp_text = await AgentFactory.chat_one_shot(
                 agent_id=agent_id,
                 user_prompt=accumulated_context,
                 override_instructions=override_instructions,
-                model=None, # Deja que el Factory decida
+                model=target_model, # Deja que el Factory decida
                 use_tools=False # Evita errores de compatibilidad en Ollama
             )
             
@@ -444,7 +447,7 @@ async def run_extraction_swarm(data: Any):
     accumulated_context = input_text
     steps = []
 
-    for role in pipeline_roles:
+    for idx, role in enumerate(pipeline_roles):
         agent_id = role["id"]
         role_name = role["name"]
         
@@ -457,12 +460,15 @@ async def run_extraction_swarm(data: Any):
             }
         })
         
+        is_final_node = (idx == len(pipeline_roles) - 1)
+        target_model = None if is_final_node else "minicpm-v4.6:1b"
+
         try:
             resp_text = await AgentFactory.chat_one_shot(
                 agent_id=agent_id,
                 user_prompt=accumulated_context,
                 override_instructions=role["prompt"],
-                model=None, # Quantum engine routing applies
+                model=target_model, # Quantum engine routing applies
                 use_tools=False
             )
             
@@ -514,7 +520,7 @@ async def run_blueprint_swarm(data: Any):
     accumulated_context = input_text
     steps = []
 
-    for role in pipeline_roles:
+    for idx, role in enumerate(pipeline_roles):
         agent_id = role["id"]
         role_name = role["name"]
         
@@ -527,12 +533,15 @@ async def run_blueprint_swarm(data: Any):
             }
         })
         
+        is_final_node = (idx == len(pipeline_roles) - 1)
+        target_model = None if is_final_node else "minicpm-v4.6:1b"
+
         try:
             resp_text = await AgentFactory.chat_one_shot(
                 agent_id=agent_id,
                 user_prompt=accumulated_context,
                 override_instructions=role["prompt"],
-                model=None, # Quantum engine routing applies
+                model=target_model, # Quantum engine routing applies
                 use_tools=False
             )
             
