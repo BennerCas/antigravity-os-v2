@@ -97,7 +97,7 @@ const AURELIOS_THEMES: Record<string, any> = {
 };
 
 const FlowArchitect: React.FC = () => {
-    const { chatMessages, addChatMessage, setFlow, setAgentCards, setBlueprintMd } = useStudioStore();
+    const { chatMessages, addChatMessage, setFlow, setAgentCards, setBlueprintMd, setTriggerChatSend } = useStudioStore();
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [thinkingPhrase, setThinkingPhrase] = useState('');
@@ -109,6 +109,9 @@ const FlowArchitect: React.FC = () => {
   const [carouselSlide, setCarouselSlide] = useState(0);
   const [quantumPhase, setQuantumPhase] = useState<'phase1_triage' | 'phase2_extraction' | 'phase3_blueprint'>('phase1_triage');
   const abortControllerRef = useRef<AbortController | null>(null);
+  // Ref mutable para que el trigger del store siempre llame a la versión más reciente de handleSend
+  // (evita stale closure cuando quantumPhase cambia entre renders)
+  const handleSendRef = useRef<(text?: string) => void>(() => {});
 
   const handleStop = () => {
     if (abortControllerRef.current) {
@@ -145,8 +148,16 @@ const FlowArchitect: React.FC = () => {
       flowEdges: [],
       agentCards: [],
       blueprintMd: '',
-      activeTab: 'discovery'
+      activeTab: 'discovery',
+      // Limpiar Espacio 1 (Activity Log)
+      activityLogs: [
+        { id: '0', source: 'AureliOS', message: 'Sistema reiniciado. Esperando intenciones del usuario.', status: 'INFO', timestamp: new Date().toISOString() }
+      ],
+      // Limpiar Espacio 2 (Zone 2)
+      phase1Interview: null,
+      zone2ActiveTab: 'okr',
     });
+    setQuantumPhase('phase1_triage');
   };
 
   const handleRegenerate = () => {
@@ -204,8 +215,8 @@ const FlowArchitect: React.FC = () => {
           const data = await res.json();
           let text = typeof data.result === 'string' ? data.result : (data.result?.triage_result || data.result?.extraction_result || data.result?.blueprint_result || data.result?.final_output || JSON.stringify(data.result));
           
-          if (text.includes('[READY_FOR_EXTRACTION]')) {
-            text = text.replace('[READY_FOR_EXTRACTION]', '').trim();
+          if (text.includes('[ES_APROBADO]')) {
+            text = text.replace('[ES_APROBADO]', '').trim();
             if (text) {
               addChatMessage({ role: 'agent', content: `**[Aprobado por Triage]**\n${text}`, model: selectedModel });
             } else {
@@ -217,7 +228,10 @@ const FlowArchitect: React.FC = () => {
             // El bucle continuará automáticamente a Extraction
           } else {
             // El agente necesita información. Pausar la máquina.
-            addChatMessage({ role: 'agent', content: text, model: selectedModel });
+            text = text.replace('[ES_ENTREVISTA]', '').trim();
+            addChatMessage({ role: 'agent', content: '> [AureliOS] Triage requiere más información. Por favor, responde la entrevista en la pestaña **Fase 1: Triage**.', model: 'Orchestrator' });
+            useStudioStore.getState().setPhase1Interview(text);
+            useStudioStore.getState().setZone2ActiveTab('phase1');
             setQuantumPhase('phase1_triage');
             break; 
           }
@@ -281,6 +295,15 @@ const FlowArchitect: React.FC = () => {
     }
   };
 
+  // Registrar handleSend como triggerChatSend en el store global
+  // Patrón ref-based: la ref se actualiza en cada render → el store tiene siempre la versión fresca
+  handleSendRef.current = handleSend;
+  useEffect(() => {
+    // Registra una función estable (que redirige a la ref) en el store
+    setTriggerChatSend((text: string) => handleSendRef.current(text));
+    return () => setTriggerChatSend(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
     
   const aiTools = [
@@ -521,6 +544,17 @@ const FlowArchitect: React.FC = () => {
                   </ReactMarkdown>
                 </div>
               </div>
+              {msg.role === 'human' && (
+                <div className="flex justify-end mt-1 px-1">
+                  <button 
+                    onClick={() => navigator.clipboard.writeText(msg.content)}
+                    className="text-zinc-500 hover:text-blue-400 transition-colors"
+                    title="Copiar mensaje"
+                  >
+                    <Copy size={14} />
+                  </button>
+                </div>
+              )}
               {msg.role === 'agent' && (
                 <div className={`flex items-center gap-3 mt-1.5 px-1 text-[11px] font-bold ${t.primary} uppercase tracking-widest opacity-75 flex-nowrap`}>
                   <Cpu size={12} />
@@ -1115,12 +1149,9 @@ export default function AgentOSStudio() {
         <FlowArchitect />
       </div>
 
-      {/* Columna 2 — 70% — Placeholder */}
-      <div style={{ width: '70%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0, minHeight: 0, minWidth: 0 }}>
-        <div className="opacity-40 text-center flex flex-col items-center gap-3">
-          <Columns size={48} weight="duotone" />
-          <p className="text-sm font-medium tracking-widest uppercase">Canvas trasladado a InfinityBoard</p>
-        </div>
+      {/* Columna 2 — 70% — Swarm Orchestration */}
+      <div style={{ width: '70%', height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0, position: 'relative' }}>
+        <SwarmOrchestrationPanel />
       </div>
     </div>
   );
