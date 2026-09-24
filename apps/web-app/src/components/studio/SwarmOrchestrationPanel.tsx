@@ -358,8 +358,12 @@ export const SwarmOrchestrationPanel: React.FC = () => {
                     </h2>
                     {(() => {
                       const ansCount = phase1Interview ? phase1Interview.split('===USER_ANSWER_START===').length - 1 : 0;
-                      // Ej: con 0 respuestas falta 85%, con 1 falta 40%, etc.
-                      const missingPercent = Math.max(0, 85 - (ansCount * 45));
+                      // Con 0 respuestas: 85%, 1 respuesta: 40%, 2 respuestas: 15%, etc.
+                      let missingPercent = 85;
+                      if (ansCount === 1) missingPercent = 40;
+                      if (ansCount === 2) missingPercent = 15;
+                      if (ansCount > 2) missingPercent = Math.max(5, 15 - (ansCount - 2) * 5); // Nunca baja de 5% hasta que apruebe
+                      
                       return missingPercent > 0 ? (
                         <div className="px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-mono font-medium flex items-center gap-1.5 animate-pulse">
                           <span>Falta</span>
@@ -406,7 +410,7 @@ export const SwarmOrchestrationPanel: React.FC = () => {
                           textarea.disabled = true;
                           
                           try {
-                            const prompt = `Actúa como el usuario experto o product owner. Responde a la siguiente entrevista de Triage de manera clara, creativa y directa, inventando los requerimientos lógicos que falten para que el proyecto sea viable.\n\nREGLAS ESTRICTAS:\n1. Responde OBLIGATORIAMENTE en ESPAÑOL.\n2. PROHIBIDO usar formato Markdown (nada de asteriscos, negritas, viñetas, hashes o caracteres especiales).\n3. Escribe en texto plano continuo, como una persona real escribiendo en un chat.\n\nENTREVISTA A RESPONDER:\n${phase1Interview}`;
+                            const prompt = `Actúa como el usuario experto o product owner. Responde a la siguiente entrevista de Triage de manera clara, creativa y directa, inventando los requerimientos lógicos que falten para que el proyecto sea viable.\n\nREGLAS ESTRICTAS:\n1. Responde OBLIGATORIAMENTE en ESPAÑOL.\n2. PROHIBIDO usar formato Markdown (nada de asteriscos, negritas, viñetas, hashes o caracteres especiales).\n3. Debes estructurar tu respuesta de forma numerada: coloca el número de la pregunta original seguido de tu respuesta (Ejemplo: "1. Mi objetivo es... 2. El público objetivo...").\n\nENTREVISTA A RESPONDER:\n${phase1Interview}`;
                             
                             const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001/api/v1';
                             const modelToUse = localStorage.getItem('aurelios_model') || 'free.ai/auto';

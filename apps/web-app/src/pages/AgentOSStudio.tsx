@@ -246,13 +246,15 @@ const FlowArchitect: React.FC = () => {
             useStudioStore.getState().setTriageSummary(text);
             currentPhase = 'phase2_extraction';
             currentData = text; // Pasa el output pulido a la siguiente fase
-          } else {
-            // El agente necesita información. Pausar la máquina.
+            // El agente necesita información o está charlando. Pausar la máquina.
             const cleanText = text.replace('[ES_ENTREVISTA]', '').trim();
-            addChatMessage({ role: 'agent', content: '> [AureliOS] Triage requiere más información. Por favor, responde la entrevista en la pestaña **Fase 1: Triage**.', model: 'Orchestrator' });
+            // Mostrar la respuesta del agente también en el chat para que el usuario pueda "charlar" y leer las aclaraciones
+            addChatMessage({ role: 'agent', content: cleanText, model: selectedModel });
+            addChatMessage({ role: 'agent', content: '> [AureliOS] Triage ha actualizado las preguntas. Puedes responder aquí o en la pestaña **Fase 1: Triage**.', model: 'Orchestrator' });
+            
             const currentPhase1 = useStudioStore.getState().phase1Interview || '';
             const newPhase1 = currentPhase1 
-              ? currentPhase1.replace('\n\n---\n*AureliOS está analizando tus respuestas...*', '') + `\n\n---\n**🤖 Nueva Entrevista del Enjambre:**\n\n${cleanText}`
+              ? currentPhase1.replace('\n\n---\n*AureliOS está analizando tus respuestas...*', '') + `\n\n---\n**🤖 Respuesta/Entrevista del Enjambre:**\n\n${cleanText}`
               : cleanText;
             useStudioStore.getState().setPhase1Interview(newPhase1);
             useStudioStore.getState().setZone2ActiveTab('phase1');

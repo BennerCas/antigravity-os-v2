@@ -352,10 +352,11 @@ async def run_triage_swarm(data: Any):
             else:
                 # El usuario ya respondió
                 override_instructions = (
-                    "IMPORTANTE: Eres el nodo final del Enjambre Radar (Triage). El usuario ya ha respondido a tu primera entrevista.\n"
-                    "Analiza sus respuestas minuciosamente. Si consideras que la idea ya es lo suficientemente madura y clara, genera un resumen final de requerimientos y cierra tu mensaje OBLIGATORIAMENTE con la etiqueta exacta: [ES_APROBADO]\n"
-                    "Si por el contrario aún faltan datos críticos y absolutamente necesarios, FORMULA NUEVAS PREGUNTAS DIRIGIDAS AL USUARIO. PROHIBIDO INVENTAR RESPUESTAS O ASUMIRLAS. DEBES HACERLE LAS PREGUNTAS A BENNER para que él las responda en su próximo turno, y luego cierra tu mensaje OBLIGATORIAMENTE con la etiqueta exacta: [ES_ENTREVISTA]\n"
-                    "Bajo ninguna circunstancia debes responder tus propias preguntas. Tu rol es entrevistar o aprobar. Habla directo a Benner."
+                    "IMPORTANTE: Eres el nodo final del Enjambre Radar (Triage). El usuario ya ha interactuado contigo.\n"
+                    "1. Si el usuario te hace una pregunta o no entiende algo de tu entrevista, CHARLA CON ÉL, resuélvele la duda amablemente y vuelve a formular las preguntas necesarias. Usa la etiqueta: [ES_ENTREVISTA]\n"
+                    "2. Analiza sus respuestas a la idea de su app. Si consideras que la idea ya es lo suficientemente madura, clara y técnica para construir un Blueprint, genera un RESUMEN FINAL de requerimientos y usa la etiqueta: [ES_APROBADO]\n"
+                    "3. Si aún faltan datos críticos, FORMULA NUEVAS PREGUNTAS. Usa la etiqueta: [ES_ENTREVISTA]\n"
+                    "REGLAS CERO: PROHIBIDO inventar respuestas. Tu rol es entrevistar, aclarar dudas o aprobar. Habla directo a Benner siempre poniendo la etiqueta en la ÚLTIMA LÍNEA de tu respuesta."
                 )
 
         try:
@@ -367,15 +368,29 @@ async def run_triage_swarm(data: Any):
                 use_tools=False # Evita errores de compatibilidad en Ollama
             )
             
-            # --- HARD ENFORCEMENT: Python inyecta el tag, no confiamos en el LLM local ---
+            # --- HARD ENFORCEMENT: Respetar decisión del LLM si no es la primera pasada ---
             if idx == len(agent_ids) - 1:
                 is_first_pass = "Respuestas del usuario:" not in input_text and "--- [Respuesta" not in input_text
-                # Limpiar cualquier tag alucinado por el LLM
+                
+                has_aprobado = "[ES_APROBADO]" in resp_text
+                has_entrevista = "[ES_ENTREVISTA]" in resp_text
+                
+                # Limpiar cualquier tag para evitar duplicados
                 resp_text = resp_text.replace("[ES_APROBADO]", "").replace("[ES_ENTREVISTA]", "").strip()
+                
                 if is_first_pass:
                     resp_text += "\n\n[ES_ENTREVISTA]"
                 else:
-                    resp_text += "\n\n[ES_APROBADO]"
+                    if has_aprobado:
+                        resp_text += "\n\n[ES_APROBADO]"
+                    elif has_entrevista:
+                        resp_text += "\n\n[ES_ENTREVISTA]"
+                    else:
+                        # Fallback si el LLM local omitió el tag
+                        if "?" in resp_text:
+                            resp_text += "\n\n[ES_ENTREVISTA]"
+                        else:
+                            resp_text += "\n\n[ES_APROBADO]"
             
             accumulated_context = f"{accumulated_context}\n\n--- [Aporte de {role_name}] ---\n{resp_text}"
             steps.append({"role": role_name, "output": resp_text})
