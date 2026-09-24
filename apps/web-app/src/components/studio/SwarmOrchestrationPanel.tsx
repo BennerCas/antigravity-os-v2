@@ -285,39 +285,12 @@ Analizando el Blueprint anterior, redacta un discurso robusto, cohesivo, profund
               {/* Objetivo Principal */}
               <div className="relative">
                 <div className="absolute -left-5 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500/0 via-emerald-500 to-emerald-500/0 opacity-50 rounded-full" />
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-sm font-mono text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                    <TrendUp size={16} /> Vector de Intención
-                  </h3>
-                  {phase1Complete && triageSummary && (
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => setIsEditingObjective(!isEditingObjective)}
-                        className="p-2 rounded-xl bg-zinc-800/50 hover:bg-zinc-700 text-zinc-400 hover:text-emerald-400 transition-colors"
-                        title="Editar Objetivo"
-                      >
-                        <PaintBrush size={16} />
-                      </button>
-                      {phase3Complete && (
-                        <button 
-                          onClick={handleExplainFlow}
-                          className={`p-2 rounded-xl flex items-center gap-2 text-sm font-medium transition-all ${
-                            isSpeaking 
-                              ? 'bg-emerald-500 text-zinc-950 shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse' 
-                              : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
-                          }`}
-                          title="Explicar cómo lograr el objetivo usando el Blueprint"
-                        >
-                          {isSpeaking ? <Square size={16} weight="fill" /> : <SpeakerHigh size={16} />}
-                          {isSpeaking ? "Detener" : "Explicar Flujo"}
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <h3 className="text-sm font-mono text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                  <TrendUp size={16} /> Vector de Intención
+                </h3>
                 
                 {phase1Complete && triageSummary ? (
-                  <div className="p-8 rounded-3xl border border-emerald-500/20 bg-emerald-500/5 shadow-[0_0_30px_rgba(16,185,129,0.05)]">
+                  <div className="p-8 rounded-3xl border border-emerald-500/20 bg-emerald-500/5 shadow-[0_0_30px_rgba(16,185,129,0.05)] relative group">
                     <div className="flex items-start gap-5">
                       <div className="shrink-0 p-4 bg-emerald-500/10 rounded-2xl">
                         <Checks size={28} className="text-emerald-400" weight="duotone" />
@@ -336,13 +309,39 @@ Analizando el Blueprint anterior, redacta un discurso robusto, cohesivo, profund
                             </div>
                           </div>
                         ) : (
-                          <div className="markdown-body text-[15px] leading-relaxed text-emerald-100 user-answer-block">
-                            <ReactMarkdown>{triageSummary}</ReactMarkdown>
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="markdown-body text-[15px] leading-relaxed text-emerald-100 user-answer-block">
+                              <ReactMarkdown>{triageSummary}</ReactMarkdown>
+                            </div>
+                            <div className="flex flex-col gap-2 shrink-0">
+                              {phase3Complete && (
+                                <button 
+                                  onClick={handleExplainFlow}
+                                  className={`px-3 py-2 rounded-xl flex items-center gap-2 text-sm font-medium transition-all ${
+                                    isSpeaking 
+                                      ? 'bg-emerald-500 text-zinc-950 shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse' 
+                                      : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
+                                  }`}
+                                  title="Explicar cómo lograr el objetivo usando el Blueprint"
+                                >
+                                  {isSpeaking ? <Square size={16} weight="fill" /> : <SpeakerHigh size={16} />}
+                                  {isSpeaking ? "Detener" : "Explicar"}
+                                </button>
+                              )}
+                              <button 
+                                onClick={() => setIsEditingObjective(!isEditingObjective)}
+                                className="p-2 rounded-xl bg-zinc-800/50 hover:bg-zinc-700 text-zinc-400 hover:text-emerald-400 transition-colors opacity-0 group-hover:opacity-100 flex items-center justify-center self-end"
+                                title="Editar Objetivo"
+                              >
+                                <PaintBrush size={16} />
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
                     </div>
                   </div>
+
 
                 ) : (
                   <div className="p-10 rounded-3xl border border-dashed border-zinc-700/50 bg-zinc-900/20 flex flex-col items-center justify-center text-center gap-5">
