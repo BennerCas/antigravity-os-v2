@@ -97,7 +97,7 @@ const AURELIOS_THEMES: Record<string, any> = {
 };
 
 const FlowArchitect: React.FC = () => {
-    const { chatMessages, addChatMessage, setFlow, setAgentCards, setBlueprintMd, setTriggerChatSend, activityLogs } = useStudioStore();
+    const { chatMessages, addChatMessage, setFlow, setAgentCards, setBlueprintMd, setTriggerChatSend, activityLogs, quantumPhase, setQuantumPhase } = useStudioStore();
   const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
   const [thinkingPhrase, setThinkingPhrase] = useState('');
@@ -107,7 +107,6 @@ const FlowArchitect: React.FC = () => {
   const [currentThemeKey, setCurrentThemeKey] = useState(() => localStorage.getItem('aurelios_theme') || 'obsidian');
   const [selectedChatAgentId, setSelectedChatAgentId] = useState('aurelios-core');
   const [carouselSlide, setCarouselSlide] = useState(0);
-  const [quantumPhase, setQuantumPhase] = useState<'phase1_triage' | 'phase2_extraction' | 'phase3_blueprint'>('phase1_triage');
   const [showSwarmSlider, setShowSwarmSlider] = useState(true);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isHandlingSendRef = useRef<boolean>(false);

@@ -90,6 +90,9 @@ interface StudioState {
   setPhase3Content: (text: string | null) => void;
   setTriageSummary: (text: string | null) => void;
 
+  quantumPhase: 'phase1_triage' | 'phase2_extraction' | 'phase3_blueprint';
+  setQuantumPhase: (phase: 'phase1_triage' | 'phase2_extraction' | 'phase3_blueprint') => void;
+
   // Focus mode (AgentCarousel)
   focusedAgent: AgentCard | null;
   setFocusedAgent: (agent: AgentCard | null) => void;
@@ -547,6 +550,9 @@ export const useStudioStore = create<StudioState>()(
       setPhase3Content: (phase3Content) => set({ phase3Content }),
       setTriageSummary: (triageSummary) => set({ triageSummary }),
 
+      quantumPhase: 'phase1_triage',
+      setQuantumPhase: (quantumPhase) => set({ quantumPhase }),
+
       focusedAgent: null,
       setFocusedAgent: (focusedAgent) => set({ focusedAgent }),
 
@@ -569,6 +575,16 @@ export const useStudioStore = create<StudioState>()(
         blueprintMd: state.blueprintMd,
         activeTab: state.activeTab,
         theme: state.theme,
+        // Persistiendo el estado de las fases
+        phase1Interview: state.phase1Interview,
+        triageSummary: state.triageSummary,
+        phase2Content: state.phase2Content,
+        phase3Content: state.phase3Content,
+        phase1Complete: state.phase1Complete,
+        phase2Complete: state.phase2Complete,
+        phase3Complete: state.phase3Complete,
+        zone2ActiveTab: state.zone2ActiveTab,
+        quantumPhase: state.quantumPhase,
       }),
     }
   )
