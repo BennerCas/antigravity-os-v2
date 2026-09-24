@@ -753,20 +753,6 @@ const FlowDiagram: React.FC = () => {
   React.useEffect(() => { setNodes(flowNodes); }, [flowNodes]);
   React.useEffect(() => { setEdges(flowEdges); }, [flowEdges]);
 
-  // WebSocket — escucha progreso en tiempo real del pipeline Match & Fuse
-  React.useEffect(() => {
-    const ws = new WebSocket(WS_STUDIO_ACTIVITY_URL);
-    ws.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data);
-        if (msg.type === 'match_fuse_progress') {
-          setPipelineProgress(msg.stage || '', msg.pct ?? 0);
-        }
-      } catch {}
-    };
-    return () => ws.close();
-  }, []);
-
   if (flowNodes.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-transparent text-gray-600 gap-3">
@@ -809,87 +795,7 @@ const FlowDiagram: React.FC = () => {
         />
       </ReactFlow>
 
-      {/* ── Overlay de progreso Match & Fuse ── */}
-      {isSynthesizing && (
-        <div style={{
-          position: 'absolute', inset: 0, zIndex: 50,
-          background: 'rgba(3,7,18,0.92)',
-          backdropFilter: 'blur(8px)',
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', gap: 24,
-        }}>
-          {/* Icono animado */}
-          <div style={{ position: 'relative', width: 80, height: 80 }}>
-            <div style={{
-              position: 'absolute', inset: 0, borderRadius: '50%',
-              border: '2px solid var(--theme-border)',
-              animation: 'spin 2s linear infinite', opacity: 0.4
-            }} />
-            <div style={{
-              position: 'absolute', inset: 8, borderRadius: '50%',
-              border: '2px solid var(--theme-border)',
-              animation: 'spin 1.4s linear infinite reverse', opacity: 0.6
-            }} />
-            <div style={{
-              position: 'absolute', inset: 0, display: 'flex',
-              alignItems: 'center', justifyContent: 'center',
-              color: 'var(--theme-border)', fontSize: 28
-            }}>⚛</div>
-          </div>
 
-          {/* Título */}
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 11, fontFamily: 'monospace', letterSpacing: '0.2em', color: 'var(--theme-border)', opacity: 0.6, marginBottom: 6 }}>
-              MATCH & FUSE — TRIÁNGULO DORADO
-            </div>
-            <div style={{ fontSize: 14, color: '#ffffff', fontWeight: 600, maxWidth: 380, textAlign: 'center', minHeight: 22 }}>
-              {pipelineStage || 'Inicializando pipeline cuántico...'}
-            </div>
-          </div>
-
-          {/* Barra de progreso */}
-          <div style={{ width: 360 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontSize: 10, fontFamily: 'monospace', color: 'rgba(255,255,255,0.4)' }}>PROGRESO</span>
-              <span style={{ fontSize: 12, fontFamily: 'monospace', fontWeight: 700, color: 'var(--theme-border)' }}>
-                {pipelineProgress}%
-              </span>
-            </div>
-            <div style={{ height: 4, borderRadius: 9999, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-              <div style={{
-                height: '100%', borderRadius: 9999,
-                width: `${pipelineProgress}%`,
-                background: 'var(--theme-border)',
-                boxShadow: '0 0 12px var(--theme-border)',
-                transition: 'width 0.6s cubic-bezier(0.4,0,0.2,1)'
-              }} />
-            </div>
-            {/* Indicadores de etapa */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12 }}>
-              {[
-                { label: 'Genes', pct: 15 },
-                { label: 'Síntesis', pct: 45 },
-                { label: 'Evaluador', pct: 75 },
-                { label: 'Listo', pct: 100 },
-              ].map(({ label, pct }) => (
-                <div key={label} style={{ textAlign: 'center' }}>
-                  <div style={{
-                    width: 8, height: 8, borderRadius: '50%', margin: '0 auto 4px',
-                    background: pipelineProgress >= pct ? 'var(--theme-border)' : 'rgba(255,255,255,0.15)',
-                    boxShadow: pipelineProgress >= pct ? '0 0 8px var(--theme-border)' : 'none',
-                    transition: 'background 0.3s, box-shadow 0.3s'
-                  }} />
-                  <div style={{ fontSize: 9, fontFamily: 'monospace', color: pipelineProgress >= pct ? 'var(--theme-border)' : 'rgba(255,255,255,0.3)' }}>
-                    {label}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
-        </div>
-      )}
 
       {/* Panel lateral de detalle */}
       {selectedNode && meta && (
@@ -989,12 +895,125 @@ const FlowDiagram: React.FC = () => {
       )}
     </div>
   );
-};
-
-const AgentCarousel: React.FC = () => {
-  const { agentCards, focusedAgent, setFocusedAgent } = useStudioStore();
+};const AgentCarousel: React.FC = () => {
+  const { agentCards, focusedAgent, setFocusedAgent, isSynthesizing, pipelineStage, pipelineProgress, setPipelineProgress } = useStudioStore();
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const [timeLeft, setTimeLeft] = React.useState(300);
+
+  // Efecto para el countdown de 5 min
+  React.useEffect(() => {
+    if (!isSynthesizing) {
+      setTimeLeft(300);
+      return;
+    }
+    const interval = setInterval(() => {
+      setTimeLeft(prev => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isSynthesizing]);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  // WebSocket — escucha progreso en tiempo real del pipeline Match & Fuse
+  React.useEffect(() => {
+    if (!isSynthesizing) return;
+    const ws = new WebSocket(WS_STUDIO_ACTIVITY_URL);
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'match_fuse_progress') {
+          setPipelineProgress(msg.stage || '', msg.pct ?? 0);
+        }
+      } catch {}
+    };
+    return () => ws.close();
+  }, [isSynthesizing, setPipelineProgress]);
+
+  if (isSynthesizing) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center w-full h-full bg-transparent" style={{ gap: 36 }}>
+        {/* Icono animado */}
+        <div style={{ position: 'relative', width: 100, height: 100 }}>
+          <div style={{
+            position: 'absolute', inset: 0, borderRadius: '50%',
+            border: '2px solid var(--theme-border)',
+            animation: 'spin 2s linear infinite', opacity: 0.4
+          }} />
+          <div style={{
+            position: 'absolute', inset: 8, borderRadius: '50%',
+            border: '2px solid var(--theme-border)',
+            animation: 'spin 1.4s linear infinite reverse', opacity: 0.6
+          }} />
+          <div style={{
+            position: 'absolute', inset: 0, display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+            color: 'var(--theme-border)', fontSize: 36
+          }}>⚛</div>
+        </div>
+
+        {/* Título */}
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 18, fontFamily: 'monospace', letterSpacing: '0.2em', color: 'var(--theme-border)', opacity: 0.8, marginBottom: 16 }}>
+            MATCH & FUSE — TRIÁNGULO DORADO
+          </div>
+          <div style={{ fontSize: 36, color: '#ffffff', fontWeight: 800, maxWidth: 800, textAlign: 'center', minHeight: 48, lineHeight: 1.2 }}>
+            {pipelineStage || 'Inicializando pipeline cuántico...'}
+          </div>
+        </div>
+
+        {/* Barra de progreso */}
+        <div style={{ width: '100%', maxWidth: 400 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, alignItems: 'center' }}>
+            <span style={{ fontSize: 11, fontFamily: 'monospace', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em' }}>PROGRESO REAL</span>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+              <span style={{ fontSize: 11, fontFamily: 'monospace', color: 'rgba(255,255,255,0.3)' }}>
+                T-{formatTime(timeLeft)}
+              </span>
+              <span style={{ fontSize: 13, fontFamily: 'monospace', fontWeight: 700, color: 'var(--theme-border)' }}>
+                {pipelineProgress}%
+              </span>
+            </div>
+          </div>
+          <div style={{ height: 6, borderRadius: 9999, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+            <div style={{
+              height: '100%', borderRadius: 9999,
+              width: `${pipelineProgress}%`,
+              background: 'var(--theme-border)',
+              boxShadow: '0 0 16px var(--theme-border)',
+              transition: 'width 0.6s cubic-bezier(0.4,0,0.2,1)'
+            }} />
+          </div>
+          {/* Indicadores de etapa */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16 }}>
+            {[
+              { label: 'Genes', pct: 15 },
+              { label: 'Síntesis', pct: 45 },
+              { label: 'Evaluador', pct: 75 },
+              { label: 'Listo', pct: 100 },
+            ].map(({ label, pct }) => (
+              <div key={label} style={{ textAlign: 'center' }}>
+                <div style={{
+                  width: 10, height: 10, borderRadius: '50%', margin: '0 auto 6px',
+                  background: pipelineProgress >= pct ? 'var(--theme-border)' : 'rgba(255,255,255,0.1)',
+                  boxShadow: pipelineProgress >= pct ? '0 0 10px var(--theme-border)' : 'none',
+                  transition: 'background 0.3s, box-shadow 0.3s'
+                }} />
+                <div style={{ fontSize: 10, fontFamily: 'monospace', color: pipelineProgress >= pct ? 'var(--theme-border)' : 'rgba(255,255,255,0.3)' }}>
+                  {label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+      </div>
+    );
+  }
 
   if (agentCards.length === 0) {
     return (
@@ -1172,14 +1191,21 @@ const ArchitectureBlueprint: React.FC = () => {
 };
 
 export const CanvasTabs: React.FC = () => {
-  const { activeTab, setActiveTab } = useStudioStore();
+  const { activeTab, setActiveTab, isSynthesizing } = useStudioStore();
 
   const runMatchAndFusePipeline = async () => {
-    const { flowNodes, setAgentCards, setActiveTab, setIsSynthesizing } = useStudioStore.getState();
+    const { flowNodes, setAgentCards, setActiveTab, setIsSynthesizing, isSynthesizing } = useStudioStore.getState();
+    if (isSynthesizing) return; // Prevent multiple concurrent executions
+
     setActiveTab('synthesis');
     if (flowNodes.length === 0) return;
 
     setIsSynthesizing(true);
+    
+    // UI optimista: establecemos 5% para tapar los milisegundos que tarda el WebSocket en conectar (y que por lo tanto pierde el 1er evento del backend)
+    const { setPipelineProgress } = useStudioStore.getState();
+    setPipelineProgress("🔍 Despertando motor cuántico...", 5);
+
     // AbortController con 5 minutos — el pipeline SDK tiene 3 etapas y puede tardar ~90s en Ollama
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);
@@ -1272,9 +1298,15 @@ export const CanvasTabs: React.FC = () => {
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
           <button 
             onClick={runMatchAndFusePipeline}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#00D9FF] text-black hover:brightness-110 shadow-[0_0_20px_rgba(0,217,255,0.3)] transition-all font-bold text-sm"
+            disabled={isSynthesizing}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-full transition-all font-bold text-sm ${
+              isSynthesizing
+                ? 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-50 shadow-none'
+                : 'bg-[#00D9FF] text-black hover:brightness-110 shadow-[0_0_20px_rgba(0,217,255,0.3)]'
+            }`}
           >
-            <Brain size={18} weight="duotone" /> Detectar Agentes
+            <Brain size={18} weight={isSynthesizing ? "regular" : "duotone"} />
+            {isSynthesizing ? 'Sintetizando...' : 'Detectar Agentes'}
           </button>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useStudioStore } from '../../stores/useStudioStore';
-import { CheckCircle, XCircle, Clock, Info, ListChecks, Target, Brain, Robot, SpeakerHigh, Trash, CheckSquare, Square, Lightning, Crosshair, RocketLaunch, Checks, TrendUp } from '@phosphor-icons/react';
+import { CheckCircle, XCircle, Clock, Info, ListChecks, Target, Brain, Robot, SpeakerHigh, Trash, CheckSquare, Square, Lightning, Crosshair, RocketLaunch, Checks, TrendUp, PaintBrush } from '@phosphor-icons/react';
 import { WS_STUDIO_ACTIVITY_URL } from '../../lib/api';
 
 export const SwarmOrchestrationPanel: React.FC = () => {
@@ -12,6 +12,63 @@ export const SwarmOrchestrationPanel: React.FC = () => {
     phase1Complete, phase2Complete, phase3Complete,
     phase2Content, phase3Content, triageSummary
   } = useStudioStore();
+
+  const [isSpeaking, setIsSpeaking] = React.useState(false);
+  const [isEditingObjective, setIsEditingObjective] = React.useState(false);
+  const [editedObjective, setEditedObjective] = React.useState(triageSummary || '');
+
+  React.useEffect(() => {
+    setEditedObjective(triageSummary || '');
+  }, [triageSummary]);
+
+  const handleExplainFlow = async () => {
+    if (!triageSummary || isSpeaking) {
+      if (isSpeaking) {
+        window.speechSynthesis.cancel();
+        setIsSpeaking(false);
+      }
+      return;
+    }
+    setIsSpeaking(true);
+
+    try {
+      const prompt = `Actúa como AureliOS. Explica en 2 oraciones directas, técnicas y sin usar saludos ni clichés, cómo el flujo multi-agente logrará este objetivo: "${triageSummary}"`;
+      
+      const res = await fetch('http://127.0.0.1:11434/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'qwen2.5:3b',
+          prompt: prompt,
+          stream: false
+        })
+      });
+      const data = await res.json();
+      const text = data.response;
+
+      const synth = window.speechSynthesis;
+      const utterance = new SpeechSynthesisUtterance(text);
+      // Attempt to find a Spanish voice
+      const voices = synth.getVoices();
+      const esVoice = voices.find(v => v.lang.startsWith('es')) || voices[0];
+      if (esVoice) utterance.voice = esVoice;
+      utterance.lang = 'es-ES';
+      utterance.rate = 1.05;
+      
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+      
+      synth.speak(utterance);
+    } catch (e) {
+      console.error('Error TTS:', e);
+      setIsSpeaking(false);
+    }
+  };
+
+  const handleSaveObjective = () => {
+    useStudioStore.getState().setTriageSummary(editedObjective);
+    setIsEditingObjective(false);
+  };
 
   const [activeModel, setActiveModel] = React.useState(() => localStorage.getItem('aurelios_model') || 'free.ai/auto');
 
@@ -206,9 +263,34 @@ export const SwarmOrchestrationPanel: React.FC = () => {
               {/* Objetivo Principal */}
               <div className="relative">
                 <div className="absolute -left-5 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500/0 via-emerald-500 to-emerald-500/0 opacity-50 rounded-full" />
-                <h3 className="text-sm font-mono text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-                  <TrendUp size={16} /> Vector de Intención
-                </h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-sm font-mono text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                    <TrendUp size={16} /> Vector de Intención
+                  </h3>
+                  {phase1Complete && triageSummary && (
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => setIsEditingObjective(!isEditingObjective)}
+                        className="p-2 rounded-xl bg-zinc-800/50 hover:bg-zinc-700 text-zinc-400 hover:text-emerald-400 transition-colors"
+                        title="Editar Objetivo"
+                      >
+                        <PaintBrush size={16} />
+                      </button>
+                      <button 
+                        onClick={handleExplainFlow}
+                        className={`p-2 rounded-xl flex items-center gap-2 text-sm font-medium transition-all ${
+                          isSpeaking 
+                            ? 'bg-emerald-500 text-zinc-950 shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse' 
+                            : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
+                        }`}
+                        title="Explicar cómo lograr el objetivo"
+                      >
+                        {isSpeaking ? <Square size={16} weight="fill" /> : <SpeakerHigh size={16} />}
+                        {isSpeaking ? "Detener" : "Explicar Flujo"}
+                      </button>
+                    </div>
+                  )}
+                </div>
                 
                 {phase1Complete && triageSummary ? (
                   <div className="p-8 rounded-3xl border border-emerald-500/20 bg-emerald-500/5 shadow-[0_0_30px_rgba(16,185,129,0.05)]">
@@ -216,11 +298,28 @@ export const SwarmOrchestrationPanel: React.FC = () => {
                       <div className="shrink-0 p-4 bg-emerald-500/10 rounded-2xl">
                         <Checks size={28} className="text-emerald-400" weight="duotone" />
                       </div>
-                      <div className="markdown-body text-[15px] leading-relaxed text-emerald-100 user-answer-block pt-1">
-                        <ReactMarkdown>{triageSummary}</ReactMarkdown>
+                      <div className="flex-1 min-w-0 pt-1">
+                        {isEditingObjective ? (
+                          <div className="flex flex-col gap-3">
+                            <textarea
+                              value={editedObjective}
+                              onChange={(e) => setEditedObjective(e.target.value)}
+                              className="w-full bg-zinc-900/50 border border-zinc-700 rounded-xl p-3 text-sm text-zinc-200 focus:outline-none focus:border-emerald-500 min-h-[120px]"
+                            />
+                            <div className="flex justify-end gap-2">
+                              <button onClick={() => { setIsEditingObjective(false); setEditedObjective(triageSummary); }} className="px-4 py-2 text-xs rounded-lg bg-zinc-800 text-zinc-400 hover:text-zinc-200">Cancelar</button>
+                              <button onClick={handleSaveObjective} className="px-4 py-2 text-xs rounded-lg bg-emerald-500 text-zinc-950 font-medium hover:bg-emerald-400">Guardar</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="markdown-body text-[15px] leading-relaxed text-emerald-100 user-answer-block">
+                            <ReactMarkdown>{triageSummary}</ReactMarkdown>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
+
                 ) : (
                   <div className="p-10 rounded-3xl border border-dashed border-zinc-700/50 bg-zinc-900/20 flex flex-col items-center justify-center text-center gap-5">
                     <div className="w-20 h-20 rounded-full border border-zinc-800 bg-zinc-900/50 flex items-center justify-center relative">
