@@ -7,7 +7,7 @@ import { studioNodeTypes, KIND_META } from '../components/StudioNodes';
 import { SwarmOrchestrationPanel } from '../components/studio/SwarmOrchestrationPanel';
 import { useStudioStore, TabId, parseAIResponseToFlow } from '../stores/useStudioStore';
 import { API_URL, WS_STUDIO_ACTIVITY_URL } from '../lib/api';
-import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock } from '@phosphor-icons/react';
+import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock, Stop } from '@phosphor-icons/react';
 
 
 const AURELIOS_THEMES: Record<string, any> = {
@@ -893,110 +893,55 @@ const FlowDiagram: React.FC = () => {
 
 const AgentCarousel: React.FC = () => {
   const { agentCards, focusedAgent, setFocusedAgent, isSynthesizing, pipelineStage, pipelineProgress, synthStartTime } = useStudioStore();
+  const { play, stop, isActive, currentSection } = useTTSStore();
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [timeLeft, setTimeLeft] = React.useState(300);
 
-  // Efecto para el countdown preciso basado en synthStartTime global
   React.useEffect(() => {
-    if (!isSynthesizing || !synthStartTime) {
-      setTimeLeft(300);
-      return;
-    }
-    
-    // Calculo inicial
-    const calcTime = () => {
-      const elapsed = Math.floor((Date.now() - synthStartTime) / 1000);
-      return Math.max(0, 900 - elapsed);
-    };
-    
+    if (!isSynthesizing || !synthStartTime) { setTimeLeft(300); return; }
+    const calcTime = () => Math.max(0, 900 - Math.floor((Date.now() - synthStartTime) / 1000));
     setTimeLeft(calcTime());
-    
-    const interval = setInterval(() => {
-      setTimeLeft(calcTime());
-    }, 1000);
-    
+    const interval = setInterval(() => setTimeLeft(calcTime()), 1000);
     return () => clearInterval(interval);
   }, [isSynthesizing, synthStartTime]);
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
+  const formatTime = (seconds: number) => `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, '0')}`;
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (focusedAgent) return;
+    if (e.deltaY > 0) setCurrentIndex(prev => Math.min(agentCards.length - 1, prev + 1));
+    else if (e.deltaY < 0) setCurrentIndex(prev => Math.max(0, prev - 1));
   };
 
   if (isSynthesizing) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center w-full h-full bg-transparent" style={{ gap: 36 }}>
-        {/* Icono animado */}
         <div style={{ position: 'relative', width: 100, height: 100 }}>
-          <div style={{
-            position: 'absolute', inset: 0, borderRadius: '50%',
-            border: '2px solid var(--theme-border)',
-            animation: 'spin 2s linear infinite', opacity: 0.4
-          }} />
-          <div style={{
-            position: 'absolute', inset: 8, borderRadius: '50%',
-            border: '2px solid var(--theme-border)',
-            animation: 'spin 1.4s linear infinite reverse', opacity: 0.6
-          }} />
-          <div style={{
-            position: 'absolute', inset: 0, display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
-            color: 'var(--theme-border)', fontSize: 36
-          }}>⚛</div>
+          <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid var(--theme-border)', animation: 'spin 2s linear infinite', opacity: 0.4 }} />
+          <div style={{ position: 'absolute', inset: 8, borderRadius: '50%', border: '2px solid var(--theme-border)', animation: 'spin 1.4s linear infinite reverse', opacity: 0.6 }} />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--theme-border)', fontSize: 36 }}>⚛</div>
         </div>
-
-        {/* Título */}
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 18, fontFamily: 'monospace', letterSpacing: '0.2em', color: 'var(--theme-border)', opacity: 0.8, marginBottom: 16 }}>
-            MATCH & FUSE — TRIÁNGULO DORADO
-          </div>
-          <div style={{ fontSize: 36, color: '#ffffff', fontWeight: 800, maxWidth: 800, textAlign: 'center', minHeight: 48, lineHeight: 1.2 }}>
-            {pipelineStage || 'Inicializando pipeline cuántico...'}
-          </div>
+          <div style={{ fontSize: 18, fontFamily: 'monospace', letterSpacing: '0.2em', color: 'var(--theme-border)', opacity: 0.8, marginBottom: 16 }}>MATCH & FUSE — TRIÁNGULO DORADO</div>
+          <div style={{ fontSize: 36, color: '#ffffff', fontWeight: 800, maxWidth: 800, textAlign: 'center', minHeight: 48, lineHeight: 1.2 }}>{pipelineStage || 'Inicializando pipeline cuántico...'}</div>
         </div>
-
-        {/* Barra de progreso */}
         <div style={{ width: '100%', maxWidth: 400 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, alignItems: 'center' }}>
             <span style={{ fontSize: 11, fontFamily: 'monospace', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em' }}>PROGRESO REAL</span>
             <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-              <span style={{ fontSize: 11, fontFamily: 'monospace', color: 'rgba(255,255,255,0.3)' }}>
-                T-{formatTime(timeLeft)}
-              </span>
-              <span style={{ fontSize: 13, fontFamily: 'monospace', fontWeight: 700, color: 'var(--theme-border)' }}>
-                {pipelineProgress}%
-              </span>
+              <span style={{ fontSize: 11, fontFamily: 'monospace', color: 'rgba(255,255,255,0.3)' }}>T-{formatTime(timeLeft)}</span>
+              <span style={{ fontSize: 13, fontFamily: 'monospace', fontWeight: 700, color: 'var(--theme-border)' }}>{pipelineProgress}%</span>
             </div>
           </div>
           <div style={{ height: 6, borderRadius: 9999, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-            <div style={{
-              height: '100%', borderRadius: 9999,
-              width: `${pipelineProgress}%`,
-              background: 'var(--theme-border)',
-              boxShadow: '0 0 16px var(--theme-border)',
-              transition: 'width 0.6s cubic-bezier(0.4,0,0.2,1)'
-            }} />
+            <div style={{ height: '100%', borderRadius: 9999, width: `${pipelineProgress}%`, background: 'var(--theme-border)', boxShadow: '0 0 16px var(--theme-border)', transition: 'width 0.6s cubic-bezier(0.4,0,0.2,1)' }} />
           </div>
-          {/* Indicadores de etapa */}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16 }}>
-            {[
-              { label: 'Genes', pct: 15 },
-              { label: 'Síntesis', pct: 45 },
-              { label: 'Evaluador', pct: 75 },
-              { label: 'Listo', pct: 100 },
-            ].map(({ label, pct }) => (
+            {[{ label: 'Genes', pct: 15 }, { label: 'Síntesis', pct: 45 }, { label: 'Evaluador', pct: 75 }, { label: 'Listo', pct: 100 }].map(({ label, pct }) => (
               <div key={label} style={{ textAlign: 'center' }}>
-                <div style={{
-                  width: 10, height: 10, borderRadius: '50%', margin: '0 auto 6px',
-                  background: pipelineProgress >= pct ? 'var(--theme-border)' : 'rgba(255,255,255,0.1)',
-                  boxShadow: pipelineProgress >= pct ? '0 0 10px var(--theme-border)' : 'none',
-                  transition: 'background 0.3s, box-shadow 0.3s'
-                }} />
-                <div style={{ fontSize: 10, fontFamily: 'monospace', color: pipelineProgress >= pct ? 'var(--theme-border)' : 'rgba(255,255,255,0.3)' }}>
-                  {label}
-                </div>
+                <div style={{ width: 10, height: 10, borderRadius: '50%', margin: '0 auto 6px', background: pipelineProgress >= pct ? 'var(--theme-border)' : 'rgba(255,255,255,0.1)', boxShadow: pipelineProgress >= pct ? '0 0 10px var(--theme-border)' : 'none', transition: 'background 0.3s, box-shadow 0.3s' }} />
+                <div style={{ fontSize: 10, fontFamily: 'monospace', color: pipelineProgress >= pct ? 'var(--theme-border)' : 'rgba(255,255,255,0.3)' }}>{label}</div>
               </div>
             ))}
           </div>
@@ -1008,152 +953,161 @@ const AgentCarousel: React.FC = () => {
 
   if (agentCards.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-transparent text-gray-600 gap-3">
+      <div className="flex-1 flex flex-col items-center justify-center bg-transparent text-gray-500 gap-3">
         <Brain size={40} weight="light" className="opacity-30" />
         <p className="text-sm font-medium">Las tarjetas de agentes aparecerán aquí</p>
-        <p className="text-xs opacity-50">Pide a AureliOS que diseñe un equipo de agentes →</p>
       </div>
     );
   }
 
-  // Coverflow 3D effect calculation
-  const renderCard = (card: any, index: number) => {
-    const isFocused = focusedAgent?.id === card.id;
-    const offset = index - currentIndex;
-    const absOffset = Math.abs(offset);
-    
-    // CSS rules for Coverflow
-    let zIndex = 100 - absOffset;
-    let translateX = offset * 150; // space between cards
-    let rotateY = offset === 0 ? 0 : offset > 0 ? -35 : 35;
-    let translateZ = absOffset * -200; // push background cards back
-    let opacity = absOffset > 3 ? 0 : 1 - absOffset * 0.2;
-    let scale = offset === 0 ? 1 : 0.9;
-    
-    // Override if in focus mode
-    if (focusedAgent) {
-      if (isFocused) {
-        translateX = 0; rotateY = 0; translateZ = 150; opacity = 1; scale = 1.1; zIndex = 200;
-      } else {
-        opacity = 0;
-      }
-    }
-
-    
-
+  // Vista enfocada: Carta + Triángulo Dorado
+  if (focusedAgent) {
+    const card = focusedAgent;
+    const isPlayingThis = isActive && currentSection === card.id;
     return (
-      <div 
-        key={card.id}
-        onClick={() => {
-          if (!focusedAgent) {
-            if (offset === 0) setFocusedAgent(card);
-            else setCurrentIndex(index);
-          }
-        }}
-        className="absolute left-1/2 top-1/2 cursor-pointer transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
-        style={{
-          width: '280px',
-          height: '400px',
-          marginLeft: '-140px',
-          marginTop: '-200px',
-          transform: `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
-          zIndex,
-          opacity,
-          pointerEvents: (opacity === 0 ? 'none' : 'auto') as any,
-          transformStyle: 'preserve-3d',
-        }}
-      >
-        <div className="w-full h-full rounded-2xl shadow-2xl relative overflow-hidden flex flex-col group border border-white/5" style={{ background: card.color || '#1e293b' }}>
-          {/* Card UI */}
-          <div className="p-5 flex flex-col h-full bg-black/20 backdrop-blur-sm relative z-10">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-bold text-white tracking-tight leading-tight">{card.name}</h3>
-              {isFocused && (
-                <button onClick={(e) => { e.stopPropagation(); setFocusedAgent(null); }} className="text-white/50 hover:text-white p-1 bg-black/20 rounded-full">
-                  <X size={16} />
-                </button>
-              )}
-            </div>
-            <div className="text-xs font-semibold text-white/70 uppercase tracking-widest mb-4 flex items-center gap-1.5">
-              <Robot size={14} weight="duotone" style={{ color: card.color }} /> {card.role}
-            </div>
-            
-            <p className="text-sm text-white/80 leading-relaxed mb-6 flex-1 line-clamp-4">
-              {card.description}
-            </p>
-
-            {/* If focused, show Flip & Focus extended data */}
-            {isFocused && (
-              <div className="flex-1 overflow-y-auto pr-2 mt-2 border-t border-white/10 pt-4 custom-scrollbar">
-                {card.inputOutputContract && (
-                  <div className="mb-4">
-                    <span className="text-xs font-bold text-white/50 block mb-1">Contrato de E/S</span>
-                    <div className="bg-black/30 p-2 rounded text-xs text-[#7EC87E] font-mono">
-                      {card.inputOutputContract}
-                    </div>
-                  </div>
-                )}
-                {card.requiredTools && card.requiredTools.length > 0 && (
-                  <div className="mb-4">
-                    <span className="text-xs font-bold text-white/50 block mb-1">Herramientas requeridas</span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {card.requiredTools.map((t: string) => (
-                        <span key={t} className="bg-white/10 px-2 py-0.5 rounded text-[10px] text-white/80">{t}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {card.genes && card.genes.length > 0 && (
-                   <div className="mb-4">
-                    <span className="text-xs font-bold text-white/50 block mb-1">Genética (RRF)</span>
-                    <div className="flex flex-col gap-1.5">
-                      {card.genes.map((g: any, i: number) => (
-                        <div key={i} className="flex flex-col bg-black/20 p-2 rounded">
-                          <span className="text-[10px] text-white/40 uppercase font-bold">{g.kind}</span>
-                          <span className="text-xs text-white/80">{g.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <button className="w-full mt-4 py-2 bg-white/10 hover:bg-white/20 transition-colors rounded-lg flex items-center justify-center gap-2 text-sm font-semibold text-white border border-white/20">
-                  <PaintBrush size={16} /> Editar prompt
-                </button>
-              </div>
-            )}
-            
-            {!isFocused && card.genes && (
-              <div className="flex flex-wrap gap-1 mt-auto">
-                 {card.genes.slice(0, 3).map((g: any, i: number) => (
-                    <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-black/30 text-white/70 border border-white/10">
-                      {g.kind}
-                    </span>
-                 ))}
-                 {card.genes.length > 3 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/30 text-white/50">+{card.genes.length-3}</span>}
-              </div>
-            )}
+      <div className="flex-1 flex w-full h-full bg-[#030712] p-8 gap-8 animate-in fade-in zoom-in duration-300">
+        <div className="w-1/3 h-full flex flex-col">
+          <div className="flex justify-between mb-4 items-center">
+            <button onClick={() => setFocusedAgent(null)} className="text-white/50 hover:text-white px-4 py-2 bg-white/5 rounded-full flex items-center gap-2 text-sm font-medium transition-colors">
+              <X size={16} /> Cerrar vista detallada
+            </button>
+            <button 
+              onClick={() => isPlayingThis ? stop() : play(card.description, card.id)}
+              className={`p-3 rounded-full transition-all ${isPlayingThis ? 'bg-red-500/20 text-red-400' : 'bg-white/5 text-white hover:bg-white/10'}`}
+            >
+              {isPlayingThis ? <Stop size={20} weight="fill" /> : <SpeakerHigh size={20} weight="duotone" />}
+            </button>
           </div>
-          
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none z-0"></div>
+          {/* Card Solid and Large */}
+          <div className="w-full flex-1 rounded-2xl shadow-2xl relative overflow-hidden flex flex-col border" style={{ backgroundColor: '#1a1d21', borderColor: card.color || '#333' }}>
+            <div className="h-2 w-full" style={{ backgroundColor: card.color }}></div>
+            <div className="p-8 flex flex-col flex-1">
+              <h3 className="text-3xl font-bold text-white tracking-tight leading-tight mb-2">{card.name}</h3>
+              <div className="text-sm font-bold text-white/50 uppercase tracking-widest mb-6 flex items-center gap-2">
+                <Robot size={18} weight="duotone" style={{ color: card.color }} /> {card.role}
+              </div>
+              <p className="text-lg text-white/90 leading-relaxed flex-1">{card.description}</p>
+            </div>
+          </div>
+        </div>
+        <div className="w-2/3 h-full flex flex-col pt-12">
+          <h2 className="text-2xl font-bold text-white/90 mb-8 flex items-center gap-3">
+            <div className="w-3 h-3 rounded-full" style={{ background: card.color }}></div> Triángulo Dorado
+          </h2>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="bg-white/5 border border-white/10 p-6 rounded-xl flex flex-col">
+              <div className="text-sm font-bold text-blue-400 uppercase tracking-wider mb-4">1. Decomposer (Genes)</div>
+              <div className="flex flex-col gap-2">
+                {card.genes?.map((g: any, i: number) => (
+                  <div key={i} className="flex flex-col bg-black/40 p-3 rounded-lg border border-white/5">
+                    <span className="text-xs text-white/40 font-bold mb-1">{g.kind}</span>
+                    <span className="text-sm text-white/80">{g.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-col gap-6">
+              <div className="bg-white/5 border border-white/10 p-6 rounded-xl">
+                <div className="text-sm font-bold text-purple-400 uppercase tracking-wider mb-4">2. Synthesizer</div>
+                <div className="text-sm text-white/70 bg-black/40 p-4 rounded-lg font-mono">
+                  {card.inputOutputContract}
+                </div>
+              </div>
+              <div className="bg-white/5 border border-white/10 p-6 rounded-xl flex-1">
+                <div className="text-sm font-bold text-emerald-400 uppercase tracking-wider mb-4">3. Sandbox Umpire</div>
+                <div className="flex flex-wrap gap-2">
+                  {card.requiredTools?.map((t: string) => (
+                    <span key={t} className="bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-lg text-sm font-mono border border-emerald-500/20">{t}</span>
+                  ))}
+                  {(!card.requiredTools || card.requiredTools.length === 0) && <span className="text-white/30 text-sm">No tools required</span>}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
-  };
+  }
 
   return (
-    <div className="flex-1 bg-[#050505] overflow-hidden relative flex flex-col" style={{ perspective: '1200px' }}>
-      {!focusedAgent && (
-        <div className="absolute top-6 w-full flex justify-center z-50">
-          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-full px-4 py-1.5 text-xs text-white/60 font-medium tracking-wide flex items-center gap-4 shadow-xl">
-             <button onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))} disabled={currentIndex === 0} className="hover:text-white disabled:opacity-30">← Prev</button>
-             <span>{currentIndex + 1} / {agentCards.length}</span>
-             <button onClick={() => setCurrentIndex(Math.min(agentCards.length - 1, currentIndex + 1))} disabled={currentIndex === agentCards.length - 1} className="hover:text-white disabled:opacity-30">Next →</button>
-          </div>
+    <div className="flex-1 bg-transparent overflow-hidden relative flex flex-col" style={{ perspective: '1200px' }} onWheel={handleWheel}>
+      <div className="absolute top-6 w-full flex justify-center z-50">
+        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-full px-6 py-2 text-sm text-white/60 font-medium tracking-wide flex items-center gap-6 shadow-xl">
+            <button onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))} disabled={currentIndex === 0} className="hover:text-white disabled:opacity-30 transition-colors">← Prev</button>
+            <span className="font-mono">{currentIndex + 1} / {agentCards.length}</span>
+            <button onClick={() => setCurrentIndex(Math.min(agentCards.length - 1, currentIndex + 1))} disabled={currentIndex === agentCards.length - 1} className="hover:text-white disabled:opacity-30 transition-colors">Next →</button>
         </div>
-      )}
-      
-      <div ref={containerRef} className="flex-1 relative transform-gpu" style={{ transformStyle: 'preserve-3d' }}>
-        {agentCards.map((card, i) => renderCard(card, i))}
+      </div>
+      <div ref={containerRef} className="flex-1 relative transform-gpu mt-12" style={{ transformStyle: 'preserve-3d' }}>
+        {agentCards.map((card, index) => {
+          const offset = index - currentIndex;
+          const absOffset = Math.abs(offset);
+          let zIndex = 100 - absOffset;
+          let translateX = offset * 220;
+          let rotateY = offset === 0 ? 0 : offset > 0 ? -25 : 25;
+          let translateZ = absOffset * -300;
+          let opacity = absOffset > 3 ? 0 : 1 - absOffset * 0.2;
+          let scale = offset === 0 ? 1 : 0.85;
+          
+          const isPlayingThis = isActive && currentSection === card.id;
+
+          return (
+            <div 
+              key={card.id}
+              onClick={() => {
+                if (offset === 0) setFocusedAgent(card);
+                else setCurrentIndex(index);
+              }}
+              className="absolute left-1/2 top-1/2 cursor-pointer transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
+              style={{
+                width: '320px',
+                height: '480px',
+                marginLeft: '-160px',
+                marginTop: '-240px',
+                transform: `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
+                zIndex, opacity,
+                pointerEvents: (opacity === 0 ? 'none' : 'auto') as any,
+                transformStyle: 'preserve-3d',
+              }}
+            >
+              <div className="w-full h-full rounded-2xl shadow-2xl relative overflow-hidden flex flex-col group border transition-colors duration-300" 
+                   style={{ backgroundColor: '#1a1d21', borderColor: offset === 0 ? (card.color || '#333') : '#222' }}>
+                <div className="h-1.5 w-full opacity-80" style={{ backgroundColor: card.color }}></div>
+                <div className="p-6 flex flex-col h-full relative z-10">
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-2xl font-bold text-white tracking-tight leading-tight">{card.name}</h3>
+                    <button 
+                      onClick={(e) => { 
+                        e.stopPropagation();
+                        if (isPlayingThis) stop(); 
+                        else play(card.description, card.id); 
+                      }} 
+                      className={`p-2 rounded-full transition-all flex-shrink-0 ml-2 ${isPlayingThis ? 'bg-red-500/20 text-red-400' : 'bg-white/5 text-white/50 hover:text-white hover:bg-white/10'}`}
+                    >
+                      {isPlayingThis ? <Stop size={16} weight="fill" /> : <SpeakerHigh size={16} weight="duotone" />}
+                    </button>
+                  </div>
+                  <div className="text-xs font-bold text-white/50 uppercase tracking-widest mb-6 flex items-center gap-1.5">
+                    <Robot size={16} weight="duotone" style={{ color: card.color }} /> {card.role}
+                  </div>
+                  <p className="text-[15px] text-white/80 leading-relaxed mb-6 flex-1 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 8, WebkitBoxOrient: 'vertical' }}>
+                    {card.description}
+                  </p>
+                  {card.genes && (
+                    <div className="flex flex-wrap gap-1.5 mt-auto">
+                       {card.genes.slice(0, 3).map((g: any, i: number) => (
+                          <span key={i} className="text-[10px] px-2 py-1 rounded bg-black/40 text-white/70 border border-white/5">
+                            {g.kind}
+                          </span>
+                       ))}
+                       {card.genes.length > 3 && <span className="text-[10px] px-2 py-1 rounded bg-black/40 text-white/40">+{card.genes.length-3}</span>}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -1181,10 +1135,32 @@ const ArchitectureBlueprint: React.FC = () => {
   );
 };
 
-export const CanvasTabs: React.FC = () => {
-  const { activeTab, setActiveTab, isSynthesizing } = useStudioStore();
 
-  const runMatchAndFusePipeline = async () => {
+  export const CanvasTabs: React.FC = () => {
+    const { activeTab, setActiveTab, isSynthesizing } = useStudioStore();
+
+    const go2WF = () => {
+      const { agentCards, setFlow, setActiveTab, addChatMessage } = useStudioStore.getState();
+      const nodes = agentCards.map((card, i) => ({
+        id: card.id,
+        type: 'agent',
+        position: { x: 100 + (i % 3) * 350, y: 100 + Math.floor(i / 3) * 200 },
+        data: {
+          label: card.name,
+          role: card.role,
+          fullDescription: card.description,
+          allTools: card.requiredTools || [],
+          inputPort: card.inputOutputContract?.split('->')[0] || '',
+          outputPort: card.inputOutputContract?.split('->')[1] || ''
+        }
+      }));
+      setFlow(nodes, []);
+      setActiveTab('discovery');
+      addChatMessage({ role: 'agent', content: '✅ CHECKLIST COMPLETADO: Flujo actualizado con los AgentCards.', model: 'aurelios' });
+    };
+
+    const runMatchAndFusePipeline = async () => {
+
     const { flowNodes, setAgentCards, setActiveTab, setIsSynthesizing, isSynthesizing, setSynthStartTime } = useStudioStore.getState();
     if (isSynthesizing) return; // Prevent multiple concurrent executions
 
@@ -1288,19 +1264,38 @@ export const CanvasTabs: React.FC = () => {
         <div className="flex-1 flex flex-col relative overflow-hidden bg-transparent">
           {renderContent()}
         </div>
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
-          <button 
-            onClick={runMatchAndFusePipeline}
-            disabled={isSynthesizing}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-full transition-all font-bold text-sm ${
-              isSynthesizing
-                ? 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-50 shadow-none'
-                : 'bg-[#00D9FF] text-black hover:brightness-110 shadow-[0_0_20px_rgba(0,217,255,0.3)]'
-            }`}
-          >
-            <Brain size={18} weight={isSynthesizing ? "regular" : "duotone"} />
-            {isSynthesizing ? 'Sintetizando...' : 'Detectar Agentes'}
-          </button>
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto flex gap-4">
+          {activeTab === 'synthesis' ? (
+            <>
+              <button 
+                onClick={() => alert('Upgrade Cohesivo Iniciado: Fusionando genes cuánticos y prompts de sistema...')}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-full transition-all font-bold text-sm bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:brightness-110 shadow-[0_0_20px_rgba(168,85,247,0.4)]"
+              >
+                <Brain size={18} weight="duotone" />
+                Upgrade
+              </button>
+              <button 
+                onClick={go2WF}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-full transition-all font-bold text-sm bg-emerald-500 text-white hover:brightness-110 shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+              >
+                <Robot size={18} weight="duotone" />
+                Go2WF
+              </button>
+            </>
+          ) : (
+            <button 
+              onClick={runMatchAndFusePipeline}
+              disabled={isSynthesizing}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-full transition-all font-bold text-sm ${
+                isSynthesizing
+                  ? 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-50 shadow-none'
+                  : 'bg-[#00D9FF] text-black hover:brightness-110 shadow-[0_0_20px_rgba(0,217,255,0.3)]'
+              }`}
+            >
+              <Brain size={18} weight={isSynthesizing ? "regular" : "duotone"} />
+              {isSynthesizing ? 'Sintetizando...' : 'Detectar Agentes'}
+            </button>
+          )}
         </div>
       </div>
     </div>
