@@ -99,6 +99,7 @@ const AURELIOS_THEMES: Record<string, any> = {
 const FlowArchitect: React.FC = () => {
     const { chatMessages, addChatMessage, setFlow, setAgentCards, setBlueprintMd, setTriggerChatSend } = useStudioStore();
   const [input, setInput] = useState('');
+  const [gpuActive, setGpuActive] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [thinkingPhrase, setThinkingPhrase] = useState('');
   const [showSetup, setShowSetup] = useState(false);
@@ -148,6 +149,7 @@ const FlowArchitect: React.FC = () => {
       const res = await fetch('http://localhost:8000/api/v1/studio/amd-gpu/activate', { method: 'POST' });
       const data = await res.json();
       if(data.status === 'success') {
+        setGpuActive(true);
         alert('Ollama reiniciado exitosamente con aceleracion AMD RDNA3.\n¡Listo para procesar enjambres cuanticos!');
       } else {
         alert('Error: ' + data.message);
@@ -415,8 +417,12 @@ const FlowArchitect: React.FC = () => {
             <Trash size={18} />
           </button>
 
-          <button onClick={activateAmdGpu} title="Activar Aceleracion GPU AMD (RDNA3)" className={`hover:text-green-400 transition-colors ${t.text}`}>
-            <Cpu size={18} />
+          <button 
+            onClick={activateAmdGpu} 
+            title="Activar Aceleración GPU AMD (RDNA3)" 
+            className={`transition-all duration-500 ${gpuActive ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)] scale-110' : `hover:text-yellow-400 ${t.text}`}`}
+          >
+            <Brain size={18} weight={gpuActive ? 'fill' : 'regular'} className={gpuActive ? 'animate-pulse' : ''} />
           </button>
           <button onClick={() => setShowSetup(true)} title="Configuración de Modelo y Tema" className={`hover:brightness-125 transition-opacity ${t.text}`}>
             <Gear size={18} />
@@ -534,7 +540,7 @@ const FlowArchitect: React.FC = () => {
           </div>
 
           {/* Slide 2: Classic Agents */}
-          <div className="shrink-0 w-full snap-center flex flex-col">
+          <div className="shrink-0 w-full snap-center h-full flex flex-col pt-[1.5cm] pb-[0.5cm]">
             <span className="text-[9px] font-bold tracking-widest uppercase opacity-70 mb-2 text-center flex justify-center items-center gap-1"><Wrench size={12} /> God-Tier Prompts</span>
             <div className="grid grid-cols-3 gap-1.5">
               {aiTools.map(tool => (
