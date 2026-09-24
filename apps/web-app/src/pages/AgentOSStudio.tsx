@@ -895,44 +895,41 @@ const FlowDiagram: React.FC = () => {
       )}
     </div>
   );
-};const AgentCarousel: React.FC = () => {
-  const { agentCards, focusedAgent, setFocusedAgent, isSynthesizing, pipelineStage, pipelineProgress, setPipelineProgress } = useStudioStore();
+};
+
+const AgentCarousel: React.FC = () => {
+  const { agentCards, focusedAgent, setFocusedAgent, isSynthesizing, pipelineStage, pipelineProgress, synthStartTime } = useStudioStore();
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [timeLeft, setTimeLeft] = React.useState(300);
 
-  // Efecto para el countdown de 5 min
+  // Efecto para el countdown preciso basado en synthStartTime global
   React.useEffect(() => {
-    if (!isSynthesizing) {
+    if (!isSynthesizing || !synthStartTime) {
       setTimeLeft(300);
       return;
     }
+    
+    // Calculo inicial
+    const calcTime = () => {
+      const elapsed = Math.floor((Date.now() - synthStartTime) / 1000);
+      return Math.max(0, 300 - elapsed);
+    };
+    
+    setTimeLeft(calcTime());
+    
     const interval = setInterval(() => {
-      setTimeLeft(prev => Math.max(0, prev - 1));
+      setTimeLeft(calcTime());
     }, 1000);
+    
     return () => clearInterval(interval);
-  }, [isSynthesizing]);
+  }, [isSynthesizing, synthStartTime]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
-
-  // WebSocket — escucha progreso en tiempo real del pipeline Match & Fuse
-  React.useEffect(() => {
-    if (!isSynthesizing) return;
-    const ws = new WebSocket(WS_STUDIO_ACTIVITY_URL);
-    ws.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data);
-        if (msg.type === 'match_fuse_progress') {
-          setPipelineProgress(msg.stage || '', msg.pct ?? 0);
-        }
-      } catch {}
-    };
-    return () => ws.close();
-  }, [isSynthesizing, setPipelineProgress]);
 
   if (isSynthesizing) {
     return (
@@ -1194,13 +1191,14 @@ export const CanvasTabs: React.FC = () => {
   const { activeTab, setActiveTab, isSynthesizing } = useStudioStore();
 
   const runMatchAndFusePipeline = async () => {
-    const { flowNodes, setAgentCards, setActiveTab, setIsSynthesizing, isSynthesizing } = useStudioStore.getState();
+    const { flowNodes, setAgentCards, setActiveTab, setIsSynthesizing, isSynthesizing, setSynthStartTime } = useStudioStore.getState();
     if (isSynthesizing) return; // Prevent multiple concurrent executions
 
     setActiveTab('synthesis');
     if (flowNodes.length === 0) return;
 
     setIsSynthesizing(true);
+    setSynthStartTime(Date.now());
     
     // UI optimista: establecemos 5% para tapar los milisegundos que tarda el WebSocket en conectar (y que por lo tanto pierde el 1er evento del backend)
     const { setPipelineProgress } = useStudioStore.getState();
@@ -1258,6 +1256,7 @@ export const CanvasTabs: React.FC = () => {
       setAgentCards(fallbackCards as any);
     } finally {
       setIsSynthesizing(false);
+      setSynthStartTime(null);
     }
   };
 
@@ -1325,6 +1324,22 @@ const THINKING_PHRASES = [
 ];
 
 export default function AgentOSStudio() {
+  const { isSynthesizing, setPipelineProgress } = useStudioStore();
+
+  React.useEffect(() => {
+    if (!isSynthesizing) return;
+    const ws = new WebSocket(WS_STUDIO_ACTIVITY_URL);
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'match_fuse_progress') {
+          setPipelineProgress(msg.stage || '', msg.pct ?? 0);
+        }
+      } catch {}
+    };
+    return () => ws.close();
+  }, [isSynthesizing, setPipelineProgress]);
+
   return (
     <div
       style={{

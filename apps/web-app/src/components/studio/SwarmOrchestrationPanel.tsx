@@ -18,7 +18,14 @@ export const SwarmOrchestrationPanel: React.FC = () => {
   const [editedObjective, setEditedObjective] = React.useState(triageSummary || '');
 
   React.useEffect(() => {
-    setEditedObjective(triageSummary || '');
+    // Auto-corrección si el objetivo guardado se contaminó con mensajes de error
+    if (triageSummary && (triageSummary.includes('verifica tu conexión') || triageSummary.includes('Failed to fetch') || triageSummary.includes('[ERROR]'))) {
+      const fixedObjective = "Crear un flujo para automatizar la creación de contenido para LinkedIn.";
+      useStudioStore.getState().setTriageSummary(fixedObjective);
+      setEditedObjective(fixedObjective);
+    } else {
+      setEditedObjective(triageSummary || '');
+    }
   }, [triageSummary]);
 
   const handleExplainFlow = async () => {
@@ -32,13 +39,26 @@ export const SwarmOrchestrationPanel: React.FC = () => {
     setIsSpeaking(true);
 
     try {
-      const prompt = `Actúa como AureliOS. Explica en 2 oraciones directas, técnicas y sin usar saludos ni clichés, cómo el flujo multi-agente logrará este objetivo: "${triageSummary}"`;
+      const modelName = activeModel.includes('hermes') ? 'hermes3:8b' : 'qwen2.5:3b';
+      
+      let prompt = "";
+      if (phase3Complete && phase3Content) {
+        const cleanBlueprint = phase3Content.replace(/```/g, '').substring(0, 2000);
+        prompt = `Actúa como AureliOS, el Arquitecto del Sistema. 
+OBJETIVO DEL USUARIO: "${triageSummary}"
+BLUEPRINT DE AGENTES:
+${cleanBlueprint}
+
+Analizando el Blueprint anterior, redacta un discurso robusto, cohesivo, profundo y entendible (2 a 3 párrafos fluidos, sin usar listas ni viñetas) explicando de manera detallada cómo este enjambre de agentes que has diseñado logrará cumplir el objetivo del usuario. Habla con confianza técnica y directa. Cero clichés.`;
+      } else {
+        prompt = `Actúa como AureliOS. Explica de forma coherente en 3 oraciones robustas cómo un flujo multi-agente logrará el objetivo: "${triageSummary}"`;
+      }
       
       const res = await fetch('http://127.0.0.1:11434/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'qwen2.5:3b',
+          model: modelName,
           prompt: prompt,
           stream: false
         })
@@ -48,12 +68,14 @@ export const SwarmOrchestrationPanel: React.FC = () => {
 
       const synth = window.speechSynthesis;
       const utterance = new SpeechSynthesisUtterance(text);
-      // Attempt to find a Spanish voice
+      
+      // Intentar forzar voces españolas locales de Windows (Cortana, Helena, etc.)
       const voices = synth.getVoices();
-      const esVoice = voices.find(v => v.lang.startsWith('es')) || voices[0];
+      const esVoice = voices.find(v => v.lang.startsWith('es') && v.localService) || voices.find(v => v.lang.startsWith('es')) || voices[0];
       if (esVoice) utterance.voice = esVoice;
       utterance.lang = 'es-ES';
       utterance.rate = 1.05;
+      utterance.pitch = 1.0;
       
       utterance.onend = () => setIsSpeaking(false);
       utterance.onerror = () => setIsSpeaking(false);
@@ -276,18 +298,20 @@ export const SwarmOrchestrationPanel: React.FC = () => {
                       >
                         <PaintBrush size={16} />
                       </button>
-                      <button 
-                        onClick={handleExplainFlow}
-                        className={`p-2 rounded-xl flex items-center gap-2 text-sm font-medium transition-all ${
-                          isSpeaking 
-                            ? 'bg-emerald-500 text-zinc-950 shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse' 
-                            : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
-                        }`}
-                        title="Explicar cómo lograr el objetivo"
-                      >
-                        {isSpeaking ? <Square size={16} weight="fill" /> : <SpeakerHigh size={16} />}
-                        {isSpeaking ? "Detener" : "Explicar Flujo"}
-                      </button>
+                      {phase3Complete && (
+                        <button 
+                          onClick={handleExplainFlow}
+                          className={`p-2 rounded-xl flex items-center gap-2 text-sm font-medium transition-all ${
+                            isSpeaking 
+                              ? 'bg-emerald-500 text-zinc-950 shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse' 
+                              : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
+                          }`}
+                          title="Explicar cómo lograr el objetivo usando el Blueprint"
+                        >
+                          {isSpeaking ? <Square size={16} weight="fill" /> : <SpeakerHigh size={16} />}
+                          {isSpeaking ? "Detener" : "Explicar Flujo"}
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

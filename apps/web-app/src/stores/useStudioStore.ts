@@ -50,6 +50,8 @@ interface StudioState {
   setActiveTab: (tab: TabId) => void;
   isSynthesizing: boolean;
   setIsSynthesizing: (val: boolean) => void;
+  synthStartTime: number | null;
+  setSynthStartTime: (time: number | null) => void;
   pipelineStage: string;
   pipelineProgress: number; // 0-100
   setPipelineProgress: (stage: string, pct: number) => void;
@@ -217,6 +219,8 @@ export const useStudioStore = create<StudioState>()(
       setZone2ActiveTab: (tab) => set({ zone2ActiveTab: tab }),
       isSynthesizing: false,
       setIsSynthesizing: (val) => set({ isSynthesizing: val }),
+      synthStartTime: null,
+      setSynthStartTime: (time) => set({ synthStartTime: time }),
       pipelineStage: '',
       pipelineProgress: 0,
       setPipelineProgress: (stage, pct) => set({ pipelineStage: stage, pipelineProgress: pct }),
