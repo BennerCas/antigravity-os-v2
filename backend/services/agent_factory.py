@@ -217,10 +217,22 @@ class AgentFactory:
             try:
                 async with httpx.AsyncClient(timeout=120.0) as client:
                     resp = await client.post(f"{ollama_url}/chat/completions", json=payload)
+                    
+                    if resp.status_code == 404 or "model not found" in resp.text.lower():
+                        # Si el modelo default no existe, usamos el primero disponible
+                        tags_resp = await client.get(f"{ollama_url.replace('/v1', '/api/tags')}")
+                        if tags_resp.status_code == 200:
+                            models = tags_resp.json().get("models", [])
+                            if models:
+                                payload["model"] = models[-1]["name"]  # Usar el ltimo modelo instalado
+                                print(f"[Quantum Routing] Modelo original no encontrado. Usando fallback local: {payload['model']}")
+                                resp = await client.post(f"{ollama_url}/chat/completions", json=payload)
+                    
                     resp.raise_for_status()
                     return resp.json()["choices"][0]["message"]["content"]
             except Exception as e:
-                print(f"[Quantum Routing] Falló Ollama local: {e}. Cayendo a Gemini Cloud...")
+                return f"[AgentFactory Error] El enjambre cuantico local fallo: Ollama no respondio correctamente. Verifica que este corriendo. Detalle: {e}"
+
                 
         # --- RUTEO POR DEFECTO: Google Antigravity SDK ---
         config = cls.build_config(
