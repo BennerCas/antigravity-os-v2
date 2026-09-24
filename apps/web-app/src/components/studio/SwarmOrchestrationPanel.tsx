@@ -499,56 +499,108 @@ export const SwarmOrchestrationPanel: React.FC = () => {
                 </div>
               </div>
             )}
+            {/* ── Banner fijo inferior: Fase 1 aprobada ── */}
+            {phase1Complete && (
+              <div className="shrink-0 flex items-center justify-between px-8 py-3 border-t" style={{ background: 'rgba(16,185,129,0.08)', borderColor: 'rgba(16,185,129,0.2)' }}>
+                <div className="flex items-center gap-2 text-emerald-400 text-sm font-mono">
+                  <CheckCircle size={16} weight="fill" />
+                  <span>Fase 1: Triage aprobada</span>
+                </div>
+                <button
+                  onClick={() => useStudioStore.getState().setZone2ActiveTab('phase2')}
+                  className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all"
+                  style={{ background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}
+                >
+                  Ir a Fase 2: Extracción →
+                </button>
+              </div>
+            )}
           </div>
 
           {/* ── Fase 2: Extracción ── */}
-          <div className={zone2ActiveTab === 'phase2' ? 'block' : 'hidden'}>
-            <div className="max-w-3xl mx-auto space-y-6 animate-fade-in pt-4">
-              {phase2Content ? (
-                <div className="text-left space-y-4">
-                  <h2 className="text-xl text-[var(--text-primary)] font-semibold flex items-center gap-2">
-                    {phase2Complete
-                      ? <CheckCircle size={24} weight="duotone" className="text-emerald-400" />
-                      : <Clock size={24} weight="duotone" className="text-amber-400" />}
-                    {phase2Complete ? 'Contrato I/O — Arquitectura Aprobada' : 'Enjambre Inquisidor — En progreso'}
-                  </h2>
-                  <div className={`p-5 rounded-xl border text-[var(--text-primary)] text-sm leading-relaxed markdown-body ${
-                    phase2Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-purple-500/30 bg-purple-500/5'
-                  }`}>
-                    <ReactMarkdown>{phase2Content}</ReactMarkdown>
+          <div className={zone2ActiveTab === 'phase2' ? 'flex flex-col h-full' : 'hidden'}>
+            <div className="flex-1 overflow-y-auto">
+              <div className="max-w-3xl mx-auto space-y-6 animate-fade-in pt-4 px-4">
+                {phase2Content ? (
+                  <div className="text-left space-y-4">
+                    <h2 className="text-xl text-[var(--text-primary)] font-semibold flex items-center gap-2">
+                      {phase2Complete
+                        ? <CheckCircle size={24} weight="duotone" className="text-emerald-400" />
+                        : <Clock size={24} weight="duotone" className="text-amber-400" />}
+                      {phase2Complete ? 'Contrato I/O — Arquitectura Aprobada' : 'Enjambre Inquisidor — En progreso'}
+                    </h2>
+                    <div className={`p-5 rounded-xl border text-[var(--text-primary)] text-sm leading-relaxed markdown-body ${
+                      phase2Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-purple-500/30 bg-purple-500/5'
+                    }`}>
+                      <ReactMarkdown>{phase2Content}</ReactMarkdown>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="text-center pt-20">
-                  <Brain size={48} className="mx-auto text-zinc-700 mb-4" weight="duotone" />
-                  <h2 className="text-xl text-zinc-500 font-light">Fase 2 inactiva</h2>
-                  <p className="text-sm text-zinc-600">Requiere la aprobación de la Fase 1 para generar el Cuestionario Avanzado.</p>
-                </div>
-              )}
+                ) : (
+                  <div className="text-center pt-20">
+                    <Brain size={48} className="mx-auto text-zinc-700 mb-4" weight="duotone" />
+                    <h2 className="text-xl text-zinc-500 font-light">Fase 2 inactiva</h2>
+                    <p className="text-sm text-zinc-600">Requiere la aprobación de la Fase 1 para generar el Cuestionario Avanzado.</p>
+                  </div>
+                )}
+              </div>
             </div>
+            {/* ── Banner fijo inferior: Fase 2 aprobada ── */}
+            {phase2Complete && (
+              <div className="shrink-0 flex items-center justify-between px-8 py-3 border-t" style={{ background: 'rgba(16,185,129,0.08)', borderColor: 'rgba(16,185,129,0.2)' }}>
+                <div className="flex items-center gap-2 text-emerald-400 text-sm font-mono">
+                  <CheckCircle size={16} weight="fill" />
+                  <span>Fase 2: Extracción aprobada</span>
+                </div>
+                <button
+                  onClick={() => useStudioStore.getState().setZone2ActiveTab('phase3')}
+                  className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all"
+                  style={{ background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}
+                >
+                  Ir a Fase 3: Blueprint →
+                </button>
+              </div>
+            )}
           </div>
 
           {/* ── Fase 3: Blueprint ── */}
-          <div className={zone2ActiveTab === 'phase3' ? 'block' : 'hidden'}>
-            <div className="max-w-3xl mx-auto space-y-6 animate-fade-in pt-4">
-              {phase3Content ? (
-                <div className="text-left space-y-4">
-                  <h2 className="text-xl text-[var(--text-primary)] font-semibold flex items-center gap-2">
-                    <CheckCircle size={24} weight="duotone" className="text-emerald-400" />
-                    Blueprint — Arquitectura Final
-                  </h2>
-                  <div className="p-5 rounded-xl border border-amber-500/30 bg-amber-500/5 text-[var(--text-primary)] text-sm leading-relaxed markdown-body">
-                    <ReactMarkdown>{phase3Content}</ReactMarkdown>
+          <div className={zone2ActiveTab === 'phase3' ? 'flex flex-col h-full' : 'hidden'}>
+            <div className="flex-1 overflow-y-auto">
+              <div className="max-w-3xl mx-auto space-y-6 animate-fade-in pt-4 px-4">
+                {phase3Content ? (
+                  <div className="text-left space-y-4">
+                    <h2 className="text-xl text-[var(--text-primary)] font-semibold flex items-center gap-2">
+                      <CheckCircle size={24} weight="duotone" className="text-emerald-400" />
+                      Blueprint — Arquitectura Final
+                    </h2>
+                    <div className="p-5 rounded-xl border border-amber-500/30 bg-amber-500/5 text-[var(--text-primary)] text-sm leading-relaxed markdown-body">
+                      <ReactMarkdown>{phase3Content}</ReactMarkdown>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="text-center pt-20">
-                  <Brain size={48} className="mx-auto text-zinc-700 mb-4" weight="duotone" />
-                  <h2 className="text-xl text-zinc-500 font-light">Fase 3 inactiva</h2>
-                  <p className="text-sm text-zinc-600">Requiere el Contrato I/O del Enjambre 1 para diseñar la Arquitectura (Nodos y Animaciones).</p>
-                </div>
-              )}
+                ) : (
+                  <div className="text-center pt-20">
+                    <Brain size={48} className="mx-auto text-zinc-700 mb-4" weight="duotone" />
+                    <h2 className="text-xl text-zinc-500 font-light">Fase 3 inactiva</h2>
+                    <p className="text-sm text-zinc-600">Requiere el Contrato I/O del Enjambre 1 para diseñar la Arquitectura (Nodos y Animaciones).</p>
+                  </div>
+                )}
+              </div>
             </div>
+            {/* ── Banner fijo inferior: Fase 3 completada ── */}
+            {phase3Complete && (
+              <div className="shrink-0 flex items-center justify-between px-8 py-3 border-t" style={{ background: 'rgba(245,158,11,0.08)', borderColor: 'rgba(245,158,11,0.2)' }}>
+                <div className="flex items-center gap-2 text-amber-400 text-sm font-mono">
+                  <CheckCircle size={16} weight="fill" />
+                  <span>Fase 3: Blueprint completado — Arquitectura lista</span>
+                </div>
+                <button
+                  onClick={() => useStudioStore.getState().setZone2ActiveTab('okr')}
+                  className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all"
+                  style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)' }}
+                >
+                  Ver OKRs y Checklist →
+                </button>
+              </div>
+            )}
           </div>
 
         </div>

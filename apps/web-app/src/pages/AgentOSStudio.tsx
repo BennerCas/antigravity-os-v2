@@ -242,9 +242,12 @@ const FlowArchitect: React.FC = () => {
             }
             // ✅ Marcar Fase 1 como completada en el checklist
             setPhase1Complete(true);
-            useStudioStore.getState().setTriageSummary(text);
+            // Filtrar mensajes de error — no guardar como triageSummary
+            const isErrorText = text.includes('[ERROR]') || text.includes('AgentFactory Error') || text.includes('Verifica tu conexión') || text.includes('Failed to fetch') || text.includes('Connection') || text.length < 50;
+            const summaryToSave = isErrorText ? currentData : text;
+            useStudioStore.getState().setTriageSummary(summaryToSave);
             currentPhase = 'phase2_extraction';
-            currentData = text; // Pasa el output pulido a la siguiente fase
+            currentData = summaryToSave;
           } else if (text.includes('[ES_ENTREVISTA]')) {
             // El agente necesita información o está charlando. Pausar la máquina.
             const cleanText = text.replace('[ES_ENTREVISTA]', '').trim();
