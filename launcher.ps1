@@ -82,30 +82,39 @@ if (-not (Test-Path "$backendDir\.env") -and (Test-Path "$backendDir\.env.exampl
 }
 
 # ============================================================
-# 0. VRAM y Motor Local (Ollama / Hermes 3)
+# 0. VRAM y Motor Local (Ollama + AMD RDNA3 Shield)
 # ============================================================
 function OllamaUp {
     try { $null = Invoke-RestMethod "$ollamaUrl/api/tags" -TimeoutSec 2; $true } catch { $false }
 }
 
 if (-not $NoOllamaReset) {
-    if (OllamaUp) {
-        Log "Liberando VRAM: reinicio del motor de Ollama..."
-        taskkill /F /IM ollama_llama_server.exe 2>$null | Out-Null
-        taskkill /F /IM ollama.exe               2>$null | Out-Null
-        Start-Sleep -Seconds 1
-    }
-    Log "Iniciando Ollama serve (Inyectando variables ROCm para AMD RDNA3)..."
-    $env:OLLAMA_IGPU_ENABLE="1"
-    $env:HSA_OVERRIDE_GFX_VERSION="11.0.0"
-    $env:OLLAMA_NUM_PARALLEL="1"
+    # Matar cualquier instancia previa limpiamente (incluso las sin escudo)
+    taskkill /F /IM ollama_llama_server.exe 2>$null | Out-Null
+    taskkill /F /IM ollama.exe               2>$null | Out-Null
+    Start-Sleep -Seconds 2
+
+    Log "Iniciando Ollama con escudo AMD RDNA3 (ROCm + iGPU)..."
+    # Variables OBLIGATORIAS para AMD Radeon 860M - sin estas la GPU colapsa (TDR)
+    $env:OLLAMA_IGPU_ENABLE       = "1"
+    $env:HSA_OVERRIDE_GFX_VERSION = "11.0.0"
+    $env:OLLAMA_NUM_PARALLEL      = "1"
+
+    # Arrancar SIN ventana de consola visible
     Start-Process "ollama" -ArgumentList "serve" -WindowStyle Hidden
-    $w = 0; while (-not (OllamaUp) -and $w -lt 10) { Start-Sleep -Seconds 1; $w++ }
+
+    # Esperar hasta que Ollama responda (max 15s)
+    $w = 0; while (-not (OllamaUp) -and $w -lt 15) { Start-Sleep -Seconds 1; $w++ }
+
     if (OllamaUp) {
-        Log "Precargando hermes3:8b en VRAM (asincrono)..."
-        Start-Process "powershell" -WindowStyle Hidden -ArgumentList "-NoProfile -Command `"try { Invoke-RestMethod -Uri '$ollamaUrl/api/generate' -Method Post -Body '{\`"model\`":\`"hermes3:8b\`",\`"prompt\`":\`"\`"}' -ContentType 'application/json' -TimeoutSec 600 } catch {}`""
+        Log "Ollama activo. Pre-calentando modelos del Enjambre Cuantico (silencioso)..."
+        # Pre-cargar modelo PRINCIPAL (nodo final del enjambre - hermes3:8b)
+        Start-Process "powershell" -WindowStyle Hidden -ArgumentList "-NoProfile", "-NonInteractive", "-Command", "try { Invoke-RestMethod -Uri '$ollamaUrl/api/generate' -Method Post -Body '{\"model\":\"hermes3:8b\",\"prompt\":\"\",\"keep_alive\":\"10m\"}' -ContentType 'application/json' -TimeoutSec 90 } catch {}"
+        # Pre-cargar modelo SECUNDARIO (agentes analistas del enjambre - qwen2.5:3b)
+        Start-Process "powershell" -WindowStyle Hidden -ArgumentList "-NoProfile", "-NonInteractive", "-Command", "try { Invoke-RestMethod -Uri '$ollamaUrl/api/generate' -Method Post -Body '{\"model\":\"qwen2.5:3b\",\"prompt\":\"\",\"keep_alive\":\"10m\"}' -ContentType 'application/json' -TimeoutSec 60 } catch {}"
+        Log "Enjambre listo: hermes3:8b (principal) + qwen2.5:3b (analistas secundarios)"
     } else {
-        Log "Ollama no respondio en 10s: el motor hibrido usara Free.AI o ira lento al primer prompt"
+        Log "AVISO: Ollama no respondio en 15s. Revisa que este instalado."
     }
 }
 
