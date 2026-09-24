@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useStudioStore } from '../../stores/useStudioStore';
-import { CheckCircle, XCircle, Clock, Info, ListChecks, Target, Brain, Robot, SpeakerHigh, Trash, CheckSquare, Square } from '@phosphor-icons/react';
+import { CheckCircle, XCircle, Clock, Info, ListChecks, Target, Brain, Robot, SpeakerHigh, Trash, CheckSquare, Square, Lightning, Crosshair, RocketLaunch, Checks, TrendUp } from '@phosphor-icons/react';
 import { WS_STUDIO_ACTIVITY_URL } from '../../lib/api';
 
 export const SwarmOrchestrationPanel: React.FC = () => {
@@ -65,30 +65,7 @@ export const SwarmOrchestrationPanel: React.FC = () => {
     }
   };
 
-  /** Render a checklist item with dynamic state */
-  const ChecklistItem = ({
-    done, inProgress, label,
-  }: { done: boolean; inProgress: boolean; label: string }) => (
-    <div className="flex items-center gap-3 p-3 rounded-lg border border-[var(--stroke-subtle)] bg-[var(--surface-canvas)]/40">
-      <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${
-        done        ? 'border-emerald-400 bg-emerald-500/20' :
-        inProgress  ? 'border-amber-400  bg-amber-500/20'   :
-                      'border-zinc-600   bg-[var(--surface-card)]'
-      }`}>
-        {done       && <CheckSquare size={12} className="text-emerald-400" weight="fill" />}
-        {inProgress && <Clock       size={12} className="text-amber-400" />}
-        {!done && !inProgress && <Square size={12} className="text-zinc-600" />}
-      </div>
-      <span className={`text-sm font-medium ${
-        done        ? 'text-emerald-400 line-through opacity-70' :
-        inProgress  ? 'text-amber-400' :
-                      'text-zinc-500'
-      }`}>
-        {label}
-      </span>
-      {done && <CheckCircle size={14} className="text-emerald-400 ml-auto shrink-0" weight="fill" />}
-    </div>
-  );
+
 
   return (
     <div className="w-full h-full flex bg-[var(--surface-canvas)] text-[var(--text-primary)]">
@@ -190,48 +167,180 @@ export const SwarmOrchestrationPanel: React.FC = () => {
         <div id="zone2-content" className="flex-1 flex flex-col overflow-hidden relative">
           
           {/* ── OKR & Checklist ── */}
-          <div className={zone2ActiveTab === 'okr' ? 'flex-1 overflow-y-auto p-8 custom-scrollbar block' : 'hidden'}>
-            <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
-              <div>
-                <h2 className="text-xl font-light text-[var(--text-primary)] mb-2">Objetivo Principal</h2>
-                <div className="p-4 rounded-xl border border-[var(--stroke-subtle)] bg-[var(--surface-card)]/50 text-[var(--text-primary)]">
-                  {phase1Complete && triageSummary ? (
-                    <div className="markdown-body text-sm text-emerald-400">
-                      <ReactMarkdown>{triageSummary}</ReactMarkdown>
+          <div className={zone2ActiveTab === 'okr' ? 'flex-1 overflow-y-auto p-8 custom-scrollbar block relative' : 'hidden'}>
+            
+            {/* Background elements */}
+            <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
+              <Crosshair size={300} weight="thin" />
+            </div>
+
+            <div className="max-w-3xl mx-auto space-y-12 animate-fade-in relative z-10">
+              
+              {/* Header Progress */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-semibold text-white tracking-wide flex items-center gap-3">
+                    <Target size={28} className="text-blue-400" weight="duotone" />
+                    Radar de Arquitectura
+                  </h2>
+                  <div className="text-right">
+                    <div className="text-xs font-mono text-blue-400/70 tracking-widest uppercase mb-1">Progreso Global</div>
+                    <div className="text-xl font-bold text-blue-400">
+                      {phase3Complete ? '100%' : phase2Complete ? '75%' : phase1Complete ? '50%' : phase1Interview ? '25%' : '0%'}
                     </div>
-                  ) : phase1Complete ? (
-                    'Requerimiento capturado. Procesando arquitectura...'
-                  ) : (
-                    'Esperando definición de intención por parte del usuario...'
-                  )}
+                  </div>
+                </div>
+                {/* Progress Bar */}
+                <div className="h-2 w-full bg-blue-950/50 rounded-full overflow-hidden border border-blue-900/30">
+                  <div 
+                    className="h-full bg-gradient-to-r from-blue-600 to-cyan-400 transition-all duration-1000 ease-out"
+                    style={{ width: phase3Complete ? '100%' : phase2Complete ? '75%' : phase1Complete ? '50%' : phase1Interview ? '25%' : '0%' }}
+                  />
                 </div>
               </div>
+
+              {/* Objetivo Principal */}
+              <div className="relative">
+                <div className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500/0 via-emerald-500 to-emerald-500/0 opacity-50 rounded-full" />
+                <h3 className="text-sm font-mono text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <TrendUp size={16} /> Vector de Intención
+                </h3>
+                
+                {phase1Complete && triageSummary ? (
+                  <div className="p-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 shadow-[0_0_30px_rgba(16,185,129,0.05)]">
+                    <div className="flex items-start gap-4">
+                      <div className="shrink-0 p-3 bg-emerald-500/10 rounded-xl">
+                        <Checks size={24} className="text-emerald-400" weight="duotone" />
+                      </div>
+                      <div className="markdown-body text-[15px] leading-relaxed text-emerald-100 user-answer-block">
+                        <ReactMarkdown>{triageSummary}</ReactMarkdown>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-8 rounded-2xl border border-dashed border-zinc-700/50 bg-zinc-900/20 flex flex-col items-center justify-center text-center gap-4">
+                    <div className="w-16 h-16 rounded-full border border-zinc-800 bg-zinc-900/50 flex items-center justify-center relative">
+                      {phase1Interview ? (
+                        <>
+                          <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping" />
+                          <TrendUp size={28} className="text-blue-400 animate-pulse" weight="duotone" />
+                        </>
+                      ) : (
+                        <Brain size={28} className="text-zinc-600" weight="duotone" />
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="text-zinc-300 font-medium text-lg mb-1">
+                        {phase1Interview ? "El Enjambre 1 está perfilando tu idea..." : "A la espera de un objetivo"}
+                      </h4>
+                      <p className="text-zinc-500 text-sm max-w-sm mx-auto">
+                        {phase1Interview 
+                          ? "Responde las preguntas en la pestaña Triage para que AureliOS extraiga el Requerimiento Principal."
+                          : "Escribe en el chat qué quieres construir. AureliOS despertará al Enjambre 1 para entrevistarte."}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
               
+              {/* Timeline Stepper */}
               <div>
-                <h2 className="text-xl font-light text-[var(--text-primary)] mb-4 flex items-center gap-2">
-                  <ListChecks size={24} className="text-cyan-400" /> Checklist de Enjambres
-                </h2>
-                <div className="space-y-3">
-                  <ChecklistItem
-                    done={phase1Complete}
-                    inProgress={!!phase1Interview && !phase1Complete}
-                    label="Fase 1: Entrevista de Triage"
-                  />
-                  <ChecklistItem
-                    done={phase2Complete}
-                    inProgress={phase1Complete && !phase2Complete}
-                    label="Fase 2: Cuestionario Técnico resuelto"
-                  />
-                  <ChecklistItem
-                    done={phase3Complete}
-                    inProgress={phase2Complete && !phase3Complete}
-                    label="Fase 3: Arquitectura y Nodos validados"
-                  />
-                  <ChecklistItem
-                    done={phase3Complete}
-                    inProgress={false}
-                    label="Aprobación Final y Ensamblaje (Match & Fuse)"
-                  />
+                <h3 className="text-sm font-mono text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                  <ListChecks size={16} /> Secuencia de Orquestación
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  
+                  {/* Step 1 */}
+                  <div className={`p-5 rounded-xl border transition-all ${
+                    phase1Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 
+                    phase1Interview ? 'border-blue-500/50 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.1)]' : 
+                    'border-zinc-800/50 bg-zinc-900/30 opacity-60'
+                  }`}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        phase1Complete ? 'bg-emerald-500/20 text-emerald-400' : 
+                        phase1Interview ? 'bg-blue-500/20 text-blue-400 animate-pulse' : 
+                        'bg-zinc-800 text-zinc-500'
+                      }`}>
+                        <Brain size={18} weight="duotone" />
+                      </div>
+                      <h4 className={`font-semibold ${phase1Complete ? 'text-emerald-400' : phase1Interview ? 'text-blue-400' : 'text-zinc-400'}`}>
+                        Fase 1: Triage Inicial
+                      </h4>
+                    </div>
+                    <p className="text-sm text-zinc-500 pl-11">
+                      El equipo Radar realiza una entrevista socrática adaptativa para destilar tu idea cruda en un contrato sólido.
+                    </p>
+                  </div>
+
+                  {/* Step 2 */}
+                  <div className={`p-5 rounded-xl border transition-all ${
+                    phase2Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 
+                    (phase1Complete && !phase2Complete) ? 'border-purple-500/50 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.1)]' : 
+                    'border-zinc-800/50 bg-zinc-900/30 opacity-60'
+                  }`}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        phase2Complete ? 'bg-emerald-500/20 text-emerald-400' : 
+                        (phase1Complete && !phase2Complete) ? 'bg-purple-500/20 text-purple-400 animate-pulse' : 
+                        'bg-zinc-800 text-zinc-500'
+                      }`}>
+                        <Robot size={18} weight="duotone" />
+                      </div>
+                      <h4 className={`font-semibold ${phase2Complete ? 'text-emerald-400' : (phase1Complete && !phase2Complete) ? 'text-purple-400' : 'text-zinc-400'}`}>
+                        Fase 2: Extracción Técnica
+                      </h4>
+                    </div>
+                    <p className="text-sm text-zinc-500 pl-11">
+                      El Enjambre Clandestino analiza riesgos, arquitecturas posibles y extrae los requisitos técnicos precisos.
+                    </p>
+                  </div>
+
+                  {/* Step 3 */}
+                  <div className={`p-5 rounded-xl border transition-all ${
+                    phase3Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 
+                    (phase2Complete && !phase3Complete) ? 'border-amber-500/50 bg-amber-500/10 shadow-[0_0_20px_rgba(245,158,11,0.1)]' : 
+                    'border-zinc-800/50 bg-zinc-900/30 opacity-60'
+                  }`}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        phase3Complete ? 'bg-emerald-500/20 text-emerald-400' : 
+                        (phase2Complete && !phase3Complete) ? 'bg-amber-500/20 text-amber-400 animate-pulse' : 
+                        'bg-zinc-800 text-zinc-500'
+                      }`}>
+                        <Lightning size={18} weight="duotone" />
+                      </div>
+                      <h4 className={`font-semibold ${phase3Complete ? 'text-emerald-400' : (phase2Complete && !phase3Complete) ? 'text-amber-400' : 'text-zinc-400'}`}>
+                        Fase 3: Blueprint MD
+                      </h4>
+                    </div>
+                    <p className="text-sm text-zinc-500 pl-11">
+                      Se consolida toda la información en un Blueprint Maestro (Markdown) listo para que los ingenieros generen el código.
+                    </p>
+                  </div>
+
+                  {/* Step 4 */}
+                  <div className={`p-5 rounded-xl border transition-all ${
+                    phase3Complete ? 'border-cyan-500/50 bg-cyan-500/10 shadow-[0_0_20px_rgba(6,182,212,0.2)]' : 
+                    'border-zinc-800/50 bg-zinc-900/30 opacity-60'
+                  }`}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        phase3Complete ? 'bg-cyan-500/20 text-cyan-400 animate-pulse' : 
+                        'bg-zinc-800 text-zinc-500'
+                      }`}>
+                        <RocketLaunch size={18} weight="duotone" />
+                      </div>
+                      <h4 className={`font-semibold ${phase3Complete ? 'text-cyan-400' : 'text-zinc-400'}`}>
+                        Fase 4: Ejecución Final
+                      </h4>
+                    </div>
+                    <p className="text-sm text-zinc-500 pl-11">
+                      El blueprint es transferido a Antigravity OS para el auto-desarrollo (Match & Fuse).
+                    </p>
+                  </div>
+
                 </div>
               </div>
             </div>
