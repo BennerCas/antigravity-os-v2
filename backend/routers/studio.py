@@ -101,8 +101,9 @@ async def _call_ollama(user: str, system: str, model: str) -> ChatResponse:
     """Llama directamente a la API OpenAI-compatible de Ollama con httpx (timeout explícito).
     El SDK google.antigravity.Agent no tiene timeout y se bloquea indefinidamente.
     """
+    actual_model = model.replace("ollama/", "") if model else "hermes3:8b"
     payload = {
-        "model": model,
+        "model": actual_model,
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": user}
@@ -340,12 +341,22 @@ async def run_triage_swarm(data: Any):
         # Override for the final agent to strictly output the routing tag
         override_instructions = None
         if idx == len(agent_ids) - 1:
-            override_instructions = (
-                "IMPORTANTE: Como el nodo final del Enjambre Radar, debes cerrar tu respuesta OBLIGATORIAMENTE con una de estas dos etiquetas en la última línea:\n"
-                "- Si la idea del usuario no es clara o requiere más detalles, usa [ES_ENTREVISTA]\n"
-                "- Si la idea ya es suficientemente madura para crear un plan y el usuario quiere avanzar, usa [ES_APROBADO]\n"
-                "Habla directo a Benner. Eres la voz de AureliOS asimilando todo el perfilaje anterior."
-            )
+            if "Respuestas del usuario:" not in input_text and "--- [Respuesta" not in input_text:
+                # Es el primer mensaje. PROHIBIDO aprobar.
+                override_instructions = (
+                    "IMPORTANTE: Eres el nodo final del Enjambre Radar (Triage). El usuario acaba de dar su idea inicial.\n"
+                    "ES OBLIGATORIO que formules un cuestionario/entrevista de 3 a 5 preguntas clave para definir la arquitectura y alcances de su idea.\n"
+                    "CIERRA tu respuesta OBLIGATORIAMENTE con esta etiqueta exacta en la última línea: [ES_ENTREVISTA]\n"
+                    "Bajo ninguna circunstancia puedes aprobar la idea aún. Habla directo a Benner."
+                )
+            else:
+                # El usuario ya respondió
+                override_instructions = (
+                    "IMPORTANTE: Eres el nodo final del Enjambre Radar (Triage). El usuario ya ha respondido a tu primera entrevista.\n"
+                    "Analiza sus respuestas minuciosamente. Si consideras que la idea ya es lo suficientemente madura y clara, genera un resumen final de requerimientos y cierra tu mensaje OBLIGATORIAMENTE con la etiqueta exacta: [ES_APROBADO]\n"
+                    "Si por el contrario aún faltan datos críticos y absolutamente necesarios, FORMULA NUEVAS PREGUNTAS DIRIGIDAS AL USUARIO. PROHIBIDO INVENTAR RESPUESTAS O ASUMIRLAS. DEBES HACERLE LAS PREGUNTAS A BENNER para que él las responda en su próximo turno, y luego cierra tu mensaje OBLIGATORIAMENTE con la etiqueta exacta: [ES_ENTREVISTA]\n"
+                    "Bajo ninguna circunstancia debes responder tus propias preguntas. Tu rol es entrevistar o aprobar. Habla directo a Benner."
+                )
 
         try:
             resp_text = await AgentFactory.chat_one_shot(
@@ -355,6 +366,16 @@ async def run_triage_swarm(data: Any):
                 model=None, # Deja que el Factory decida
                 use_tools=False # Evita errores de compatibilidad en Ollama
             )
+            
+            # --- HARD ENFORCEMENT: Python inyecta el tag, no confiamos en el LLM local ---
+            if idx == len(agent_ids) - 1:
+                is_first_pass = "Respuestas del usuario:" not in input_text and "--- [Respuesta" not in input_text
+                # Limpiar cualquier tag alucinado por el LLM
+                resp_text = resp_text.replace("[ES_APROBADO]", "").replace("[ES_ENTREVISTA]", "").strip()
+                if is_first_pass:
+                    resp_text += "\n\n[ES_ENTREVISTA]"
+                else:
+                    resp_text += "\n\n[ES_APROBADO]"
             
             accumulated_context = f"{accumulated_context}\n\n--- [Aporte de {role_name}] ---\n{resp_text}"
             steps.append({"role": role_name, "output": resp_text})

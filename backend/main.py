@@ -51,32 +51,8 @@ from routers.studio import router as studio_router
 app.include_router(studio_router)
 
 
-def _ensure_amd_acceleration():
-    # Establece las variables de entorno para esta y cualquier sub-procesos
-    os.environ["OLLAMA_IGPU_ENABLE"] = "1"
-    os.environ["HSA_OVERRIDE_GFX_VERSION"] = "11.0.0"
-    
-    # Reinicia ollama silenciosamente en background
-    import subprocess
-    try:
-        subprocess.run(["powershell", "-Command", "Stop-Process -Name 'ollama', 'ollama app' -Force -ErrorAction SilentlyContinue"], check=False)
-        ollama_path = os.path.expandvars(r"%LOCALAPPDATA%\Programs\Ollama\ollama.exe")
-        if not os.path.exists(ollama_path):
-            ollama_path = "ollama"
-        subprocess.Popen(
-            [ollama_path, "serve"],
-            env=os.environ,
-            creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
-        )
-        print("[GPU] Aceleracion AMD RDNA3 inyectada y servicio Ollama reiniciado.")
-    except Exception as e:
-        print(f"[GPU] Error al inyectar AMD RDNA3: {e}")
-
 @app.on_event("startup")
 async def startup_event():
-    _ensure_amd_acceleration()
     import db
     db.init_db()
     from services.academy.catalog_service import CatalogService

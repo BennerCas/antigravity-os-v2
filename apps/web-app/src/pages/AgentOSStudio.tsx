@@ -97,7 +97,7 @@ const AURELIOS_THEMES: Record<string, any> = {
 };
 
 const FlowArchitect: React.FC = () => {
-    const { chatMessages, addChatMessage, setFlow, setAgentCards, setBlueprintMd, setTriggerChatSend } = useStudioStore();
+    const { chatMessages, addChatMessage, setFlow, setAgentCards, setBlueprintMd, setTriggerChatSend, activityLogs } = useStudioStore();
   const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
   const [thinkingPhrase, setThinkingPhrase] = useState('');
@@ -110,9 +110,13 @@ const FlowArchitect: React.FC = () => {
   const [quantumPhase, setQuantumPhase] = useState<'phase1_triage' | 'phase2_extraction' | 'phase3_blueprint'>('phase1_triage');
   const [showSwarmSlider, setShowSwarmSlider] = useState(true);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const isHandlingSendRef = useRef<boolean>(false);
   // Ref mutable para que el trigger del store siempre llame a la versión más reciente de handleSend
   // (evita stale closure cuando quantumPhase cambia entre renders)
   const handleSendRef = useRef<(text?: string) => void>(() => {});
+  
+  const activeAgentLog = activityLogs.filter(log => log.status === 'PENDING').pop();
+  const activeAgentName = activeAgentLog ? activeAgentLog.source : null;
 
   const handleStop = () => {
     if (abortControllerRef.current) {
@@ -124,6 +128,7 @@ const FlowArchitect: React.FC = () => {
   };
   useEffect(() => {
     localStorage.setItem('aurelios_model', selectedModel);
+    window.dispatchEvent(new Event('aurelios_model_changed'));
   }, [selectedModel]);
 
   useEffect(() => {
@@ -195,7 +200,8 @@ const FlowArchitect: React.FC = () => {
 
   const handleSend = async (overrideInput?: string) => {
     const textToSend = overrideInput ? overrideInput : input;
-    if (!textToSend.trim() || isTyping) return;
+    if (!textToSend.trim() || isTyping || isHandlingSendRef.current) return;
+    isHandlingSendRef.current = true;
     
     addChatMessage({ role: 'human', content: textToSend });
     setInput('');
@@ -237,13 +243,18 @@ const FlowArchitect: React.FC = () => {
             }
             // ✅ Marcar Fase 1 como completada en el checklist
             setPhase1Complete(true);
+            useStudioStore.getState().setTriageSummary(text);
             currentPhase = 'phase2_extraction';
             currentData = text; // Pasa el output pulido a la siguiente fase
           } else {
             // El agente necesita información. Pausar la máquina.
-            text = text.replace('[ES_ENTREVISTA]', '').trim();
+            const cleanText = text.replace('[ES_ENTREVISTA]', '').trim();
             addChatMessage({ role: 'agent', content: '> [AureliOS] Triage requiere más información. Por favor, responde la entrevista en la pestaña **Fase 1: Triage**.', model: 'Orchestrator' });
-            useStudioStore.getState().setPhase1Interview(text);
+            const currentPhase1 = useStudioStore.getState().phase1Interview || '';
+            const newPhase1 = currentPhase1 
+              ? currentPhase1.replace('\n\n---\n*AureliOS está analizando tus respuestas...*', '') + `\n\n---\n**🤖 Nueva Entrevista del Enjambre:**\n\n${cleanText}`
+              : cleanText;
+            useStudioStore.getState().setPhase1Interview(newPhase1);
             useStudioStore.getState().setZone2ActiveTab('phase1');
             setQuantumPhase('phase1_triage');
             break; 
@@ -310,6 +321,7 @@ const FlowArchitect: React.FC = () => {
         addChatMessage({ role: 'agent', content: `[ERROR] ${err.message}`, model: selectedModel });
       }
     } finally {
+      isHandlingSendRef.current = false;
       setIsTyping(false);
       abortControllerRef.current = null;
     }
@@ -413,18 +425,31 @@ const FlowArchitect: React.FC = () => {
         </div>
       </div>
 
-      <div className={`px-4 pt-4 pb-2 shrink-0 flex flex-col gap-6 transition-all duration-300 overflow-hidden ${showSwarmSlider ? 'h-[320px] opacity-100' : 'h-0 opacity-0 !pb-0'}`}>
-        {/* Fixed AI Tools Carousel */}
-        <div className="flex justify-center mb-1 relative">
-          <div className="flex gap-2 items-center mx-auto relative left-[0px]">
+      <div className={`px-4 pt-4 pb-2 shrink-0 flex flex-col transition-all duration-300 overflow-hidden ${showSwarmSlider ? 'h-[270px] opacity-100' : 'h-0 opacity-0 !pb-0'}`}>
+        {/* Fixed AI Tools Header */}
+        <div className="flex flex-col items-center gap-2 mb-4 relative z-10">
+          <div className="flex gap-2 items-center mx-auto">
             <button onClick={() => document.getElementById("agent-carousel")?.scrollTo({ left: 0, behavior: "smooth" })} className={`w-2 h-2 rounded-full transition-colors duration-300 ${carouselSlide === 0 ? t.primary : "bg-gray-500 opacity-40"}`} />
             <button onClick={() => document.getElementById("agent-carousel")?.scrollTo({ left: window.innerWidth, behavior: "smooth" })} className={`w-2 h-2 rounded-full transition-colors duration-300 ${carouselSlide === 1 ? t.primary : "bg-gray-500 opacity-40"}`} />
+          </div>
+          
+          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/30 border border-white/5 shadow-inner text-[11px] font-mono tracking-widest text-emerald-400/90 font-semibold backdrop-blur-sm">
+            <Brain size={14} className="text-emerald-400" weight="duotone" />
+            <span>{selectedModel.startsWith('ollama/') ? `LOCAL | ${selectedModel.replace('ollama/', '')}` : `NUBE | ${selectedModel}`}</span>
+            {activeAgentName && (
+              <>
+                <span className="text-emerald-400/50">|</span>
+                <span className="text-cyan-400 flex items-center gap-1.5 animate-pulse">
+                  <Robot size={12} weight="duotone" /> {activeAgentName}
+                </span>
+              </>
+            )}
           </div>
         </div>
 
         <div 
           id="agent-carousel"
-          className="flex overflow-x-auto overflow-y-visible snap-x snap-mandatory gap-4 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
+          className="flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory gap-4 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           onScroll={(e) => {
             const slide = Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth);
@@ -432,7 +457,7 @@ const FlowArchitect: React.FC = () => {
           }}
         >
           {/* Slide 1: Swarms */}
-          <div className="shrink-0 w-full snap-center h-full flex flex-col pt-[1.5cm] pb-[0.5cm]">
+          <div className="shrink-0 w-full snap-center h-full flex flex-col pt-0 pb-2">
             <div className="grid grid-cols-3 gap-1.5">
               {/* Col 1: Enjambre Radar */}
               <div className="flex flex-col gap-1.5">
@@ -520,7 +545,7 @@ const FlowArchitect: React.FC = () => {
           </div>
 
           {/* Slide 2: Classic Agents */}
-          <div className="shrink-0 w-full snap-center h-full flex flex-col pt-[1.5cm] pb-[0.5cm]">
+          <div className="shrink-0 w-full snap-center h-full flex flex-col pt-0 pb-2">
             <span className="text-[9px] font-bold tracking-widest uppercase opacity-70 mb-2 text-center flex justify-center items-center gap-1"><Wrench size={12} /> God-Tier Prompts</span>
             <div className="grid grid-cols-3 gap-1.5">
               {aiTools.map(tool => (

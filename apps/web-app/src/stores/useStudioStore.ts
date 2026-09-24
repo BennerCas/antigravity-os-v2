@@ -85,8 +85,10 @@ interface StudioState {
   // Phase content — resultados reales mostrados en pestañas Fase2 y Fase3
   phase2Content: string | null;
   phase3Content: string | null;
+  triageSummary: string | null;
   setPhase2Content: (text: string | null) => void;
   setPhase3Content: (text: string | null) => void;
+  setTriageSummary: (text: string | null) => void;
 
   // Focus mode (AgentCarousel)
   focusedAgent: AgentCard | null;
@@ -540,8 +542,10 @@ export const useStudioStore = create<StudioState>()(
       // Phase content — contenido real para las pestañas
       phase2Content: null,
       phase3Content: null,
+      triageSummary: null,
       setPhase2Content: (phase2Content) => set({ phase2Content }),
       setPhase3Content: (phase3Content) => set({ phase3Content }),
+      setTriageSummary: (triageSummary) => set({ triageSummary }),
 
       focusedAgent: null,
       setFocusedAgent: (focusedAgent) => set({ focusedAgent }),

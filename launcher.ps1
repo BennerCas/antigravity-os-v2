@@ -95,7 +95,10 @@ if (-not $NoOllamaReset) {
         taskkill /F /IM ollama.exe               2>$null | Out-Null
         Start-Sleep -Seconds 1
     }
-    Log "Iniciando Ollama serve..."
+    Log "Iniciando Ollama serve (Inyectando variables ROCm para AMD RDNA3)..."
+    $env:OLLAMA_IGPU_ENABLE="1"
+    $env:HSA_OVERRIDE_GFX_VERSION="11.0.0"
+    $env:OLLAMA_NUM_PARALLEL="1"
     Start-Process "ollama" -ArgumentList "serve" -WindowStyle Hidden
     $w = 0; while (-not (OllamaUp) -and $w -lt 10) { Start-Sleep -Seconds 1; $w++ }
     if (OllamaUp) {
