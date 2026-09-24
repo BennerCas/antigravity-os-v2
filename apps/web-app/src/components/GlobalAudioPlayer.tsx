@@ -84,16 +84,16 @@ export const GlobalAudioPlayer: React.FC = () => {
   if (!audioText) return null;
 
   return (
-    <div className="flex flex-col gap-3 w-full border-t border-[#2A2A2A] pt-4 mt-2">
-      <div className="text-[10px] uppercase tracking-widest font-bold text-orange-500 mb-1 flex items-center justify-between">
+    <div className="flex flex-col gap-3 w-full border-t border-[var(--stroke-subtle)] pt-4 mt-2">
+      <div className="text-[10px] uppercase tracking-widest font-bold text-[var(--theme-border)] mb-1 flex items-center justify-between">
         <span>AureliOS TTS</span>
-        {isPlaying && <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></span>}
+        {isPlaying && <span className="w-1.5 h-1.5 bg-[var(--theme-border)] rounded-full animate-pulse"></span>}
       </div>
       
       <div className="flex flex-col gap-2">
-        <label className="text-xs text-gray-500">Voice (Spanish Only)</label>
+        <label className="text-xs text-[var(--text-secondary)]">Voice (Spanish Only)</label>
         <select
-          className="bg-gray-900 border border-gray-700 rounded text-sm p-1.5 focus:outline-none focus:border-orange-500 text-gray-300"
+          className="bg-[var(--surface-card)] border border-[var(--stroke-subtle)] rounded text-sm p-1.5 focus:outline-none focus:border-[var(--theme-border)] text-[var(--text-primary)]"
           value={selectedVoiceURI || ''}
           onChange={(e) => setSelectedVoiceURI(e.target.value)}
         >
@@ -109,7 +109,7 @@ export const GlobalAudioPlayer: React.FC = () => {
         <div className="flex gap-2">
           <button
             onClick={handlePlayPause}
-            className="flex items-center justify-center bg-orange-600 hover:bg-orange-500 text-white rounded-full w-10 h-10 transition-colors"
+            className="flex items-center justify-center bg-[var(--theme-border)] hover:bg-[var(--theme-border)] text-[var(--text-primary)] rounded-full w-10 h-10 transition-colors"
             title={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? (
@@ -125,7 +125,7 @@ export const GlobalAudioPlayer: React.FC = () => {
           
           <button
             onClick={handleStop}
-            className="flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-white rounded-full w-10 h-10 transition-colors"
+            className="flex items-center justify-center bg-[var(--surface-elevated)] hover:bg-[var(--surface-canvas)] text-[var(--text-primary)] rounded-full w-10 h-10 transition-colors"
             title="Stop"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -134,15 +134,15 @@ export const GlobalAudioPlayer: React.FC = () => {
           </button>
         </div>
 
-        <div className="flex bg-gray-900 rounded-lg p-1 border border-gray-800">
+        <div className="flex bg-[var(--surface-card)] rounded-lg p-1 border border-[var(--stroke-subtle)]">
           {rates.map((r) => (
             <button
               key={r}
               onClick={() => setAudioRate(r)}
               className={`px-2 py-1 text-xs rounded transition-colors ${
                 audioRate === r 
-                  ? 'bg-orange-600 text-white' 
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-[var(--theme-border)] text-[var(--text-primary)]' 
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               {r}x
@@ -153,3 +153,5 @@ export const GlobalAudioPlayer: React.FC = () => {
     </div>
   );
 };
+
+

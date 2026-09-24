@@ -73,35 +73,35 @@ export const RunResults: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#050505] text-white p-6 overflow-y-auto">
-      <div className="flex justify-between items-center border-b border-[#2A2A2A] pb-4">
+    <div className="flex flex-col h-full w-full bg-[var(--surface-canvas)] text-[var(--text-primary)] p-6 overflow-y-auto">
+      <div className="flex justify-between items-center border-b border-[var(--stroke-subtle)] pb-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-100 flex items-center gap-2">
             <CheckCircle weight="fill" className="text-emerald-500" />
             Resultados Finales
           </h2>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-[var(--text-secondary)] text-sm mt-1">
             Historial de ejecuciones completadas del grafo y sus outputs correspondientes.
           </p>
         </div>
         <button 
           onClick={fetchResults}
-          className="px-4 py-2 bg-[#111111] hover:bg-[#1A1A1A] border border-[#2A2A2A] text-gray-300 rounded-lg text-sm transition-colors"
+          className="px-4 py-2 bg-[var(--surface-card)] hover:bg-[var(--surface-elevated)] border border-[var(--stroke-subtle)] text-[var(--text-primary)] rounded-lg text-sm transition-colors"
         >
           Actualizar
         </button>
       </div>
 
       {/* AI Prompts Toolbar */}
-      <div className="py-2 mb-6 border-b border-gray-800 flex items-center gap-2 overflow-x-auto scrollbar-none">
-        <span className="text-[10px] uppercase text-gray-500 font-bold mr-2 whitespace-nowrap">QA & Eval Tools:</span>
+      <div className="py-2 mb-6 border-b border-[var(--stroke-subtle)] flex items-center gap-2 overflow-x-auto scrollbar-none">
+        <span className="text-[10px] uppercase text-[var(--text-secondary)] font-bold mr-2 whitespace-nowrap">QA & Eval Tools:</span>
         {[
           { id: 'testgen', label: 'Test Scenario Generator', icon: '🧪', desc: 'Genera escenarios de prueba comprensivos basados en los resultados.' },
           { id: 'evaluator', label: 'Output Evaluator', icon: '⚖️', desc: 'Evalúa la calidad del output generado usando métricas avanzadas.' }
         ].map(p => (
           <button
             key={p.id}
-            className="whitespace-nowrap text-[10px] px-2 py-1 bg-gray-800 border border-gray-700 rounded text-gray-300 hover:bg-emerald-900/40 hover:text-emerald-300 hover:border-emerald-700 transition-all"
+            className="whitespace-nowrap text-[10px] px-2 py-1 bg-[var(--surface-elevated)] border border-gray-700 rounded text-[var(--text-primary)] hover:bg-emerald-900/40 hover:text-emerald-300 hover:border-emerald-700 transition-all"
             onClick={() => {}}
           />
         ))}
@@ -112,27 +112,27 @@ export const RunResults: React.FC = () => {
           <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : results.length === 0 ? (
-        <div className="flex-1 flex flex-col justify-center items-center text-gray-500">
+        <div className="flex-1 flex flex-col justify-center items-center text-[var(--text-secondary)]">
           <Clock size={48} className="mb-4 opacity-50" />
           <p>No hay resultados de ejecuciones todavía.</p>
         </div>
       ) : (
         <div className="grid gap-4">
           {results.map((item) => (
-            <div key={item.id} className="bg-[#0A0A0A] border border-[#2A2A2A] rounded-xl p-5 shadow-sm hover:border-gray-700 transition-colors">
+            <div key={item.id} className="bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-xl p-5 shadow-sm hover:border-gray-700 transition-colors">
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-3">
                   <div className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-md uppercase tracking-wider">
                     {item.status}
                   </div>
-                  <span className="text-gray-500 text-sm font-mono">{item.run_id}</span>
+                  <span className="text-[var(--text-secondary)] text-sm font-mono">{item.run_id}</span>
                 </div>
-                <span className="text-gray-500 text-xs">
+                <span className="text-[var(--text-secondary)] text-xs">
                   {new Date(item.created_at).toLocaleString()}
                 </span>
               </div>
               
-              <div className="bg-[#111111] border border-[#1A1A1A] p-4 rounded-lg text-gray-300 text-sm leading-relaxed mb-4">
+              <div className="bg-[var(--surface-card)] border border-[#1A1A1A] p-4 rounded-lg text-[var(--text-primary)] text-sm leading-relaxed mb-4">
                 {item.result_text}
               </div>
 
@@ -142,7 +142,7 @@ export const RunResults: React.FC = () => {
                   className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     isActive && currentSection === `result-${item.id}` && !isPaused
                       ? 'bg-blue-900/30 text-blue-400 border border-blue-800'
-                      : 'bg-[#1A1A1A] hover:bg-[#252525] text-gray-300 border border-[#2A2A2A]'
+                      : 'bg-[var(--surface-elevated)] hover:bg-[#252525] text-[var(--text-primary)] border border-[var(--stroke-subtle)]'
                   }`}
                 >
                   {isActive && currentSection === `result-${item.id}` && !isPaused ? (
@@ -164,7 +164,7 @@ export const RunResults: React.FC = () => {
                 <button
                   onClick={() => handleTranslate(item.id, item.result_text)}
                   disabled={translatingId === item.id}
-                  className="flex items-center gap-2 px-4 py-1.5 bg-[#1A1A1A] hover:bg-[#252525] text-gray-300 border border-[#2A2A2A] rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-1.5 bg-[var(--surface-elevated)] hover:bg-[#252525] text-[var(--text-primary)] border border-[var(--stroke-subtle)] rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                 >
                   {translatingId === item.id ? (
                     <><div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div> Traduciendo...</>

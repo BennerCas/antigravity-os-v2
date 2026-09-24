@@ -811,7 +811,7 @@ ${inspectedPrompt.content}
     <div
       key={cat.id || idx}
       onClick={() => handleCategoryClick(cat)}
-      className="border rounded-2xl p-6 cursor-pointer transition-all flex flex-col min-h-[14rem] bg-gray-900 border border-cyan-400"
+      className="border rounded-2xl p-6 cursor-pointer transition-all flex flex-col min-h-[14rem] bg-[var(--surface-card)] border border-[var(--theme-border)]"
     >
       <div className="flex justify-between items-start mb-4">
         <div className="flex flex-col gap-1">
@@ -822,15 +822,15 @@ ${inspectedPrompt.content}
         </div>
         <button
           onClick={(e) => handleSpeak(e, `${cat.title}. Category with ${cat.subCategories.length} subcategories.`)}
-          className="text-gray-400 hover:text-white bg-gray-800 p-2.5 rounded-full transition-colors flex-shrink-0 border border-cyan-400"
+          className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--surface-elevated)] p-2.5 rounded-full transition-colors flex-shrink-0 border border-[var(--theme-border)]"
         >
           <SpeakerHigh size={18} />
         </button>
       </div>
-      <h3 className="text-cyan-400 font-bold text-xl mb-2">{cat.title}</h3>
+      <h3 className="text-[var(--theme-border)] font-bold text-xl mb-2">{cat.title}</h3>
       <div className="flex-1 overflow-hidden">
         {cat.subCategories.slice(0, 4).map((sub, i) => (
-          <div className="text-xs text-gray-500 truncate flex items-center gap-1 mb-0.5" key={i}>
+          <div className="text-xs text-[var(--text-secondary)] truncate flex items-center gap-1 mb-0.5" key={i}>
             <CaretRight size={10} /> {sub.name}
             <span className="text-gray-600 ml-auto flex-shrink-0">{sub.count}</span>
           </div>
@@ -861,10 +861,10 @@ ${inspectedPrompt.content}
   }, [allPrompts, promptHistory]);
 
   return (
-    <div className="flex h-screen bg-[#0a0c10] text-gray-200 font-sans overflow-hidden">\n      <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+    <div className="flex h-screen bg-[var(--surface-canvas)] text-[var(--text-primary)] font-sans overflow-hidden">\n      <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
       <header className="mb-8 text-center">
-        <h1 className="text-cyan-400 text-4xl font-bold tracking-wide">Atlas 4.0</h1>
-        <p className="text-gray-400 mt-2">Explorador de Categorías y Prompts</p>
+        <h1 className="text-[var(--theme-border)] text-4xl font-bold tracking-wide">Atlas 4.0</h1>
+        <p className="text-[var(--text-secondary)] mt-2">Explorador de Categorías y Prompts</p>
       </header>
 
       {/* ─── SEARCH BOX ─────────────────────────────────────────────────────── */}
@@ -877,20 +877,20 @@ ${inspectedPrompt.content}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="flex-1 bg-gray-900 border  rounded-xl p-4 text-white outline-none focus:border-blue-500 transition-colors  text-sm border border-cyan-400"
+              className="flex-1 bg-[var(--surface-card)] border  rounded-xl p-4 text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors  text-sm border border-[var(--theme-border)]"
             />
             <button
- className="font-bold py-4 px-7 rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 whitespace-nowrap border border-cyan-400 text-cyan-400 hover:bg-cyan-900/30 transition-all"              onClick={handleImprove}
+ className="font-bold py-4 px-7 rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 whitespace-nowrap border border-[var(--theme-border)] text-[var(--theme-border)] hover:bg-cyan-900/30 transition-all"              onClick={handleImprove}
             >
               <MagicWand size={18} /> Mejorar
             </button>
             <button
- className="font-bold py-4 px-7 rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 whitespace-nowrap border border-cyan-400 text-cyan-400 hover:bg-cyan-900/30 transition-all"              onClick={handleSearch}
+ className="font-bold py-4 px-7 rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 whitespace-nowrap border border-[var(--theme-border)] text-[var(--theme-border)] hover:bg-cyan-900/30 transition-all"              onClick={handleSearch}
             >
               <MagnifyingGlass size={18} /> Buscar
             </button>
             <button
- className="font-bold py-4 px-7 rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-wait border border-cyan-400 text-cyan-400 hover:bg-cyan-900/30 transition-all"              onClick={handleSuggestFlows}
+ className="font-bold py-4 px-7 rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-wait border border-[var(--theme-border)] text-[var(--theme-border)] hover:bg-cyan-900/30 transition-all"              onClick={handleSuggestFlows}
               disabled={isSuggesting}
               title="La IA mejora tu texto y diseña el flujo de trabajo ideal + 5 alternativas"
             >
@@ -898,9 +898,9 @@ ${inspectedPrompt.content}
             </button>
           </div>
           {isSearchMode && searchResults !== null && (
-            <p className="text-xs text-gray-500 pl-1">
+            <p className="text-xs text-[var(--text-secondary)] pl-1">
               <span className="text-blue-400 font-bold">{searchResults.length}</span> prompts relevantes encontrados para: 
-              <span className="text-white"> "{searchQuery}"</span>
+              <span className="text-[var(--text-primary)]"> "{searchQuery}"</span>
               <span className="text-gray-600"> — Puedes seleccionar varios con </span>
               <span className="text-purple-400">☑</span>
               <span className="text-gray-600"> y encadenarlos en el Builder como un flujo de trabajo.</span>
@@ -909,7 +909,7 @@ ${inspectedPrompt.content}
 
           {/* ─── FLOW SUGGESTION PANEL ─── */}
           {(isSuggesting || recommendedFlow || flowAlternatives.length > 0 || suggestError || enhancedQuery) && (
-            <div className="mt-4 bg-gray-900/80 border rounded-2xl p-5 border-cyan-400">
+            <div className="mt-4 bg-[var(--surface-card)]/80 border rounded-2xl p-5 border-[var(--theme-border)]">
               {isSuggesting && (
                 <div className="flex items-center gap-3 text-emerald-300 text-sm">
                   <span className="animate-spin text-lg">⚙️</span>
@@ -919,7 +919,7 @@ ${inspectedPrompt.content}
               {enhancedQuery && !isSuggesting && (
                 <div className="mb-4">
                   <div className="text-[10px] uppercase tracking-widest text-emerald-500 font-bold mb-1">Tu objetivo, mejorado por IA:</div>
-                  <p className="text-sm text-gray-300 italic border-l-2 border-emerald-600 pl-3">{enhancedQuery}</p>
+                  <p className="text-sm text-[var(--text-primary)] italic border-l-2 border-emerald-600 pl-3">{enhancedQuery}</p>
                 </div>
               )}
               {suggestError && (
@@ -930,11 +930,11 @@ ${inspectedPrompt.content}
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <div className="text-[10px] uppercase tracking-widest text-emerald-400 font-bold mb-1">⭐ Flujo Recomendado por la IA</div>
-                      <h4 className="text-cyan-400 font-bold text-lg">{recommendedFlow.name}</h4>
-                      <p className="text-sm text-gray-400 mt-1">{recommendedFlow.description}</p>
+                      <h4 className="text-[var(--theme-border)] font-bold text-lg">{recommendedFlow.name}</h4>
+                      <p className="text-sm text-[var(--text-secondary)] mt-1">{recommendedFlow.description}</p>
                       <div className="flex gap-2 mt-2 text-xs">
                         <span className="px-2 py-0.5 rounded-full bg-emerald-900/50 text-emerald-300 border border-emerald-700/50">{recommendedFlow.framework}</span>
-                        <span className="px-2 py-0.5 rounded-full bg-gray-800 text-gray-300 border border-cyan-400">{recommendedFlow.nodes.length} agentes</span>
+                        <span className="px-2 py-0.5 rounded-full bg-[var(--surface-elevated)] text-[var(--text-primary)] border border-[var(--theme-border)]">{recommendedFlow.nodes.length} agentes</span>
                       </div>
                       <div className="flex flex-wrap gap-1.5 mt-3">
                         {recommendedFlow.nodes.map((n) => (
@@ -948,7 +948,7 @@ ${inspectedPrompt.content}
                       <></>
                       <button
  onClick={() => saveFlowToNexus(recommendedFlow)}
-                        className="bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-bold px-4 py-2 rounded-lg transition-colors whitespace-nowrap border border-cyan-400"
+                        className="bg-[var(--surface-elevated)] hover:bg-gray-700 text-[var(--text-primary)] text-xs font-bold px-4 py-2 rounded-lg transition-colors whitespace-nowrap border border-[var(--theme-border)]"
                       >
                         Guardar en Nexus
                       </button>
@@ -958,17 +958,17 @@ ${inspectedPrompt.content}
               )}
               {flowAlternatives.length > 0 && (
                 <div>
-                  <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">Flujos alternativos:</div>
+                  <div className="text-[10px] uppercase tracking-widest text-[var(--text-secondary)] font-bold mb-2">Flujos alternativos:</div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                     {flowAlternatives.map((alt) => (
                       <button
  key={alt.id}
                         onClick={() => navigate('/flows')}
-                        className="text-left bg-gray-800/60 hover:bg-gray-800 border  hover:border-emerald-700 rounded-lg p-3 transition-colors border border-cyan-400"
+                        className="text-left bg-[var(--surface-elevated)]/60 hover:bg-[var(--surface-elevated)] border  hover:border-emerald-700 rounded-lg p-3 transition-colors border border-[var(--theme-border)]"
                         title={alt.description}
                       >
-                        <div className="text-sm font-bold text-gray-200">{alt.name}</div>
-                        <div className="text-[10px] text-gray-500 mt-0.5">{alt.engine} · {alt.category}</div>
+                        <div className="text-sm font-bold text-[var(--text-primary)]">{alt.name}</div>
+                        <div className="text-[10px] text-[var(--text-secondary)] mt-0.5">{alt.engine} · {alt.category}</div>
                       </button>
                     ))}
                   </div>
@@ -981,24 +981,24 @@ ${inspectedPrompt.content}
 
       {/* ─── CHAIN TOOLBAR ──────────────────────────────────────────────────── */}
       {selectedForChain.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-900 border border-purple-500 rounded-2xl px-6 py-4 flex items-center gap-4 max-w-3xl w-full mx-4 border-cyan-400">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[var(--surface-card)] border border-purple-500 rounded-2xl px-6 py-4 flex items-center gap-4 max-w-3xl w-full mx-4 border-[var(--theme-border)]">
           <div className="flex-1">
             <p className="text-purple-400 font-bold text-sm">{selectedForChain.length} prompts seleccionados para el flujo</p>
             <div className="flex flex-wrap gap-1 mt-1">
               {selectedForChain.map((p, i) => (
                 <span className="bg-purple-900/40 text-purple-300 text-xs px-2 py-0.5 rounded-full border border-purple-800/50 flex items-center gap-1" key={i}>
                   {i + 1}. {p.title.slice(0, 25)}{p.title.length > 25 ? '…' : ''}
-                  <button className="border border-cyan-400 text-cyan-400 hover:bg-cyan-900/30 transition-all font-bold hover:text-white ml-1" onClick={(e) => toggleChainSelect(e, p)}><X size={10} /></button>
+                  <button className="border border-[var(--theme-border)] text-[var(--theme-border)] hover:bg-cyan-900/30 transition-all font-bold hover:text-[var(--text-primary)] ml-1" onClick={(e) => toggleChainSelect(e, p)}><X size={10} /></button>
                 </span>
               ))}
             </div>
           </div>
           <button
- className="font-bold py-3 px-6 rounded-xl flex items-center gap-2 whitespace-nowrap transition-colors border border-cyan-400 text-cyan-400 hover:bg-cyan-900/30 transition-all"            onClick={launchChain}
+ className="font-bold py-3 px-6 rounded-xl flex items-center gap-2 whitespace-nowrap transition-colors border border-[var(--theme-border)] text-[var(--theme-border)] hover:bg-cyan-900/30 transition-all"            onClick={launchChain}
           >
             <Sparkle size={18} /> Lanzar Flujo
           </button>
-          <button className="border border-cyan-400 text-cyan-400 hover:bg-cyan-900/30 transition-all font-bold text-gray-500 hover:text-white p-2" onClick={() => setSelectedForChain([])}>
+          <button className="border border-[var(--theme-border)] text-[var(--theme-border)] hover:bg-cyan-900/30 transition-all font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-2" onClick={() => setSelectedForChain([])}>
             <X size={18} />
           </button>
         </div>
@@ -1007,7 +1007,7 @@ ${inspectedPrompt.content}
       {/* ─── BREADCRUMB ─────────────────────────────────────────────────────── */}
       {(view !== 'categories' || isSearchMode) && (
         <button
- className="flex items-center gap-2 mb-6 transition-colors px-4 py-2 rounded-lg w-fit border border-cyan-400 border-cyan-400 text-cyan-400 hover:bg-cyan-900/30 transition-all font-bold"          onClick={goBack}
+ className="flex items-center gap-2 mb-6 transition-colors px-4 py-2 rounded-lg w-fit border border-[var(--theme-border)] border-[var(--theme-border)] text-[var(--theme-border)] hover:bg-cyan-900/30 transition-all font-bold"          onClick={goBack}
         >
           <ArrowLeft size={20} />
           {view === 'subcategories' ? 'Volver a Categorías' : selectedSubCategory ? `Volver a ${selectedCategory?.title}` : 'Volver a Categorías'}
@@ -1027,10 +1027,10 @@ ${inspectedPrompt.content}
           </div>
 
           {recentPrompts.length > 0 && (
-            <div className="mb-10 mt-10 overflow-hidden relative w-full border-t border-b /50 py-8 bg-[#0a0c10] border border-cyan-400">
+            <div className="mb-10 mt-10 overflow-hidden relative w-full border-t border-b /50 py-8 bg-[var(--surface-canvas)] border border-[var(--theme-border)]">
               <div className="flex items-center gap-2 mb-6 px-4">
                 <Clock weight="fill" className="text-green-500" size={24} />
-                <h3 className="text-cyan-400 text-xl font-bold tracking-wide">Prompts Recién Abiertos</h3>
+                <h3 className="text-[var(--theme-border)] text-xl font-bold tracking-wide">Prompts Recién Abiertos</h3>
               </div>
               <style>{`
                 @keyframes marquee-recent {
@@ -1050,7 +1050,7 @@ ${inspectedPrompt.content}
                   const key = makePromptKey(prompt);
                   const isInspected = inspectedPrompt === prompt || (inspectedPrompt && makePromptKey(inspectedPrompt) === key);
                   const isGenerated = isGeneratedPrompt(prompt);
-                  const activeClass = 'bg-cyan-950/40 border-cyan-400';
+                  const activeClass = 'bg-cyan-950/40 border-[var(--theme-border)]';
                   return (
                     <div 
                       key={i} 
@@ -1064,17 +1064,17 @@ ${inspectedPrompt.content}
                       className={`w-[320px] h-40 rounded-2xl p-5 shrink-0 shadow-lg relative cursor-pointer transition-colors flex flex-col justify-between overflow-hidden group border ${
                         isInspected 
                           ? activeClass 
-                          : (isGenerated ? 'bg-black/80 border-orange-500/50 hover:border-orange-400' : 'bg-black/80 border-cyan-400 hover:border-cyan-400')
+                          : (isGenerated ? 'bg-[var(--surface-canvas)]/80 border-orange-500/50 hover:border-orange-400' : 'bg-[var(--surface-canvas)]/80 border-[var(--theme-border)] hover:border-[var(--theme-border)]')
                       }`}
                     >
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <h4 className="text-cyan-400 font-bold text-sm line-clamp-1 flex-1 leading-snug">{prompt.title}</h4>
+                          <h4 className="text-[var(--theme-border)] font-bold text-sm line-clamp-1 flex-1 leading-snug">{prompt.title}</h4>
                           {prompt.upgradeExplanation && (
                             <span className="text-[10px] font-bold bg-blue-900/40 text-blue-400 border border-blue-800/50 px-1.5 py-0.5 rounded-full flex-shrink-0">IA</span>
                           )}
                         </div>
-                        <p className="text-xs text-gray-500 mt-2 line-clamp-3 leading-relaxed">{prompt.content}</p>
+                        <p className="text-xs text-[var(--text-secondary)] mt-2 line-clamp-3 leading-relaxed">{prompt.content}</p>
                       </div>
                       <div className="text-[10px] uppercase font-bold text-blue-500 tracking-widest mt-2 truncate">
                         {prompt.category?.split(' > ').pop() || 'Prompt'}
@@ -1087,10 +1087,10 @@ ${inspectedPrompt.content}
           )}
 
           {generatedVariants.length > 0 && (
-            <div className="mb-10 mt-10 overflow-hidden relative w-full border-t border-b /50 py-8 bg-[#0a0c10] border border-cyan-400">
+            <div className="mb-10 mt-10 overflow-hidden relative w-full border-t border-b /50 py-8 bg-[var(--surface-canvas)] border border-[var(--theme-border)]">
               <div className="flex items-center gap-2 mb-6 px-4">
                 <Sparkle weight="light" className="text-blue-500" size={24} />
-                <h3 className="text-cyan-400 text-xl font-bold tracking-wide">Variantes IA Generadas</h3>
+                <h3 className="text-[var(--theme-border)] text-xl font-bold tracking-wide">Variantes IA Generadas</h3>
               </div>
               <style>{`
                 @keyframes marquee {
@@ -1112,10 +1112,10 @@ ${inspectedPrompt.content}
                       <Sparkle weight="light" className="text-blue-400" />
                     </div>
                     <div>
-                      <h4 className="text-cyan-400 font-bold text-lg truncate mb-1 pr-6">{v.title}</h4>
+                      <h4 className="text-[var(--theme-border)] font-bold text-lg truncate mb-1 pr-6">{v.title}</h4>
                       <p className="text-xs text-purple-400/80 mb-2 truncate uppercase tracking-widest">{v.role}</p>
                     </div>
-                    <p className="text-sm text-gray-400 line-clamp-3 opacity-80 leading-snug">{v.content}</p>
+                    <p className="text-sm text-[var(--text-secondary)] line-clamp-3 opacity-80 leading-snug">{v.content}</p>
                   </div>
                 ))}
               </div>
@@ -1131,16 +1131,16 @@ ${inspectedPrompt.content}
 
         /* ─── SUBCATEGORÍAS ───────────────────────────────────────────────── */
         <div>
-          <h2 className="text-cyan-400 text-2xl font-bold mb-1">{selectedCategory.title}</h2>
-          <p className="text-gray-500 mb-6">{selectedCategory.totalCount.toLocaleString()} prompts en {selectedCategory.subCategories.length} subcategorías</p>
+          <h2 className="text-[var(--theme-border)] text-2xl font-bold mb-1">{selectedCategory.title}</h2>
+          <p className="text-[var(--text-secondary)] mb-6">{selectedCategory.totalCount.toLocaleString()} prompts en {selectedCategory.subCategories.length} subcategorías</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {selectedCategory.subCategories.map((sub, idx) => (
               <div
                 key={idx}
                 onClick={() => handleSubCategoryClick(sub.name)}
-                className="border rounded-xl p-5 cursor-pointer transition-all flex flex-col justify-between min-h-[8rem] bg-gray-900 border border-cyan-400"
+                className="border rounded-xl p-5 cursor-pointer transition-all flex flex-col justify-between min-h-[8rem] bg-[var(--surface-card)] border border-[var(--theme-border)]"
               >
-                <h3 className="text-cyan-400 font-semibold text-md leading-snug">{sub.name}</h3>
+                <h3 className="text-[var(--theme-border)] font-semibold text-md leading-snug">{sub.name}</h3>
                 <span className="mt-3 bg-blue-900/30 text-blue-400 text-xs font-bold px-2 py-1 rounded-full border border-blue-800/40 w-fit">
                   {sub.count} prompts
                 </span>
@@ -1155,8 +1155,8 @@ ${inspectedPrompt.content}
         <div>
           {selectedCategory && selectedSubCategory && (
             <div className="mb-6">
-              <h2 className="text-cyan-400 text-2xl font-bold ">{selectedSubCategory}</h2>
-              <p className="text-gray-500">{selectedCategory.title} › {selectedSubCategory} — {displayPrompts.length} prompts</p>
+              <h2 className="text-[var(--theme-border)] text-2xl font-bold ">{selectedSubCategory}</h2>
+              <p className="text-[var(--text-secondary)]">{selectedCategory.title} › {selectedSubCategory} — {displayPrompts.length} prompts</p>
             </div>
           )}
 
@@ -1175,7 +1175,7 @@ ${inspectedPrompt.content}
               const isInspected = inspectedPrompt === prompt || (inspectedPrompt && makePromptKey(inspectedPrompt) === key);
               const chainPos = selectedForChain.findIndex(p => makePromptKey(p) === key);
               const isGenerated = isGeneratedPrompt(prompt);
-              const activeClass = 'bg-cyan-950/40 border-cyan-400';
+              const activeClass = 'bg-cyan-950/40 border-[var(--theme-border)]';
 
               return (
                 <div
@@ -1190,22 +1190,22 @@ ${inspectedPrompt.content}
                     }}
                   className={`border rounded-2xl p-6 flex flex-col h-80 relative cursor-pointer transition-all group ${
                     inChain 
-                      ? (isGenerated ? 'bg-black/80 border-cyan-400' : 'bg-black/80 border-cyan-400') 
+                      ? (isGenerated ? 'bg-[var(--surface-canvas)]/80 border-[var(--theme-border)]' : 'bg-[var(--surface-canvas)]/80 border-[var(--theme-border)]') 
                       : isInspected 
                         ? activeClass 
-                        : (isGenerated ? 'bg-black/80 border-orange-500/50 hover:border-orange-400' : 'bg-gray-900 border-cyan-400 hover:border-[#3a3a3a]')
+                        : (isGenerated ? 'bg-[var(--surface-canvas)]/80 border-orange-500/50 hover:border-orange-400' : 'bg-[var(--surface-card)] border-[var(--theme-border)] hover:border-[var(--stroke-subtle)]')
                   }`}
                 >
                   {/* Chain position badge */}
                   {inChain && (
-                    <div className="absolute -top-3 -left-3 w-7 h-7 bg-purple-600 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg z-10">
+                    <div className="absolute -top-3 -left-3 w-7 h-7 bg-purple-600 rounded-full flex items-center justify-center text-xs font-bold text-[var(--text-primary)] shadow-lg z-10">
                       {chainPos + 1}
                     </div>
                   )}
 
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex flex-col gap-1">
-                      <span className="text-gray-500 text-xs font-bold bg-gray-800 px-3 py-1 rounded-full w-fit border border-cyan-400">#{idx + 1}</span>
+                      <span className="text-[var(--text-secondary)] text-xs font-bold bg-[var(--surface-elevated)] px-3 py-1 rounded-full w-fit border border-[var(--theme-border)]">#{idx + 1}</span>
                       {lastOpened && (
                         <span className={`${isGenerated ? 'text-blue-400/70' : 'text-green-500/70'} text-[10px] leading-tight`}>🕐 {formatDate(lastOpened)}</span>
                       )}
@@ -1214,7 +1214,7 @@ ${inspectedPrompt.content}
                       {/* Chain / Selection toggle — always visible */}
                       <button
                         onClick={(e) => toggleChainSelect(e, prompt)}
-                        className={`p-2 rounded-full border transition-colors ${inChain ? 'bg-cyan-500 border-cyan-400 text-white' : 'border-cyan-400 text-cyan-400 bg-transparent hover:bg-cyan-900/30'}`}
+                        className={`p-2 rounded-full border transition-colors ${inChain ? 'bg-[var(--theme-border)] border-[var(--theme-border)] text-[var(--text-primary)]' : 'border-[var(--theme-border)] text-[var(--theme-border)] bg-transparent hover:bg-cyan-900/30'}`}
                         title={inChain ? 'Quitar del flujo' : 'Seleccionar prompt'}
                       >
                         {inChain ? <CheckSquare size={16} /> : <Square size={16} />}
@@ -1222,17 +1222,17 @@ ${inspectedPrompt.content}
                       {/* TTS */}
                       <button
                         onClick={(e) => handleSpeak(e, `${prompt.title}. ${prompt.content || ''}`)}
-                        className="text-gray-400 hover:text-white bg-gray-800 p-2.5 rounded-full transition-colors border border-cyan-400"
+                        className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--surface-elevated)] p-2.5 rounded-full transition-colors border border-[var(--theme-border)]"
                       >
                         <SpeakerHigh size={16} />
                       </button>
                     </div>
                   </div>
 
-                  <div className="flex items-center mb-2"><h3 className="text-cyan-400 font-bold text-lg line-clamp-2 leading-snug flex-1">{prompt.title}</h3>{prompt.upgradeExplanation && (
+                  <div className="flex items-center mb-2"><h3 className="text-[var(--theme-border)] font-bold text-lg line-clamp-2 leading-snug flex-1">{prompt.title}</h3>{prompt.upgradeExplanation && (
                     <button
                       onClick={(e) => { e.stopPropagation(); setExplanationPopup({title: prompt.title, text: prompt.upgradeExplanation!}); }}
-                      className="ml-2 text-xs font-bold border border-cyan-400 text-cyan-400 hover:bg-cyan-900/30 transition-all w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                      className="ml-2 text-xs font-bold border border-[var(--theme-border)] text-[var(--theme-border)] hover:bg-cyan-900/30 transition-all w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
                       title="Ver explicación de la mejora"
                     >
                       ?
@@ -1242,19 +1242,19 @@ ${inspectedPrompt.content}
                   {prompt.isMultiPrompt && prompt.chain ? (
                     <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-2 mt-1 pr-1 custom-scrollbar">
                       {prompt.chain.map((step, i) => (
-                        <div className="flex items-start gap-3 text-sm text-gray-300 bg-gray-800/40 p-2.5 rounded-lg border /50 border-cyan-400" key={i}>
+                        <div className="flex items-start gap-3 text-sm text-[var(--text-primary)] bg-[var(--surface-elevated)]/40 p-2.5 rounded-lg border /50 border-[var(--theme-border)]" key={i}>
                           <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-xs border border-purple-500/30 mt-0.5">
                             {i + 1}
                           </div>
                           <div className="flex-1 flex flex-col">
-                            <span className="font-semibold text-gray-200 line-clamp-1">{step.title}</span>
-                            <span className="text-xs text-gray-500 line-clamp-1">{step.content}</span>
+                            <span className="font-semibold text-[var(--text-primary)] line-clamp-1">{step.title}</span>
+                            <span className="text-xs text-[var(--text-secondary)] line-clamp-1">{step.content}</span>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-400 line-clamp-4 flex-1 leading-relaxed">{prompt.content}</p>
+                    <p className="text-sm text-[var(--text-secondary)] line-clamp-4 flex-1 leading-relaxed">{prompt.content}</p>
                   )}
 
                   <div className="mt-4">
@@ -1264,7 +1264,7 @@ ${inspectedPrompt.content}
                           e.stopPropagation();
                           console.log("Builder removed");
                         }}
-                        className=" border border-cyan-400 text-cyan-400 hover:bg-cyan-900/30 font-bold py-2 px-4 rounded-lg transition-colors w-full flex items-center justify-center gap-2"
+                        className=" border border-[var(--theme-border)] text-[var(--theme-border)] hover:bg-cyan-900/30 font-bold py-2 px-4 rounded-lg transition-colors w-full flex items-center justify-center gap-2"
                       >
                         <Sparkle size={18} /> Enviar Flujo a Builder
                       </button>
@@ -1276,7 +1276,7 @@ ${inspectedPrompt.content}
               );
             })}
             {displayPrompts.length === 0 && (
-              <div className="col-span-full text-center text-gray-500 py-10 text-lg">
+              <div className="col-span-full text-center text-[var(--text-secondary)] py-10 text-lg">
                 No se encontraron prompts.
               </div>
             )}
@@ -1285,11 +1285,11 @@ ${inspectedPrompt.content}
       )}
       </div>
       {/* Right Column: Panel */}
-      <div className="w-96 md:w-[600px] border-l bg-[#0f111a] flex flex-col z-20 flex-shrink-0 border border-cyan-400">
-        <div className="p-5 border-b flex items-center justify-between bg-gray-900/50 border border-cyan-400">
-          <h2 className="text-cyan-400 font-bold flex items-center gap-2"><Sparkle size={18} className="text-blue-400" /> Panel de Prompt</h2>
+      <div className="w-96 md:w-[600px] border-l bg-[#0f111a] flex flex-col z-20 flex-shrink-0 border border-[var(--theme-border)]">
+        <div className="p-5 border-b flex items-center justify-between bg-[var(--surface-card)]/50 border border-[var(--theme-border)]">
+          <h2 className="text-[var(--theme-border)] font-bold flex items-center gap-2"><Sparkle size={18} className="text-blue-400" /> Panel de Prompt</h2>
           {inspectedPrompt && (
-            <button className="border border-cyan-400 text-cyan-400 hover:bg-cyan-900/30 transition-all font-bold text-gray-500 hover:text-white transition-colors" onClick={() => setInspectedPrompt(null)}>
+            <button className="border border-[var(--theme-border)] text-[var(--theme-border)] hover:bg-cyan-900/30 transition-all font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" onClick={() => setInspectedPrompt(null)}>
               <X size={16} />
             </button>
           )}
@@ -1302,15 +1302,15 @@ ${inspectedPrompt.content}
               <div className="flex-1 overflow-y-auto p-5 custom-scrollbar" style={{ paddingBottom: '0.5cm' }}>
                 
                 <div className="flex flex-col gap-2 mb-6">
-                  <div className="text-[10px] uppercase font-bold text-gray-500 tracking-widest border-b pb-2 mb-1 border border-cyan-400">Herramientas IA</div>
+                  <div className="text-[10px] uppercase font-bold text-[var(--text-secondary)] tracking-widest border-b pb-2 mb-1 border border-[var(--theme-border)]">Herramientas IA</div>
                   <div className="flex flex-wrap gap-2">
-                    <button className="rounded border flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all flex-1 min-w-[100px] disabled:opacity-50 border-cyan-400 border-cyan-400 text-cyan-400 hover:bg-cyan-900/30 font-bold" 
+                    <button className="rounded border flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all flex-1 min-w-[100px] disabled:opacity-50 border-[var(--theme-border)] border-[var(--theme-border)] text-[var(--theme-border)] hover:bg-cyan-900/30 font-bold" 
                       onClick={handleUpgrade} 
                       disabled={isUpgrading}
                     >
                       {isUpgrading ? '⚡ Upgrade...' : '✨ Upgrade'}
                     </button>
-                    <button className="rounded border flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all flex-1 min-w-[100px] disabled:opacity-50 border-cyan-400 border-cyan-400 text-cyan-400 hover:bg-cyan-900/30 font-bold" 
+                    <button className="rounded border flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all flex-1 min-w-[100px] disabled:opacity-50 border-[var(--theme-border)] border-[var(--theme-border)] text-[var(--theme-border)] hover:bg-cyan-900/30 font-bold" 
                       onClick={handleTTS}
                       disabled={isTranslating}
                     >
@@ -1318,7 +1318,7 @@ ${inspectedPrompt.content}
                     </button>
                     <button
                       onClick={handleLogic}
-                      className={`border border-cyan-400 text-cyan-400 rounded bg-gray-800 hover:bg-gray-700 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] ${panelTab === 'logic' ? 'border-cyan-300 bg-cyan-950/30' : ''}`}
+                      className={`border border-[var(--theme-border)] text-[var(--theme-border)] rounded bg-[var(--surface-elevated)] hover:bg-gray-700 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] ${panelTab === 'logic' ? 'border-cyan-300 bg-cyan-950/30' : ''}`}
                     >
                       {currentLogicTask?.isRunning ? '🧠 Analizando...' : '🧠 Lógica'}
                     </button>
@@ -1327,13 +1327,13 @@ ${inspectedPrompt.content}
                   <div className="flex gap-2 mt-2 w-full">
                     <button
                       onClick={() => setPanelTab('content')} 
-                      className={`border border-cyan-400 flex-1 text-sm font-bold px-3 py-2 rounded transition-colors flex items-center justify-center gap-2 shadow-sm ${panelTab === 'content' ? 'bg-gray-800 text-white border-cyan-300' : 'bg-transparent text-cyan-400/70 border-cyan-700 hover:text-cyan-300'}`}
+                      className={`border border-[var(--theme-border)] flex-1 text-sm font-bold px-3 py-2 rounded transition-colors flex items-center justify-center gap-2 shadow-sm ${panelTab === 'content' ? 'bg-[var(--surface-elevated)] text-[var(--text-primary)] border-cyan-300' : 'bg-transparent text-[var(--theme-border)]/70 border-cyan-700 hover:text-cyan-300'}`}
                     >
                       💬 Original
                     </button>
                     <button
                       onClick={handleTranslate} 
-                      className={`border border-cyan-400 flex-1 text-sm font-bold px-3 py-2 rounded transition-colors flex items-center justify-center gap-2 shadow-sm ${panelTab === 'translation' ? 'bg-green-900/40 text-green-300 border-green-700/50' : 'bg-transparent text-cyan-400/70 border-cyan-700 hover:text-cyan-300'}`}
+                      className={`border border-[var(--theme-border)] flex-1 text-sm font-bold px-3 py-2 rounded transition-colors flex items-center justify-center gap-2 shadow-sm ${panelTab === 'translation' ? 'bg-green-900/40 text-green-300 border-green-700/50' : 'bg-transparent text-[var(--theme-border)]/70 border-cyan-700 hover:text-cyan-300'}`}
                     >
                       🇪🇸 Traducir
                     </button>
@@ -1341,11 +1341,11 @@ ${inspectedPrompt.content}
                   
                   {isUpgrading && (
                     <div className="mt-2 flex flex-col gap-1">
-                      <div className="flex justify-between text-xs text-[#7B9C7F] font-medium">
+                      <div className="flex justify-between text-xs text-[var(--theme-border)] font-medium">
                         <span>Generando mejora...</span>
                         <span>{upgradeProgress}% ({upgradeTimeLeft})</span>
                       </div>
-                      <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden border border-cyan-400">
+                      <div className="w-full bg-[var(--surface-card)] rounded-full h-1.5 overflow-hidden border border-[var(--theme-border)]">
                         <div
  className="h-full rounded-full transition-all duration-300 ease-out"                          style={{ width: `${upgradeProgress}%`, backgroundColor: '#4ade80', boxShadow: '0 0 10px rgba(74,222,128,0.5)' }}
                         ></div>
@@ -1359,7 +1359,7 @@ ${inspectedPrompt.content}
                         <span>Analizando lógica interna...</span>
                         <span>{currentLogicTask.progress}% ({currentLogicTask.timeLeft})</span>
                       </div>
-                      <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden border border-cyan-400">
+                      <div className="w-full bg-[var(--surface-card)] rounded-full h-1.5 overflow-hidden border border-[var(--theme-border)]">
                         <div
  className="h-full rounded-full transition-all duration-300 ease-out"                          style={{ width: `${currentLogicTask.progress}%`, backgroundColor: '#3b82f6', boxShadow: '0 0 10px rgba(59,130,246,0.5)' }}
                         ></div>
@@ -1371,14 +1371,14 @@ ${inspectedPrompt.content}
                 <div className="flex items-center justify-between mb-4">
                   <div className="pr-2">
                     <span className="text-xs font-bold text-blue-400 uppercase tracking-widest">{inspectedPrompt.category?.split(' > ').pop() || 'Prompt'}</span>
-                    <h3 className="text-cyan-400 text-2xl font-bold mt-1 leading-tight">{inspectedPrompt.title}</h3>
+                    <h3 className="text-[var(--theme-border)] text-2xl font-bold mt-1 leading-tight">{inspectedPrompt.title}</h3>
                   </div>
 
                 </div>
                 
-                <div className={`bg-gray-900/80 p-6 rounded-xl border border-cyan-400 leading-relaxed prose prose-invert max-w-none shadow-inner ${
+                <div className={`bg-[var(--surface-card)]/80 p-6 rounded-xl border border-[var(--theme-border)] leading-relaxed prose prose-invert max-w-none shadow-inner ${
                   panelTab === 'logic' 
-                    ? 'text-sm text-gray-300 prose-sm prose-headings:text-blue-400 prose-a:text-blue-400' 
+                    ? 'text-sm text-[var(--text-primary)] prose-sm prose-headings:text-blue-400 prose-a:text-blue-400' 
                     : `${inspectedPrompt.upgradeExplanation ? 'prose-p:text-blue-400 prose-headings:text-blue-400 prose-strong:text-blue-400 text-blue-400' : 'prose-p:text-[#4ade80] prose-headings:text-[#4ade80] prose-strong:text-[#4ade80] text-[#4ade80]'} prose-p:text-[1.15rem] prose-p:font-bold prose-p:leading-snug prose-headings:text-[1.15rem] prose-headings:font-bold`
                 }`}>
                   {panelTab === 'content' && (
@@ -1412,19 +1412,19 @@ ${inspectedPrompt.content}
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-[#050a0f]/60 backdrop-blur-md animate-in fade-in duration-200"
         >
-          <div className="bg-[#12141a] border rounded-2xl p-6 md:p-8 max-w-xl w-full relative animate-in zoom-in-95 duration-200 border-cyan-400">
+          <div className="bg-[#12141a] border rounded-2xl p-6 md:p-8 max-w-xl w-full relative animate-in zoom-in-95 duration-200 border-[var(--theme-border)]">
             <button
               onClick={() => setExplanationPopup(null)}
-              className="absolute top-4 right-4 text-cyan-400 hover:text-white transition-colors bg-gray-800/50 hover:bg-cyan-900/30 p-2 rounded-full border border-cyan-400"
+              className="absolute top-4 right-4 text-[var(--theme-border)] hover:text-[var(--text-primary)] transition-colors bg-[var(--surface-elevated)]/50 hover:bg-cyan-900/30 p-2 rounded-full border border-[var(--theme-border)]"
             >
               <X size={20} />
             </button>
-            <h3 className="text-cyan-400 text-2xl font-bold mb-4 flex items-center gap-2">
+            <h3 className="text-[var(--theme-border)] text-2xl font-bold mb-4 flex items-center gap-2">
               <Sparkle weight="fill" className="text-blue-400" />
               Mejora Aplicada
             </h3>
-            <p className="text-gray-400 mb-4">Explicación de la optimización y cambios en <strong className="text-white">{explanationPopup.title}</strong>:</p>
-            <div className="bg-[#0a0c10] border rounded-xl p-5 text-gray-300 leading-relaxed font-medium mb-6 border-cyan-400">
+            <p className="text-[var(--text-secondary)] mb-4">Explicación de la optimización y cambios en <strong className="text-[var(--text-primary)]">{explanationPopup.title}</strong>:</p>
+            <div className="bg-[var(--surface-canvas)] border rounded-xl p-5 text-[var(--text-primary)] leading-relaxed font-medium mb-6 border-[var(--theme-border)]">
               {explanationPopup.text}
             </div>
             
@@ -1440,14 +1440,14 @@ ${inspectedPrompt.content}
                     window.speechSynthesis.speak(utterance);
                   }
                 }}
-                className="text-gray-400 hover:text-white flex items-center gap-2 border  hover:border-gray-500 px-4 py-2 rounded-full transition-colors bg-gray-900 border border-cyan-400"
+                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center gap-2 border  hover:border-gray-500 px-4 py-2 rounded-full transition-colors bg-[var(--surface-card)] border border-[var(--theme-border)]"
               >
                 <SpeakerHigh size={18} /> Escuchar
               </button>
               
               <button
                 onClick={() => setExplanationPopup(null)}
-                className="text-cyan-400 font-bold border border-cyan-400 hover:bg-cyan-900/30 px-6 py-2.5 rounded-full transition-colors"
+                className="text-[var(--theme-border)] font-bold border border-[var(--theme-border)] hover:bg-cyan-900/30 px-6 py-2.5 rounded-full transition-colors"
               >
                 Entendido
               </button>
@@ -1461,3 +1461,4 @@ ${inspectedPrompt.content}
 };
 
 export default Atlas;
+

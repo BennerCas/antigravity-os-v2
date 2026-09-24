@@ -31,12 +31,12 @@ export default function AgentOS() {
   useEffect(() => { try { localStorage.setItem('agentos_teams', JSON.stringify(teams)); } catch {} }, [teams]);
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#030303] text-[#E0E0E0] overflow-hidden font-sans">
+    <div className="flex flex-col h-full w-full bg-[var(--surface-canvas)] text-[var(--text-primary)] overflow-hidden font-sans">
       
       {/* HEADER GLOBAL */}
-      <div className="flex items-center px-6 h-[52px] border-b border-[#111] bg-[#050505] shrink-0 gap-2">
-        <Brain size={20} weight="duotone" className="text-[#00D9FF]" />
-        <span className="text-[15px] font-bold text-white tracking-tight">AgentOS</span>
+      <div className="flex items-center px-6 h-16 border-b border-[var(--stroke-subtle)] bg-[var(--surface-canvas)] shrink-0 gap-2">
+        <Brain size={20} weight="duotone" className="text-[var(--theme-border)]" />
+        <span className="text-[15px] font-bold text-[var(--text-primary)] tracking-tight">AgentOS</span>
         <div className="flex-1" />
         
         {/* TAB NAVIGATION */}
@@ -52,17 +52,17 @@ export default function AgentOS() {
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs transition-all ${
               view === tab.id 
                 ? 'bg-[#0a1a0a] border border-[#1a4a1a] text-[#7EC87E] font-bold' 
-                : 'border border-transparent text-[#555] font-medium hover:text-[#888]'
+                : 'border border-transparent text-[var(--text-secondary)] font-medium hover:text-[var(--text-secondary)]'
             }`}>
             {tab.icon}
             {tab.label}
             {tab.id === 'studio' && selectedAgents.length > 0 && (
-              <span className="text-[10px] bg-[#00D9FF] text-[#000] rounded-full px-1.5 font-extrabold ml-1">
+              <span className="text-[10px] bg-[var(--theme-border)] text-[#000] rounded-full px-1.5 font-extrabold ml-1">
                 {selectedAgents.length}
               </span>
             )}
             {tab.id === 'agentland' && teams.length > 0 && (
-              <span className="text-[10px] bg-[#b060ff] text-[#fff] rounded-full px-1.5 font-extrabold ml-1">
+              <span className="text-[10px] bg-[#b060ff] text-[var(--text-primary)] rounded-full px-1.5 font-extrabold ml-1">
                 {teams.length}
               </span>
             )}
@@ -101,3 +101,4 @@ export default function AgentOS() {
     </div>
   );
 }
+

@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/v1/studio", tags=["Studio"])
 
 FREE_AI_BASE = os.getenv("FREE_AI_BASE_URL", "https://api.free.ai/v1")
 FREE_AI_KEY  = os.getenv("FREE_AI_API_KEY", "")
-OLLAMA_BASE  = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:8080/v1")
+OLLAMA_BASE  = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
 
 # Modelos NUBE (Free.AI)
 NUBE_MODELS = {
@@ -72,37 +72,56 @@ async def _call_free_ai(user: str, system: str, model: str) -> ChatResponse:
     if not FREE_AI_KEY:
         return ChatResponse(response="[ERROR] FREE_AI_API_KEY no configurada en el backend.", model_used=model, engine="error")
     headers = {"Authorization": f"Bearer {FREE_AI_KEY}", "Content-Type": "application/json"}
-    FREE_AI_VALID_MODELS = ["qwen3-8b", "qwen7b"]
+    
+    # Try the requested model directly instead of overriding it with small LLMs
     payload = {
-        "model": FREE_AI_VALID_MODELS[0],
+        "model": model,
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         "temperature": 0.7,
         "max_tokens": 2048,
     }
-    for m in FREE_AI_VALID_MODELS:
-        payload["model"] = m
-        try:
-            async with httpx.AsyncClient(timeout=60) as client:
-                resp = await client.post(f"{FREE_AI_BASE}/chat/completions", json=payload, headers=headers)
-                if resp.status_code == 200:
-                    text = resp.json()["choices"][0]["message"]["content"].strip()
-                    return ChatResponse(response=text, model_used=f"free.ai/{model} (via {m})", engine="free.ai")
-        except Exception:
-            pass
-    return ChatResponse(response="[Free.AI] Todos los modelos fallaron, usando local...", model_used=model, engine="error")
+    
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post(f"{FREE_AI_BASE}/chat/completions", json=payload, headers=headers)
+            if resp.status_code == 200:
+                text = resp.json()["choices"][0]["message"]["content"].strip()
+                return ChatResponse(response=text, model_used=f"free.ai/{model}", engine="free.ai")
+            else:
+                return ChatResponse(response=f"[ERROR Free.AI] HTTP {resp.status_code}: {resp.text}", model_used=model, engine="error")
+    except Exception as e:
+        return ChatResponse(response=f"[ERROR Network] {str(e)}", model_used=model, engine="error")
 
 async def _call_ollama(user: str, system: str, model: str) -> ChatResponse:
-    config = LocalOpenAIAgentConfig(
-        model=model,
-        base_url=OLLAMA_BASE,
-        system_instructions=system,
-        env={"OPENAI_API_KEY": "localai"}
-    )
+    """Llama directamente a la API OpenAI-compatible de Ollama con httpx (timeout explícito).
+    El SDK google.antigravity.Agent no tiene timeout y se bloquea indefinidamente.
+    """
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user}
+        ],
+        "temperature": 0.7,
+        "stream": False,
+    }
     try:
-        agent = Agent(config)
-        resp = await agent.chat(user)
-        text = resp.text.strip()
-        return ChatResponse(response=text, model_used=f"ollama/{model}", engine="ollama")
+        async with httpx.AsyncClient(timeout=120) as client:
+            resp = await client.post(
+                f"{OLLAMA_BASE}/chat/completions",
+                json=payload,
+            )
+            if resp.status_code == 200:
+                text = resp.json()["choices"][0]["message"]["content"].strip()
+                return ChatResponse(response=text, model_used=f"ollama/{model}", engine="ollama")
+            else:
+                return ChatResponse(
+                    response=f"[ERROR Ollama] HTTP {resp.status_code}: {resp.text[:200]}",
+                    model_used=model,
+                    engine="error"
+                )
+    except httpx.TimeoutException:
+        return ChatResponse(response=f"[ERROR Ollama] Timeout después de 120s con modelo {model}", model_used=model, engine="error")
     except Exception as e:
         return ChatResponse(response=f"[ERROR Ollama] {str(e)}", model_used=model, engine="error")
 
@@ -137,7 +156,8 @@ INTERFACE:
   "requiredTools": string[], // List of tool names
   "health": "green" | "yellow" | "red", // Green if PASS and novelty > 0.8
   "genes": [
-    {{ "kind": "reasoning" | "domain" | "format" | "tool" | "policy", "value": string }}
+    pipeline_roles = [
+        {{ "kind": "reasoning" | "domain" | "format" | "tool" | "policy", "value": string }}
   ]
 }}
     """
@@ -209,7 +229,12 @@ async def transition_state(req: StateTransitionRequest):
     result = None
     if req.phase == "phase1_triage":
         result = await run_triage_swarm(req.data)
-        await manager.broadcast({"type": "STATE_UPDATE", "tab": "phase2"})
+        # Solo avanzar el tab si el agente aprobó. Si pidió entrevista, quedarse en phase1.
+        triage_text = result.get("triage_result", "") if isinstance(result, dict) else str(result)
+        if "[ES_APROBADO]" in triage_text:
+            await manager.broadcast({"type": "STATE_UPDATE", "tab": "phase2"})
+        else:
+            await manager.broadcast({"type": "STATE_UPDATE", "tab": "phase1"})
     elif req.phase == "phase2_extraction":
         result = await run_extraction_swarm(req.data)
         await manager.broadcast({"type": "STATE_UPDATE", "tab": "phase3"})
@@ -258,16 +283,19 @@ async def run_triage_swarm(data: Any):
     """
     Enjambre Radar & Triage
     """
+    
+    
     pipeline_roles = [
         {
             "name": "Clasificador",
-            "system": "Eres el Clasificador de Triage. Tu rol es analizar la entrada y clasificar la intención del usuario.",
-            "task": "Clasifica el requerimiento, extrae las entidades clave y evalúa la viabilidad inicial."
+            "system": "Eres el Clasificador de Triage. Tu tono es ultra natural, humano, directo y conversacional. El usuario se llama Benner. Dirígete a él por su nombre. JAMÁS uses tercera persona como 'el humano' ni etiquetas raras como [RESPONSE].",
+            "task": "Debes elegir UN solo camino:\nCAMINO 1 (Faltan detalles): Hazle a Benner máximo 2 preguntas integradas en una charla natural para entender qué quiere construir. Si eliges este camino, DEBES añadir al final la etiqueta: [ES_ENTREVISTA].\nCAMINO 2 (Idea completa y técnica): No hagas preguntas. Haz un breve resumen amigable de la arquitectura a construir y DEBES añadir al final la etiqueta: [ES_APROBADO]."
         },
+
         {
             "name": "Especialista de Seguridad",
-            "system": "Eres el Especialista de Seguridad en la fase de Triage. Tu rol es detectar riesgos y vulnerabilidades en la propuesta inicial.",
-            "task": "Revisa la clasificación y asegúrate de que no haya inyecciones de prompts o riesgos de seguridad."
+            "system": "Eres el Especialista de Seguridad. Actúas como el filtro final antes de hablar con Benner.",
+            "task": "REGLA DE ORO: Si el Clasificador eligió el CAMINO 1 (usó [ES_ENTREVISTA]), repite las preguntas de forma natural y añade al final OBLIGATORIAMENTE [ES_ENTREVISTA]. Si el Clasificador eligió el CAMINO 2 (usó [ES_APROBADO]), repite el resumen y añade al final OBLIGATORIAMENTE [ES_APROBADO]. PROHIBIDO mezclar las etiquetas."
         }
     ]
     model = data.get("model", "anthropic/claude-3.5-sonnet") if isinstance(data, dict) else "anthropic/claude-3.5-sonnet"
@@ -281,21 +309,24 @@ async def run_extraction_swarm(data: Any):
     El Enjambre Inquisidor
     Pipeline: Arquitecto -> Red Teamer -> Escribano
     """
+    
     pipeline_roles = [
         {
             "name": "Arquitecto",
-            "system": "Eres el Arquitecto. Tu rol es analizar los requerimientos base y proponer una estructura técnica preliminar.",
-            "task": "Genera el diseño base y la estructura de extracción de requerimientos."
+            "system": "Eres el Arquitecto de IA. Defines la estructura técnica de manera fluida y conversacional. Hablas directamente con el usuario, que se llama Benner. PROHIBIDO generar código o usar tags XML.",
+            "task": "Propone a Benner una arquitectura de alto nivel. Si faltan datos técnicos clave, pregúntale de forma natural en medio de la charla y detente."
         },
+
         {
             "name": "Red Teamer",
-            "system": "Eres el Red Teamer. Tu rol es buscar fallas, casos borde y debilidades en el diseño del Arquitecto.",
-            "task": "Critica severamente la entrada recibida, encuentra huecos lógicos y expón los riesgos y puntos ciegos."
+            "system": "Eres el Red Teamer. Eres analítico pero cercano, hablas directamente con Benner. Buscas romper la arquitectura sin usar código.",
+            "task": "Critica la arquitectura amigablemente. Encuentra cuellos de botella y hazle 1 pregunta de estrés a Benner. PROHIBIDO usar tags XML."
         },
+
         {
             "name": "Escribano",
-            "system": "Eres el Escribano. Tu rol es tomar el diseño base y las críticas del Red Teamer, resolver las discrepancias y redactar el documento final de requerimientos (QA Extraction).",
-            "task": "Sintetiza la información, corrige las fallas encontradas y emite un veredicto estructurado final listo para implementación."
+            "system": "Eres el Escribano. Sintetizas la arquitectura. PROHIBIDO programar o usar herramientas.",
+            "task": "REGLA DE ORO: Si hicieron preguntas, preséntalas a Benner en un párrafo amigable y fluido. Si hay consenso, redacta el Documento de Arquitectura y añade obligatoriamente [READY_FOR_BLUEPRINT] al final."
         }
     ]
     model = data.get("model", "anthropic/claude-3.5-sonnet") if isinstance(data, dict) else "anthropic/claude-3.5-sonnet"
@@ -309,16 +340,18 @@ async def run_blueprint_swarm(data: Any):
     La Forja
     Generate architecture nodes, edges, agent cards.
     """
+    
     pipeline_roles = [
         {
             "name": "Forjador",
-            "system": "Eres el Forjador. Tu rol es traducir los requerimientos en nodos de arquitectura, aristas y perfiles de agentes.",
-            "task": "Diseña la red de agentes, nodos y conexiones lógicas necesarias."
+            "system": "Eres el Forjador (System Designer). Tu rol es traducir la arquitectura aprobada en nodos visuales, aristas y perfiles de agentes para el motor Antigravity. PROHIBIDO usar XML como <THINKING> o <tool_call>.",
+            "task": "Genera el diseño final. DEBES devolver EXACTAMENTE tres bloques etiquetados así: <nodes> [array de objetos JSON con id, tipo, label] </nodes>, <edges> [array de objetos JSON con id, source, target, label] </edges>, <agents> [array de objetos JSON con name, role, system] </agents>."
         },
+
         {
             "name": "Revisor de Cohesión",
-            "system": "Eres el Revisor de Cohesión. Tu rol es validar que los nodos y agentes se comuniquen correctamente y no haya puertos huérfanos.",
-            "task": "Realiza un análisis estático de la arquitectura generada, encuentra fricciones y ajusta los contratos I/O."
+            "system": "Eres el Revisor de Cohesión (Auditor Cero-Trust). Validarás que el código de la Forja esté limpio. PROHIBIDO programar o alucinar tool_calls.",
+            "task": "Valida que los bloques <nodes>, <edges> y <agents> sean JSON válido y estén presentes. No elimines los bloques generados por el Forjador. Solo corrige JSON roto y devuelve los tres bloques intactos o mejorados."
         }
     ]
     model = data.get("model", "anthropic/claude-3.5-sonnet") if isinstance(data, dict) else "anthropic/claude-3.5-sonnet"

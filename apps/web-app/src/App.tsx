@@ -31,6 +31,7 @@ const Academy = lazy(() => import('./pages/Academy'));
 const Architecture = lazy(() => import('./pages/Architecture'));
 const Automations = lazy(() => import('./pages/Automations'));
 const CoautorIA = lazy(() => import('./pages/CoautorIA'));
+const Setup = lazy(() => import('./pages/Setup'));
 
 import { applyThemeToDocument } from './lib/themes';
 
@@ -55,6 +56,9 @@ function MainContent() {
       </div>
       <div style={{ display: path === '/coautoria' ? 'block' : 'none', height: '100%', width: '100%' }}>
         <CoautorIA />
+      </div>
+      <div style={{ display: path === '/setup' ? 'block' : 'none', height: '100%', width: '100%' }}>
+        <Setup />
       </div>
     </>
   );

@@ -68,6 +68,10 @@ interface StudioState {
 
   // Blueprint (Markdown)
   blueprintMd: string;
+  phase1Interview: string | null;
+  setPhase1Interview: (text: string | null) => void;
+  triggerChatSend: ((text: string) => void) | null;
+  setTriggerChatSend: (fn: ((text: string) => void) | null) => void;
   setBlueprintMd: (md: string) => void;
 
   // Focus mode (AgentCarousel)
@@ -504,6 +508,11 @@ export const useStudioStore = create<StudioState>()(
 
       blueprintMd: '',
       setBlueprintMd: (blueprintMd) => set({ blueprintMd }),
+
+      phase1Interview: null,
+      setPhase1Interview: (phase1Interview) => set({ phase1Interview }),
+      triggerChatSend: null,
+      setTriggerChatSend: (triggerChatSend) => set({ triggerChatSend }),
 
       focusedAgent: null,
       setFocusedAgent: (focusedAgent) => set({ focusedAgent }),

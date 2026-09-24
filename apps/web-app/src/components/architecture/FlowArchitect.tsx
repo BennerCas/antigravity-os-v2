@@ -233,17 +233,17 @@ export const FlowArchitect: React.FC = () => {
   };
 
   return (
-    <div className="flex h-full w-full bg-gray-900 text-white relative">
+    <div className="flex h-full w-full bg-[var(--surface-card)] text-[var(--text-primary)] relative">
       {/* Error Toast */}
       {error && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-red-600/95 text-white text-sm px-5 py-2.5 rounded-xl shadow-2xl backdrop-blur-sm border border-red-500/50">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-red-600/95 text-[var(--text-primary)] text-sm px-5 py-2.5 rounded-xl shadow-2xl backdrop-blur-sm border border-red-500/50">
           ⚠️ {error}
         </div>
       )}
 
       {/* Left panel: Discovery Chat */}
       <div className="w-1/3 min-w-0 flex-shrink-0 flex flex-col border-r border-gray-700">
-        <div className="p-4 bg-gray-800 font-bold border-b border-gray-700 flex items-center justify-between">
+        <div className="p-4 bg-[var(--surface-elevated)] font-bold border-b border-gray-700 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-blue-400">🏗️</span> FlowArchitect Discovery
           </div>
@@ -251,7 +251,7 @@ export const FlowArchitect: React.FC = () => {
             {(chatHistory.length > 0 || analysis || blueprint) && (
               <button
                 onClick={handleClear}
-                className="text-xs text-gray-500 hover:text-red-400 transition-colors px-2 py-1 rounded hover:bg-red-900/20"
+                className="text-xs text-[var(--text-secondary)] hover:text-red-400 transition-colors px-2 py-1 rounded hover:bg-red-900/20"
                 title="Limpiar sesión"
               >
                 🗑️ Limpiar
@@ -261,8 +261,8 @@ export const FlowArchitect: React.FC = () => {
         </div>
 
         {/* AI Prompts Grid */}
-        <div className="p-4 bg-gray-800/20 border-b border-gray-800">
-          <div className="text-xs uppercase text-gray-500 font-bold mb-3 tracking-wider">🛠️ AI Tools (Master Prompts)</div>
+        <div className="p-4 bg-[var(--surface-elevated)]/20 border-b border-[var(--stroke-subtle)]">
+          <div className="text-xs uppercase text-[var(--text-secondary)] font-bold mb-3 tracking-wider">🛠️ AI Tools (Master Prompts)</div>
           <div className="grid grid-cols-2 gap-3">
             {[
               { id: 'gatekeeper', label: 'Requirements Gatekeeper', icon: '🛡️', desc: 'Filtro estricto de validación. Evalúa tu idea buscando ambigüedades y exige claridad absoluta antes de permitir el diseño.' },
@@ -274,11 +274,11 @@ export const FlowArchitect: React.FC = () => {
                 key={p.id} 
                 onClick={() => setInput(`Activa la herramienta ${p.label}: `)} 
                 role="button"
-                className="flex flex-col items-start text-left p-3 bg-[#0a0a0a] border border-gray-800 border-l-4 border-l-gray-700 rounded-none hover:bg-blue-950/30 hover:border-gray-700 hover:border-l-blue-500 transition-all group cursor-pointer relative"
+                className="flex flex-col items-start text-left p-3 bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] border-l-4 border-l-gray-700 rounded-none hover:bg-blue-950/30 hover:border-gray-700 hover:border-l-blue-500 transition-all group cursor-pointer relative"
               >
                 <div className="flex items-center w-full mb-1.5">
                   <span className="text-base mr-2">{p.icon}</span>
-                  <span className="text-sm font-bold text-gray-300 group-hover:text-blue-400 transition-colors">{p.label}</span>
+                  <span className="text-sm font-bold text-[var(--text-primary)] group-hover:text-blue-400 transition-colors">{p.label}</span>
                   
                   <button
                     onClick={(e) => {
@@ -289,13 +289,13 @@ export const FlowArchitect: React.FC = () => {
                         play(`Herramienta maestra: ${p.label}. ${p.desc}`, p.id);
                       }
                     }}
-                    className={`ml-auto p-1.5 rounded-full transition-colors ${isActive && currentSection === p.id ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'}`}
+                    className={`ml-auto p-1.5 rounded-full transition-colors ${isActive && currentSection === p.id ? 'bg-blue-500/20 text-blue-400' : 'bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-gray-700'}`}
                     title={isActive && currentSection === p.id ? "Detener" : "Escuchar descripción"}
                   >
                     <SpeakerHigh size={14} weight={isActive && currentSection === p.id ? "fill" : "regular"} />
                   </button>
                 </div>
-                <div className="text-xs text-gray-500 group-hover:text-gray-400 leading-relaxed pr-6">
+                <div className="text-xs text-[var(--text-secondary)] group-hover:text-[var(--text-secondary)] leading-relaxed pr-6">
                   {p.desc}
                 </div>
               </div>
@@ -303,12 +303,12 @@ export const FlowArchitect: React.FC = () => {
           </div>
         </div>
 
-        <div className="px-5 py-4 bg-gray-800/50 border-b border-gray-700 flex items-center">
-          <span className="text-sm font-semibold text-gray-400 mr-4">Modelo de Chat:</span>
+        <div className="px-5 py-4 bg-[var(--surface-elevated)]/50 border-b border-gray-700 flex items-center">
+          <span className="text-sm font-semibold text-[var(--text-secondary)] mr-4">Modelo de Chat:</span>
           <select
             value={selectedModel}
             onChange={e => setSelectedModel(e.target.value)}
-            className="flex-1 bg-gray-900 text-sm text-gray-300 border border-gray-700 rounded-md px-3 py-2 outline-none focus:border-blue-500 cursor-pointer"
+            className="flex-1 bg-[var(--surface-card)] text-sm text-[var(--text-primary)] border border-gray-700 rounded-md px-3 py-2 outline-none focus:border-blue-500 cursor-pointer"
             title="Elige el modelo de IA para chatear"
           >
             {models.length === 0 && <option value="gpt-4o">gpt-4o</option>}
@@ -327,16 +327,16 @@ export const FlowArchitect: React.FC = () => {
           `}</style>
           {chatHistory.length === 0 && (
 
-            <div className="text-gray-400 text-base text-center mt-12">
+            <div className="text-[var(--text-secondary)] text-base text-center mt-12">
               <div className="text-4xl mb-4">💬</div>
               <p>Describe la aplicación o flujo que quieres construir.</p>
-              <p className="mt-2 text-sm text-gray-500">El FlowArchitect analizará tus requisitos y generará un blueprint.</p>
+              <p className="mt-2 text-sm text-[var(--text-secondary)]">El FlowArchitect analizará tus requisitos y generará un blueprint.</p>
             </div>
           )}
           {chatHistory.map((msg, idx) => (
             <div key={idx} className={`p-4 rounded-lg ${msg.role === 'user' ? 'bg-blue-600/80 ml-8' : 'bg-gray-700 mr-8'} group relative`}>
               <div className="flex justify-between items-center mb-2">
-                <div className="text-sm text-gray-400 font-mono uppercase tracking-wider">{msg.role}</div>
+                <div className="text-sm text-[var(--text-secondary)] font-mono uppercase tracking-wider">{msg.role}</div>
                 {msg.role === 'assistant' && (
                   <button 
                     onClick={() => {
@@ -347,7 +347,7 @@ export const FlowArchitect: React.FC = () => {
                         play(msg.content, sectionName);
                       }
                     }}
-                    className={`text-gray-400 hover:text-white transition-colors p-1 rounded-full flex items-center justify-center w-6 h-6 ${isActive && currentSection === 'FlowArchitect - Mensaje ' + (idx + 1) ? 'opacity-100 bg-blue-600' : 'opacity-50 group-hover:opacity-100 hover:bg-gray-600'}`}
+                    className={`text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-1 rounded-full flex items-center justify-center w-6 h-6 ${isActive && currentSection === 'FlowArchitect - Mensaje ' + (idx + 1) ? 'opacity-100 bg-blue-600' : 'opacity-50 group-hover:opacity-100 hover:bg-gray-600'}`}
                     title={isActive && currentSection === 'FlowArchitect - Mensaje ' + (idx + 1) ? "Detener audio" : "Reproducir audio"}
                   >
                     {isActive && currentSection === 'FlowArchitect - Mensaje ' + (idx + 1) ? '⏹️' : '🔊'}
@@ -368,7 +368,7 @@ export const FlowArchitect: React.FC = () => {
                           handleSend(action);
                         }
                       }}
-                      className="text-sm font-medium bg-blue-900/40 hover:bg-blue-600/80 text-blue-200 hover:text-white border border-blue-700/50 rounded-full px-4 py-2 transition-colors text-left"
+                      className="text-sm font-medium bg-blue-900/40 hover:bg-blue-600/80 text-blue-200 hover:text-[var(--text-primary)] border border-blue-700/50 rounded-full px-4 py-2 transition-colors text-left"
                     >
                       {action}
                     </button>
@@ -378,16 +378,16 @@ export const FlowArchitect: React.FC = () => {
             </div>
           ))}
           {isAnalyzing && (
-            <div className="flex items-center gap-2 text-gray-400 text-base mt-2">
+            <div className="flex items-center gap-2 text-[var(--text-secondary)] text-base mt-2">
               <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
               Analizando con IA...
             </div>
           )}
         </div>
-        <div className="p-4 bg-gray-800 border-t border-gray-700 flex gap-2">
+        <div className="p-4 bg-[var(--surface-elevated)] border-t border-gray-700 flex gap-2">
           <input
             type="text"
-            className="flex-1 bg-gray-900 border border-gray-700 rounded-l px-4 py-3 text-white text-base outline-none focus:border-blue-500 transition-colors"
+            className="flex-1 bg-[var(--surface-card)] border border-gray-700 rounded-l px-4 py-3 text-[var(--text-primary)] text-base outline-none focus:border-blue-500 transition-colors"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !isAnalyzing && handleSend()}
@@ -406,7 +406,7 @@ export const FlowArchitect: React.FC = () => {
 
       {/* Right panel: Analysis and Blueprint */}
       <div className="w-2/3 min-w-0 flex-shrink-0 flex flex-col">
-        <div className="p-5 bg-gray-800 font-bold border-b border-gray-700 flex justify-between items-center text-lg">
+        <div className="p-5 bg-[var(--surface-elevated)] font-bold border-b border-gray-700 flex justify-between items-center text-lg">
           <span className="flex items-center gap-2">
             <span className="text-green-400">🗺️</span> Architecture Blueprint
           </span>
@@ -434,8 +434,8 @@ export const FlowArchitect: React.FC = () => {
         <div className="flex-1 overflow-hidden p-6 flex space-x-6">
           
           {/* Column 2: Intent & Requirements */}
-          <div className="flex-1 min-w-0 flex flex-col bg-gray-800 p-5 rounded-lg shadow border border-gray-700">
-            <h3 className="text-base font-bold text-gray-300 mb-3 border-b border-gray-700 pb-3 flex items-center gap-2 flex-shrink-0">
+          <div className="flex-1 min-w-0 flex flex-col bg-[var(--surface-elevated)] p-5 rounded-lg shadow border border-gray-700">
+            <h3 className="text-base font-bold text-[var(--text-primary)] mb-3 border-b border-gray-700 pb-3 flex items-center gap-2 flex-shrink-0">
               <span className="text-yellow-400">🎯</span> Intent & Requirements
             </h3>
             <div className="flex-1 overflow-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
@@ -447,14 +447,14 @@ export const FlowArchitect: React.FC = () => {
                   {JSON.stringify(analysis, null, 2)}
                 </pre>
               ) : (
-                <div className="text-gray-500 text-base mt-4">El análisis aparecerá aquí luego de chatear.</div>
+                <div className="text-[var(--text-secondary)] text-base mt-4">El análisis aparecerá aquí luego de chatear.</div>
               )}
             </div>
           </div>
 
           {/* Column 3: ArchitectureSpec v1 */}
-          <div className="flex-1 min-w-0 flex flex-col bg-gray-800 p-5 rounded-lg shadow border border-gray-700">
-            <h3 className="text-base font-bold text-gray-300 mb-3 border-b border-gray-700 pb-3 flex items-center gap-2 flex-shrink-0">
+          <div className="flex-1 min-w-0 flex flex-col bg-[var(--surface-elevated)] p-5 rounded-lg shadow border border-gray-700">
+            <h3 className="text-base font-bold text-[var(--text-primary)] mb-3 border-b border-gray-700 pb-3 flex items-center gap-2 flex-shrink-0">
               <span className="text-blue-400">📐</span> ArchitectureSpec v1
             </h3>
             <div className="flex-1 overflow-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
@@ -463,7 +463,7 @@ export const FlowArchitect: React.FC = () => {
                   {JSON.stringify(blueprint, null, 2)}
                 </pre>
               ) : (
-                <div className="text-gray-500 text-base mt-4">El blueprint generado aparecerá aquí.</div>
+                <div className="text-[var(--text-secondary)] text-base mt-4">El blueprint generado aparecerá aquí.</div>
               )}
             </div>
           </div>

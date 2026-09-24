@@ -110,28 +110,28 @@ export default function AgentOSInteract({ selectedAgents, assignedKB, teams, age
   };
 
   return (
-    <div className="flex h-full w-full bg-[#050505] text-[#E0E0E0] overflow-hidden">
+    <div className="flex h-full w-full bg-[var(--surface-canvas)] text-[var(--text-primary)] overflow-hidden">
       {/* SIDEBAR */}
-      <div className="w-72 bg-[#080808] border-r border-[#111] flex flex-col">
+      <div className="w-72 bg-[var(--surface-canvas)] border-r border-[#111] flex flex-col">
         <div className="p-3 border-b border-[#111] flex gap-2">
-          <button onClick={() => setMode('agent')} className={`flex-1 py-1.5 text-xs font-bold rounded ${mode === 'agent' ? 'bg-[#0a1a0a] border border-[#1a4a1a] text-[#7EC87E]' : 'bg-[#050505] border border-[#111] text-[#555]'}`}>Individual</button>
-          <button onClick={() => setMode('team')} className={`flex-1 py-1.5 text-xs font-bold rounded ${mode === 'team' ? 'bg-[#1a0a2e] border border-[#3a1a5e] text-[#b060ff]' : 'bg-[#050505] border border-[#111] text-[#555]'}`}>Equipo</button>
+          <button onClick={() => setMode('agent')} className={`flex-1 py-1.5 text-xs font-bold rounded ${mode === 'agent' ? 'bg-[#0a1a0a] border border-[#1a4a1a] text-[#7EC87E]' : 'bg-[var(--surface-canvas)] border border-[#111] text-[var(--text-secondary)]'}`}>Individual</button>
+          <button onClick={() => setMode('team')} className={`flex-1 py-1.5 text-xs font-bold rounded ${mode === 'team' ? 'bg-[#1a0a2e] border border-[#3a1a5e] text-[#b060ff]' : 'bg-[var(--surface-canvas)] border border-[#111] text-[var(--text-secondary)]'}`}>Equipo</button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
           {mode === 'agent' ? (
             <>
-              <h3 className="text-xs font-bold text-[#555] mb-3 uppercase tracking-wider">Tus Agentes Seleccionados</h3>
+              <h3 className="text-xs font-bold text-[var(--text-secondary)] mb-3 uppercase tracking-wider">Tus Agentes Seleccionados</h3>
               {selectedAgents.length === 0 ? (
-                <div className="text-center text-xs text-[#555] mt-4">No has seleccionado agentes. <button onClick={onGoToSelect} className="text-[#00D9FF] hover:underline block mt-2">Ir a seleccionar</button></div>
+                <div className="text-center text-xs text-[var(--text-secondary)] mt-4">No has seleccionado agentes. <button onClick={onGoToSelect} className="text-[var(--theme-border)] hover:underline block mt-2">Ir a seleccionar</button></div>
               ) : (
                 <div className="flex flex-col gap-2">
                   {selectedAgents.map(a => (
                     <div key={a.id} onClick={() => setActiveAgent(a)}
-                      className={`p-3 rounded-lg border cursor-pointer flex items-center justify-between ${activeAgent?.id === a.id ? 'bg-[#0a1a0a] border-[#1a4a1a]' : 'bg-[#050505] border-[#111] hover:border-[#222]'}`}>
+                      className={`p-3 rounded-lg border cursor-pointer flex items-center justify-between ${activeAgent?.id === a.id ? 'bg-[#0a1a0a] border-[#1a4a1a]' : 'bg-[var(--surface-canvas)] border-[#111] hover:border-[#222]'}`}>
                       <div className="flex flex-col">
                         <span className={`text-sm font-bold ${activeAgent?.id === a.id ? 'text-[#7EC87E]' : 'text-[#ccc]'}`}>{a.name || a.id}</span>
-                        <span className="text-[10px] text-[#555]">{a.category}</span>
+                        <span className="text-[10px] text-[var(--text-secondary)]">{a.category}</span>
                       </div>
                       {activeAgent?.id === a.id && <div className="w-2 h-2 rounded-full bg-[#7EC87E] animate-pulse" />}
                     </div>
@@ -140,30 +140,30 @@ export default function AgentOSInteract({ selectedAgents, assignedKB, teams, age
               )}
               {assignedKB && (
                 <div className="mt-6">
-                  <h3 className="text-xs font-bold text-[#555] mb-2 uppercase tracking-wider">Base de Conocimiento</h3>
+                  <h3 className="text-xs font-bold text-[var(--text-secondary)] mb-2 uppercase tracking-wider">Base de Conocimiento</h3>
                   <div className="p-2 bg-[#0a0a1a] border border-[#1a1a4a] text-[#8080ff] rounded text-xs font-bold truncate">{assignedKB.title}</div>
                 </div>
               )}
               {tools.length > 0 && activeAgent && (
                 <div className="mt-6">
-                  <h3 className="text-xs font-bold text-[#555] mb-2 uppercase tracking-wider">Tools Habilitadas</h3>
+                  <h3 className="text-xs font-bold text-[var(--text-secondary)] mb-2 uppercase tracking-wider">Tools Habilitadas</h3>
                   <div className="flex flex-wrap gap-1">
-                    {tools.map(t => <span key={t.name} className="px-2 py-1 bg-[#111] border border-[#222] rounded text-[10px] text-[#888]">{t.name}</span>)}
+                    {tools.map(t => <span key={t.name} className="px-2 py-1 bg-[#111] border border-[#222] rounded text-[10px] text-[var(--text-secondary)]">{t.name}</span>)}
                   </div>
                 </div>
               )}
             </>
           ) : (
             <>
-              <h3 className="text-xs font-bold text-[#555] mb-3 uppercase tracking-wider">Equipos Disponibles</h3>
+              <h3 className="text-xs font-bold text-[var(--text-secondary)] mb-3 uppercase tracking-wider">Equipos Disponibles</h3>
               {teams.length === 0 ? (
-                <div className="text-center text-xs text-[#555] mt-4">No has creado equipos. <button onClick={onGoToTeams} className="text-[#b060ff] hover:underline block mt-2">Ir a crear equipo</button></div>
+                <div className="text-center text-xs text-[var(--text-secondary)] mt-4">No has creado equipos. <button onClick={onGoToTeams} className="text-[#b060ff] hover:underline block mt-2">Ir a crear equipo</button></div>
               ) : (
                 <div className="flex flex-col gap-2">
                   <select 
                     value={activeTeamId || ''} 
                     onChange={e => { setActiveTeamId(e.target.value); localStorage.setItem('agentos_active_team_id', e.target.value); }}
-                    className="w-full bg-[#050505] border border-[#111] rounded p-2 text-sm text-[#ccc] outline-none focus:border-[#3a1a5e]"
+                    className="w-full bg-[var(--surface-canvas)] border border-[#111] rounded p-2 text-sm text-[#ccc] outline-none focus:border-[#3a1a5e]"
                   >
                     <option value="" disabled>Selecciona un equipo</option>
                     {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -176,7 +176,7 @@ export default function AgentOSInteract({ selectedAgents, assignedKB, teams, age
                         <div className="flex flex-wrap gap-1">
                           {activeTeam.agentIds.map(id => {
                             const a = agents.find(x => x.id === id);
-                            return <span key={id} className="px-2 py-1 bg-[#050505] border border-[#2a1040] rounded text-[10px] text-[#ccc]">{a?.name || id}</span>;
+                            return <span key={id} className="px-2 py-1 bg-[var(--surface-canvas)] border border-[#2a1040] rounded text-[10px] text-[#ccc]">{a?.name || id}</span>;
                           })}
                         </div>
                       </div>
@@ -189,27 +189,27 @@ export default function AgentOSInteract({ selectedAgents, assignedKB, teams, age
         </div>
         
         <div className="p-3 border-t border-[#111]">
-          <button onClick={mode === 'agent' ? onGoToSelect : onGoToTeams} className="w-full flex items-center justify-center gap-2 py-2 bg-[#050505] border border-[#111] rounded text-[#888] text-xs font-bold hover:bg-[#111] hover:text-[#ccc]">
+          <button onClick={mode === 'agent' ? onGoToSelect : onGoToTeams} className="w-full flex items-center justify-center gap-2 py-2 bg-[var(--surface-canvas)] border border-[#111] rounded text-[var(--text-secondary)] text-xs font-bold hover:bg-[#111] hover:text-[#ccc]">
             <ArrowLeft size={14} /> Volver a {mode === 'agent' ? 'Seleccionar' : 'Equipos'}
           </button>
         </div>
       </div>
 
       {/* CHAT CONSOLE */}
-      <div className="flex-1 flex flex-col bg-[#050505]">
+      <div className="flex-1 flex flex-col bg-[var(--surface-canvas)]">
         {/* Header */}
-        <div className="h-14 border-b border-[#111] flex items-center px-6 justify-between bg-[#080808]">
+        <div className="h-14 border-b border-[#111] flex items-center px-6 justify-between bg-[var(--surface-canvas)]">
           <div className="flex items-center gap-3">
             {mode === 'agent' && activeAgent ? (
-              <><Robot size={24} className="text-[#7EC87E]" /><span className="font-bold text-[#E0E0E0]">{activeAgent.name || activeAgent.id}</span><span className="px-2 py-0.5 bg-[#0a1a0a] border border-[#1a4a1a] text-[#7EC87E] text-[10px] rounded uppercase font-bold tracking-wider">Individual</span></>
+              <><Robot size={24} className="text-[#7EC87E]" /><span className="font-bold text-[var(--text-primary)]">{activeAgent.name || activeAgent.id}</span><span className="px-2 py-0.5 bg-[#0a1a0a] border border-[#1a4a1a] text-[#7EC87E] text-[10px] rounded uppercase font-bold tracking-wider">Individual</span></>
             ) : mode === 'team' && activeTeam ? (
-              <><UsersThree size={24} className="text-[#b060ff]" /><span className="font-bold text-[#E0E0E0]">{activeTeam.name}</span><span className="px-2 py-0.5 bg-[#1a0a2e] border border-[#3a1a5e] text-[#b060ff] text-[10px] rounded uppercase font-bold tracking-wider">Equipo Swarm</span></>
+              <><UsersThree size={24} className="text-[#b060ff]" /><span className="font-bold text-[var(--text-primary)]">{activeTeam.name}</span><span className="px-2 py-0.5 bg-[#1a0a2e] border border-[#3a1a5e] text-[#b060ff] text-[10px] rounded uppercase font-bold tracking-wider">Equipo Swarm</span></>
             ) : (
-              <span className="text-[#555] font-bold">Consola</span>
+              <span className="text-[var(--text-secondary)] font-bold">Consola</span>
             )}
           </div>
           {messages.length > 0 && (
-            <button onClick={() => setMessages([])} className="text-[#555] hover:text-[#fff] flex items-center gap-1 text-xs">
+            <button onClick={() => setMessages([])} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center gap-1 text-xs">
               <Trash size={14} /> Limpiar
             </button>
           )}
@@ -218,13 +218,13 @@ export default function AgentOSInteract({ selectedAgents, assignedKB, teams, age
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
           {!activeAgent && mode === 'agent' && (
-            <div className="flex-1 flex items-center justify-center text-[#555] flex-col gap-2">
+            <div className="flex-1 flex items-center justify-center text-[var(--text-secondary)] flex-col gap-2">
               <ArrowLeft size={24} />
               <p>Selecciona un agente desde el panel izquierdo</p>
             </div>
           )}
           {!activeTeam && mode === 'team' && (
-            <div className="flex-1 flex items-center justify-center text-[#555] flex-col gap-2">
+            <div className="flex-1 flex items-center justify-center text-[var(--text-secondary)] flex-col gap-2">
               <ArrowLeft size={24} />
               <p>Selecciona un equipo desde el panel izquierdo</p>
             </div>
@@ -248,7 +248,7 @@ export default function AgentOSInteract({ selectedAgents, assignedKB, teams, age
           ))}
           {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-[#050505] border border-[#111] px-4 py-3 rounded-xl rounded-bl-none text-[#555]">
+              <div className="bg-[var(--surface-canvas)] border border-[#111] px-4 py-3 rounded-xl rounded-bl-none text-[var(--text-secondary)]">
                 <span className="animate-pulse">•••</span>
               </div>
             </div>
@@ -257,8 +257,8 @@ export default function AgentOSInteract({ selectedAgents, assignedKB, teams, age
         </div>
 
         {/* Input */}
-        <div className="p-4 border-t border-[#111] bg-[#080808]">
-          <div className={`flex bg-[#050505] border rounded-xl overflow-hidden p-2 transition-colors focus-within:border-[#00D9FF] ${
+        <div className="p-4 border-t border-[#111] bg-[var(--surface-canvas)]">
+          <div className={`flex bg-[var(--surface-canvas)] border rounded-xl overflow-hidden p-2 transition-colors focus-within:border-[#00D9FF] ${
             (mode === 'agent' && !activeAgent) || (mode === 'team' && !activeTeam) ? 'opacity-50 pointer-events-none border-[#111]' : 'border-[#1a1a1a]'
           }`}>
             <textarea
@@ -293,3 +293,4 @@ export default function AgentOSInteract({ selectedAgents, assignedKB, teams, age
     </div>
   );
 }
+

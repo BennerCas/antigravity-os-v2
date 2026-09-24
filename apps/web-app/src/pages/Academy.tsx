@@ -382,40 +382,40 @@ export default function Academy() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#050505] text-[#E0E0E0] font-sans antialiased select-none">
+    <div className="flex flex-col min-h-screen bg-[var(--surface-canvas)] text-[var(--text-primary)] font-sans antialiased select-none">
       {/* Top Header */}
-      <header className="border-b border-[#1A1A1A] bg-[#0A0A0A]/80 backdrop-blur-md px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-30">
+      <header className="border-b border-[var(--stroke-subtle)] bg-[var(--surface-card)]/80 backdrop-blur-md px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-30">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#174A1F] to-[#0A1C0D] flex items-center justify-center border border-[#2B7836] shadow-lg shadow-[#174A1F]/30">
-            <GraduationCap size={24} weight="bold" className="text-[#86EFAC]" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#174A1F] to-[#0A1C0D] flex items-center justify-center border border-[var(--theme-border)]/50 shadow-lg shadow-[#174A1F]/30">
+            <GraduationCap size={24} weight="bold" className="text-[var(--text-primary)]" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold text-white tracking-wide uppercase">Antigravity Academy V3</h1>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#174A1F]/40 border border-[#2B7836]/60 text-[#86EFAC]">
+              <h1 className="text-base font-bold text-[var(--text-primary)] tracking-wide uppercase">Antigravity Academy V3</h1>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[var(--theme-border)]/20/40 border border-[var(--theme-border)]/50/60 text-[var(--text-primary)]">
                 PROD-LOS
               </span>
             </div>
-            <p className="text-xs text-[#71717A] font-mono">Learning Operating System & Verifiable Architecture Ledger</p>
+            <p className="text-xs text-[var(--text-secondary)] font-mono">Learning Operating System & Verifiable Architecture Ledger</p>
           </div>
         </div>
 
         {/* Global Context Indicator */}
-        <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#111111] border border-[#222222] text-xs font-mono text-[#A1A1AA]">
-          <Cpu size={14} className="text-[#86EFAC]" />
+        <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--surface-elevated)] border border-[var(--stroke-subtle)] text-xs font-mono text-[var(--text-secondary)]">
+          <Cpu size={14} className="text-[var(--text-primary)]" />
           <span>[Contexto Cargado: Arquitecto_Sistemas + Ingeniero_Fullstack + Auditor_Industrial]</span>
         </div>
 
         {/* Engine & Learner Controls */}
         <div className="flex items-center gap-3">
           <EngineIndicator />
-          <div className="flex items-center gap-3 bg-[#111111] border border-[#262626] rounded-full px-4 py-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#22C55E] animate-pulse" />
+          <div className="flex items-center gap-3 bg-[var(--surface-elevated)] border border-[var(--stroke-subtle)] rounded-full px-4 py-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-[var(--theme-border)] animate-pulse" />
             <div className="text-xs">
-              <span className="text-[#71717A]">Learner: </span>
-              <span className="text-white font-semibold font-mono">{currentUserId}</span>
+              <span className="text-[var(--text-secondary)]">Learner: </span>
+              <span className="text-[var(--text-primary)] font-semibold font-mono">{currentUserId}</span>
             </div>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-[#1A1A1A] text-[#86EFAC] font-mono uppercase font-bold border border-[#333333]">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--surface-elevated)] text-[var(--text-primary)] font-mono uppercase font-bold border border-[var(--stroke-subtle)]">
               {profile?.level || 'Foundation'}
             </span>
           </div>
@@ -423,7 +423,7 @@ export default function Academy() {
       </header>
 
       {/* Navigation Sub-Tabs */}
-      <div className="border-b border-[#1A1A1A] bg-[#0A0A0A] px-6 flex overflow-x-auto no-scrollbar gap-1">
+      <div className="border-b border-[var(--stroke-subtle)] bg-[var(--surface-card)] px-6 flex overflow-x-auto no-scrollbar gap-1">
         {[
           { id: 'hub', label: 'Hub General', icon: <Trophy size={16} /> },
           { id: 'tracks', label: 'Rutas & Misiones (18+2)', icon: <BookOpen size={16} /> },
@@ -440,8 +440,8 @@ export default function Academy() {
               onClick={() => setActiveTab(tab.id as AcademyTab)}
               className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold uppercase tracking-wider transition-all border-b-2 whitespace-nowrap ${
                 isActive
-                  ? 'border-[#22C55E] text-[#86EFAC] bg-[#174A1F]/15'
-                  : 'border-transparent text-[#71717A] hover:text-white hover:bg-[#141414]'
+                  ? 'border-[var(--theme-border)] text-[var(--text-primary)] bg-[var(--theme-border)]/20/15'
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-elevated)]'
               }`}
             >
               {tab.icon}
@@ -458,7 +458,7 @@ export default function Academy() {
             <Warning size={18} className="text-red-400" />
             <span>{errorMsg}</span>
           </div>
-          <button onClick={() => setErrorMsg(null)} className="p-1 hover:text-white">
+          <button onClick={() => setErrorMsg(null)} className="p-1 hover:text-[var(--text-primary)]">
             <X size={14} />
           </button>
         </div>
@@ -467,8 +467,8 @@ export default function Academy() {
       {/* Main Content Area */}
       <main className={`flex-1 overflow-y-auto ${activeTab === 'graph' && graphViewMode === '3d' ? 'p-3 flex flex-col' : 'p-6'}`}>
         {loading ? (
-          <div className="flex flex-col items-center justify-center min-h-[400px] gap-3 text-[#71717A]">
-            <ArrowsClockwise size={32} className="animate-spin text-[#22C55E]" />
+          <div className="flex flex-col items-center justify-center min-h-[400px] gap-3 text-[var(--text-secondary)]">
+            <ArrowsClockwise size={32} className="animate-spin text-[var(--theme-border)]" />
             <p className="text-xs font-mono">Sincronizando estado de aprendizaje y evidencias...</p>
           </div>
         ) : (
@@ -480,13 +480,13 @@ export default function Academy() {
                 <div className="p-6 rounded-2xl bg-gradient-to-r from-[#0F2012] via-[#081309] to-[#0D0D0D] border border-[#1E4D25] shadow-2xl relative overflow-hidden">
                   <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="space-y-2 max-w-2xl">
-                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#174A1F]/50 border border-[#2B7836] text-[11px] font-mono text-[#86EFAC]">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--theme-border)]/20/50 border border-[var(--theme-border)]/50 text-[11px] font-mono text-[var(--text-primary)]">
                         <Flame size={14} /> Antigravity Adaptive Curriculum
                       </div>
-                      <h2 className="text-2xl font-bold text-white tracking-tight">
+                      <h2 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">
                         Aprende Diseñando Arquitecturas Reales de IA
                       </h2>
-                      <p className="text-sm text-[#A1A1AA] leading-relaxed">
+                      <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
                         Progresa a través de 18 misiones estructuradas y 2 capstones industriales. Valida contratos de datos, inyecta fallos en el Failure Lab, calibra agentes autónomos y genera certificados respaldados por evidencias criptográficas SHA-256.
                       </p>
                     </div>
@@ -496,14 +496,14 @@ export default function Academy() {
                           const firstUnfinished = missions.find(m => !(profile?.completed_missions || []).includes(m.id)) || missions[0];
                           if (firstUnfinished) handleLaunchMission(firstUnfinished);
                         }}
-                        className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#22C55E] hover:bg-[#16A34A] text-black font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-[#22C55E]/20"
+                        className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[var(--theme-border)] hover:opacity-80 text-black font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-[#22C55E]/20"
                       >
                         <Play size={16} weight="fill" />
                         Continuar Aprendizaje
                       </button>
                       <button
                         onClick={() => setActiveTab('graph')}
-                        className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#171717] hover:bg-[#222222] border border-[#333333] text-white font-medium text-xs transition-all"
+                        className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#171717] hover:bg-[#222222] border border-[var(--stroke-subtle)] text-[var(--text-primary)] font-medium text-xs transition-all"
                       >
                         <Graph size={16} />
                         Ver Grafo de Habilidades
@@ -514,47 +514,47 @@ export default function Academy() {
 
                 {/* Metrics Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="p-4 rounded-xl bg-[#0D0D0D] border border-[#202020]">
-                    <span className="text-[11px] font-mono text-[#71717A] uppercase tracking-wider">Misiones Completadas</span>
+                  <div className="p-4 rounded-xl bg-[var(--surface-card)] border border-[var(--stroke-subtle)]">
+                    <span className="text-[11px] font-mono text-[var(--text-secondary)] uppercase tracking-wider">Misiones Completadas</span>
                     <div className="mt-2 flex items-baseline gap-2">
-                      <span className="text-2xl font-bold text-white font-mono">{profile?.completed_missions?.length || 0}</span>
-                      <span className="text-xs text-[#71717A]">/ 20</span>
+                      <span className="text-2xl font-bold text-[var(--text-primary)] font-mono">{profile?.completed_missions?.length || 0}</span>
+                      <span className="text-xs text-[var(--text-secondary)]">/ 20</span>
                     </div>
-                    <div className="mt-2 w-full bg-[#1A1A1A] h-1.5 rounded-full overflow-hidden">
+                    <div className="mt-2 w-full bg-[var(--surface-elevated)] h-1.5 rounded-full overflow-hidden">
                       <div
-                        className="bg-[#22C55E] h-full transition-all duration-500"
+                        className="bg-[var(--theme-border)] h-full transition-all duration-500"
                         style={{ width: `${Math.min(100, (((profile?.completed_missions?.length || 0) / 20) * 100))}%` }}
                       />
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-[#0D0D0D] border border-[#202020]">
-                    <span className="text-[11px] font-mono text-[#71717A] uppercase tracking-wider">Evidencias Ledger</span>
+                  <div className="p-4 rounded-xl bg-[var(--surface-card)] border border-[var(--stroke-subtle)]">
+                    <span className="text-[11px] font-mono text-[var(--text-secondary)] uppercase tracking-wider">Evidencias Ledger</span>
                     <div className="mt-2 flex items-baseline gap-2">
-                      <span className="text-2xl font-bold text-[#86EFAC] font-mono">{evidenceList.length}</span>
-                      <span className="text-xs text-[#71717A]">registros SHA-256</span>
+                      <span className="text-2xl font-bold text-[var(--text-primary)] font-mono">{evidenceList.length}</span>
+                      <span className="text-xs text-[var(--text-secondary)]">registros SHA-256</span>
                     </div>
                     <p className="mt-2 text-[10px] font-mono text-[#52525B]">100% Inmutables en SQLite WAL</p>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-[#0D0D0D] border border-[#202020]">
-                    <span className="text-[11px] font-mono text-[#71717A] uppercase tracking-wider">Certificaciones</span>
+                  <div className="p-4 rounded-xl bg-[var(--surface-card)] border border-[var(--stroke-subtle)]">
+                    <span className="text-[11px] font-mono text-[var(--text-secondary)] uppercase tracking-wider">Certificaciones</span>
                     <div className="mt-2 flex items-baseline gap-2">
-                      <span className="text-2xl font-bold text-white font-mono">{certifications.length}</span>
-                      <span className="text-xs text-[#71717A]">obtenidas</span>
+                      <span className="text-2xl font-bold text-[var(--text-primary)] font-mono">{certifications.length}</span>
+                      <span className="text-xs text-[var(--text-secondary)]">obtenidas</span>
                     </div>
                     <p className="mt-2 text-[10px] font-mono text-[#52525B]">Foundation · Practitioner · Expert</p>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-[#0D0D0D] border border-[#202020]">
-                    <span className="text-[11px] font-mono text-[#71717A] uppercase tracking-wider">Promedio de Dominio</span>
+                  <div className="p-4 rounded-xl bg-[var(--surface-card)] border border-[var(--stroke-subtle)]">
+                    <span className="text-[11px] font-mono text-[var(--text-secondary)] uppercase tracking-wider">Promedio de Dominio</span>
                     <div className="mt-2 flex items-baseline gap-2">
-                      <span className="text-2xl font-bold text-[#86EFAC] font-mono">
+                      <span className="text-2xl font-bold text-[var(--text-primary)] font-mono">
                         {masteryRecords.length > 0
                           ? Math.round((masteryRecords.reduce((acc, curr) => acc + curr.mastery_score, 0) / masteryRecords.length) * 100)
                           : 0}%
                       </span>
-                      <span className="text-xs text-[#71717A]">8 dimensiones</span>
+                      <span className="text-xs text-[var(--text-secondary)]">8 dimensiones</span>
                     </div>
                     <p className="mt-2 text-[10px] font-mono text-[#52525B]">Anti-Mock · Penalidad por Pistas</p>
                   </div>
@@ -563,10 +563,10 @@ export default function Academy() {
                 {/* Tracks Overview */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">Rutas de Maestría</h3>
+                    <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Rutas de Maestría</h3>
                     <button
                       onClick={() => setActiveTab('tracks')}
-                      className="text-xs text-[#22C55E] hover:underline flex items-center gap-1"
+                      className="text-xs text-[var(--theme-border)] hover:underline flex items-center gap-1"
                     >
                       Explorar todas las rutas <ArrowRight size={12} />
                     </button>
@@ -576,24 +576,24 @@ export default function Academy() {
                     {tracks.map((track) => (
                       <div
                         key={track.id}
-                        className="p-5 rounded-xl bg-[#0F0F0F] border border-[#222222] hover:border-[#333333] transition-all flex flex-col justify-between gap-4"
+                        className="p-5 rounded-xl bg-[var(--surface-card)] border border-[var(--stroke-subtle)] hover:border-[var(--stroke-subtle)] transition-all flex flex-col justify-between gap-4"
                       >
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[#1A1A1A] text-[#A1A1AA] border border-[#2A2A2A]">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-[var(--surface-elevated)] text-[var(--text-secondary)] border border-[var(--stroke-subtle)]">
                               Ruta 0{track.order}
                             </span>
-                            <span className="text-xs font-mono text-[#71717A]">{track.mission_count} misiones</span>
+                            <span className="text-xs font-mono text-[var(--text-secondary)]">{track.mission_count} misiones</span>
                           </div>
-                          <h4 className="text-base font-bold text-white">{track.title}</h4>
-                          <p className="text-xs text-[#A1A1AA] leading-relaxed">{track.description}</p>
+                          <h4 className="text-base font-bold text-[var(--text-primary)]">{track.title}</h4>
+                          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{track.description}</p>
                         </div>
                         <button
                           onClick={() => {
                             setSelectedTrackFilter(track.id);
                             setActiveTab('tracks');
                           }}
-                          className="flex items-center justify-center gap-2 py-2 rounded-lg bg-[#171717] hover:bg-[#202020] border border-[#2E2E2E] text-xs font-medium text-white transition-all"
+                          className="flex items-center justify-center gap-2 py-2 rounded-lg bg-[#171717] hover:bg-[#202020] border border-[#2E2E2E] text-xs font-medium text-[var(--text-primary)] transition-all"
                         >
                           Ver Misiones <ArrowRight size={12} />
                         </button>
@@ -608,18 +608,18 @@ export default function Academy() {
             {activeTab === 'tracks' && (
               <div className="space-y-6 max-w-7xl mx-auto">
                 {/* Filter Bar */}
-                <div className="flex items-center justify-between flex-wrap gap-4 border-b border-[#1A1A1A] pb-4">
+                <div className="flex items-center justify-between flex-wrap gap-4 border-b border-[var(--stroke-subtle)] pb-4">
                   <div>
-                    <h2 className="text-lg font-bold text-white">Catálogo de Misiones Profesionales</h2>
-                    <p className="text-xs text-[#71717A]">Aprende construyendo arquitecturas verificables en el Sandbox.</p>
+                    <h2 className="text-lg font-bold text-[var(--text-primary)]">Catálogo de Misiones Profesionales</h2>
+                    <p className="text-xs text-[var(--text-secondary)]">Aprende construyendo arquitecturas verificables en el Sandbox.</p>
                   </div>
                   <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
                     <button
                       onClick={() => setSelectedTrackFilter('all')}
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                         selectedTrackFilter === 'all'
-                          ? 'bg-[#22C55E] text-black font-bold'
-                          : 'bg-[#141414] text-[#A1A1AA] hover:text-white'
+                          ? 'bg-[var(--theme-border)] text-black font-bold'
+                          : 'bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                       }`}
                     >
                       Todas ({missions.length})
@@ -630,8 +630,8 @@ export default function Academy() {
                         onClick={() => setSelectedTrackFilter(t.id)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                           selectedTrackFilter === t.id
-                            ? 'bg-[#22C55E] text-black font-bold'
-                            : 'bg-[#141414] text-[#A1A1AA] hover:text-white'
+                            ? 'bg-[var(--theme-border)] text-black font-bold'
+                            : 'bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                         }`}
                       >
                         {t.title}
@@ -652,33 +652,33 @@ export default function Academy() {
                           className={`p-5 rounded-xl border flex flex-col justify-between gap-4 transition-all ${
                             isCompleted
                               ? 'bg-[#0A140C] border-[#1B4D22]'
-                              : 'bg-[#0D0D0D] border-[#222222] hover:border-[#383838]'
+                              : 'bg-[var(--surface-card)] border-[var(--stroke-subtle)] hover:border-[#383838]'
                           }`}
                         >
                           <div className="space-y-3">
                             <div className="flex items-center justify-between gap-2">
-                              <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-[#181818] text-[#86EFAC] border border-[#282828]">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-[var(--surface-elevated)] text-[var(--text-primary)] border border-[var(--stroke-subtle)]">
                                 {mission.difficulty}
                               </span>
-                              <div className="flex items-center gap-2 text-xs font-mono text-[#71717A]">
+                              <div className="flex items-center gap-2 text-xs font-mono text-[var(--text-secondary)]">
                                 <Clock size={12} />
                                 <span>{mission.estimated_minutes} min</span>
                                 {isCompleted && (
-                                  <span className="flex items-center gap-1 text-[#22C55E] font-bold">
+                                  <span className="flex items-center gap-1 text-[var(--theme-border)] font-bold">
                                     <CheckCircle size={14} weight="fill" /> Completada
                                   </span>
                                 )}
                               </div>
                             </div>
                             <div>
-                              <h4 className="text-sm font-bold text-white leading-snug">{mission.title}</h4>
+                              <h4 className="text-sm font-bold text-[var(--text-primary)] leading-snug">{mission.title}</h4>
                               <p className="text-xs text-[#999999] mt-1.5 line-clamp-2">{mission.problem_statement}</p>
                             </div>
 
                             {/* Skills trained */}
                             <div className="flex flex-wrap gap-1 mt-2">
                               {mission.skills_trained.slice(0, 3).map((s) => (
-                                <span key={s} className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#141414] text-[#A1A1AA] border border-[#222222]">
+                                <span key={s} className="px-2 py-0.5 rounded text-[10px] font-mono bg-[var(--surface-elevated)] text-[var(--text-secondary)] border border-[var(--stroke-subtle)]">
                                   {s}
                                 </span>
                               ))}
@@ -689,8 +689,8 @@ export default function Academy() {
                             onClick={() => handleLaunchMission(mission)}
                             className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
                               isCompleted
-                                ? 'bg-[#17301B] hover:bg-[#1C3E22] text-[#86EFAC] border border-[#2B6D36]'
-                                : 'bg-[#22C55E] hover:bg-[#16A34A] text-black shadow-md shadow-[#22C55E]/10'
+                                ? 'bg-[#17301B] hover:bg-[#1C3E22] text-[var(--text-primary)] border border-[#2B6D36]'
+                                : 'bg-[var(--theme-border)] hover:opacity-80 text-black shadow-md shadow-[#22C55E]/10'
                             }`}
                           >
                             <Play size={14} weight="fill" />
@@ -709,39 +709,39 @@ export default function Academy() {
                 {activeMission ? (
                   <>
                     {/* Sandbox Control Header */}
-                    <div className="p-4 rounded-xl bg-[#0D0D0D] border border-[#222222] flex flex-wrap items-center justify-between gap-4">
+                    <div className="p-4 rounded-xl bg-[var(--surface-card)] border border-[var(--stroke-subtle)] flex flex-wrap items-center justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#181818] text-[#86EFAC] border border-[#282828] uppercase">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[var(--surface-elevated)] text-[var(--text-primary)] border border-[var(--stroke-subtle)] uppercase">
                             Misión: {activeMission.id}
                           </span>
-                          <h2 className="text-sm font-bold text-white">{activeMission.title}</h2>
+                          <h2 className="text-sm font-bold text-[var(--text-primary)]">{activeMission.title}</h2>
                         </div>
-                        <p className="text-xs text-[#71717A] mt-0.5">{activeMission.problem_statement}</p>
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5">{activeMission.problem_statement}</p>
                       </div>
 
                       <div className="flex items-center gap-2">
                         <button
                           onClick={handleFlowSaveAndValidate}
                           disabled={isValidating}
-                          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#181818] hover:bg-[#222222] border border-[#333333] text-xs font-medium text-white transition-all"
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--surface-elevated)] hover:bg-[#222222] border border-[var(--stroke-subtle)] text-xs font-medium text-[var(--text-primary)] transition-all"
                         >
-                          <ShieldCheck size={16} className="text-[#86EFAC]" />
+                          <ShieldCheck size={16} className="text-[var(--text-primary)]" />
                           {isValidating ? 'Validando...' : 'Validar Flujo'}
                         </button>
 
                         <button
                           onClick={handleRunSimulation}
                           disabled={simRunning}
-                          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#181818] hover:bg-[#222222] border border-[#333333] text-xs font-medium text-white transition-all"
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--surface-elevated)] hover:bg-[#222222] border border-[var(--stroke-subtle)] text-xs font-medium text-[var(--text-primary)] transition-all"
                         >
-                          <Play size={16} className="text-[#22C55E]" />
+                          <Play size={16} className="text-[var(--theme-border)]" />
                           {simRunning ? 'Simulando...' : 'Ejecutar Simulación'}
                         </button>
 
                         <button
                           onClick={() => setShowReflectionModal(true)}
-                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#22C55E] hover:bg-[#16A34A] text-black font-bold text-xs uppercase tracking-wider transition-all"
+                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[var(--theme-border)] hover:opacity-80 text-black font-bold text-xs uppercase tracking-wider transition-all"
                         >
                           <CheckCircle size={16} weight="fill" />
                           Defender & Graduar
@@ -750,7 +750,7 @@ export default function Academy() {
                         <button
                           onClick={handleCloneToWorkspace}
                           title="Promover a Producción"
-                          className="p-2 rounded-lg bg-[#181818] hover:bg-[#222222] border border-[#333333] text-white"
+                          className="p-2 rounded-lg bg-[var(--surface-elevated)] hover:bg-[#222222] border border-[var(--stroke-subtle)] text-[var(--text-primary)]"
                         >
                           <GitFork size={16} />
                         </button>
@@ -760,7 +760,7 @@ export default function Academy() {
                     {/* Main Sandbox Layout: Left Canvas, Right Panels */}
                     <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-3 min-h-0">
                       {/* React Flow Canvas (3 cols) */}
-                      <div className="lg:col-span-3 rounded-xl border border-[#222222] bg-[#080808] relative overflow-hidden flex flex-col">
+                      <div className="lg:col-span-3 rounded-xl border border-[var(--stroke-subtle)] bg-[var(--surface-canvas)] relative overflow-hidden flex flex-col">
                         <ReactFlowProvider>
                           <ReactFlow
                             nodes={rfNodes}
@@ -768,32 +768,32 @@ export default function Academy() {
                             nodeTypes={nodeTypes}
                             onConnect={onConnect}
                             fitView
-                            className="bg-[#050505]"
+                            className="bg-[var(--surface-canvas)]"
                           >
                             <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="#222222" />
-                            <Controls className="bg-[#111111] border border-[#2A2A2A] text-white fill-white" />
+                            <Controls className="bg-[var(--surface-elevated)] border border-[var(--stroke-subtle)] text-[var(--text-primary)] fill-white" />
                             <MiniMap
                               nodeStrokeColor="#22C55E"
                               nodeColor="#111111"
-                              className="bg-[#0A0A0A] border border-[#2A2A2A]"
+                              className="bg-[var(--surface-card)] border border-[var(--stroke-subtle)]"
                             />
                           </ReactFlow>
                         </ReactFlowProvider>
 
                         {/* In-Canvas Bottom Drawer: Simulation & Findings */}
-                        <div className="absolute bottom-3 left-3 right-3 bg-[#0D0D0D]/90 backdrop-blur-md border border-[#222222] rounded-xl p-3 max-h-40 overflow-y-auto flex flex-col gap-2 shadow-2xl">
+                        <div className="absolute bottom-3 left-3 right-3 bg-[var(--surface-card)]/90 backdrop-blur-md border border-[var(--stroke-subtle)] rounded-xl p-3 max-h-40 overflow-y-auto flex flex-col gap-2 shadow-2xl">
                           <div className="flex items-center justify-between text-xs font-mono">
-                            <span className="text-[#A1A1AA] font-bold flex items-center gap-2">
+                            <span className="text-[var(--text-secondary)] font-bold flex items-center gap-2">
                               <ShieldWarning size={14} className="text-[#FBBF24]" />
                               Hallazgos de Validación ({validationFindings.length})
                             </span>
-                            <span className="text-[10px] text-[#71717A]">
+                            <span className="text-[10px] text-[var(--text-secondary)]">
                               {validationFindings.filter(f => f.severity === 'blocking').length} Bloqueadores
                             </span>
                           </div>
 
                           {validationFindings.length === 0 ? (
-                            <div className="text-xs text-[#22C55E] flex items-center gap-1.5 font-mono">
+                            <div className="text-xs text-[var(--theme-border)] flex items-center gap-1.5 font-mono">
                               <CheckCircle size={14} /> Flujo topológicamente correcto y alineado a contratos.
                             </div>
                           ) : (
@@ -808,7 +808,7 @@ export default function Academy() {
                                   }`}
                                 >
                                   <span>[{f.code}] {f.message}</span>
-                                  <span className="text-[10px] text-zinc-400 underline cursor-help" title={f.suggested_action}>
+                                  <span className="text-[10px] text-[var(--text-secondary)] underline cursor-help" title={f.suggested_action}>
                                     Acción sugerida
                                   </span>
                                 </div>
@@ -817,27 +817,27 @@ export default function Academy() {
                           )}
 
                           {simResult && (
-                            <div className="mt-1 pt-2 border-t border-[#222222] text-[11px] font-mono flex items-center justify-between">
-                              <span className="text-zinc-300">
+                            <div className="mt-1 pt-2 border-t border-[var(--stroke-subtle)] text-[11px] font-mono flex items-center justify-between">
+                              <span className="text-[var(--text-secondary)]">
                                 Estado Simulación: <strong className={simResult.status === 'success' ? 'text-green-400' : 'text-red-400'}>{simResult.status}</strong> ({simResult.execution_trace?.length || 0} pasos)
                               </span>
-                              <span className="text-zinc-500">{simResult.duration_ms}ms</span>
+                              <span className="text-[var(--text-secondary)]">{simResult.duration_ms}ms</span>
                             </div>
                           )}
                         </div>
                       </div>
 
                       {/* Right Panel: Hints, Copilot & Chaos Lab (1 col) */}
-                      <div className="rounded-xl border border-[#222222] bg-[#0D0D0D] flex flex-col overflow-hidden">
+                      <div className="rounded-xl border border-[var(--stroke-subtle)] bg-[var(--surface-card)] flex flex-col overflow-hidden">
                         {/* Panel Selector */}
-                        <div className="p-3 border-b border-[#1F1F1F] bg-[#111111] flex items-center justify-between text-xs font-bold uppercase tracking-wider">
-                          <span className="flex items-center gap-1.5 text-white">
-                            <ChatCircleDots size={16} className="text-[#22C55E]" /> Copilot & Pistas
+                        <div className="p-3 border-b border-[var(--stroke-subtle)] bg-[var(--surface-elevated)] flex items-center justify-between text-xs font-bold uppercase tracking-wider">
+                          <span className="flex items-center gap-1.5 text-[var(--text-primary)]">
+                            <ChatCircleDots size={16} className="text-[var(--theme-border)]" /> Copilot & Pistas
                           </span>
                           <select
                             value={copilotRole}
                             onChange={(e) => setCopilotRole(e.target.value as CopilotRole)}
-                            className="bg-[#1C1C1C] border border-[#333333] rounded px-2 py-1 text-[11px] text-[#A1A1AA] outline-none"
+                            className="bg-[var(--surface-elevated)] border border-[var(--stroke-subtle)] rounded px-2 py-1 text-[11px] text-[var(--text-secondary)] outline-none"
                           >
                             <option value="socratic_guide">Guía Socrático</option>
                             <option value="code_architect">Arquitecto</option>
@@ -848,9 +848,9 @@ export default function Academy() {
                         </div>
 
                         {/* Hint Ladder Section */}
-                        <div className="p-3 border-b border-[#1F1F1F] bg-[#0A0A0A] space-y-2">
+                        <div className="p-3 border-b border-[var(--stroke-subtle)] bg-[var(--surface-card)] space-y-2">
                           <div className="flex items-center justify-between text-[11px] font-mono">
-                            <span className="text-[#A1A1AA]">Escalera de Pistas (Penaliza Score)</span>
+                            <span className="text-[var(--text-secondary)]">Escalera de Pistas (Penaliza Score)</span>
                             <span className="text-yellow-500 text-[10px]">Anti-Mock</span>
                           </div>
                           <div className="flex gap-1.5">
@@ -862,8 +862,8 @@ export default function Academy() {
                                   onClick={() => handleUnlockHint(lvl)}
                                   className={`flex-1 py-1 rounded text-[10px] font-mono font-bold uppercase transition-all ${
                                     isUnlocked
-                                      ? 'bg-[#1E3B22] text-[#86EFAC] border border-[#2D6A35]'
-                                      : 'bg-[#181818] text-[#71717A] hover:text-white border border-[#2A2A2A]'
+                                      ? 'bg-[#1E3B22] text-[var(--text-primary)] border border-[var(--theme-border)]/50'
+                                      : 'bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--stroke-subtle)]'
                                   }`}
                                 >
                                   L{lvl}
@@ -872,16 +872,16 @@ export default function Academy() {
                             })}
                           </div>
                           {activeHintContent && (
-                            <div className="p-2 rounded bg-[#171717] border border-[#2B2B2B] text-[11px] text-[#A1A1AA] font-mono leading-tight">
+                            <div className="p-2 rounded bg-[#171717] border border-[var(--stroke-subtle)] text-[11px] text-[var(--text-secondary)] font-mono leading-tight">
                               {activeHintContent}
                             </div>
                           )}
                         </div>
 
                         {/* Failure Lab Fast Injector */}
-                        <div className="p-3 border-b border-[#1F1F1F] bg-[#0A0A0A] space-y-2">
+                        <div className="p-3 border-b border-[var(--stroke-subtle)] bg-[var(--surface-card)] space-y-2">
                           <div className="flex items-center justify-between text-[11px] font-mono">
-                            <span className="text-[#A1A1AA] flex items-center gap-1">
+                            <span className="text-[var(--text-secondary)] flex items-center gap-1">
                               <Bug size={13} className="text-red-400" /> Inyectar Caos
                             </span>
                           </div>
@@ -914,39 +914,39 @@ export default function Academy() {
                               key={idx}
                               className={`p-2.5 rounded-lg leading-relaxed ${
                                 item.role === 'assistant'
-                                  ? 'bg-[#151515] text-[#D4D4D8] border border-[#222222]'
-                                  : 'bg-[#18341D] text-[#86EFAC] border border-[#26532E] ml-4'
+                                  ? 'bg-[var(--surface-card)] text-[#D4D4D8] border border-[var(--stroke-subtle)]'
+                                  : 'bg-[var(--theme-border)]/20 text-[var(--text-primary)] border border-[var(--theme-border)]/50 ml-4'
                               }`}
                             >
                               <div>{item.text}</div>
                               {item.action && (
-                                <div className="mt-1.5 pt-1.5 border-t border-[#2A2A2A] text-[10px] text-yellow-300">
+                                <div className="mt-1.5 pt-1.5 border-t border-[var(--stroke-subtle)] text-[10px] text-yellow-300">
                                   Paso sugerido: {item.action}
                                 </div>
                               )}
                             </div>
                           ))}
                           {isCopilotLoading && (
-                            <div className="p-2 text-zinc-500 flex items-center gap-2">
+                            <div className="p-2 text-[var(--text-secondary)] flex items-center gap-2">
                               <ArrowsClockwise size={12} className="animate-spin" /> Analizando arquitectura...
                             </div>
                           )}
                         </div>
 
                         {/* Copilot Input */}
-                        <div className="p-2 border-t border-[#1F1F1F] bg-[#111111] flex gap-2">
+                        <div className="p-2 border-t border-[var(--stroke-subtle)] bg-[var(--surface-elevated)] flex gap-2">
                           <input
                             type="text"
                             value={copilotInput}
                             onChange={(e) => setCopilotInput(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSendCopilot()}
                             placeholder="Pregunta al Copilot Pedagógico..."
-                            className="flex-1 bg-[#181818] border border-[#2B2B2B] rounded px-2.5 py-1.5 text-xs text-white outline-none focus:border-[#22C55E]"
+                            className="flex-1 bg-[var(--surface-elevated)] border border-[var(--stroke-subtle)] rounded px-2.5 py-1.5 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--theme-border)]"
                           />
                           <button
                             onClick={handleSendCopilot}
                             disabled={isCopilotLoading || !copilotInput.trim()}
-                            className="px-3 py-1.5 rounded bg-[#22C55E] hover:bg-[#16A34A] text-black font-bold text-xs"
+                            className="px-3 py-1.5 rounded bg-[var(--theme-border)] hover:opacity-80 text-black font-bold text-xs"
                           >
                             Enviar
                           </button>
@@ -955,12 +955,12 @@ export default function Academy() {
                     </div>
                   </>
                 ) : (
-                  <div className="flex flex-col items-center justify-center flex-1 text-[#71717A] gap-4">
+                  <div className="flex flex-col items-center justify-center flex-1 text-[var(--text-secondary)] gap-4">
                     <BookOpen size={48} className="text-[#333333]" />
                     <p className="text-sm">Selecciona una misión del catálogo para cargar el Sandbox de aprendizaje.</p>
                     <button
                       onClick={() => setActiveTab('tracks')}
-                      className="px-4 py-2 rounded-lg bg-[#22C55E] text-black font-bold text-xs"
+                      className="px-4 py-2 rounded-lg bg-[var(--theme-border)] text-black font-bold text-xs"
                     >
                       Ver Catálogo de Misiones
                     </button>
@@ -972,21 +972,21 @@ export default function Academy() {
             {/* 4. SKILL GRAPH & MASTERY TAB */}
             {activeTab === 'graph' && (
               <div className={`w-full flex-1 flex flex-col ${graphViewMode === '3d' ? 'h-full space-y-3' : 'max-w-7xl mx-auto space-y-6'}`}>
-                <div className="border-b border-[#1A1A1A] pb-4 flex flex-col gap-2">
+                <div className="border-b border-[var(--stroke-subtle)] pb-4 flex flex-col gap-2">
                   <div className="flex flex-wrap items-center justify-start gap-6">
-                    <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                      <Graph size={20} className="text-[#22C55E]" />
+                    <h2 className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
+                      <Graph size={20} className="text-[var(--theme-border)]" />
                       Grafo de Habilidades & Maestría Multidimensional
                     </h2>
                     
                     {/* View Mode Switcher: 3D Holographic Sphere vs 2D Grid */}
-                    <div className="flex items-center gap-1 bg-[#111111] p-1 rounded-xl border border-[#222222] font-mono text-xs">
+                    <div className="flex items-center gap-1 bg-[var(--surface-elevated)] p-1 rounded-xl border border-[var(--stroke-subtle)] font-mono text-xs">
                       <button
                         onClick={() => setGraphViewMode('3d')}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all ${
                           graphViewMode === '3d'
-                            ? 'bg-[#174A1F] text-[#86EFAC] shadow-md border border-[#2B7836]'
-                            : 'text-[#71717A] hover:text-white'
+                            ? 'bg-[var(--theme-border)]/20 text-[var(--text-primary)] shadow-md border border-[var(--theme-border)]/50'
+                            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                         }`}
                       >
                         <Sparkle size={14} weight="bold" />
@@ -996,8 +996,8 @@ export default function Academy() {
                         onClick={() => setGraphViewMode('grid')}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all ${
                           graphViewMode === 'grid'
-                            ? 'bg-[#174A1F] text-[#86EFAC] shadow-md border border-[#2B7836]'
-                            : 'text-[#71717A] hover:text-white'
+                            ? 'bg-[var(--theme-border)]/20 text-[var(--text-primary)] shadow-md border border-[var(--theme-border)]/50'
+                            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                         }`}
                       >
                         <BookOpen size={14} />
@@ -1005,7 +1005,7 @@ export default function Academy() {
                       </button>
                     </div>
                   </div>
-                  <p className="text-xs text-[#71717A] mt-0.5">
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                     Evaluación en 8 dimensiones: Corrección, Independencia, Transferencia, Confiabilidad, Comprensión, Consistencia, Complejidad y Seguridad.
                   </p>
                 </div>
@@ -1081,29 +1081,29 @@ export default function Academy() {
                             })}
                             className={`p-4 rounded-xl border cursor-pointer transition-all ${
                               selectedSkillForDetail?.skill_id === skill.id
-                                ? 'bg-[#152B1A] border-[#22C55E]'
-                                : 'bg-[#0D0D0D] border-[#202020] hover:border-[#333333]'
+                                ? 'bg-[var(--theme-border)]/20 border-[var(--theme-border)]'
+                                : 'bg-[var(--surface-card)] border-[var(--stroke-subtle)] hover:border-[var(--stroke-subtle)]'
                             }`}
                           >
                             <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-mono text-[#71717A] uppercase">{skill.category}</span>
+                              <span className="text-[10px] font-mono text-[var(--text-secondary)] uppercase">{skill.category}</span>
                               <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
-                                state === 'MASTERED' ? 'bg-[#174A1F] text-[#86EFAC]' :
+                                state === 'MASTERED' ? 'bg-[var(--theme-border)]/20 text-[var(--text-primary)]' :
                                 state === 'INDEPENDENT' ? 'bg-blue-950 text-blue-300' :
                                 state === 'COMPETENT' ? 'bg-cyan-950 text-cyan-300' :
                                 state === 'NOVICE' ? 'bg-yellow-950 text-yellow-300' :
-                                'bg-[#1A1A1A] text-zinc-500'
+                                'bg-[var(--surface-elevated)] text-[var(--text-secondary)]'
                               }`}>
                                 {state}
                               </span>
                             </div>
-                            <h4 className="text-sm font-bold text-white mt-1.5">{skill.name}</h4>
+                            <h4 className="text-sm font-bold text-[var(--text-primary)] mt-1.5">{skill.name}</h4>
                             <div className="mt-3 flex items-center justify-between text-xs font-mono">
-                              <span className="text-[#71717A]">Puntaje:</span>
-                              <span className="text-white font-bold">{score}%</span>
+                              <span className="text-[var(--text-secondary)]">Puntaje:</span>
+                              <span className="text-[var(--text-primary)] font-bold">{score}%</span>
                             </div>
-                            <div className="mt-1 w-full bg-[#1A1A1A] h-1 rounded-full overflow-hidden">
-                              <div className="bg-[#22C55E] h-full" style={{ width: `${score}%` }} />
+                            <div className="mt-1 w-full bg-[var(--surface-elevated)] h-1 rounded-full overflow-hidden">
+                              <div className="bg-[var(--theme-border)] h-full" style={{ width: `${score}%` }} />
                             </div>
                           </div>
                         );
@@ -1112,16 +1112,16 @@ export default function Academy() {
                   </div>
 
                   {/* Right: Dimension Radar / Inspector */}
-                  <div className="p-5 rounded-xl bg-[#0D0D0D] border border-[#222222] space-y-4">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  <div className="p-5 rounded-xl bg-[var(--surface-card)] border border-[var(--stroke-subtle)] space-y-4">
+                    <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">
                       Desglose de Dimensiones
                     </h3>
                     {selectedSkillForDetail ? (
                       <div className="space-y-3 font-mono text-xs">
-                        <div className="border-b border-[#202020] pb-2">
-                          <span className="text-[10px] text-[#71717A] uppercase">Habilidad Seleccionada</span>
-                          <h4 className="text-base font-bold text-white mt-0.5">{selectedSkillForDetail.skill_id}</h4>
-                          <span className="text-xs text-[#22C55E]">Estado: {selectedSkillForDetail.state}</span>
+                        <div className="border-b border-[var(--stroke-subtle)] pb-2">
+                          <span className="text-[10px] text-[var(--text-secondary)] uppercase">Habilidad Seleccionada</span>
+                          <h4 className="text-base font-bold text-[var(--text-primary)] mt-0.5">{selectedSkillForDetail.skill_id}</h4>
+                          <span className="text-xs text-[var(--theme-border)]">Estado: {selectedSkillForDetail.state}</span>
                         </div>
 
                         {[
@@ -1136,17 +1136,17 @@ export default function Academy() {
                         ].map((dim) => (
                           <div key={dim.key} className="space-y-1">
                             <div className="flex justify-between text-[11px]">
-                              <span className="text-[#A1A1AA]">{dim.label}</span>
-                              <span className="text-white font-bold">{Math.round(dim.val * 100)}%</span>
+                              <span className="text-[var(--text-secondary)]">{dim.label}</span>
+                              <span className="text-[var(--text-primary)] font-bold">{Math.round(dim.val * 100)}%</span>
                             </div>
-                            <div className="w-full bg-[#1A1A1A] h-1.5 rounded-full overflow-hidden">
-                              <div className="bg-[#22C55E] h-full" style={{ width: `${Math.round(dim.val * 100)}%` }} />
+                            <div className="w-full bg-[var(--surface-elevated)] h-1.5 rounded-full overflow-hidden">
+                              <div className="bg-[var(--theme-border)] h-full" style={{ width: `${Math.round(dim.val * 100)}%` }} />
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-[#71717A]">Haz clic en cualquier habilidad para inspeccionar sus 8 dimensiones de dominio.</p>
+                      <p className="text-xs text-[var(--text-secondary)]">Haz clic en cualquier habilidad para inspeccionar sus 8 dimensiones de dominio.</p>
                     )}
                   </div>
                 </div>
@@ -1159,17 +1159,17 @@ export default function Academy() {
             {/* 5. DRIFT STUDIO TAB */}
             {activeTab === 'drift' && (
               <div className="space-y-6 max-w-7xl mx-auto">
-                <div className="border-b border-[#1A1A1A] pb-4 flex items-center justify-between">
+                <div className="border-b border-[var(--stroke-subtle)] pb-4 flex items-center justify-between">
                   <div>
-                    <h2 className="text-lg font-bold text-white">Drift Studio: Architecture vs. Implementation</h2>
-                    <p className="text-xs text-[#71717A]">
+                    <h2 className="text-lg font-bold text-[var(--text-primary)]">Drift Studio: Architecture vs. Implementation</h2>
+                    <p className="text-xs text-[var(--text-secondary)]">
                       Diferencial estricto entre el Architecture Spec formal y el Builder Flow. Detecta pasos faltantes, omisión de revisión humana y políticas de error descartadas.
                     </p>
                   </div>
                   <button
                     onClick={handleCompareDrift}
                     disabled={driftAnalyzing}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#22C55E] hover:bg-[#16A34A] text-black font-bold text-xs uppercase tracking-wider"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--theme-border)] hover:opacity-80 text-black font-bold text-xs uppercase tracking-wider"
                   >
                     <GitFork size={16} />
                     {driftAnalyzing ? 'Analizando...' : 'Ejecutar Análisis de Drift'}
@@ -1178,31 +1178,31 @@ export default function Academy() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-mono text-[#A1A1AA] font-bold">Architecture Specification (Spec)</label>
+                    <label className="text-xs font-mono text-[var(--text-secondary)] font-bold">Architecture Specification (Spec)</label>
                     <textarea
                       value={driftSpecJson}
                       onChange={(e) => setDriftSpecJson(e.target.value)}
                       rows={12}
-                      className="w-full bg-[#0D0D0D] border border-[#222222] rounded-xl p-3 text-xs font-mono text-white outline-none focus:border-[#22C55E]"
+                      className="w-full bg-[var(--surface-card)] border border-[var(--stroke-subtle)] rounded-xl p-3 text-xs font-mono text-[var(--text-primary)] outline-none focus:border-[var(--theme-border)]"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs font-mono text-[#A1A1AA] font-bold">Builder Flow Real (Implementation)</label>
+                    <label className="text-xs font-mono text-[var(--text-secondary)] font-bold">Builder Flow Real (Implementation)</label>
                     <textarea
                       value={driftBuilderJson}
                       onChange={(e) => setDriftBuilderJson(e.target.value)}
                       rows={12}
-                      className="w-full bg-[#0D0D0D] border border-[#222222] rounded-xl p-3 text-xs font-mono text-white outline-none focus:border-[#22C55E]"
+                      className="w-full bg-[var(--surface-card)] border border-[var(--stroke-subtle)] rounded-xl p-3 text-xs font-mono text-[var(--text-primary)] outline-none focus:border-[var(--theme-border)]"
                     />
                   </div>
                 </div>
 
                 {/* Drift Results Display */}
                 {driftResult && (
-                  <div className="p-5 rounded-xl bg-[#0D0D0D] border border-[#222222] space-y-3">
+                  <div className="p-5 rounded-xl bg-[var(--surface-card)] border border-[var(--stroke-subtle)] space-y-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-white">Resultado del Análisis de Drift</h3>
+                      <h3 className="text-sm font-bold text-[var(--text-primary)]">Resultado del Análisis de Drift</h3>
                       <span className={`px-2.5 py-1 rounded text-xs font-mono font-bold ${
                         driftResult.is_compliant ? 'bg-green-950 text-green-300 border border-green-800' : 'bg-red-950 text-red-300 border border-red-800'
                       }`}>
@@ -1212,10 +1212,10 @@ export default function Academy() {
 
                     <div className="space-y-2">
                       {driftResult.drifts.map((d, idx) => (
-                        <div key={idx} className="p-3 rounded-lg bg-[#141414] border border-[#2A2A2A] text-xs font-mono flex items-start justify-between gap-4">
+                        <div key={idx} className="p-3 rounded-lg bg-[var(--surface-elevated)] border border-[var(--stroke-subtle)] text-xs font-mono flex items-start justify-between gap-4">
                           <div>
-                            <span className="text-red-400 font-bold">[{d.type}]</span> <span className="text-white">{d.description}</span>
-                            <div className="text-[11px] text-[#A1A1AA] mt-1">Sugerencia: {d.suggested_action}</div>
+                            <span className="text-red-400 font-bold">[{d.type}]</span> <span className="text-[var(--text-primary)]">{d.description}</span>
+                            <div className="text-[11px] text-[var(--text-secondary)] mt-1">Sugerencia: {d.suggested_action}</div>
                           </div>
                           <span className="px-2 py-0.5 rounded text-[10px] uppercase bg-red-900/40 text-red-300 border border-red-800">
                             {d.severity}
@@ -1231,9 +1231,9 @@ export default function Academy() {
             {/* 6. CERTIFICATIONS CENTER TAB */}
             {activeTab === 'certifications' && (
               <div className="space-y-6 max-w-7xl mx-auto">
-                <div className="border-b border-[#1A1A1A] pb-4">
-                  <h2 className="text-lg font-bold text-white">Centro de Certificaciones Profesionales</h2>
-                  <p className="text-xs text-[#71717A]">
+                <div className="border-b border-[var(--stroke-subtle)] pb-4">
+                  <h2 className="text-lg font-bold text-[var(--text-primary)]">Centro de Certificaciones Profesionales</h2>
+                  <p className="text-xs text-[var(--text-secondary)]">
                     Emisión y validación criptográfica de credenciales técnicas auditables mediante token AG-CERT.
                   </p>
                 </div>
@@ -1247,20 +1247,20 @@ export default function Academy() {
                   ].map((cert) => {
                     const isOwned = certifications.some(c => c.level === cert.level);
                     return (
-                      <div key={cert.level} className="p-6 rounded-2xl bg-[#0D0D0D] border border-[#222222] flex flex-col justify-between gap-4">
+                      <div key={cert.level} className="p-6 rounded-2xl bg-[var(--surface-card)] border border-[var(--stroke-subtle)] flex flex-col justify-between gap-4">
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase bg-[#181818] text-[#A1A1AA] border border-[#282828]">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase bg-[var(--surface-elevated)] text-[var(--text-secondary)] border border-[var(--stroke-subtle)]">
                               Nivel {cert.level}
                             </span>
-                            {isOwned && <span className="text-xs text-[#22C55E] font-bold">Emitida</span>}
+                            {isOwned && <span className="text-xs text-[var(--theme-border)] font-bold">Emitida</span>}
                           </div>
-                          <h3 className="text-base font-bold text-white">{cert.title}</h3>
-                          <p className="text-xs text-[#71717A]">{cert.req}</p>
+                          <h3 className="text-base font-bold text-[var(--text-primary)]">{cert.title}</h3>
+                          <p className="text-xs text-[var(--text-secondary)]">{cert.req}</p>
                         </div>
                         <button
                           onClick={() => handleIssueCert(cert.level)}
-                          className="w-full py-2.5 rounded-lg bg-[#1C1C1C] hover:bg-[#252525] border border-[#333333] text-xs font-bold text-white transition-all uppercase tracking-wider"
+                          className="w-full py-2.5 rounded-lg bg-[var(--surface-elevated)] hover:bg-[var(--surface-elevated)] border border-[var(--stroke-subtle)] text-xs font-bold text-[var(--text-primary)] transition-all uppercase tracking-wider"
                         >
                           Auditar & Reclamar
                         </button>
@@ -1270,25 +1270,25 @@ export default function Academy() {
                 </div>
 
                 {/* Verification Box */}
-                <div className="p-6 rounded-2xl bg-[#0D0D0D] border border-[#222222] space-y-4">
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">Verificador Público de Token</h3>
+                <div className="p-6 rounded-2xl bg-[var(--surface-card)] border border-[var(--stroke-subtle)] space-y-4">
+                  <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Verificador Público de Token</h3>
                   <div className="flex gap-2">
                     <input
                       type="text"
                       value={verifyTokenInput}
                       onChange={(e) => setVerifyTokenInput(e.target.value)}
                       placeholder="Pega el token AG-CERT-... para auditar su validez criptográfica"
-                      className="flex-1 bg-[#141414] border border-[#262626] rounded-xl px-4 py-2 text-xs font-mono text-white outline-none focus:border-[#22C55E]"
+                      className="flex-1 bg-[var(--surface-elevated)] border border-[var(--stroke-subtle)] rounded-xl px-4 py-2 text-xs font-mono text-[var(--text-primary)] outline-none focus:border-[var(--theme-border)]"
                     />
                     <button
                       onClick={handleVerifyToken}
-                      className="px-5 py-2 rounded-xl bg-[#22C55E] hover:bg-[#16A34A] text-black font-bold text-xs"
+                      className="px-5 py-2 rounded-xl bg-[var(--theme-border)] hover:opacity-80 text-black font-bold text-xs"
                     >
                       Verificar
                     </button>
                   </div>
                   {tokenVerifyResult && (
-                    <div className="p-4 rounded-xl bg-[#141414] border border-[#2A2A2A] text-xs font-mono">
+                    <div className="p-4 rounded-xl bg-[var(--surface-elevated)] border border-[var(--stroke-subtle)] text-xs font-mono">
                       <pre>{JSON.stringify(tokenVerifyResult, null, 2)}</pre>
                     </div>
                   )}
@@ -1299,10 +1299,10 @@ export default function Academy() {
             {/* 7. PORTFOLIO LEDGER TAB */}
             {activeTab === 'portfolio' && (
               <div className="space-y-6 max-w-7xl mx-auto">
-                <div className="border-b border-[#1A1A1A] pb-4 flex items-center justify-between">
+                <div className="border-b border-[var(--stroke-subtle)] pb-4 flex items-center justify-between">
                   <div>
-                    <h2 className="text-lg font-bold text-white">Portfolio Ledger Público</h2>
-                    <p className="text-xs text-[#71717A]">
+                    <h2 className="text-lg font-bold text-[var(--text-primary)]">Portfolio Ledger Público</h2>
+                    <p className="text-xs text-[var(--text-secondary)]">
                       Arquitecturas aprobadas, cadenas de hash de evidencias y firmas digitales para evaluación técnica.
                     </p>
                   </div>
@@ -1312,29 +1312,29 @@ export default function Academy() {
                       setPortfolio(res);
                       alert('Portfolio compilado con las últimas evidencias.');
                     }}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#22C55E] text-black font-bold text-xs uppercase tracking-wider"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--theme-border)] text-black font-bold text-xs uppercase tracking-wider"
                   >
                     <ArrowsClockwise size={16} /> Compilar Portfolio
                   </button>
                 </div>
 
-                <div className="p-6 rounded-2xl bg-[#0D0D0D] border border-[#222222] space-y-6">
+                <div className="p-6 rounded-2xl bg-[var(--surface-card)] border border-[var(--stroke-subtle)] space-y-6">
                   <div>
-                    <span className="text-[10px] font-mono text-[#71717A] uppercase">Firma Digital del Portfolio</span>
-                    <h3 className="text-sm font-bold text-white mt-1">{portfolio?.signature || 'HUMAN AI SYNERGY BY BENNER CASTILLO - 2026®'}</h3>
+                    <span className="text-[10px] font-mono text-[var(--text-secondary)] uppercase">Firma Digital del Portfolio</span>
+                    <h3 className="text-sm font-bold text-[var(--text-primary)] mt-1">{portfolio?.signature || 'HUMAN AI SYNERGY BY BENNER CASTILLO - 2026®'}</h3>
                   </div>
 
                   {/* Evidence Items */}
                   <div className="space-y-3">
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono">Cadenas de Evidencia SHA-256</h4>
+                    <h4 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider font-mono">Cadenas de Evidencia SHA-256</h4>
                     <div className="space-y-2">
                       {evidenceList.slice(0, 8).map((ev) => (
-                        <div key={ev.id} className="p-3 rounded-lg bg-[#141414] border border-[#222222] text-xs font-mono flex items-center justify-between gap-4">
+                        <div key={ev.id} className="p-3 rounded-lg bg-[var(--surface-elevated)] border border-[var(--stroke-subtle)] text-xs font-mono flex items-center justify-between gap-4">
                           <div className="truncate">
-                            <span className="text-[#86EFAC] font-semibold">{ev.artifact_type}:</span> {ev.mission_id}
-                            <div className="text-[10px] text-zinc-500 truncate">{ev.hash_sha256}</div>
+                            <span className="text-[var(--text-primary)] font-semibold">{ev.artifact_type}:</span> {ev.mission_id}
+                            <div className="text-[10px] text-[var(--text-secondary)] truncate">{ev.hash_sha256}</div>
                           </div>
-                          <span className="text-[10px] text-zinc-400 whitespace-nowrap">{new Date(ev.timestamp).toLocaleTimeString()}</span>
+                          <span className="text-[10px] text-[var(--text-secondary)] whitespace-nowrap">{new Date(ev.timestamp).toLocaleTimeString()}</span>
                         </div>
                       ))}
                     </div>
@@ -1348,15 +1348,15 @@ export default function Academy() {
 
       {/* Reflection Modal */}
       {showReflectionModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-[#0F0F0F] border border-[#262626] p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#222222] pb-3">
-              <h3 className="text-sm font-bold text-white">Defensa de Arquitectura & Reflexión</h3>
-              <button onClick={() => setShowReflectionModal(false)} className="text-zinc-500 hover:text-white">
+        <div className="fixed inset-0 bg-[var(--surface-canvas)]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-[var(--surface-card)] border border-[var(--stroke-subtle)] p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--stroke-subtle)] pb-3">
+              <h3 className="text-sm font-bold text-[var(--text-primary)]">Defensa de Arquitectura & Reflexión</h3>
+              <button onClick={() => setShowReflectionModal(false)} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
                 <X size={18} />
               </button>
             </div>
-            <p className="text-xs text-[#A1A1AA] leading-relaxed">
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
               Explica las decisiones de diseño tomadas en este flujo: ¿por qué conectaste estos nodos? ¿cómo garantizas idempotencia y mitigas fallos en producción?
             </p>
             <textarea
@@ -1364,19 +1364,19 @@ export default function Academy() {
               onChange={(e) => setReflectionText(e.target.value)}
               rows={5}
               placeholder="Escribe tu justificación técnica aquí..."
-              className="w-full bg-[#141414] border border-[#2B2B2B] rounded-xl p-3 text-xs font-mono text-white outline-none focus:border-[#22C55E]"
+              className="w-full bg-[var(--surface-elevated)] border border-[var(--stroke-subtle)] rounded-xl p-3 text-xs font-mono text-[var(--text-primary)] outline-none focus:border-[var(--theme-border)]"
             />
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowReflectionModal(false)}
-                className="px-4 py-2 rounded-lg bg-[#1C1C1C] text-zinc-300 text-xs hover:bg-[#252525]"
+                className="px-4 py-2 rounded-lg bg-[var(--surface-elevated)] text-[var(--text-secondary)] text-xs hover:bg-[var(--surface-elevated)]"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSubmitReflectionAndComplete}
                 disabled={reflectionSubmitting || !reflectionText.trim()}
-                className="px-5 py-2 rounded-lg bg-[#22C55E] text-black font-bold text-xs uppercase tracking-wider hover:bg-[#16A34A]"
+                className="px-5 py-2 rounded-lg bg-[var(--theme-border)] text-black font-bold text-xs uppercase tracking-wider hover:opacity-80"
               >
                 {reflectionSubmitting ? 'Graduando...' : 'Enviar Defensa & Graduar'}
               </button>
@@ -1386,15 +1386,18 @@ export default function Academy() {
       )}
 
       {/* Mandatory Industrial Footer */}
-      <footer className="border-t border-[#1A1A1A] bg-[#0A0A0A] px-6 py-3 flex items-center justify-between text-[11px] font-mono text-[#71717A]">
+      <footer className="border-t border-[var(--stroke-subtle)] bg-[var(--surface-card)] px-6 py-3 flex items-center justify-between text-[11px] font-mono text-[var(--text-secondary)]">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-[#22C55E]" />
+          <div className="w-2 h-2 rounded-full bg-[var(--theme-border)]" />
           <span>ANTIGRAVITY ACADEMY V3 · VERIFIABLE LEARNING OPERATING SYSTEM</span>
         </div>
-        <div className="text-white font-semibold tracking-wider">
+        <div className="text-[var(--text-primary)] font-semibold tracking-wider">
           HUMAN AI SYNERGY BY BENNER CASTILLO - 2026®
         </div>
       </footer>
     </div>
   );
 }
+
+
+

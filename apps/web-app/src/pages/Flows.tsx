@@ -68,10 +68,10 @@ export default function Flows() {
 
   const getEngineColor = (engine?: string) => {
     switch (engine) {
-      case 'CrewAI': return 'bg-[#151515] text-[#8A8A8A] border-[#2A2A2A]';
-      case 'LangGraph': return 'bg-[#151515] text-[#8A8A8A] border-[#2A2A2A]';
-      case 'AutoGen': return 'bg-[#0A1C0D] text-[#7B9C7F] border-[#174A1F]';
-      default: return 'bg-[#151515] text-[#8A8A8A] border-[#2A2A2A]';
+      case 'CrewAI': return 'bg-[var(--surface-card)] text-[var(--text-secondary)] border-[var(--stroke-subtle)]';
+      case 'LangGraph': return 'bg-[var(--surface-card)] text-[var(--text-secondary)] border-[var(--stroke-subtle)]';
+      case 'AutoGen': return 'bg-[#0A1C0D] text-[var(--theme-border)] border-[var(--theme-border)]';
+      default: return 'bg-[var(--surface-card)] text-[var(--text-secondary)] border-[var(--stroke-subtle)]';
     }
   };
 
@@ -80,7 +80,7 @@ export default function Flows() {
       case 'Basico': return { icon: <GraduationCap size={20} />, color: 'bg-green-500/20 text-green-400 border-green-500/50' };
       case 'Intermedio': return { icon: <ShieldCheck size={20} />, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' };
       case 'Avanzado': return { icon: <Rocket size={20} />, color: 'bg-red-500/20 text-red-400 border-red-500/50' };
-      case 'Experto': return { icon: <Brain size={20} />, color: 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/50' };
+      case 'Experto': return { icon: <Brain size={20} />, color: 'bg-[var(--surface-elevated)]uchsia-500/20 text-fuchsia-400 border-[var(--stroke-subtle)]uchsia-500/50' };
       default: return { icon: <Books size={20} />, color: 'bg-blue-500/20 text-blue-400' };
     }
   };
@@ -90,7 +90,7 @@ export default function Flows() {
     if (filtered.length === 0) return null;
 
     let gridClass = "flex-1 grid gap-6 h-full pb-6 ";
-    let itemClass = "group border rounded-2xl p-6 flex flex-col transition-all relative bg-[#151515] border-[#2A2A2A] hover:border-[#3a3a3a] ";
+    let itemClass = "group border rounded-2xl p-6 flex flex-col transition-all relative bg-[var(--surface-card)] border-[var(--stroke-subtle)] hover:border-[var(--stroke-subtle)] ";
     
     if (activeLevel === 'Avanzado') {
       gridClass += "grid-cols-4 w-full h-full";
@@ -113,12 +113,12 @@ export default function Flows() {
                   {tpl.engine}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-1 bg-gray-800 text-gray-400 rounded-full border border-gray-700">
+                  <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-1 bg-[var(--surface-elevated)] text-[var(--text-secondary)] rounded-full border border-gray-700">
                     {tpl.category}
                   </span>
                   <button 
                     onClick={() => handleTTS(tpl.id, `Plantilla ${tpl.name}. Nivel ${tpl.complexity}. ${tpl.description}`)}
-                    className={`p-1.5 rounded-full transition-colors ${playingTTS === tpl.id ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+                    className={`p-1.5 rounded-full transition-colors ${playingTTS === tpl.id ? 'bg-blue-500/20 text-blue-400' : 'bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
                   >
                     <SpeakerHigh size={16} weight={playingTTS === tpl.id ? "fill" : "regular"} />
                   </button>
@@ -129,7 +129,7 @@ export default function Flows() {
               
               {/* Description Content */}
               <div className="flex flex-col gap-5 mb-4 flex-grow">
-                  <p className="text-sm text-gray-400 leading-relaxed text-justify">
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed text-justify">
                     {tpl.description}
                   </p>
                   
@@ -138,43 +138,43 @@ export default function Flows() {
                     <h4 className="text-[11px] uppercase tracking-wider font-bold text-blue-400 flex items-center gap-1.5 mb-1.5">
                       <Target size={14} weight="light" /> Objetivo de Aprendizaje
                     </h4>
-                    <p className="text-xs text-gray-300 leading-relaxed text-justify">
+                    <p className="text-xs text-[var(--text-primary)] leading-relaxed text-justify">
                       {tpl.learningObjective}
                     </p>
                   </div>
 
-                  <div className="bg-fuchsia-900/10 border border-fuchsia-900/30 rounded-lg p-3">
+                  <div className="bg-[var(--surface-elevated)]uchsia-900/10 border border-[var(--stroke-subtle)]uchsia-900/30 rounded-lg p-3">
                     <h4 className="text-[11px] uppercase tracking-wider font-bold text-fuchsia-400 flex items-center gap-1.5 mb-1.5">
                       <Lightning size={14} weight="light" /> Masterclass de {tpl.engine}
                     </h4>
-                    <p className="text-xs text-gray-300 leading-relaxed text-justify">
+                    <p className="text-xs text-[var(--text-primary)] leading-relaxed text-justify">
                       {tpl.frameworkMastery}
                     </p>
                   </div>
                   
                   {/* Rich Metadata Section */}
-                  <div className="mt-2 pt-4 border-t border-gray-800/50 grid grid-cols-2 gap-4">
+                  <div className="mt-2 pt-4 border-t border-[var(--stroke-subtle)]/50 grid grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1">
-                      <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 flex items-center gap-1"><Cpu size={12}/> Stack Recomendado</span>
-                      <span className="text-xs text-gray-300 font-mono bg-black/20 p-1.5 rounded border border-gray-800">{tpl.apis || 'Local LLM (Ollama)'}</span>
+                      <span className="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-secondary)] flex items-center gap-1"><Cpu size={12}/> Stack Recomendado</span>
+                      <span className="text-xs text-[var(--text-primary)] font-mono bg-[var(--surface-canvas)]/20 p-1.5 rounded border border-[var(--stroke-subtle)]">{tpl.apis || 'Local LLM (Ollama)'}</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 flex items-center gap-1"><Clock size={12}/> Tiempo Ejecución</span>
+                      <span className="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-secondary)] flex items-center gap-1"><Clock size={12}/> Tiempo Ejecución</span>
                       <span className="text-xs text-blue-400 font-mono bg-blue-900/10 p-1.5 rounded border border-blue-900/30">{tpl.time || '~1-2 min'}</span>
                     </div>
                     <div className="col-span-2 flex flex-col gap-2">
-                      <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 flex items-center gap-1"><PuzzlePiece size={12}/> Casos de Uso</span>
+                      <span className="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-secondary)] flex items-center gap-1"><PuzzlePiece size={12}/> Casos de Uso</span>
                       <div className="flex flex-wrap gap-1.5">
                         {(tpl.useCases || ['Prototipado', 'Automatización']).map((uc: string, i: number) => (
-                          <span key={i} className="px-2 py-1 bg-gray-800/60 text-gray-300 rounded text-[10px] uppercase tracking-wider border border-gray-700">{uc}</span>
+                          <span key={i} className="px-2 py-1 bg-[var(--surface-elevated)]/60 text-[var(--text-primary)] rounded text-[10px] uppercase tracking-wider border border-gray-700">{uc}</span>
                         ))}
                       </div>
                     </div>
                   </div>                  </div>
                   
                   {/* Nodes Preview Section */}
-                  <div className="mt-3 bg-gray-900/30 p-3 rounded-lg border border-gray-800/50">
-                    <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 flex items-center gap-1 mb-2"><GitBranch size={12}/> Composición de Nodos ({tpl.nodes})</span>
+                  <div className="mt-3 bg-[var(--surface-card)]/30 p-3 rounded-lg border border-[var(--stroke-subtle)]/50">
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-[var(--text-secondary)] flex items-center gap-1 mb-2"><GitBranch size={12}/> Composición de Nodos ({tpl.nodes})</span>
                     <div className="flex flex-wrap gap-1.5">
                       {tpl.builderData?.nodes?.map((n: { id: string; data?: { title?: string } }, idx: number) => (
                         <span key={idx} className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-900/20 text-indigo-300 border border-indigo-900/40">
@@ -184,8 +184,8 @@ export default function Flows() {
                     </div>
                   </div>
                 {/* Action Footer */}
-              <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-800/50 flex-shrink-0">
-                <span className="text-sm font-medium text-gray-500">{tpl.nodes} nodos estructurales</span>
+              <div className="flex items-center justify-between mt-auto pt-4 border-t border-[var(--stroke-subtle)]/50 flex-shrink-0">
+                <span className="text-sm font-medium text-[var(--text-secondary)]">{tpl.nodes} nodos estructurales</span>
                 <button 
                   onClick={() => navigate('/builder', { state: { templateFlow: tpl.builderData } })} 
                   className="px-5 py-2 bg-blue-600/10 hover:bg-blue-600/30 text-blue-400 rounded-lg transition-all flex items-center gap-2 font-bold hover:scale-105"
@@ -202,16 +202,16 @@ export default function Flows() {
   };
 
   return (
-    <div className="h-[calc(100vh)] w-full flex flex-col p-8 bg-[#0a0c10] overflow-hidden">
+    <div className="h-[calc(100vh)] w-full flex flex-col p-8 bg-[var(--surface-canvas)] overflow-hidden">
       <header className="mb-6 flex-shrink-0">
         <h1 className="text-4xl font-bold text-blue-500 tracking-wide flex items-center gap-3">
           <Network size={36} weight="light" /> Nexus
         </h1>
-        <p className="text-gray-400 mt-2">Tu red neuronal de pipelines y ecosistemas multi-agentes guardados.</p>
+        <p className="text-[var(--text-secondary)] mt-2">Tu red neuronal de pipelines y ecosistemas multi-agentes guardados.</p>
       </header>
 
       {/* Tabs Principales */}
-          <div className="flex gap-3 mb-6 border-b border-gray-800 pb-4 flex-shrink-0">
+          <div className="flex gap-3 mb-6 border-b border-[var(--stroke-subtle)] pb-4 flex-shrink-0">
             <button 
               onClick={() => setActiveTab('my_flows')}
               className={`flex items-center gap-2 px-5 py-2 font-medium transition-all duration-200 ${activeTab === 'my_flows' ? 'nav-item-active shadow-[0_0_10px_rgba(23,74,31,0.5)]' : 'nav-item-inactive'}`}
@@ -230,7 +230,7 @@ export default function Flows() {
         {activeTab === 'my_flows' ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6 h-auto">
             {allFlows.map(flow => (
-              <div key={flow.id} className="relative group bg-[#151515] border border-[#2A2A2A] rounded-2xl p-6 overflow-hidden hover:border-[#3a3a3a] transition-all h-[240px] flex flex-col">
+              <div key={flow.id} className="relative group bg-[var(--surface-card)] border border-[var(--stroke-subtle)] rounded-2xl p-6 overflow-hidden hover:border-[var(--stroke-subtle)] transition-all h-[240px] flex flex-col">
                 <div className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity" style={{ backgroundImage: 'linear-gradient(#334155 1px, transparent 1px), linear-gradient(90deg, #334155 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
                 
                 <div className="relative z-10 flex justify-between items-start mb-auto">
@@ -241,12 +241,12 @@ export default function Flows() {
                     <h2 className="text-xl font-bold text-gray-100 mt-3">{flow.name}</h2>
                   </div>
                   <div className="relative">
-                    <button onClick={() => setOpenMenuId(openMenuId === flow.id ? null : flow.id)} className="text-gray-500 hover:text-white relative">
+                    <button onClick={() => setOpenMenuId(openMenuId === flow.id ? null : flow.id)} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] relative">
                       <DotsThreeOutlineVertical size={20} weight="light" />
                     </button>
                     {openMenuId === flow.id && (
-                      <div className="absolute right-0 mt-2 w-32 bg-[#151515] border border-[#2A2A2A] rounded-lg shadow-xl overflow-hidden z-50">
-                        <button onClick={() => handleDeleteFlow(flow.id)} className="w-full text-left px-4 py-2 text-[#8A8A8A] hover:bg-[#1f1f1f] hover:text-white text-sm font-semibold transition-colors">
+                      <div className="absolute right-0 mt-2 w-32 bg-[var(--surface-card)] border border-[var(--stroke-subtle)] rounded-lg shadow-xl overflow-hidden z-50">
+                        <button onClick={() => handleDeleteFlow(flow.id)} className="w-full text-left px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)] text-sm font-semibold transition-colors">
                           Eliminar
                         </button>
                       </div>
@@ -254,28 +254,28 @@ export default function Flows() {
                   </div>
                 </div>
 
-                <div className="relative z-10 flex gap-4 text-sm text-gray-500 mb-4 mt-4">
+                <div className="relative z-10 flex gap-4 text-sm text-[var(--text-secondary)] mb-4 mt-4">
                   <span>{Array.isArray(flow.nodes) ? flow.nodes.length : (flow.nodes || flow.data?.nodes?.length || 0)} nodos</span>
                   <span>•</span>
                   <span>{flow.lastActive || 'Reciente'}</span>
                 </div>
 
                 <div className="relative z-10 flex gap-3">
-                  <button onClick={() => navigate('/builder', { state: { restoreFlow: flow } })} className="flex-1 bg-[#151515] hover:bg-[#1f1f1f] text-[#8A8A8A] hover:text-white border border-[#2A2A2A] py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors">
+                  <button onClick={() => navigate('/builder', { state: { restoreFlow: flow } })} className="flex-1 bg-[var(--surface-card)] hover:bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--stroke-subtle)] py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors">
                     <Network size={18} /> Editar
                   </button>
-                  <button onClick={() => alert("Próximamente: Ejecución Headless. Te permitirá correr este ecosistema en segundo plano y recibir los resultados directamente aquí, sin tener que abrir el entorno del Builder.")} className="w-12 bg-[#151515] hover:bg-[#1f1f1f] text-[#8A8A8A] hover:text-white border border-[#2A2A2A] rounded-xl flex items-center justify-center transition-colors" title="Ejecución Headless (Próximamente)">
+                  <button onClick={() => alert("Próximamente: Ejecución Headless. Te permitirá correr este ecosistema en segundo plano y recibir los resultados directamente aquí, sin tener que abrir el entorno del Builder.")} className="w-12 bg-[var(--surface-card)] hover:bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--stroke-subtle)] rounded-xl flex items-center justify-center transition-colors" title="Ejecución Headless (Próximamente)">
                     <Play size={18} weight="light" />
                   </button>
                 </div>
               </div>
             ))}
 
-            <div onClick={() => navigate('/builder')} className="group bg-transparent border border-dashed border-[#2A2A2A] hover:border-[#174A1F] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-colors h-[240px]">
-              <div className="w-14 h-14 rounded-full bg-[#151515] text-[#8A8A8A] group-hover:text-[#7B9C7F] border border-[#2A2A2A] group-hover:border-[#174A1F] flex items-center justify-center mb-4 group-hover:scale-110 transition-all">
+            <div onClick={() => navigate('/builder')} className="group bg-transparent border border-dashed border-[var(--stroke-subtle)] hover:border-[var(--theme-border)] rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-colors h-[240px]">
+              <div className="w-14 h-14 rounded-full bg-[var(--surface-card)] text-[var(--text-secondary)] group-hover:text-[var(--theme-border)] border border-[var(--stroke-subtle)] group-hover:border-[var(--theme-border)] flex items-center justify-center mb-4 group-hover:scale-110 transition-all">
                 <Plus size={28} />
               </div>
-              <span className="font-bold text-[#8A8A8A] group-hover:text-[#7B9C7F]">Diseñar Nuevo</span>
+              <span className="font-bold text-[var(--text-secondary)] group-hover:text-[var(--theme-border)]">Diseñar Nuevo</span>
             </div>
           </div>
         ) : (
@@ -304,3 +304,4 @@ export default function Flows() {
     </div>
   );
 }
+

@@ -11,3 +11,5 @@ export const API_URL = `${BACKEND_ORIGIN}/api/v1`;
 /** URL WebSocket del runtime de ejecución. */
 export const WS_EXECUTE_URL =
   (BACKEND_ORIGIN ? BACKEND_ORIGIN.replace(/^http/, 'ws') : `ws://${window.location.host}`) + '/api/v1/ws/execute';
+export const WS_STUDIO_ACTIVITY_URL = (BACKEND_ORIGIN ? BACKEND_ORIGIN.replace(/^http/, 'ws') : `ws://${window.location.host}`) + '/api/v1/studio/ws/activity';
+

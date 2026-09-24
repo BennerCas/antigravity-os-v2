@@ -25,10 +25,10 @@ export default function CoautorIA() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-[#050505] text-gray-200">
-      <div className="p-8 border-b border-zinc-800 flex justify-between items-center bg-[#080808]">
+    <div className="w-full h-full flex flex-col bg-[var(--surface-canvas)] text-[var(--text-primary)]">
+      <div className="p-8 border-b border-[var(--stroke-subtle)] flex justify-between items-center bg-[var(--surface-canvas)]">
         <div>
-          <h1 className="text-2xl font-light text-cyan-400 flex items-center gap-3">
+          <h1 className="text-2xl font-light text-[var(--theme-border)] flex items-center gap-3">
             <UserSwitch size={32} weight="duotone" /> CoautorIA
           </h1>
           <p className="text-zinc-500 mt-2 text-sm">Laboratorio de Equipos, Empresas y Medios Autónomos</p>
@@ -46,7 +46,7 @@ export default function CoautorIA() {
               </button>
             )
           ) : (
-            <button onClick={handlePlayTTS} className="flex items-center gap-2 px-4 py-2 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors">
+            <button onClick={handlePlayTTS} className="flex items-center gap-2 px-4 py-2 bg-[var(--theme-border)]/20 text-[var(--theme-border)] rounded-lg hover:bg-[var(--theme-border)]/30 transition-colors">
               <PlayCircle size={20} weight="fill" /> Escuchar Propuesta
             </button>
           )}
@@ -59,22 +59,22 @@ export default function CoautorIA() {
         </div>
       </div>
 
-      <div className="flex border-b border-zinc-800 px-8 pt-4 gap-4 bg-[#080808]">
+      <div className="flex border-b border-[var(--stroke-subtle)] px-8 pt-4 gap-4 bg-[var(--surface-canvas)]">
         <button 
           onClick={() => setActiveTab('uiux')}
-          className={`pb-4 border-b-2 font-medium flex items-center gap-2 transition-all ${activeTab === 'uiux' ? 'border-cyan-400 text-cyan-400' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}
+          className={`pb-4 border-b-2 font-medium flex items-center gap-2 transition-all ${activeTab === 'uiux' ? 'border-[var(--theme-border)] text-[var(--theme-border)]' : 'border-transparent text-zinc-500 hover:text-[var(--text-primary)]'}`}
         >
           <Cube size={18} /> UI/UX Design
         </button>
         <button 
           onClick={() => setActiveTab('backend')}
-          className={`pb-4 border-b-2 font-medium flex items-center gap-2 transition-all ${activeTab === 'backend' ? 'border-purple-400 text-purple-400' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}
+          className={`pb-4 border-b-2 font-medium flex items-center gap-2 transition-all ${activeTab === 'backend' ? 'border-purple-400 text-purple-400' : 'border-transparent text-zinc-500 hover:text-[var(--text-primary)]'}`}
         >
           <Target size={18} /> Backend Arch
         </button>
         <button 
           onClick={() => setActiveTab('strategy')}
-          className={`pb-4 border-b-2 font-medium flex items-center gap-2 transition-all ${activeTab === 'strategy' ? 'border-emerald-400 text-emerald-400' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}
+          className={`pb-4 border-b-2 font-medium flex items-center gap-2 transition-all ${activeTab === 'strategy' ? 'border-emerald-400 text-emerald-400' : 'border-transparent text-zinc-500 hover:text-[var(--text-primary)]'}`}
         >
           <Target size={18} /> Product Strategy
         </button>
@@ -88,3 +88,4 @@ export default function CoautorIA() {
     </div>
   );
 }
+

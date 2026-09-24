@@ -167,25 +167,25 @@ export const RunInspector: React.FC<{ runId: string }> = ({ runId }) => {
   };
 
   return (
-    <div className="flex h-full w-full bg-gray-950 text-white">
+    <div className="flex h-full w-full bg-[var(--surface-canvas)] text-[var(--text-primary)]">
       {/* Event Timeline */}
-      <div className="w-1/2 border-r border-gray-800 p-6 overflow-y-auto flex flex-col">
-        <div className="flex items-center justify-between border-b border-gray-800 pb-2">
-          <h2 className="text-xl font-bold text-gray-200">
+      <div className="w-1/2 border-r border-[var(--stroke-subtle)] p-6 overflow-y-auto flex flex-col">
+        <div className="flex items-center justify-between border-b border-[var(--stroke-subtle)] pb-2">
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">
             Run Inspector Timeline
             {runId !== 'no-run' && (
-              <span className="text-xs text-gray-500 font-mono ml-2">[{runId.slice(0, 12)}...]</span>
+              <span className="text-xs text-[var(--text-secondary)] font-mono ml-2">[{runId.slice(0, 12)}...]</span>
             )}
           </h2>
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-gray-600'}`} />
-            <span className="text-xs text-gray-500">{isConnected ? 'Conectado' : 'Desconectado'}</span>
+            <span className="text-xs text-[var(--text-secondary)]">{isConnected ? 'Conectado' : 'Desconectado'}</span>
           </div>
         </div>
 
         {/* AI Prompts Toolbar */}
-        <div className="py-2 mb-4 border-b border-gray-800 flex items-center gap-2 overflow-x-auto scrollbar-none">
-          <span className="text-[10px] uppercase text-gray-500 font-bold mr-2 whitespace-nowrap">Inspector AI:</span>
+        <div className="py-2 mb-4 border-b border-[var(--stroke-subtle)] flex items-center gap-2 overflow-x-auto scrollbar-none">
+          <span className="text-[10px] uppercase text-[var(--text-secondary)] font-bold mr-2 whitespace-nowrap">Inspector AI:</span>
           {[
             { id: 'rootcause', label: 'Root Cause Analyzer', icon: '🔍', desc: 'Analiza la causa raíz de un error o comportamiento inusual en la ejecución.' },
             { id: 'autopatch', label: 'Auto Patcher', icon: '🩹', desc: 'Intenta generar y aplicar parches automáticamente para reparar el flujo.' },
@@ -195,14 +195,14 @@ export const RunInspector: React.FC<{ runId: string }> = ({ runId }) => {
           ].map(p => (
             <button
               key={p.id}
-              className="whitespace-nowrap text-[10px] px-2 py-1 bg-gray-800 border border-gray-700 rounded text-gray-300 hover:bg-purple-900/40 hover:text-purple-300 hover:border-purple-700 transition-all"
+              className="whitespace-nowrap text-[10px] px-2 py-1 bg-[var(--surface-elevated)] border border-gray-700 rounded text-[var(--text-primary)] hover:bg-purple-900/40 hover:text-purple-300 hover:border-purple-700 transition-all"
               onClick={() => {}}
             />
           ))}
         </div>
 
         {events.length === 0 ? (
-          <div className="text-gray-500 text-sm flex flex-col items-center justify-center flex-1">
+          <div className="text-[var(--text-secondary)] text-sm flex flex-col items-center justify-center flex-1">
             <div className="text-3xl mb-3">📡</div>
             <p>Esperando eventos de ejecución...</p>
             <p className="text-xs mt-1">Ejecuta un flujo desde FlowBoard para ver la traza aquí.</p>
@@ -213,9 +213,9 @@ export const RunInspector: React.FC<{ runId: string }> = ({ runId }) => {
               <div key={ev.id} className="flex space-x-3">
                 <div className="flex flex-col items-center">
                   <div className={`w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${getEventColor(ev.event_type)}`} />
-                  {i < events.length - 1 && <div className="w-0.5 flex-1 bg-gray-800 mt-1 min-h-4" />}
+                  {i < events.length - 1 && <div className="w-0.5 flex-1 bg-[var(--surface-elevated)] mt-1 min-h-4" />}
                 </div>
-                <div className="bg-gray-900 p-3 rounded shadow flex-1 border border-gray-800 mb-1">
+                <div className="bg-[var(--surface-card)] p-3 rounded shadow flex-1 border border-[var(--stroke-subtle)] mb-1">
                   <div className="flex justify-between items-center mb-1">
                     <span className={`font-bold text-xs uppercase tracking-wider ${
                       ev.event_type === 'error' ? 'text-red-400' :
@@ -225,7 +225,7 @@ export const RunInspector: React.FC<{ runId: string }> = ({ runId }) => {
                     }`}>{ev.event_type}</span>
                     <span className="text-xs text-gray-600 font-mono">{new Date(ev.timestamp).toLocaleTimeString()}</span>
                   </div>
-                  <pre className="text-xs text-gray-400 overflow-x-auto leading-relaxed">
+                  <pre className="text-xs text-[var(--text-secondary)] overflow-x-auto leading-relaxed">
                     {JSON.stringify(ev.payload, null, 2)}
                   </pre>
                 </div>
@@ -239,17 +239,17 @@ export const RunInspector: React.FC<{ runId: string }> = ({ runId }) => {
       {/* HITL / Task Resolution Panel */}
       <div className="w-1/2 p-6 flex flex-col items-center justify-center">
         {activeTask ? (
-          <div className="bg-gray-900 p-6 rounded-xl border border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.15)] max-w-md w-full">
+          <div className="bg-[var(--surface-card)] p-6 rounded-xl border border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.15)] max-w-md w-full">
             <div className="flex items-center space-x-2 text-purple-400 mb-4">
               <span className="animate-pulse">🔴</span>
               <h3 className="font-bold">Human-in-the-Loop Requerido</h3>
             </div>
 
-            <h4 className="text-xl font-bold text-white mb-2">{activeTask.title}</h4>
-            <p className="text-sm text-gray-400 mb-4">{activeTask.objective}</p>
+            <h4 className="text-xl font-bold text-[var(--text-primary)] mb-2">{activeTask.title}</h4>
+            <p className="text-sm text-[var(--text-secondary)] mb-4">{activeTask.objective}</p>
 
             <textarea
-              className="w-full h-20 p-2 bg-black/40 border border-gray-700 text-white rounded-lg text-sm outline-none focus:border-purple-500 mb-4 resize-none"
+              className="w-full h-20 p-2 bg-[var(--surface-canvas)]/40 border border-gray-700 text-[var(--text-primary)] rounded-lg text-sm outline-none focus:border-purple-500 mb-4 resize-none"
               placeholder="Feedback opcional para el agente..."
               value={humanInput}
               onChange={e => setHumanInput(e.target.value)}
@@ -259,14 +259,14 @@ export const RunInspector: React.FC<{ runId: string }> = ({ runId }) => {
               <button
                 onClick={() => handleAction(activeTask.id, 'reject')}
                 disabled={isResuming}
-                className="flex-1 py-2 rounded bg-gray-800 text-gray-300 hover:bg-red-900/50 hover:text-red-400 transition-colors border border-gray-700 disabled:opacity-40 text-sm font-medium"
+                className="flex-1 py-2 rounded bg-[var(--surface-elevated)] text-[var(--text-primary)] hover:bg-red-900/50 hover:text-red-400 transition-colors border border-gray-700 disabled:opacity-40 text-sm font-medium"
               >
                 Rechazar / Abortar
               </button>
               <button
                 onClick={() => handleAction(activeTask.id, 'approve')}
                 disabled={isResuming}
-                className="flex-1 py-2 rounded bg-purple-600 text-white hover:bg-purple-500 transition-colors font-bold shadow-lg disabled:opacity-40 text-sm"
+                className="flex-1 py-2 rounded bg-purple-600 text-[var(--text-primary)] hover:bg-purple-500 transition-colors font-bold shadow-lg disabled:opacity-40 text-sm"
               >
                 {isResuming ? '⏳ Enviando...' : 'Aprobar y Continuar'}
               </button>
@@ -275,7 +275,7 @@ export const RunInspector: React.FC<{ runId: string }> = ({ runId }) => {
         ) : (
           <div className="text-center text-gray-600">
             <div className="text-4xl mb-3">✅</div>
-            <p className="text-gray-400">El flujo se está ejecutando autónomamente.</p>
+            <p className="text-[var(--text-secondary)]">El flujo se está ejecutando autónomamente.</p>
             <p className="text-sm mt-1">No hay tareas de aprobación pendientes.</p>
             {isConnected && (
               <div className="mt-4 flex items-center justify-center gap-2 text-xs text-green-500">

@@ -32,17 +32,17 @@ const CustomNode = ({ data }: any) => {
     }
   };
 
-  const statusColor = data.status === 'ready' ? 'text-[#00D9FF]' : 'text-yellow-400';
+  const statusColor = data.status === 'ready' ? 'text-[var(--theme-border)]' : 'text-yellow-400';
   const dotColor = data.status === 'ready' ? 'text-green-400' : 'text-yellow-400';
 
   return (
     <div className="bg-[#111] border border-[#333] rounded p-3 shadow-lg min-w-[150px]">
       <div className="flex items-center gap-2 mb-2 border-b border-[#222] pb-1">
         <span className={statusColor}>{getIcon(data.kind)}</span>
-        <span className="text-[10px] font-bold text-white uppercase tracking-wider">{data.kind}</span>
+        <span className="text-[10px] font-bold text-[var(--text-primary)] uppercase tracking-wider">{data.kind}</span>
         <span className={`ml-auto text-[8px] ${dotColor}`}>●</span>
       </div>
-      <div className="text-xs text-gray-300">{data.label}</div>
+      <div className="text-xs text-[var(--text-primary)]">{data.label}</div>
     </div>
   );
 };
@@ -89,13 +89,13 @@ export default function AgentOSFlowboard() {
   return (
     <div className="flex h-full w-full">
       {/* Left Sidebar: CI/CD Deployment Gates */}
-      <div className="w-[320px] bg-[#0A0A0A] border-r border-[#222] flex flex-col z-10 shrink-0">
+      <div className="w-[320px] bg-[var(--surface-canvas)] border-r border-[#222] flex flex-col z-10 shrink-0">
         <div className="p-4 border-b border-[#222]">
-          <h2 className="text-sm font-bold text-white flex items-center gap-2">
-            <ShieldCheck size={18} className="text-[#00D9FF]" />
+          <h2 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
+            <ShieldCheck size={18} className="text-[var(--theme-border)]" />
             Deployment Gates
           </h2>
-          <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-wide">
+          <p className="text-[10px] text-[var(--text-secondary)] mt-1 uppercase tracking-wide">
             CI/CD Pipeline to Production
           </p>
         </div>
@@ -115,15 +115,15 @@ export default function AgentOSFlowboard() {
                 }`}
               >
                 <div className="mt-0.5">
-                  {isCompleted ? <CheckCircle size={16} weight="fill" className="text-[#00D9FF]" /> : 
-                   isCurrent ? <Play size={16} className="text-[#00D9FF] animate-pulse" /> :
-                   <div className="w-4 h-4 rounded-full border border-gray-600 flex items-center justify-center text-[9px] text-gray-500">{gate.id}</div>}
+                  {isCompleted ? <CheckCircle size={16} weight="fill" className="text-[var(--theme-border)]" /> : 
+                   isCurrent ? <Play size={16} className="text-[var(--theme-border)] animate-pulse" /> :
+                   <div className="w-4 h-4 rounded-full border border-gray-600 flex items-center justify-center text-[9px] text-[var(--text-secondary)]">{gate.id}</div>}
                 </div>
                 <div>
-                  <div className={`text-xs font-bold ${isCurrent ? 'text-white' : isCompleted ? 'text-gray-300' : 'text-gray-500'}`}>
+                  <div className={`text-xs font-bold ${isCurrent ? 'text-[var(--text-primary)]' : isCompleted ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>
                     [{gate.id}] {gate.name}
                   </div>
-                  <div className={`text-[10px] mt-1 ${isCurrent ? 'text-[#00D9FF]' : 'text-gray-600'}`}>
+                  <div className={`text-[10px] mt-1 ${isCurrent ? 'text-[var(--theme-border)]' : 'text-gray-600'}`}>
                     {gate.desc}
                   </div>
                 </div>
@@ -137,7 +137,7 @@ export default function AgentOSFlowboard() {
             onClick={handleDeploy}
             disabled={isDeploying}
             className={`w-full py-2.5 rounded text-xs font-bold flex justify-center items-center gap-2 transition-colors ${
-              isDeploying ? 'bg-[#333] text-gray-500 cursor-not-allowed' : 'bg-[#00D9FF] text-black hover:bg-[#00b0d0]'
+              isDeploying ? 'bg-[#333] text-[var(--text-secondary)] cursor-not-allowed' : 'bg-[var(--theme-border)] text-black hover:bg-[#00b0d0]'
             }`}
           >
             <Play size={14} weight="fill" />
@@ -147,7 +147,7 @@ export default function AgentOSFlowboard() {
       </div>
 
       {/* Main Area: React Flow Canvas */}
-      <div className="flex-1 relative bg-[#050505]">
+      <div className="flex-1 relative bg-[var(--surface-canvas)]">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -170,15 +170,15 @@ export default function AgentOSFlowboard() {
         {/* Top bar info */}
         <div className="absolute top-4 left-4 z-10 bg-[#111]/90 backdrop-blur border border-[#333] rounded px-4 py-2 flex gap-6 shadow-xl">
           <div className="flex flex-col">
-            <span className="text-[9px] text-gray-500 uppercase font-bold">Project</span>
-            <span className="text-xs text-white">Lead Qualification V2</span>
+            <span className="text-[9px] text-[var(--text-secondary)] uppercase font-bold">Project</span>
+            <span className="text-xs text-[var(--text-primary)]">Lead Qualification V2</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[9px] text-gray-500 uppercase font-bold">Revision</span>
-            <span className="text-xs text-[#00D9FF] font-mono">v1.4.0 (Draft)</span>
+            <span className="text-[9px] text-[var(--text-secondary)] uppercase font-bold">Revision</span>
+            <span className="text-xs text-[var(--theme-border)] font-mono">v1.4.0 (Draft)</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[9px] text-gray-500 uppercase font-bold">Diagnostics</span>
+            <span className="text-[9px] text-[var(--text-secondary)] uppercase font-bold">Diagnostics</span>
             <span className="text-xs text-yellow-400 flex items-center gap-1"><Warning size={12}/> 1 warning</span>
           </div>
         </div>
@@ -186,3 +186,4 @@ export default function AgentOSFlowboard() {
     </div>
   );
 }
+

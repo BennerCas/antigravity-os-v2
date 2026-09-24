@@ -501,7 +501,7 @@ export default function Architecture() {
 
   if (!data) {
     return (
-      <div className="p-10 text-[#8A8A8A] flex items-center gap-3">
+      <div className="p-10 text-[var(--text-secondary)] flex items-center gap-3">
         <span className="animate-spin">⚙️</span> Cargando mapa de arquitectura...
       </div>
     );
@@ -511,25 +511,25 @@ export default function Architecture() {
     <div className="h-full overflow-hidden p-6 w-full flex flex-col bg-[var(--surface-canvas)]">
       <header className="mb-4 flex-shrink-0 flex flex-col lg:flex-row gap-4 lg:justify-between lg:items-end">
         <div>
-          <h1 className="text-2xl font-bold text-white mb-1">Arquitectura del Sistema</h1>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-1">Arquitectura del Sistema</h1>
           <p className="text-[#A0A0A0] text-sm">
             Mapa vivo del flujo completo de {data.app}. Los master prompts mostrados son los que el backend
-            usa <strong className="text-[#7B9C7F]">en este momento</strong>.
+            usa <strong className="text-[var(--theme-border)]">en este momento</strong>.
           </p>
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
           {/* Selector de Pestañas Principales: Mapa vs Evolución */}
-          <div className="flex items-center bg-[#000000] border border-[#2A2A2A] rounded-xl p-1.5 text-base">
+          <div className="flex items-center bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-xl p-1.5 text-base">
             <button
               onClick={() => setMainTab('map')}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm transition-all cursor-pointer ${
                 mainTab === 'map'
                   ? 'selected-green shadow-[0_0_10px_rgba(23,74,31,0.5)]'
-                  : 'text-[#8A8A8A] hover:text-white border border-[#2A2A2A] bg-[#000000]'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--stroke-subtle)] bg-[var(--surface-canvas)]'
               }`}
             >
-              <Compass size={18} className={mainTab === 'map' ? 'text-[#7B9C7F]' : ''} />
+              <Compass size={18} className={mainTab === 'map' ? 'text-[var(--theme-border)]' : ''} />
               Mapa del Sistema
             </button>
             <button
@@ -537,10 +537,10 @@ export default function Architecture() {
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm transition-all cursor-pointer ${
                 mainTab === 'evolution'
                   ? 'selected-green shadow-[0_0_10px_rgba(23,74,31,0.5)]'
-                  : 'text-[#8A8A8A] hover:text-white border border-[#2A2A2A] bg-[#000000]'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--stroke-subtle)] bg-[var(--surface-canvas)]'
               }`}
             >
-              <Sparkle size={18} className={mainTab === 'evolution' ? 'text-[#7B9C7F]' : ''} />
+              <Sparkle size={18} className={mainTab === 'evolution' ? 'text-[var(--theme-border)]' : ''} />
               Evolución & Auto-Mejora ({data ? [...data.flow, ...(data.apps || [])].reduce((acc, section) => acc + (section.prompts?.length || 0), 0) : 131})
             </button>
             <button
@@ -548,7 +548,7 @@ export default function Architecture() {
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${
                 mainTab === 'library'
                   ? 'bg-[#0a0a1a] border border-[#2a2a5e] text-[#8080ff]'
-                  : 'text-[#555] hover:text-[#888]'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'
               }`}
             >
               <Brain size={18} className={mainTab === 'library' ? 'text-[#8080ff]' : ''} />
@@ -557,7 +557,7 @@ export default function Architecture() {
           </div>
 
           {/* Motor Híbrido Compacto */}
-          <div className={`flex gap-4 items-center bg-[#000000] border ${data.engine.hybrid_enabled ? 'border-[#7B9C7F]' : 'border-[#2A2A2A]'} rounded-xl px-4 py-3 text-xs`}>
+          <div className={`flex gap-4 items-center bg-[var(--surface-canvas)] border ${data.engine.hybrid_enabled ? 'border-[#7B9C7F]' : 'border-[var(--stroke-subtle)]'} rounded-xl px-4 py-3 text-xs`}>
             <button 
               onClick={async () => {
                 const res = await fetch(`${API_URL}/engine/config`, {
@@ -567,15 +567,15 @@ export default function Architecture() {
                 });
                 if (res.ok) window.location.reload();
               }}
-              className="flex items-center gap-1 font-bold text-white hover:opacity-80 transition-opacity outline-none"
+              className="flex items-center gap-1 font-bold text-[var(--text-primary)] hover:opacity-80 transition-opacity outline-none"
               title={data.engine.hybrid_enabled ? "Desactivar Motor Híbrido" : "Activar Motor Híbrido"}
             >
-              <Cpu size={16} className={data.engine.hybrid_enabled ? 'text-[#7B9C7F]' : 'text-gray-500'} /> 
+              <Cpu size={16} className={data.engine.hybrid_enabled ? 'text-[var(--theme-border)]' : 'text-[var(--text-secondary)]'} /> 
               {data.engine.name} {data.engine.hybrid_enabled ? 'ON' : 'OFF'}
             </button>
             
-            <div className="border-l border-[#2A2A2A] pl-4">
-              <span className={`font-bold uppercase tracking-wide text-[9px] block ${data.engine.hybrid_enabled ? 'text-[#7B9C7F]' : 'text-gray-600'}`}>Nube</span>
+            <div className="border-l border-[var(--stroke-subtle)] pl-4">
+              <span className={`font-bold uppercase tracking-wide text-[9px] block ${data.engine.hybrid_enabled ? 'text-[var(--theme-border)]' : 'text-gray-600'}`}>Nube</span>
               <select 
                 value={data.engine.cloud}
                 onChange={async (e) => {
@@ -587,14 +587,14 @@ export default function Architecture() {
                   if (res.ok) window.location.reload();
                 }}
                 disabled={!data.engine.hybrid_enabled}
-                className="bg-transparent text-[#FFFFFF] font-mono outline-none cursor-pointer appearance-none disabled:opacity-50"
+                className="bg-transparent text-[var(--text-primary)] font-mono outline-none cursor-pointer appearance-none disabled:opacity-50"
               >
-                {data.engine.cloud_options.map(opt => <option key={opt} value={opt} className="bg-black text-white">{opt}</option>)}
+                {data.engine.cloud_options.map(opt => <option key={opt} value={opt} className="bg-[var(--surface-canvas)] text-[var(--text-primary)]">{opt}</option>)}
               </select>
             </div>
             
-            <div className="border-l border-[#2A2A2A] pl-4">
-              <span className="text-[#8A8A8A] font-bold uppercase tracking-wide text-[9px] block">Local</span>
+            <div className="border-l border-[var(--stroke-subtle)] pl-4">
+              <span className="text-[var(--text-secondary)] font-bold uppercase tracking-wide text-[9px] block">Local</span>
               <select 
                 value={data.engine.local}
                 onChange={async (e) => {
@@ -605,9 +605,9 @@ export default function Architecture() {
                   });
                   if (res.ok) window.location.reload();
                 }}
-                className="bg-transparent text-[#FFFFFF] font-mono outline-none cursor-pointer appearance-none"
+                className="bg-transparent text-[var(--text-primary)] font-mono outline-none cursor-pointer appearance-none"
               >
-                {data.engine.local_options.map(opt => <option key={opt} value={opt} className="bg-black text-white">{opt}</option>)}
+                {data.engine.local_options.map(opt => <option key={opt} value={opt} className="bg-[var(--surface-canvas)] text-[var(--text-primary)]">{opt}</option>)}
               </select>
             </div>
           </div>
@@ -722,7 +722,7 @@ export default function Architecture() {
         {/* Column 1: Navigation (Modules) */}
         <div className="w-[300px] flex-shrink-0 flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
            <div className="mb-1 pl-2">
-              <h3 className="text-xs font-bold text-[#7B9C7F] uppercase tracking-widest">Core Engine</h3>
+              <h3 className="text-xs font-bold text-[var(--theme-border)] uppercase tracking-widest">Core Engine</h3>
            </div>
            
            {data.flow.map(step => {
@@ -736,12 +736,12 @@ export default function Architecture() {
                     }}
                     className={`w-full flex items-center gap-3 p-4 text-left outline-none transition-all duration-300 ${isActive ? 'nav-item-active shadow-[0_0_10px_rgba(23,74,31,0.5)]' : 'nav-item-inactive'}`}
                  >
-                    <span className={`flex items-center justify-center w-7 h-7 rounded-full font-mono font-bold text-sm transition-colors ${isActive ? 'bg-[#0A1C0D] border border-[#174A1F] text-[#7B9C7F]' : 'bg-[#000000] border border-[#2A2A2A] text-[#8A8A8A]'}`}>
+                    <span className={`flex items-center justify-center w-7 h-7 rounded-full font-mono font-bold text-sm transition-colors ${isActive ? 'bg-[#0A1C0D] border border-[var(--theme-border)] text-[var(--theme-border)]' : 'bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] text-[var(--text-secondary)]'}`}>
                       {step.step}
                     </span>
-                    <span className={isActive ? "text-[#7B9C7F]" : "text-[#8A8A8A]"}>{STEP_ICONS[step.id]}</span>
-                    <h2 className={`text-base font-bold tracking-wide ${isActive ? 'text-[#7B9C7F]' : 'text-[#8A8A8A]'}`}>{step.name}</h2>
-                    <CaretRight size={16} className={`ml-auto transition-transform duration-300 ${isActive ? 'text-[#7B9C7F]' : 'text-[#2A2A2A] opacity-0'}`} />
+                    <span className={isActive ? "text-[var(--theme-border)]" : "text-[var(--text-secondary)]"}>{STEP_ICONS[step.id]}</span>
+                    <h2 className={`text-base font-bold tracking-wide ${isActive ? 'text-[var(--theme-border)]' : 'text-[var(--text-secondary)]'}`}>{step.name}</h2>
+                    <CaretRight size={16} className={`ml-auto transition-transform duration-300 ${isActive ? 'text-[var(--theme-border)]' : 'text-[#2A2A2A] opacity-0'}`} />
                  </button>
               )
            })}
@@ -749,7 +749,7 @@ export default function Architecture() {
            {data.apps && data.apps.length > 0 && (
               <>
                  <div className="mt-4 mb-2 pl-2">
-                    <h3 className="text-xs font-bold text-[#7B9C7F] uppercase tracking-widest">OS Apps</h3>
+                    <h3 className="text-xs font-bold text-[var(--theme-border)] uppercase tracking-widest">OS Apps</h3>
                  </div>
                  {data.apps.map(app => {
                     const isActive = activeStepId === app.id;
@@ -762,9 +762,9 @@ export default function Architecture() {
                           }}
                           className={`w-full flex items-center gap-3 p-4 text-left outline-none transition-all duration-300 ${isActive ? 'nav-item-active shadow-[0_0_10px_rgba(23,74,31,0.5)]' : 'nav-item-inactive'}`}
                        >
-                          <span className={isActive ? "text-[#7B9C7F]" : "text-[#8A8A8A]"}>{STEP_ICONS[app.id]}</span>
-                          <h2 className={`text-base font-bold tracking-wide ${isActive ? 'text-[#7B9C7F]' : 'text-[#8A8A8A]'}`}>{app.name}</h2>
-                          <CaretRight size={16} className={`ml-auto transition-transform duration-300 ${isActive ? 'text-[#7B9C7F]' : 'text-[#2A2A2A] opacity-0'}`} />
+                          <span className={isActive ? "text-[var(--theme-border)]" : "text-[var(--text-secondary)]"}>{STEP_ICONS[app.id]}</span>
+                          <h2 className={`text-base font-bold tracking-wide ${isActive ? 'text-[var(--theme-border)]' : 'text-[var(--text-secondary)]'}`}>{app.name}</h2>
+                          <CaretRight size={16} className={`ml-auto transition-transform duration-300 ${isActive ? 'text-[var(--theme-border)]' : 'text-[#2A2A2A] opacity-0'}`} />
                        </button>
                     )
                  })}
@@ -773,7 +773,7 @@ export default function Architecture() {
         </div>
 
         {/* Column 2: Module Details & Prompts List */}
-        <div className="w-[380px] flex-shrink-0 bg-[#000000] border border-[#2A2A2A] rounded-2xl flex flex-col overflow-hidden relative shadow-lg">
+        <div className="w-[380px] flex-shrink-0 bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-2xl flex flex-col overflow-hidden relative shadow-lg">
            {(() => {
               const activeModule = data.flow.find(s => s.id === activeStepId) || data.apps?.find(a => a.id === activeStepId);
               
@@ -788,14 +788,14 @@ export default function Architecture() {
               
               return (
                  <div className="flex flex-col h-full">
-                    <div className="p-6 border-b border-[#2A2A2A] bg-[#000000]">
-                       <h2 className={`text-xl font-bold mb-3 text-[#7B9C7F]`}>{activeModule.name}</h2>
-                       <p className="text-base text-[#FFFFFF] leading-relaxed">{activeModule.what}</p>
+                    <div className="p-6 border-b border-[var(--stroke-subtle)] bg-[var(--surface-canvas)]">
+                       <h2 className={`text-xl font-bold mb-3 text-[var(--theme-border)]`}>{activeModule.name}</h2>
+                       <p className="text-base text-[var(--text-primary)] leading-relaxed">{activeModule.what}</p>
                     </div>
 
-                    <div className="p-4 border-b border-[#2A2A2A] bg-[#000000] flex-shrink-0">
+                    <div className="p-4 border-b border-[var(--stroke-subtle)] bg-[var(--surface-canvas)] flex-shrink-0">
                        <div className="flex items-center justify-between mb-3 pl-2">
-                         <div className="text-xs uppercase tracking-widest text-[#8A8A8A] font-bold">
+                         <div className="text-xs uppercase tracking-widest text-[var(--text-secondary)] font-bold">
                            Master Prompts ({activeModule.prompts.length})
                          </div>
                        </div>
@@ -806,13 +806,13 @@ export default function Architecture() {
                            placeholder="Buscar por nombre o uso..."
                            value={promptSearchTerm}
                            onChange={(e) => setPromptSearchTerm(e.target.value)}
-                           className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-white placeholder-[#555] focus:outline-none focus:border-[#7B9C7F] transition-colors"
+                           className="w-full bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-[#7B9C7F] transition-colors"
                          />
                        </div>
 
                        {selectedForBatch.length > 0 && (
-                         <div className="mb-4 p-3 bg-[#0A1C0D] border border-[#174A1F] rounded-lg flex flex-col gap-2">
-                           <div className="text-sm font-bold text-[#7B9C7F]">
+                         <div className="mb-4 p-3 bg-[#0A1C0D] border border-[var(--theme-border)] rounded-lg flex flex-col gap-2">
+                           <div className="text-sm font-bold text-[var(--theme-border)]">
                              {selectedForBatch.length} prompts seleccionados
                            </div>
                            <div className="flex flex-wrap gap-2">
@@ -823,14 +823,14 @@ export default function Architecture() {
                                  localStorage.removeItem('arch_batch_selected');
                                  localStorage.removeItem('arch_batch_wip');
                                }}
-                               className="px-2 py-1 text-xs bg-[#000000] text-gray-300 border border-[#2A2A2A] rounded hover:bg-gray-800"
+                               className="px-2 py-1 text-xs bg-[var(--surface-canvas)] text-[var(--text-primary)] border border-[var(--stroke-subtle)] rounded hover:bg-[var(--surface-elevated)]"
                              >
                                Limpiar
                              </button>
                              <button
                                onClick={handleBatchOptimize}
                                disabled={isBatchOptimizing}
-                               className="px-2 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-500 font-bold flex items-center gap-1 disabled:opacity-50"
+                               className="px-2 py-1 text-xs bg-emerald-600 text-[var(--text-primary)] rounded hover:bg-emerald-500 font-bold flex items-center gap-1 disabled:opacity-50"
                              >
                                {isBatchOptimizing ? <Gear className="animate-spin" /> : '⚡'}
                                {isBatchOptimizing 
@@ -848,7 +848,7 @@ export default function Architecture() {
                                    setSelectedForBatch(prev => [...prev, ...toAdd]);
                                  }
                                }}
-                               className="px-2 py-1 text-xs bg-[#000000] text-[#7B9C7F] border border-[#174A1F] rounded hover:bg-[#0A1C0D]"
+                               className="px-2 py-1 text-xs bg-[var(--surface-canvas)] text-[var(--theme-border)] border border-[var(--theme-border)] rounded hover:bg-[#0A1C0D]"
                              >
                                Seleccionar Todos
                              </button>
@@ -863,7 +863,7 @@ export default function Architecture() {
                              <span className="flex items-center gap-1.5 animate-pulse">✨ Evolucionando con el motor AI...</span>
                              <span>{optProgress}% ({optTimeLeft})</span>
                            </div>
-                           <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden border border-[#2A2A2A]">
+                           <div className="w-full bg-[var(--surface-card)] rounded-full h-1.5 overflow-hidden border border-[var(--stroke-subtle)]">
                              <div 
                                className="h-full rounded-full transition-all duration-300 ease-out"
                                style={{ width: `${optProgress}%`, backgroundColor: '#10b981', boxShadow: '0 0 10px rgba(16,185,129,0.5)' }}
@@ -882,7 +882,7 @@ export default function Architecture() {
                                  <button 
                                       key={p.key}
                                       onClick={() => setSelectedPrompt(p)}
-                                      className={`w-full flex flex-col items-start gap-1.5 p-3 text-left transition-all outline-none hover:brightness-110 font-bold shadow-sm rounded-lg ${isSelected ? 'nav-item-active shadow-[0_0_10px_rgba(23,74,31,0.5)] border border-[#174A1F]' : 'nav-item-inactive border border-transparent'}`}
+                                      className={`w-full flex flex-col items-start gap-1.5 p-3 text-left transition-all outline-none hover:brightness-110 font-bold shadow-sm rounded-lg ${isSelected ? 'nav-item-active shadow-[0_0_10px_rgba(23,74,31,0.5)] border border-[var(--theme-border)]' : 'nav-item-inactive border border-transparent'}`}
                                    >
                                       <div className="w-full flex items-center justify-between">
                                         <div className="flex items-center gap-2 overflow-hidden flex-1">
@@ -897,14 +897,14 @@ export default function Architecture() {
                                               }
                                             }}
                                             onClick={(e) => e.stopPropagation()}
-                                            className="w-4 h-4 bg-gray-900 border-gray-700 rounded text-emerald-500 focus:ring-emerald-500 cursor-pointer flex-shrink-0"
+                                            className="w-4 h-4 bg-[var(--surface-card)] border-gray-700 rounded text-emerald-500 focus:ring-emerald-500 cursor-pointer flex-shrink-0"
                                           />
-                                          <code className={`text-sm font-mono truncate ${isSelected ? 'text-[#7B9C7F]' : 'text-gray-200'}`}>{p.key}</code>
+                                          <code className={`text-sm font-mono truncate ${isSelected ? 'text-[var(--theme-border)]' : 'text-[var(--text-primary)]'}`}>{p.key}</code>
                                         </div>
                                         <CaretRight size={14} style={{ opacity: isSelected ? 1 : 0.3, color: isSelected ? '#7B9C7F' : '#ffffff' }} className="flex-shrink-0" />
                                       </div>
                                       {p.used_at && (
-                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-md border font-sans tracking-wide ml-6 ${isSelected ? 'bg-emerald-950/40 text-emerald-400 border-emerald-800/50' : 'bg-gray-900/50 text-gray-400 border-gray-800'}`}>
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-md border font-sans tracking-wide ml-6 ${isSelected ? 'bg-emerald-950/40 text-emerald-400 border-emerald-800/50' : 'bg-[var(--surface-card)]/50 text-[var(--text-secondary)] border-[var(--stroke-subtle)]'}`}>
                                           {p.used_at}
                                         </span>
                                       )}
@@ -919,16 +919,16 @@ export default function Architecture() {
         </div>
 
         {/* Column 3: Prompt Viewer */}
-        <div className="flex-1 min-w-0 bg-[#000000] border border-[#2A2A2A] rounded-2xl flex flex-col overflow-hidden relative shadow-2xl">
+        <div className="flex-1 min-w-0 bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-2xl flex flex-col overflow-hidden relative shadow-2xl">
            {selectedPrompt ? (
               <>
-                  <div className="flex items-center justify-between p-4 border-b border-[#2A2A2A] bg-[#000000]">
+                  <div className="flex items-center justify-between p-4 border-b border-[var(--stroke-subtle)] bg-[var(--surface-canvas)]">
                      <div className="flex items-center gap-3">
                         <code className="text-emerald-300 text-sm font-mono font-bold bg-emerald-950/50 px-2 py-1 rounded border border-emerald-900/50">{selectedPrompt.key}</code>
                         <span className="text-[#A0A0A0] text-sm font-mono hidden xl:inline-block">{selectedPrompt.used_at}</span>
                      </div>
                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-[#8A8A8A] font-mono hidden sm:inline-block">{selectedPrompt.text.length} caracteres</span>
+                        <span className="text-xs text-[var(--text-secondary)] font-mono hidden sm:inline-block">{selectedPrompt.text.length} caracteres</span>
                         
                         {/* Botón Enviar a Builder */}
                         <button
@@ -963,7 +963,7 @@ export default function Architecture() {
                         ) : (
                           <button 
                             onClick={() => setPanelTab('content')} 
-                            className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-600 transition-colors shadow-sm"
+                            className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg bg-[var(--surface-elevated)] hover:bg-gray-700 text-[var(--text-primary)] border border-gray-600 transition-colors shadow-sm"
                           >
                             ⬅️ Volver
                           </button>
@@ -983,12 +983,12 @@ export default function Architecture() {
 
                   {/* Barra de progreso interactiva si está corriendo */}
                   {currentLogicTask?.isRunning && (
-                    <div className="px-6 pt-3 pb-1 bg-gray-950/80 border-b border-gray-800 flex flex-col gap-1.5">
+                    <div className="px-6 pt-3 pb-1 bg-[var(--surface-canvas)]/80 border-b border-[var(--stroke-subtle)] flex flex-col gap-1.5">
                       <div className="flex justify-between text-xs text-blue-400 font-medium">
                         <span className="flex items-center gap-1.5 animate-pulse">🧠 Analizando lógica interna...</span>
                         <span>{currentLogicTask.progress}% ({currentLogicTask.timeLeft})</span>
                       </div>
-                      <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden border border-[#2A2A2A]">
+                      <div className="w-full bg-[var(--surface-card)] rounded-full h-1.5 overflow-hidden border border-[var(--stroke-subtle)]">
                         <div 
                           className="h-full rounded-full transition-all duration-300 ease-out"
                           style={{ width: `${currentLogicTask.progress}%`, backgroundColor: '#3b82f6', boxShadow: '0 0 10px rgba(59,130,246,0.5)' }}
@@ -1025,26 +1025,26 @@ export default function Architecture() {
                   <div className="flex-1 overflow-y-auto custom-scrollbar relative flex flex-col">
                      <div className="flex-1 p-6">
                         {panelTab === 'content' ? (
-                           <div className="relative rounded-xl overflow-hidden bg-gradient-to-b from-[#0A0A0A] to-[#050505] border border-[#2A2A2A] shadow-2xl">
-                             <div className="flex items-center gap-2 px-4 py-3 bg-[#111] border-b border-[#2A2A2A]">
+                           <div className="relative rounded-xl overflow-hidden bg-gradient-to-b from-[#0A0A0A] to-[#050505] border border-[var(--stroke-subtle)] shadow-2xl">
+                             <div className="flex items-center gap-2 px-4 py-3 bg-[#111] border-b border-[var(--stroke-subtle)]">
                                <div className="flex gap-1.5">
                                  <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
                                  <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
                                  <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
                                </div>
-                               <div className="ml-3 flex items-center gap-2 text-xs text-[#8A8A8A] font-mono uppercase tracking-widest font-semibold">
-                                 <TerminalWindow size={15} className="text-[#7B9C7F]" />
+                               <div className="ml-3 flex items-center gap-2 text-xs text-[var(--text-secondary)] font-mono uppercase tracking-widest font-semibold">
+                                 <TerminalWindow size={15} className="text-[var(--theme-border)]" />
                                  <span>{selectedPrompt.key}.ai</span>
                                </div>
                              </div>
                              <div className="p-5 overflow-x-auto">
-                               <pre className="text-sm text-[#D4D4D4] whitespace-pre-wrap font-mono leading-relaxed selection:bg-[#7B9C7F]/30 selection:text-white">
+                               <pre className="text-sm text-[#D4D4D4] whitespace-pre-wrap font-mono leading-relaxed selection:bg-[#7B9C7F]/30 selection:text-[var(--text-primary)]">
                                   {optimizedPrompts[selectedPrompt.key] || selectedPrompt.text}
                                </pre>
                              </div>
                            </div>
                         ) : (
-                           <div className="p-6 rounded-xl border border-gray-800 leading-relaxed prose prose-invert max-w-none shadow-inner bg-gray-900/80 text-sm text-gray-300 prose-sm prose-headings:text-blue-400 prose-a:text-blue-400">
+                           <div className="p-6 rounded-xl border border-[var(--stroke-subtle)] leading-relaxed prose prose-invert max-w-none shadow-inner bg-[var(--surface-card)]/80 text-sm text-[var(--text-primary)] prose-sm prose-headings:text-blue-400 prose-a:text-blue-400">
                               <ReactMarkdown>
                                  {currentLogicTask?.result || (currentLogicTask?.isRunning ? '🧠 Generando análisis profundo de la lógica del prompt en segundo plano...' : 'No hay datos de lógica disponibles. Haz clic en "🧠 Lógica" para generarlos.')}
                               </ReactMarkdown>
@@ -1054,7 +1054,7 @@ export default function Architecture() {
                   </div>
               </>
            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-[#2A2A2A] bg-[#000000]">
+              <div className="flex-1 flex flex-col items-center justify-center text-[#2A2A2A] bg-[var(--surface-canvas)]">
                  <Brain size={64} weight="light" className="mb-6 opacity-20" />
                  <p className="text-sm font-medium">Selecciona un Master Prompt para inspeccionar su código fuente.</p>
               </div>
@@ -1066,3 +1066,4 @@ export default function Architecture() {
     </div>
   );
 }
+

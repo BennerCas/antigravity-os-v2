@@ -523,19 +523,19 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-[#000000] rounded-2xl border border-[#2A2A2A] overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 bg-[var(--surface-canvas)] rounded-2xl border border-[var(--stroke-subtle)] overflow-hidden">
       {/* Barra de Controles y Métricas Principales */}
-      <div className="p-5 border-b border-[#2A2A2A] bg-[#000000] flex flex-col gap-4">
+      <div className="p-5 border-b border-[var(--stroke-subtle)] bg-[var(--surface-canvas)] flex flex-col gap-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className="p-1.5 rounded-lg bg-[#7B9C7F]/10 text-[#7B9C7F] border border-[#7B9C7F]/20">
                 <Sparkles size={18} />
               </span>
-              <h2 className="text-lg font-bold text-white tracking-tight">
+              <h2 className="text-lg font-bold text-[var(--text-primary)] tracking-tight">
                 Consola de Evolución y Auto-Mejora Sistémica
               </h2>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#0A0A0A] border border-[#333333] text-[#A0A0A0] font-mono">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--surface-canvas)] border border-[#333333] text-[#A0A0A0] font-mono">
                 {totalCount} Master Prompts
               </span>
               {backendActive === true && (
@@ -564,7 +564,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
             <button
               onClick={() => setTakeSnapshotModalOpen(true)}
               disabled={isUpgrading || isConsolidating}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#111A13] hover:bg-[#1A2A1D] border border-[#7B9C7F]/30 text-[#7B9C7F] hover:text-white transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#111A13] hover:bg-[#1A2A1D] border border-[#7B9C7F]/30 text-[#7B9C7F] hover:text-[var(--text-primary)] transition-all cursor-pointer active:scale-95 disabled:opacity-50"
               title="Tomar un snapshot manual del estado actual"
             >
               <Save size={14} />
@@ -574,7 +574,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
             <button
               onClick={handleOpenSnapshots}
               disabled={isUpgrading}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#000000] hover:bg-[#000000] border border-[#2A2A2A] text-[#A0A0A0] hover:text-white border border-[#303030] transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[var(--surface-canvas)] hover:bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] text-[#A0A0A0] hover:text-[var(--text-primary)] border border-[#303030] transition-all cursor-pointer active:scale-95 disabled:opacity-50"
               title="Ver historial de snapshots permanentes en disco"
             >
               <HistoryIcon size={14} />
@@ -640,21 +640,21 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
         {consolidationSuccess && (
           <div className="p-2.5 rounded-xl bg-[#142316] border border-[#7B9C7F]/30 text-xs text-[#7B9C7F] flex items-center justify-between animate-fadeIn">
             <span>{consolidationSuccess}</span>
-            <button onClick={() => setConsolidationSuccess(null)} className="text-[#888] hover:text-white text-xs">✕</button>
+            <button onClick={() => setConsolidationSuccess(null)} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs">✕</button>
           </div>
         )}
 
         {/* Tarjetas de Métricas de Arquitectura */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
-          <div className="bg-[#000000] border border-[#2A2A2A] rounded-xl p-3 flex items-center justify-between">
+          <div className="bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-xl p-3 flex items-center justify-between">
             <div>
               <span className="text-xs text-[#A0A0A0] font-medium block">Total Prompts</span>
-              <span className="text-2xl font-bold text-white font-mono">{totalCount}</span>
+              <span className="text-2xl font-bold text-[var(--text-primary)] font-mono">{totalCount}</span>
             </div>
-            <Layers size={20} className="text-[#888888]" />
+            <Layers size={20} className="text-[var(--text-secondary)]" />
           </div>
 
-          <div className="bg-[#000000] border border-[#2A2A2A] rounded-xl p-3 flex items-center justify-between">
+          <div className="bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-xl p-3 flex items-center justify-between">
             <div>
               <span className="text-xs text-[#A0A0A0] font-medium block">Agentes Autónomos</span>
               <span className="text-2xl font-bold text-[#64B5F6] font-mono">{agentsCount}</span>
@@ -662,7 +662,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
             <Bot size={20} className="text-[#64B5F6]" />
           </div>
 
-          <div className="bg-[#000000] border border-[#2A2A2A] rounded-xl p-3 flex items-center justify-between">
+          <div className="bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-xl p-3 flex items-center justify-between">
             <div>
               <span className="text-xs text-[#A0A0A0] font-medium block">Directivas / Prompts</span>
               <span className="text-2xl font-bold text-[#E5A953] font-mono">{directivesCount}</span>
@@ -670,11 +670,11 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
             <Terminal size={20} className="text-[#E5A953]" />
           </div>
 
-          <div className="bg-[#000000] border border-[#2A2A2A] rounded-xl p-3 flex items-center justify-between">
+          <div className="bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-xl p-3 flex items-center justify-between">
             <div>
               <span className="text-xs text-[#A0A0A0] font-medium block">Optimizados en Vivo</span>
               <span className="text-2xl font-bold text-[#7B9C7F] font-mono">
-                {optimizedCount} <span className="text-xs font-normal text-[#888888]">/ {totalCount}</span>
+                {optimizedCount} <span className="text-xs font-normal text-[var(--text-secondary)]">/ {totalCount}</span>
               </span>
             </div>
             <CheckCircle2 size={20} className="text-[#7B9C7F]" />
@@ -687,14 +687,14 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
             <div className="flex items-center justify-between text-xs mb-2">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#7B9C7F] animate-ping" />
-                <span className="font-semibold text-white">
+                <span className="font-semibold text-[var(--text-primary)]">
                   {currentlyProcessing}
                 </span>
               </div>
               <div className="flex items-center gap-3 font-mono">
-                <span className="text-[#A0A0A0]">Por unidad: <strong className="text-white">{(realAvgMs / 1000).toFixed(1)}s</strong></span>
-                <span className="text-[#A0A0A0]">Total Estimado: <strong className="text-white">~{Math.ceil((totalCount * realAvgMs) / 1000)}s</strong></span>
-                <span className="text-[#A0A0A0]">ETA: <strong className="text-white">~{etaSeconds}s</strong></span>
+                <span className="text-[#A0A0A0]">Por unidad: <strong className="text-[var(--text-primary)]">{(realAvgMs / 1000).toFixed(1)}s</strong></span>
+                <span className="text-[#A0A0A0]">Total Estimado: <strong className="text-[var(--text-primary)]">~{Math.ceil((totalCount * realAvgMs) / 1000)}s</strong></span>
+                <span className="text-[#A0A0A0]">ETA: <strong className="text-[var(--text-primary)]">~{etaSeconds}s</strong></span>
                 <span className="text-[#7B9C7F] font-bold text-sm">{progressPercent}%</span>
               </div>
             </div>
@@ -709,13 +709,13 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
       </div>
 
             {/* Selector de Sub-pestañas */}
-      <div className="flex items-center gap-3 px-6 pt-3.5 pb-2 border-b border-[#2A2A2A] bg-[#000000]">
+      <div className="flex items-center gap-3 px-6 pt-3.5 pb-2 border-b border-[var(--stroke-subtle)] bg-[var(--surface-canvas)]">
         <button
           onClick={() => setActiveSubTab('breakdown')}
           className={`px-5 py-2.5 rounded-xl text-base font-bold transition-all cursor-pointer flex items-center gap-2.5 ${
             activeSubTab === 'breakdown'
               ? 'selected-green shadow-[0_0_10px_rgba(23,74,31,0.5)]'
-              : 'text-[#8A8A8A] hover:text-white bg-[#000000] border border-[#2A2A2A]'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)]'
           }`}
         >
           <Layers size={18} />
@@ -727,7 +727,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
           className={`px-5 py-2.5 rounded-xl text-base font-bold transition-all cursor-pointer flex items-center gap-2.5 ${
             activeSubTab === 'report'
               ? 'selected-green shadow-[0_0_10px_rgba(23,74,31,0.5)]'
-              : 'text-[#8A8A8A] hover:text-white bg-[#000000] border border-[#2A2A2A]'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)]'
           }`}
         >
           <Activity size={18} />
@@ -739,7 +739,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
           className={`px-5 py-2.5 rounded-xl text-base font-bold transition-all cursor-pointer flex items-center gap-2.5 ${
             activeSubTab === 'audit'
               ? 'selected-green shadow-[0_0_10px_rgba(23,74,31,0.5)]'
-              : 'text-[#8A8A8A] hover:text-white bg-[#000000] border border-[#2A2A2A]'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)]'
           }`}
         >
           <Database size={18} />
@@ -756,24 +756,24 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4 flex-shrink-0">
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 <div className="relative w-full sm:w-80">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8A8A8A]" />
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
                   <input
                     type="text"
                     placeholder="Buscar por clave, módulo o uso..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-9 pr-3 py-1.5 text-xs bg-[#000000] border border-[#2A2A2A] rounded-xl text-white placeholder-[#666] focus:outline-none focus:border-[#7B9C7F]"
+                    className="w-full pl-9 pr-3 py-1.5 text-xs bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-[#7B9C7F]"
                   />
                 </div>
 
                 {/* Toggle de Vista: Lista vs Grid 6 Columnas */}
-                <div className="flex items-center gap-1 bg-[#000000] p-1 rounded-xl border border-[#2A2A2A]">
+                <div className="flex items-center gap-1 bg-[var(--surface-canvas)] p-1 rounded-xl border border-[var(--stroke-subtle)]">
                   <button
                     onClick={() => setViewMode('list')}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${
                       viewMode === 'list'
                         ? 'selected-green shadow-[0_0_8px_rgba(23,74,31,0.4)]'
-                        : 'text-[#8A8A8A] hover:text-white border border-[#2A2A2A] bg-[#000000]'
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--stroke-subtle)] bg-[var(--surface-canvas)]'
                     }`}
                     title="Vista en lista detallada"
                   >
@@ -786,7 +786,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${
                       viewMode === 'grid6'
                         ? 'selected-green shadow-[0_0_8px_rgba(23,74,31,0.4)]'
-                        : 'text-[#8A8A8A] hover:text-white border border-[#2A2A2A] bg-[#000000]'
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--stroke-subtle)] bg-[var(--surface-canvas)]'
                     }`}
                     title="Vista en cuadrícula de 6 columnas compactas"
                   >
@@ -796,13 +796,13 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 bg-[#000000] p-1.5 rounded-xl border border-[#2A2A2A] self-start sm:self-auto">
+              <div className="flex items-center gap-1.5 bg-[var(--surface-canvas)] p-1.5 rounded-xl border border-[var(--stroke-subtle)] self-start sm:self-auto">
                 <button
                   onClick={() => setFilterCategory('all')}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     filterCategory === 'all'
                       ? 'selected-green shadow-[0_0_8px_rgba(23,74,31,0.4)]'
-                      : 'text-[#8A8A8A] hover:text-white'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                   }`}
                 >
                   Todos ({totalCount})
@@ -812,7 +812,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
                     filterCategory === 'agent'
                       ? 'selected-green shadow-[0_0_8px_rgba(23,74,31,0.4)]'
-                      : 'text-[#8A8A8A] hover:text-[#7B9C7F]'
+                      : 'text-[var(--text-secondary)] hover:text-[#7B9C7F]'
                   }`}
                 >
                   <Bot size={14} /> Agentes ({agentsCount})
@@ -822,7 +822,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
                     filterCategory === 'prompt'
                       ? 'selected-green shadow-[0_0_8px_rgba(23,74,31,0.4)]'
-                      : 'text-[#8A8A8A] hover:text-[#7B9C7F]'
+                      : 'text-[var(--text-secondary)] hover:text-[#7B9C7F]'
                   }`}
                 >
                   <Terminal size={14} /> Directivas ({directivesCount})
@@ -843,7 +843,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                         className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col justify-between h-[155px] ${
                           isSelected 
                             ? 'active-card shadow-[0_0_12px_rgba(23,74,31,0.6)]' 
-                            : 'bg-[#000000] border border-[#2A2A2A] hover:border-[#444444]'
+                            : 'bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] hover:border-[#444444]'
                         }`}
                       >
                         <div>
@@ -860,21 +860,21 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                                 <Check size={10} /> Opt
                               </span>
                             ) : (
-                              <span className="text-[9px] px-1.5 py-0.5 rounded font-mono text-[#8A8A8A] bg-[#0A0A0A] border border-[#2A2A2A]">
+                              <span className="text-[9px] px-1.5 py-0.5 rounded font-mono text-[var(--text-secondary)] bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)]">
                                 Orig
                               </span>
                             )}
                           </div>
 
-                          <h5 className="font-mono text-sm font-bold text-white truncate" title={p.key}>
+                          <h5 className="font-mono text-sm font-bold text-[var(--text-primary)] truncate" title={p.key}>
                             {p.key}
                           </h5>
-                          <span className="text-[10px] text-[#8A8A8A] block truncate font-medium">
+                          <span className="text-[10px] text-[var(--text-secondary)] block truncate font-medium">
                             {p.moduleName}
                           </span>
                         </div>
 
-                        <div className="pt-2 border-t border-[#2A2A2A] flex items-center justify-between">
+                        <div className="pt-2 border-t border-[var(--stroke-subtle)] flex items-center justify-between">
                           <span className={`text-[9px] font-medium truncate max-w-[85px] ${
                             p.category === 'agent' ? 'text-[#64B5F6]' : 'text-[#E5A953]'
                           }`}>
@@ -886,7 +886,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                               e.stopPropagation();
                               setSelectedPrompt(p);
                             }}
-                            className="p-1 rounded bg-[#2A2A2A] hover:bg-[#3A3A3A] text-[#CCC] hover:text-white transition-colors cursor-pointer"
+                            className="p-1 rounded bg-[#2A2A2A] hover:bg-[#3A3A3A] text-[#CCC] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
                             title="Inspeccionar"
                           >
                             <Eye size={12} />
@@ -898,7 +898,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                 </div>
 
                 {filteredPrompts.length === 0 && (
-                  <div className="text-center py-16 text-[#8A8A8A] text-xs">
+                  <div className="text-center py-16 text-[var(--text-secondary)] text-xs">
                     No se encontraron prompts que coincidan con la búsqueda.
                   </div>
                 )}
@@ -914,7 +914,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                       className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                         isSelected 
                           ? 'active-card shadow-[0_0_12px_rgba(23,74,31,0.6)]' 
-                          : 'bg-[#000000] border border-[#2A2A2A] hover:border-[#444444]'
+                          : 'bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] hover:border-[#444444]'
                       }`}
                     >
                       <div className="flex items-start gap-3 min-w-0">
@@ -927,8 +927,8 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-bold text-white text-sm tracking-tight truncate font-mono">{p.key}</span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#000000] border border-[#2A2A2A] text-[#888]">
+                            <span className="font-bold text-[var(--text-primary)] text-sm tracking-tight truncate font-mono">{p.key}</span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-md bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] text-[var(--text-secondary)]">
                               {p.moduleName}
                             </span>
                             <span className={`text-[10px] px-2 py-0.5 rounded-md font-medium ${
@@ -951,7 +951,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                             <Check size={12} /> Optimizado
                           </span>
                         ) : (
-                          <span className="text-[11px] text-[#8A8A8A] bg-[#0A0A0A] px-2.5 py-1 rounded-lg border border-[#2A2A2A]">
+                          <span className="text-[11px] text-[var(--text-secondary)] bg-[var(--surface-canvas)] px-2.5 py-1 rounded-lg border border-[var(--stroke-subtle)]">
                             Original
                           </span>
                         )}
@@ -961,7 +961,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                             e.stopPropagation();
                             setSelectedPrompt(p);
                           }}
-                          className="p-1.5 rounded-lg bg-[#2A2A2A] hover:bg-[#3A3A3A] text-[#CCC] hover:text-white transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg bg-[#2A2A2A] hover:bg-[#3A3A3A] text-[#CCC] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
                           title="Inspeccionar Antes vs. Después"
                         >
                           <Eye size={14} />
@@ -972,7 +972,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                 })}
 
                 {filteredPrompts.length === 0 && (
-                  <div className="text-center py-16 text-[#8A8A8A] text-xs">
+                  <div className="text-center py-16 text-[var(--text-secondary)] text-xs">
                     No se encontraron prompts que coincidan con la búsqueda.
                   </div>
                 )}
@@ -984,8 +984,8 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
         {/* SUBTAB 2: Resumen de Mejora Global */}
         {activeSubTab === 'report' && (
           <div className="flex-1 overflow-y-auto pr-2 space-y-5 custom-scrollbar">
-            <div className="bg-[#000000] border border-[#2A2A2A] rounded-xl p-5">
-              <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
+            <div className="bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-xl p-5">
+              <h3 className="text-sm font-bold text-[var(--text-primary)] mb-2 flex items-center gap-2">
                 <ShieldCheck size={16} className="text-[#7B9C7F]" />
                 ¿Por qué es superior la arquitectura con la evolución sistémica?
               </h3>
@@ -994,14 +994,14 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
               </p>
 
               {/* Selector Visual de Snapshots Historicos */}
-              <div className="bg-[#000000] border border-[#2A2A2A] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                   <div className="p-2 rounded-lg bg-[#182B3E] text-[#64B5F6] border border-[#244260]">
                     <HistoryIcon size={18} />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-white">Selector Visual de Snapshots Históricos</h4>
-                    <p className="text-[11px] text-[#888]">Navega y restaura instantáneamente versiones consolidadas previas en disco.</p>
+                    <h4 className="text-xs font-bold text-[var(--text-primary)]">Selector Visual de Snapshots Históricos</h4>
+                    <p className="text-[11px] text-[var(--text-secondary)]">Navega y restaura instantáneamente versiones consolidadas previas en disco.</p>
                   </div>
                 </div>
 
@@ -1011,7 +1011,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                       if (e.target.value) handleRestoreSnapshot(e.target.value);
                     }}
                     defaultValue=""
-                    className="px-3 py-1.5 text-xs bg-[#0A0A0A] border border-[#333] rounded-lg text-white font-mono focus:outline-none focus:border-[#7B9C7F]"
+                    className="px-3 py-1.5 text-xs bg-[var(--surface-canvas)] border border-[#333] rounded-lg text-[var(--text-primary)] font-mono focus:outline-none focus:border-[#7B9C7F]"
                   >
                     <option value="" disabled>-- Seleccionar Snapshot para Restaurar --</option>
                     {snapshotsList.length === 0 ? (
@@ -1027,7 +1027,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
 
                   <button
                     onClick={handleOpenSnapshots}
-                    className="px-3 py-1.5 text-xs font-semibold bg-[#000000] border border-[#2A2A2A] hover:bg-[#333] text-[#CCC] hover:text-white rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+                    className="px-3 py-1.5 text-xs font-semibold bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] hover:bg-[#333] text-[#CCC] hover:text-[var(--text-primary)] rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
                   >
                     <Eye size={13} />
                     Ver Todos
@@ -1062,32 +1062,32 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
               </div>
             </div>
 
-            <div className="bg-[#000000] border border-[#2A2A2A] rounded-xl p-5">
-              <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <div className="bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-xl p-5">
+              <h3 className="text-sm font-bold text-[var(--text-primary)] mb-3 flex items-center gap-2">
                 <Activity size={16} className="text-[#7B9C7F]" />
                 Métricas de Impacto en la Aplicación
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-3.5 bg-[#000000] rounded-xl border border-[#282828]">
-                  <span className="text-[11px] text-[#888] block">Cohesión Intermodular</span>
+                <div className="p-3.5 bg-[var(--surface-canvas)] rounded-xl border border-[#282828]">
+                  <span className="text-[11px] text-[var(--text-secondary)] block">Cohesión Intermodular</span>
                   <span className="text-2xl font-bold text-[#7B9C7F] font-mono">
                     {realMetrics?.cohesionMean ? `${realMetrics.cohesionMean}%` : '99.4%'}
                   </span>
-                  <p className="text-[10px] text-[#666] mt-1">
+                  <p className="text-[10px] text-[var(--text-secondary)] mt-1">
                     {backendActive ? 'Validada en tiempo real por Backend Engine v3.' : 'Cero colisiones en paso de parámetros entre módulos.'}
                   </p>
                 </div>
-                <div className="p-3.5 bg-[#000000] rounded-xl border border-[#282828]">
-                  <span className="text-[11px] text-[#888] block">Latencia Reducida</span>
+                <div className="p-3.5 bg-[var(--surface-canvas)] rounded-xl border border-[#282828]">
+                  <span className="text-[11px] text-[var(--text-secondary)] block">Latencia Reducida</span>
                   <span className="text-2xl font-bold text-[#64B5F6] font-mono">
                     {realMetrics?.latencyReduction ? `-${realMetrics.latencyReduction}%` : '-38%'}
                   </span>
-                  <p className="text-[10px] text-[#666] mt-1">Optimizando tokens de entrada en directivas deterministas.</p>
+                  <p className="text-[10px] text-[var(--text-secondary)] mt-1">Optimizando tokens de entrada en directivas deterministas.</p>
                 </div>
-                <div className="p-3.5 bg-[#000000] rounded-xl border border-[#282828]">
-                  <span className="text-[11px] text-[#888] block">Resistencia a Regresiones</span>
+                <div className="p-3.5 bg-[var(--surface-canvas)] rounded-xl border border-[#282828]">
+                  <span className="text-[11px] text-[var(--text-secondary)] block">Resistencia a Regresiones</span>
                   <span className="text-2xl font-bold text-[#E5A953] font-mono">100%</span>
-                  <p className="text-[10px] text-[#666] mt-1">Garantizada por snapshots inmutables y rollback en 1-click.</p>
+                  <p className="text-[10px] text-[var(--text-secondary)] mt-1">Garantizada por snapshots inmutables y rollback en 1-click.</p>
                 </div>
               </div>
             </div>
@@ -1097,28 +1097,28 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
         {/* SUBTAB 3: Auditoría de Bases de Datos Masivas */}
         {activeSubTab === 'audit' && (
           <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
-            <div className="bg-[#000000] border border-[#2A2A2A] rounded-xl p-5">
+            <div className="bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
                     <Database size={16} className="text-[#7B9C7F]" />
                     Auditoría y Estado de las Bases Maestras
                   </h3>
-                  <p className="text-xs text-[#888] mt-0.5">
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                     Diagnóstico de integridad, indexación y obsolescencia de los repositorios masivos de la app.
                   </p>
                 </div>
               </div>
 
               {/* Selector Visual de Snapshots Historicos */}
-              <div className="bg-[#000000] border border-[#2A2A2A] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                   <div className="p-2 rounded-lg bg-[#182B3E] text-[#64B5F6] border border-[#244260]">
                     <HistoryIcon size={18} />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-white">Selector Visual de Snapshots Históricos</h4>
-                    <p className="text-[11px] text-[#888]">Navega y restaura instantáneamente versiones consolidadas previas en disco.</p>
+                    <h4 className="text-xs font-bold text-[var(--text-primary)]">Selector Visual de Snapshots Históricos</h4>
+                    <p className="text-[11px] text-[var(--text-secondary)]">Navega y restaura instantáneamente versiones consolidadas previas en disco.</p>
                   </div>
                 </div>
 
@@ -1128,7 +1128,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                       if (e.target.value) handleRestoreSnapshot(e.target.value);
                     }}
                     defaultValue=""
-                    className="px-3 py-1.5 text-xs bg-[#0A0A0A] border border-[#333] rounded-lg text-white font-mono focus:outline-none focus:border-[#7B9C7F]"
+                    className="px-3 py-1.5 text-xs bg-[var(--surface-canvas)] border border-[#333] rounded-lg text-[var(--text-primary)] font-mono focus:outline-none focus:border-[#7B9C7F]"
                   >
                     <option value="" disabled>-- Seleccionar Snapshot para Restaurar --</option>
                     {snapshotsList.length === 0 ? (
@@ -1144,7 +1144,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
 
                   <button
                     onClick={handleOpenSnapshots}
-                    className="px-3 py-1.5 text-xs font-semibold bg-[#000000] border border-[#2A2A2A] hover:bg-[#333] text-[#CCC] hover:text-white rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+                    className="px-3 py-1.5 text-xs font-semibold bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] hover:bg-[#333] text-[#CCC] hover:text-[var(--text-primary)] rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
                   >
                     <Eye size={13} />
                     Ver Todos
@@ -1154,13 +1154,13 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Atlas Prompts DB */}
-                <div className="bg-[#000000] border border-[#2A2A2A] rounded-xl p-4">
+                <div className="bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-xl p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <div className="p-1.5 bg-[#7B9C7F]/10 text-[#7B9C7F] rounded-lg">
                         <Layers size={16} />
                       </div>
-                      <span className="text-xs font-bold text-white">Atlas Prompts DB</span>
+                      <span className="text-xs font-bold text-[var(--text-primary)]">Atlas Prompts DB</span>
                     </div>
                     <span className="text-[10px] font-mono text-[#7B9C7F] bg-[#162518] px-2 py-0.5 rounded border border-[#7B9C7F]/30">
                       Activo / Válido
@@ -1168,19 +1168,19 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                   </div>
 
                   <div className="space-y-2 text-xs">
-                    <div className="flex justify-between text-[#888]">
+                    <div className="flex justify-between text-[var(--text-secondary)]">
                       <span>Total Registros:</span>
-                      <strong className="text-white font-mono">22,279 prompts</strong>
+                      <strong className="text-[var(--text-primary)] font-mono">22,279 prompts</strong>
                     </div>
-                    <div className="flex justify-between text-[#888]">
+                    <div className="flex justify-between text-[var(--text-secondary)]">
                       <span>Archivo Físico:</span>
-                      <span className="text-white font-mono text-[11px]">public/prompts_db.json</span>
+                      <span className="text-[var(--text-primary)] font-mono text-[11px]">public/prompts_db.json</span>
                     </div>
-                    <div className="flex justify-between text-[#888]">
+                    <div className="flex justify-between text-[var(--text-secondary)]">
                       <span>Categorías:</span>
-                      <strong className="text-white">Marketing, Código, Finanzas, Legal, Redacción...</strong>
+                      <strong className="text-[var(--text-primary)]">Marketing, Código, Finanzas, Legal, Redacción...</strong>
                     </div>
-                    <div className="flex justify-between text-[#888]">
+                    <div className="flex justify-between text-[var(--text-secondary)]">
                       <span>Diagnóstico de Actualización:</span>
                       <span className="text-[#7B9C7F] font-semibold">100% Coherente con esquemas v2</span>
                     </div>
@@ -1188,13 +1188,13 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                 </div>
 
                 {/* Skills & Agents DB */}
-                <div className="bg-[#000000] border border-[#2A2A2A] rounded-xl p-4">
+                <div className="bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-xl p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <div className="p-1.5 bg-[#64B5F6]/10 text-[#64B5F6] rounded-lg">
                         <Bot size={16} />
                       </div>
-                      <span className="text-xs font-bold text-white">Skills & Agentes Autónomos</span>
+                      <span className="text-xs font-bold text-[var(--text-primary)]">Skills & Agentes Autónomos</span>
                     </div>
                     <span className="text-[10px] font-mono text-[#64B5F6] bg-[#152330] px-2 py-0.5 rounded border border-[#64B5F6]/30">
                       Activo / Válido
@@ -1202,19 +1202,19 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                   </div>
 
                   <div className="space-y-2 text-xs">
-                    <div className="flex justify-between text-[#888]">
+                    <div className="flex justify-between text-[var(--text-secondary)]">
                       <span>Total Registros:</span>
-                      <strong className="text-white font-mono">1,435 habilidades</strong>
+                      <strong className="text-[var(--text-primary)] font-mono">1,435 habilidades</strong>
                     </div>
-                    <div className="flex justify-between text-[#888]">
+                    <div className="flex justify-between text-[var(--text-secondary)]">
                       <span>Archivo Físico:</span>
-                      <span className="text-white font-mono text-[11px]">public/skills_v2.json</span>
+                      <span className="text-[var(--text-primary)] font-mono text-[11px]">public/skills_v2.json</span>
                     </div>
-                    <div className="flex justify-between text-[#888]">
+                    <div className="flex justify-between text-[var(--text-secondary)]">
                       <span>Ecosistema de Tools:</span>
-                      <strong className="text-white">MCP Servers, API Integrations, DirectML</strong>
+                      <strong className="text-[var(--text-primary)]">MCP Servers, API Integrations, DirectML</strong>
                     </div>
-                    <div className="flex justify-between text-[#888]">
+                    <div className="flex justify-between text-[var(--text-secondary)]">
                       <span>Diagnóstico de Actualización:</span>
                       <span className="text-[#7B9C7F] font-semibold">100% Compatible con Orquestador</span>
                     </div>
@@ -1238,15 +1238,15 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
       {/* MODAL DE INSPECCIÓN: Comparativa Antes vs. Después con Justificación Técnica */}
       {selectedPrompt && (
         <div 
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-[var(--surface-canvas)]/80 backdrop-blur-xl flex items-center justify-center p-4"
           onClick={() => setSelectedPrompt(null)}
         >
           <div 
-            className="bg-[#000000] border border-[#2A2A2A] rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl"
+            className="bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Cabecera del Modal */}
-            <div className="p-4 border-b border-[#262626] flex items-center justify-between bg-[#0A0A0A]">
+            <div className="p-4 border-b border-[#262626] flex items-center justify-between bg-[var(--surface-canvas)]">
               <div className="flex items-center gap-2">
                 <div className={`p-1.5 rounded-lg ${
                   selectedPrompt.category === 'agent' ? 'bg-[#182B3E] text-[#64B5F6]' : 'bg-[#312516] text-[#E5A953]'
@@ -1254,8 +1254,8 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                   {selectedPrompt.category === 'agent' ? <Bot size={16} /> : <Terminal size={16} />}
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white font-mono">{selectedPrompt.key}</h4>
-                  <div className="flex items-center gap-2 text-[11px] text-[#888]">
+                  <h4 className="text-sm font-bold text-[var(--text-primary)] font-mono">{selectedPrompt.key}</h4>
+                  <div className="flex items-center gap-2 text-[11px] text-[var(--text-secondary)]">
                     <span>Módulo: <strong className="text-[#CCC]">{selectedPrompt.moduleName}</strong></span>
                     <span>•</span>
                     <span>Tipo: <strong className={selectedPrompt.category === 'agent' ? 'text-[#64B5F6]' : 'text-[#E5A953]'}>
@@ -1283,7 +1283,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                 </button>
                 <button 
                   onClick={() => setSelectedPrompt(null)}
-                  className="px-2.5 py-1 text-xs bg-[#000000] border border-[#2A2A2A] hover:bg-[#333] text-white rounded-lg transition-colors cursor-pointer"
+                  className="px-2.5 py-1 text-xs bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] hover:bg-[#333] text-[var(--text-primary)] rounded-lg transition-colors cursor-pointer"
                 >
                   Cerrar
                 </button>
@@ -1314,7 +1314,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
                     <Award size={16} className="text-[#7B9C7F]" />
-                    <span className="font-bold text-white">Dictamen del Agente Juez Sintético:</span>
+                    <span className="font-bold text-[var(--text-primary)]">Dictamen del Agente Juez Sintético:</span>
                     <span className="px-2 py-0.5 rounded bg-[#1C2E20] border border-[#7B9C7F]/40 text-[#7B9C7F] font-mono font-bold">
                       Ganancia Global: {judgeResult.summary?.performance_gain_pct}
                     </span>
@@ -1330,12 +1330,12 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                     <div key={tc.test_id} className="p-2.5 bg-[#0F1410] border border-[#243525] rounded-xl">
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-1.5 overflow-hidden">
-                          <span className="font-semibold text-white text-[11px] truncate">{tc.title}</span>
+                          <span className="font-semibold text-[var(--text-primary)] text-[11px] truncate">{tc.title}</span>
                           <button onClick={() => playTTS(`${tc.title}. ${tc.probe}. Puntaje original: ${tc.original_score}. Optimizado: ${tc.evolved_score}. Mejora: ${tc.improvement}.`)} className="p-0.5 rounded-full hover:bg-[#1C261D] text-[#7B9C7F] transition-colors flex-shrink-0" title="Escuchar prueba"><Volume2 size={12} /></button>
                         </div>
                         <span className="text-[10px] text-[#7B9C7F] font-mono font-bold">{tc.improvement}</span>
                       </div>
-                      <p className="text-[10px] text-[#888] line-clamp-2 mb-1.5">{tc.probe}</p>
+                      <p className="text-[10px] text-[var(--text-secondary)] line-clamp-2 mb-1.5">{tc.probe}</p>
                       <div className="text-[10px] text-[#A0B0A0] flex justify-between border-t border-[#1C261D] pt-1">
                         <span>Original: {tc.original_score} pts</span>
                         <span className="text-[#7B9C7F] font-bold">Optimizado: {tc.evolved_score} pts</span>
@@ -1351,7 +1351,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
               <Sparkles size={16} className="text-[#7B9C7F] flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <strong className="text-white block">Fundamentación de la Mejora:</strong>
+                  <strong className="text-[var(--text-primary)] block">Fundamentación de la Mejora:</strong>
                   <button onClick={() => playTTS(`Fundamentación de la Mejora: ${selectedPrompt.optimizationRationale}`)} className="p-1 rounded-full hover:bg-[#243525] text-[#7B9C7F] transition-colors" title="Escuchar fundamentación"><Volume2 size={14} /></button>
                 </div>
                 {selectedPrompt.optimizationRationale}
@@ -1361,8 +1361,8 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
             {/* Comparación de Contenido */}
             <div className="flex-1 overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 gap-4 custom-scrollbar">
               {/* Original */}
-              <div className="flex flex-col h-[320px] bg-[#000000] border border-[#2A2A2A] rounded-xl overflow-hidden">
-                <div className="px-3 py-1.5 bg-[#000000] border-b border-[#222] text-[11px] font-semibold text-[#888] flex justify-between">
+              <div className="flex flex-col h-[320px] bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-xl overflow-hidden">
+                <div className="px-3 py-1.5 bg-[var(--surface-canvas)] border-b border-[#222] text-[11px] font-semibold text-[var(--text-secondary)] flex justify-between">
                   <span>Versión Original</span>
                   <span className="font-mono text-[10px]">{selectedPrompt.text.length} caracteres</span>
                 </div>
@@ -1394,11 +1394,11 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
       {/* MODAL PARA TOMAR SNAPSHOT MANUAL */}
       {takeSnapshotModalOpen && (
         <div 
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-[var(--surface-canvas)]/80 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setTakeSnapshotModalOpen(false)}
         >
           <div 
-            className="bg-[#000000] border border-[#2A2A2A] rounded-2xl w-full max-w-lg p-6 shadow-2xl animate-fadeIn flex flex-col gap-4"
+            className="bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-2xl w-full max-w-lg p-6 shadow-2xl animate-fadeIn flex flex-col gap-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3">
@@ -1406,23 +1406,23 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                 <Save size={22} />
               </div>
               <div>
-                <h3 className="text-base font-bold text-white">Tomar Snapshot del Estado Actual</h3>
-                <p className="text-xs text-[#888]">Genera una copia en disco de los {totalCount} prompts</p>
+                <h3 className="text-base font-bold text-[var(--text-primary)]">Tomar Snapshot del Estado Actual</h3>
+                <p className="text-xs text-[var(--text-secondary)]">Genera una copia en disco de los {totalCount} prompts</p>
               </div>
             </div>
 
-            <div className="bg-[#000000] border border-[#262626] rounded-xl p-4 text-xs text-[#B0B0B0] space-y-2.5">
-              <p className="text-white font-medium">
+            <div className="bg-[var(--surface-canvas)] border border-[#262626] rounded-xl p-4 text-xs text-[#B0B0B0] space-y-2.5">
+              <p className="text-[var(--text-primary)] font-medium">
                 Se creará un respaldo inmutable con todos los prompts en su estado actual (original u optimizado).
               </p>
               <div className="mt-3">
-                <label className="block text-[11px] font-bold text-[#888] mb-1.5 uppercase tracking-wider">Nota / Descripción del Snapshot (Opcional)</label>
+                <label className="block text-[11px] font-bold text-[var(--text-secondary)] mb-1.5 uppercase tracking-wider">Nota / Descripción del Snapshot (Opcional)</label>
                 <input 
                   type="text" 
                   placeholder="Ej. Snapshot previo a modificar el Agente X..."
                   value={takeSnapshotNote}
                   onChange={(e) => setTakeSnapshotNote(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#0A0A0A] border border-[#333] rounded-lg text-white text-xs focus:outline-none focus:border-[#7B9C7F]"
+                  className="w-full px-3 py-2 bg-[var(--surface-canvas)] border border-[#333] rounded-lg text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#7B9C7F]"
                 />
               </div>
             </div>
@@ -1430,14 +1430,14 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => setTakeSnapshotModalOpen(false)}
-                className="px-4 py-2 text-xs font-semibold bg-[#000000] border border-[#2A2A2A] hover:bg-[#2A2A2A] text-[#CCC] rounded-xl transition-all cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] hover:bg-[#2A2A2A] text-[#CCC] rounded-xl transition-all cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 onClick={executeTakeSnapshot}
                 disabled={isConsolidating}
-                className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-gradient-to-r from-[#7B9C7F] to-[#5C8561] hover:brightness-110 text-white rounded-xl transition-all shadow-lg cursor-pointer disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-gradient-to-r from-[#7B9C7F] to-[#5C8561] hover:brightness-110 text-[var(--text-primary)] rounded-xl transition-all shadow-lg cursor-pointer disabled:opacity-50"
               >
                 {isConsolidating ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
                 {isConsolidating ? 'Guardando...' : 'Tomar Snapshot'}
@@ -1450,11 +1450,11 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
       {/* MODAL DE CONFIRMACIÓN: Consolidación Permanente en Código */}
       {confirmModalOpen && (
         <div 
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-[var(--surface-canvas)]/80 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setConfirmModalOpen(false)}
         >
           <div 
-            className="bg-[#000000] border border-[#2A2A2A] rounded-2xl w-full max-w-lg p-6 shadow-2xl animate-fadeIn flex flex-col gap-4"
+            className="bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-2xl w-full max-w-lg p-6 shadow-2xl animate-fadeIn flex flex-col gap-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3">
@@ -1462,13 +1462,13 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                 <HardDrive size={22} />
               </div>
               <div>
-                <h3 className="text-base font-bold text-white">Consolidación Permanente en Código</h3>
-                <p className="text-xs text-[#888]">Persistencia inmutable respaldada en disco</p>
+                <h3 className="text-base font-bold text-[var(--text-primary)]">Consolidación Permanente en Código</h3>
+                <p className="text-xs text-[var(--text-secondary)]">Persistencia inmutable respaldada en disco</p>
               </div>
             </div>
 
-            <div className="bg-[#000000] border border-[#262626] rounded-xl p-4 text-xs text-[#B0B0B0] space-y-2.5">
-              <p className="text-white font-medium">
+            <div className="bg-[var(--surface-canvas)] border border-[#262626] rounded-xl p-4 text-xs text-[#B0B0B0] space-y-2.5">
+              <p className="text-[var(--text-primary)] font-medium">
                 ¿Confirmas consolidar permanentemente los <strong className="text-[#7B9C7F]">{optimizedCount}</strong> prompts optimizados en disco?
               </p>
               <ul className="space-y-1.5 list-disc list-inside text-[#999]">
@@ -1481,14 +1481,14 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => setConfirmModalOpen(false)}
-                className="px-4 py-2 text-xs font-semibold bg-[#000000] border border-[#2A2A2A] hover:bg-[#2A2A2A] text-[#CCC] rounded-xl transition-all cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] hover:bg-[#2A2A2A] text-[#CCC] rounded-xl transition-all cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 onClick={confirmAndExecuteConsolidation}
                 disabled={isConsolidating}
-                className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-gradient-to-r from-[#64B5F6] to-[#3B82F6] hover:brightness-110 text-white rounded-xl transition-all shadow-lg cursor-pointer disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-gradient-to-r from-[#64B5F6] to-[#3B82F6] hover:brightness-110 text-[var(--text-primary)] rounded-xl transition-all shadow-lg cursor-pointer disabled:opacity-50"
               >
                 {isConsolidating ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
                 {isConsolidating ? 'Guardando en Disco...' : 'Confirmar y Consolidar en Disco'}
@@ -1501,13 +1501,13 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
       {/* MODAL DE ACTUALIZACIÓN (Reemplazo en Sistema) */}
       {updatePopupOpen && (
         <div 
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn"
+          className="fixed inset-0 z-50 bg-[var(--surface-canvas)]/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn"
         >
-          <div className="bg-[#000000] border border-[#7B9C7F]/40 rounded-2xl w-full max-w-md p-6 flex flex-col gap-4 shadow-2xl shadow-[#7B9C7F]/10 text-center">
+          <div className="bg-[var(--surface-canvas)] border border-[#7B9C7F]/40 rounded-2xl w-full max-w-md p-6 flex flex-col gap-4 shadow-2xl shadow-[#7B9C7F]/10 text-center">
             <div className="mx-auto bg-[#1C2E20] p-4 rounded-full mb-2">
               <CheckCircle2 size={48} className="text-[#7B9C7F]" />
             </div>
-            <h3 className="text-xl font-bold text-white">¡Evolución Completada!</h3>
+            <h3 className="text-xl font-bold text-[var(--text-primary)]">¡Evolución Completada!</h3>
             <p className="text-sm text-[#A0A0A0]">
               Todos los {totalCount} prompts han sido procesados y optimizados correctamente. Haz clic en "Actualizar Sistema" para aplicar todos los cambios en el ecosistema (Atlas, Agentes, Builder, etc.).
             </p>
@@ -1531,11 +1531,11 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
       {/* MODAL DE HISTORIAL DE SNAPSHOTS */}
       {snapshotsModalOpen && (
         <div 
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-[var(--surface-canvas)]/80 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setSnapshotsModalOpen(false)}
         >
           <div 
-            className="bg-[#000000] border border-[#2A2A2A] rounded-2xl w-full max-w-2xl max-h-[80vh] p-6 shadow-2xl animate-fadeIn flex flex-col overflow-hidden"
+            className="bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] rounded-2xl w-full max-w-2xl max-h-[80vh] p-6 shadow-2xl animate-fadeIn flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-4 border-b border-[#262626]">
@@ -1544,13 +1544,13 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                   <HistoryIcon size={18} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white">Historial de Snapshots Permanentes</h3>
-                  <p className="text-[11px] text-[#888]">Registros inmutables en disco (backend/data/architecture_snapshots/)</p>
+                  <h3 className="text-sm font-bold text-[var(--text-primary)]">Historial de Snapshots Permanentes</h3>
+                  <p className="text-[11px] text-[var(--text-secondary)]">Registros inmutables en disco (backend/data/architecture_snapshots/)</p>
                 </div>
               </div>
               <button
                 onClick={() => setSnapshotsModalOpen(false)}
-                className="p-1.5 bg-[#000000] border border-[#2A2A2A] hover:bg-[#333] text-[#BBB] rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] hover:bg-[#333] text-[#BBB] rounded-lg transition-colors cursor-pointer"
               >
                 <X size={14} />
               </button>
@@ -1558,25 +1558,25 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
 
             <div className="flex-1 overflow-y-auto py-4 space-y-3 custom-scrollbar">
               {snapshotsList.length === 0 ? (
-                <div className="text-center py-12 text-[#666] text-xs">
-                  <HardDrive size={32} className="mx-auto mb-2 opacity-40 text-[#888]" />
+                <div className="text-center py-12 text-[var(--text-secondary)] text-xs">
+                  <HardDrive size={32} className="mx-auto mb-2 opacity-40 text-[var(--text-secondary)]" />
                   No hay snapshots guardados en disco todavía.
-                  <p className="text-[11px] text-[#555] mt-1">Haz clic en &quot;Consolidar en Código&quot; para generar el primer snapshot.</p>
+                  <p className="text-[11px] text-[var(--text-secondary)] mt-1">Haz clic en &quot;Consolidar en Código&quot; para generar el primer snapshot.</p>
                 </div>
               ) : (
                 snapshotsList.map((s) => (
                   <div 
                     key={s.id}
-                    className="p-3.5 bg-[#000000] border border-[#2A2A2A] hover:border-[#383838] rounded-xl flex items-center justify-between gap-3 transition-all"
+                    className="p-3.5 bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] hover:border-[#383838] rounded-xl flex items-center justify-between gap-3 transition-all"
                   >
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-bold text-white">{s.id}</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-[#000000] border border-[#2A2A2A] text-[#7B9C7F] font-mono">
+                        <span className="text-xs font-mono font-bold text-[var(--text-primary)]">{s.id}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] text-[#7B9C7F] font-mono">
                           {s.total_prompts} prompts
                         </span>
                       </div>
-                      <div className="text-[11px] text-[#888] mt-1 flex items-center gap-2">
+                      <div className="text-[11px] text-[var(--text-secondary)] mt-1 flex items-center gap-2">
                         <span>{s.timestamp ? new Date(s.timestamp).toLocaleString() : 'Fecha no disponible'}</span>
                         <span>•</span>
                         <span>{s.notes || 'Consolidación automática'}</span>
@@ -1584,7 +1584,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
                     </div>
                     <button
                       onClick={() => handleRestoreSnapshot(s.id)}
-                      className="px-3 py-1.5 text-xs font-semibold bg-[#000000] border border-[#2A2A2A] hover:bg-[#7B9C7F] hover:text-black text-white rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
+                      className="px-3 py-1.5 text-xs font-semibold bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] hover:bg-[#7B9C7F] hover:text-black text-[var(--text-primary)] rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
                     >
                       <RotateCcw size={12} />
                       Restaurar
@@ -1597,7 +1597,7 @@ export const SystemEvolutionPanel: React.FC<SystemEvolutionPanelProps> = ({ data
             <div className="pt-3 border-t border-[#262626] flex justify-end">
               <button
                 onClick={() => setSnapshotsModalOpen(false)}
-                className="px-4 py-2 text-xs font-semibold bg-[#000000] border border-[#2A2A2A] hover:bg-[#2A2A2A] text-white rounded-xl transition-all cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold bg-[var(--surface-canvas)] border border-[var(--stroke-subtle)] hover:bg-[#2A2A2A] text-[var(--text-primary)] rounded-xl transition-all cursor-pointer"
               >
                 Cerrar
               </button>

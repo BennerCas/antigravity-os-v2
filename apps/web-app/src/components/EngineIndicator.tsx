@@ -31,7 +31,7 @@ export function EngineIndicator() {
 
   if (!status) {
     return (
-      <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 px-2 py-1 rounded-lg border border-zinc-800" title="Backend no disponible">
+      <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 px-2 py-1 rounded-lg border border-[var(--stroke-subtle)]" title="Backend no disponible">
         <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
         <span className="font-mono">offline</span>
       </div>
@@ -48,11 +48,12 @@ export function EngineIndicator() {
 
   return (
     <div
-      className="flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-lg border border-zinc-800 cursor-default"
+      className="flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-lg border border-[var(--stroke-subtle)] cursor-default"
       title={`${detail} · ${status.cloud.ready ? '☁️ nube lista' : '☁️ sin key'} · ${status.local.ready ? '💻 hermes3 listo' : '💻 ollama no disponible'}`}
     >
       <span className={`w-2 h-2 rounded-full ${isCloud ? 'bg-sky-400' : status.active === 'local' ? 'bg-amber-400' : 'bg-red-500'} animate-pulse`} />
-      <span className="font-mono text-zinc-300">{isCloud ? '🌐' : '💻'} {label}</span>
+      <span className="font-mono text-[var(--text-primary)]">{isCloud ? '🌐' : '💻'} {label}</span>
     </div>
   );
 }
+

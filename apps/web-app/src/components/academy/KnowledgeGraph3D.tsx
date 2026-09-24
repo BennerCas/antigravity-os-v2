@@ -552,49 +552,49 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
   // Expanded Mode handled by camera radius
 
   return (
-    <div className="flex-1 relative flex flex-col bg-black overflow-hidden h-[calc(100vh-80px)] min-h-[700px]">
+    <div className="flex-1 relative flex flex-col bg-[var(--surface-canvas)] overflow-hidden h-[calc(100vh-80px)] min-h-[700px]">
       
             {/* Graph Toolbar Overlay (Fila 1 a 5) */}
       <div className="absolute top-0 left-0 right-[340px] p-4 z-10 flex flex-col gap-4 pointer-events-none">
           {/* Fila 1 & 2 */}
           <div className="flex items-center gap-6 pointer-events-auto">
-              <h1 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Database className="text-gray-400 w-5 h-5" /> FLOW ARCHITECT AI - LAB
+              <h1 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
+                  <Database className="text-[var(--text-secondary)] w-5 h-5" /> FLOW ARCHITECT AI - LAB
               </h1>
               
               {/* Fila 2: Progreso Global */}
               <div 
                 onClick={() => { setActiveTab('progreso'); setActiveTopFilter('Progreso'); }}
-                className="flex items-center gap-2 text-xs bg-[#161b22] hover:bg-[#1f242c] border border-gray-800 hover:border-gray-700 rounded-full px-3 py-1 cursor-pointer transition"
+                className="flex items-center gap-2 text-xs bg-[#161b22] hover:bg-[#1f242c] border border-[var(--stroke-subtle)] hover:border-gray-700 rounded-full px-3 py-1 cursor-pointer transition"
               >
-                  <span className="text-gray-400">Progreso Global:</span>
+                  <span className="text-[var(--text-secondary)]">Progreso Global:</span>
                   <Target className="text-green-500 w-4 h-4" />
                   <span className="text-green-500 font-bold">{globalScore}%</span>
               </div>
           </div>
           
-          <p className="text-xs text-gray-400 mt-[-8px]">Explora, conecta y domina el conocimiento. Todo en un solo lugar.</p>
+          <p className="text-xs text-[var(--text-secondary)] mt-[-8px]">Explora, conecta y domina el conocimiento. Todo en un solo lugar.</p>
 
           {/* Fila 3: Controles de Animación y Expansión */}
-          <div className="flex items-center gap-4 pointer-events-auto bg-gray-900/40 p-2 rounded-lg border border-gray-800/50 w-fit backdrop-blur-md">
-            <span className="text-xs font-semibold text-gray-300">MODO 3D:</span>
-            <button onClick={() => setIsExpanded(!isExpanded)} className={`px-3 py-1 rounded text-xs font-bold transition-all ${isExpanded ? 'bg-cyan-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}>
+          <div className="flex items-center gap-4 pointer-events-auto bg-[var(--surface-card)]/40 p-2 rounded-lg border border-[var(--stroke-subtle)]/50 w-fit backdrop-blur-md">
+            <span className="text-xs font-semibold text-[var(--text-primary)]">MODO 3D:</span>
+            <button onClick={() => setIsExpanded(!isExpanded)} className={`px-3 py-1 rounded text-xs font-bold transition-all ${isExpanded ? 'bg-cyan-600 text-[var(--text-primary)]' : 'bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:bg-gray-700'}`}>
               {isExpanded ? 'EXPANDIDO' : 'DENSO'}
             </button>
             <div className="w-px h-4 bg-gray-700 mx-2"></div>
-            <span className="text-xs font-semibold text-gray-300">ANIMACIÓN:</span>
-            <button onClick={() => setRotationOn(!rotationOn)} className={`px-3 py-1 rounded text-xs font-bold transition-all ${rotationOn ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}>
+            <span className="text-xs font-semibold text-[var(--text-primary)]">ANIMACIÓN:</span>
+            <button onClick={() => setRotationOn(!rotationOn)} className={`px-3 py-1 rounded text-xs font-bold transition-all ${rotationOn ? 'bg-green-600 text-[var(--text-primary)]' : 'bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:bg-gray-700'}`}>
               {rotationOn ? 'ON' : 'OFF'}
             </button>
             <div className="flex items-center gap-2 ml-2">
-              <span className="text-xs text-gray-500">Velocidad:</span>
+              <span className="text-xs text-[var(--text-secondary)]">Velocidad:</span>
               <input type="range" min="0.1" max="3" step="0.1" value={rotationSpeed} onChange={(e) => setRotationSpeed(parseFloat(e.target.value))} className="w-20 cursor-pointer accent-cyan-500" />
             </div>
           </div>
 
           {/* Fila 4: Tabs de Filtro Superiores */}
           <div className="flex items-center gap-6 pointer-events-auto mt-2">
-              <div className="flex gap-4 text-xs font-medium pb-1 border-b border-gray-800 w-fit pr-8">
+              <div className="flex gap-4 text-xs font-medium pb-1 border-b border-[var(--stroke-subtle)] w-fit pr-8">
                   {['Habilidades', 'Competencias', 'Relaciones', 'Progreso'].map(tab => (
                     <span 
                       key={tab}
@@ -604,7 +604,7 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
                         else if(tab === 'Competencias') setActiveTab('competencias');
                         else setActiveTab('info');
                       }}
-                      className={activeTopFilter === tab ? "green-text-active pb-1 cursor-pointer transition-colors relative after:content-[''] after:absolute after:bottom-[-1px] after:left-0 after:w-full after:h-[2px] after:bg-green-500" : "text-gray-500 hover:text-gray-300 cursor-pointer transition-colors pb-1"}
+                      className={activeTopFilter === tab ? "green-text-active pb-1 cursor-pointer transition-colors relative after:content-[''] after:absolute after:bottom-[-1px] after:left-0 after:w-full after:h-[2px] after:bg-green-500" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer transition-colors pb-1"}
                     >
                       {tab}
                     </span>
@@ -613,27 +613,27 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
           </div>
 
           {/* Fila 5: Selector de Contexto */}
-          <div className="flex items-center gap-3 pointer-events-auto mt-2 bg-gray-900/60 p-2 rounded-lg border border-gray-800 w-fit">
-              <span className="text-xs text-gray-400">CONTEXTO:</span>
+          <div className="flex items-center gap-3 pointer-events-auto mt-2 bg-[var(--surface-card)]/60 p-2 rounded-lg border border-[var(--stroke-subtle)] w-fit">
+              <span className="text-xs text-[var(--text-secondary)]">CONTEXTO:</span>
               <select 
                 value={contextFilter} 
                 onChange={(e) => setContextFilter(e.target.value)}
-                className="bg-black text-cyan-400 border border-gray-700 rounded px-2 py-1 text-xs outline-none cursor-pointer font-medium"
+                className="bg-[var(--surface-canvas)] text-cyan-400 border border-gray-700 rounded px-2 py-1 text-xs outline-none cursor-pointer font-medium"
               >
-                  <option value="all" className="bg-[#161b22] text-white">Todos los Contextos</option>
-                  <option value="G1" className="bg-[#161b22] text-white">G1 - Agentic Framework</option>
-                  <option value="G2" className="bg-[#161b22] text-white">G2 - Data Ontology</option>
+                  <option value="all" className="bg-[#161b22] text-[var(--text-primary)]">Todos los Contextos</option>
+                  <option value="G1" className="bg-[#161b22] text-[var(--text-primary)]">G1 - Agentic Framework</option>
+                  <option value="G2" className="bg-[#161b22] text-[var(--text-primary)]">G2 - Data Ontology</option>
               </select>
           </div>
       </div>
       <div ref={containerRef} className="w-full h-full absolute inset-0 z-0"></div>
 
       {/* Right Sidebar (Detalles de Habilidad & Tabs) */}
-            <aside className="w-[320px] bg-black border-l border-gray-800 flex flex-col z-20 shrink-0 absolute right-0 top-0 bottom-0 shadow-2xl pointer-events-auto">
+            <aside className="w-[320px] bg-[var(--surface-canvas)] border-l border-[var(--stroke-subtle)] flex flex-col z-20 shrink-0 absolute right-0 top-0 bottom-0 shadow-2xl pointer-events-auto">
           
-          <div className="flex-none bg-black z-10 border-b border-gray-800">
+          <div className="flex-none bg-[var(--surface-canvas)] z-10 border-b border-[var(--stroke-subtle)]">
             <div className="p-4 flex justify-between items-center">
-                <h2 className="text-base font-bold text-white">
+                <h2 className="text-base font-bold text-[var(--text-primary)]">
                   {activeTab === 'info' && 'Detalles de habilidad'}
                   {activeTab === 'competencias' && 'Competencias por habilidad'}
                   {activeTab === 'sistema' && 'Sistema de aprendizaje'}
@@ -642,7 +642,7 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
                 {selectedNode && activeTab === 'info' && (
                   <button 
                     onClick={() => selectNode(null)} 
-                    className="text-gray-400 hover:text-white transition p-1 rounded hover:bg-gray-900"
+                    className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition p-1 rounded hover:bg-[var(--surface-card)]"
                     title="Cerrar detalles"
                   >
                     <X className="w-4 h-4" />
@@ -703,7 +703,7 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
                             )}
                         </div>
                         <div>
-                            <h3 className="font-bold text-white text-lg leading-tight">
+                            <h3 className="font-bold text-[var(--text-primary)] text-lg leading-tight">
                               {selectedNode.name ? selectedNode.name.replace(/\n/g, ' ') : 'Detalle del Nodo'}
                             </h3>
                             <span className="bg-[#161b22] border border-gray-700 text-cyan-400 text-xs px-2 py-0.5 rounded mt-1 inline-block">
@@ -715,12 +715,12 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
                     {/* Progress */}
                     <div>
                         <div className="flex justify-between text-sm mb-1">
-                            <span className="text-gray-400">Progreso</span>
-                            <span className="text-white font-bold">
+                            <span className="text-[var(--text-secondary)]">Progreso</span>
+                            <span className="text-[var(--text-primary)] font-bold">
                               {selectedScore}%
                             </span>
                         </div>
-                        <div className="w-full bg-gray-800 rounded-full h-1.5">
+                        <div className="w-full bg-[var(--surface-elevated)] rounded-full h-1.5">
                             <div 
                               className="h-1.5 rounded-full" 
                               style={{ 
@@ -733,12 +733,12 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
 
                     <div className="text-sm">
                         <p>
-                          <span className="text-gray-400">Nivel:</span>{' '}
+                          <span className="text-[var(--text-secondary)]">Nivel:</span>{' '}
                           <span style={{ color: selectedNode.color || '#22c55e' }}>
                             {selectedNode.isSub ? 'En práctica' : 'Intermedio'}
                           </span>
                         </p>
-                        <p className="text-gray-400 mt-2 leading-relaxed whitespace-pre-line">
+                        <p className="text-[var(--text-secondary)] mt-2 leading-relaxed whitespace-pre-line">
                             {selectedNode.desc || 'Habilidad base para el desarrollo de software, modelado de sistemas y resolución práctica de problemas tecnológicos.'}
                         </p>
                     </div>
@@ -749,12 +749,12 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
 
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {activeTab === 'info' && !selectedNode && (
-              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-gray-500 my-auto">
-                <div className="w-12 h-12 rounded-full border border-dashed border-gray-700 flex items-center justify-center mb-3 text-gray-400">
-                  <Target className="w-6 h-6 text-gray-500" />
+              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-[var(--text-secondary)] my-auto">
+                <div className="w-12 h-12 rounded-full border border-dashed border-gray-700 flex items-center justify-center mb-3 text-[var(--text-secondary)]">
+                  <Target className="w-6 h-6 text-[var(--text-secondary)]" />
                 </div>
-                <p className="text-base font-medium text-gray-300">Selecciona un nodo para ver sus detalles</p>
-                <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+                <p className="text-base font-medium text-[var(--text-primary)]">Selecciona un nodo para ver sus detalles</p>
+                <p className="text-sm text-[var(--text-secondary)] mt-2 leading-relaxed">
                   Haz clic sobre cualquier habilidad o competencia en el grafo 3D para visualizar su descripción, nivel y actividades recomendadas.
                 </p>
               </div>
@@ -763,11 +763,11 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
             {activeTab === 'info' && selectedNode && (
               <>
                 <div className="p-4 flex flex-col gap-4">
-                    <hr className="border-gray-800" />
+                    <hr className="border-[var(--stroke-subtle)]" />
 
                     {/* Competencias */}
                     <div>
-                        <h4 className="text-sm font-semibold text-gray-300 mb-2">
+                        <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-2">
                           {selectedNode.isSub ? 'Habilidad Asociada' : 'Sub-competencias'}
                         </h4>
                         {(() => {
@@ -777,7 +777,7 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
                           
                           if (relatedNodes.length === 0) {
                             return (
-                              <p className="text-xs text-gray-500 italic">Nodo raíz del sistema agéntico FlowArchitect.</p>
+                              <p className="text-xs text-[var(--text-secondary)] italic">Nodo raíz del sistema agéntico FlowArchitect.</p>
                             );
                           }
                           return (
@@ -815,11 +815,11 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
                         })()}
                     </div>
 
-                    <hr className="border-gray-800" />
+                    <hr className="border-[var(--stroke-subtle)]" />
 
                     {/* Relaciones */}
                     <div>
-                        <h4 className="text-sm font-semibold text-gray-300 mb-2">Relaciones Semánticas</h4>
+                        <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-2">Relaciones Semánticas</h4>
                         {(() => {
                           const relatedLinks = gData.links.filter(l => {
                             const sId = typeof l.source === 'object' && l.source !== null ? (l.source as GraphSkillNode).id : l.source;
@@ -829,12 +829,12 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
 
                           if (relatedLinks.length === 0) {
                             return (
-                              <p className="text-xs text-gray-500 italic">Sin relaciones transversales directas.</p>
+                              <p className="text-xs text-[var(--text-secondary)] italic">Sin relaciones transversales directas.</p>
                             );
                           }
 
                           return (
-                            <ul className="text-xs flex flex-col gap-1.5 text-gray-400">
+                            <ul className="text-xs flex flex-col gap-1.5 text-[var(--text-secondary)]">
                               {relatedLinks.map((l, i) => {
                                 const sId = typeof l.source === 'object' && l.source !== null ? (l.source as GraphSkillNode).id : l.source;
                                 const tId = typeof l.target === 'object' && l.target !== null ? (l.target as GraphSkillNode).id : l.target;
@@ -863,7 +863,7 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
                                     <span className="text-gray-600">&rarr;</span>
                                     <span className="text-cyan-400 font-medium shrink-0">{l.name}</span>
                                     <span className="text-gray-600">&rarr;</span>
-                                    <span className="text-gray-300 truncate" title={otherNode?.name.replace(/\n/g, ' ')}>
+                                    <span className="text-[var(--text-primary)] truncate" title={otherNode?.name.replace(/\n/g, ' ')}>
                                       {otherNode?.name.replace(/\n/g, ' ') || otherId}
                                     </span>
                                   </li>
@@ -874,28 +874,28 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
                         })()}
                     </div>
 
-                    <hr className="border-gray-800" />
+                    <hr className="border-[var(--stroke-subtle)]" />
 
                     {/* Misiones relacionadas */}
                     <div>
-                        <h4 className="text-sm font-semibold text-gray-300 mb-2">Misiones relacionadas</h4>
-                        <ul className="text-xs flex flex-col gap-1.5 text-gray-300">
+                        <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-2">Misiones relacionadas</h4>
+                        <ul className="text-xs flex flex-col gap-1.5 text-[var(--text-primary)]">
                             <li className="flex items-center gap-2 hover:text-cyan-400 cursor-pointer transition">
-                              <Target className="text-gray-500 w-3 h-3" /> Reto: {selectedNode.name ? selectedNode.name.replace(/\n/g, ' ') : 'Misión Práctica'}
+                              <Target className="text-[var(--text-secondary)] w-3 h-3" /> Reto: {selectedNode.name ? selectedNode.name.replace(/\n/g, ' ') : 'Misión Práctica'}
                             </li>
                             <li className="flex items-center gap-2 hover:text-cyan-400 cursor-pointer transition">
-                              <Target className="text-gray-500 w-3 h-3" /> Laboratorio interactivo aplicado
+                              <Target className="text-[var(--text-secondary)] w-3 h-3" /> Laboratorio interactivo aplicado
                             </li>
                         </ul>
                         <button 
                           onClick={() => handleLaunchMission(selectedNode?.id || 'mission_id')}
-                          className="w-full mt-3 py-1.5 rounded border border-gray-700 hover:bg-gray-800 active:scale-95 transition-transform text-sm text-gray-400"
+                          className="w-full mt-3 py-1.5 rounded border border-gray-700 hover:bg-[var(--surface-elevated)] active:scale-95 transition-transform text-sm text-[var(--text-secondary)]"
                         >
                           Ver detalles completos
                         </button>
                         <button 
                           onClick={() => handleBack()}
-                          className="w-full mt-2 py-1.5 rounded bg-transparent border border-gray-800 hover:border-gray-600 hover:text-white active:scale-95 transition-transform text-sm text-gray-500"
+                          className="w-full mt-2 py-1.5 rounded bg-transparent border border-[var(--stroke-subtle)] hover:border-gray-600 hover:text-[var(--text-primary)] active:scale-95 transition-transform text-sm text-[var(--text-secondary)]"
                         >
                           Atrás
                         </button>
@@ -908,7 +908,7 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
           {activeTab === 'competencias' && (
             <div className="p-4 flex flex-col gap-4">
               <div className="bg-[#0d1117]/85 backdrop-blur-md border border-[#30363d] rounded-xl p-4">
-                  <h3 className="text-sm font-semibold text-gray-300 mb-3">
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">
                     Competencias por habilidad ({gData.nodes.filter(n => !n.isSub && n.id !== 'center').length})
                   </h3>
                   <div className="flex flex-col gap-2 text-xs max-h-[calc(100vh-280px)] overflow-y-auto custom-scrollbar pr-1">
@@ -935,7 +935,7 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
                               }
                             }}
                             className={`flex justify-between items-center p-2 rounded cursor-pointer transition ${
-                              isSelected ? 'bg-white/10 text-white border border-blue-500/40' : 'hover:bg-white/5 text-gray-300 border border-transparent'
+                              isSelected ? 'bg-white/10 text-[var(--text-primary)] border border-blue-500/40' : 'hover:bg-white/5 text-[var(--text-primary)] border border-transparent'
                             }`}
                           >
                             <span className="flex items-center gap-2 truncate pr-2">
@@ -949,7 +949,7 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
                                 {skill.name.replace(/\n/g, ' ')}
                               </span>
                             </span>
-                            <span className="text-gray-500 text-[11px] shrink-0 font-medium">
+                            <span className="text-[var(--text-secondary)] text-[11px] shrink-0 font-medium">
                               {subSkills.length} comp.
                             </span>
                           </div>
@@ -964,53 +964,53 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
           {activeTab === 'sistema' && (
             <div className="p-4 flex flex-col gap-4">
               <div className="bg-[#0d1117]/85 backdrop-blur-md border border-[#30363d] rounded-xl p-4">
-                  <h3 className="text-sm font-semibold text-gray-300 mb-4">Sistema de aprendizaje adaptativo</h3>
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Sistema de aprendizaje adaptativo</h3>
                   <div className="flex flex-col gap-3">
-                      <div className="flex items-start gap-3 p-2.5 rounded-lg bg-[#161b22] border border-gray-800">
+                      <div className="flex items-start gap-3 p-2.5 rounded-lg bg-[#161b22] border border-[var(--stroke-subtle)]">
                           <div className="w-8 h-8 rounded border border-gray-600 bg-[#0d1117] flex items-center justify-center text-cyan-400 shrink-0"><Crosshair className="w-4 h-4" /></div>
                           <div>
-                            <span className="text-sm font-semibold text-gray-200 block">Diagnóstico Inicial</span>
-                            <span className="text-xs text-gray-400 leading-tight mt-0.5 block">Evalúa conocimientos y estilo de aprendizaje</span>
+                            <span className="text-sm font-semibold text-[var(--text-primary)] block">Diagnóstico Inicial</span>
+                            <span className="text-xs text-[var(--text-secondary)] leading-tight mt-0.5 block">Evalúa conocimientos y estilo de aprendizaje</span>
                           </div>
                       </div>
                       <div className="flex justify-center -my-1">
                           <ChevronRight className="text-gray-600 w-4 h-4 rotate-90" />
                       </div>
-                      <div className="flex items-start gap-3 p-2.5 rounded-lg bg-[#161b22] border border-gray-800">
+                      <div className="flex items-start gap-3 p-2.5 rounded-lg bg-[#161b22] border border-[var(--stroke-subtle)]">
                           <div className="w-8 h-8 rounded border border-gray-600 bg-[#0d1117] flex items-center justify-center text-green-400 shrink-0"><Route className="w-4 h-4" /></div>
                           <div>
-                            <span className="text-sm font-semibold text-gray-200 block">Ruta personalizada</span>
-                            <span className="text-xs text-gray-400 leading-tight mt-0.5 block">Selecciona contenidos y actividades</span>
+                            <span className="text-sm font-semibold text-[var(--text-primary)] block">Ruta personalizada</span>
+                            <span className="text-xs text-[var(--text-secondary)] leading-tight mt-0.5 block">Selecciona contenidos y actividades</span>
                           </div>
                       </div>
                       <div className="flex justify-center -my-1">
                           <ChevronRight className="text-gray-600 w-4 h-4 rotate-90" />
                       </div>
-                      <div className="flex items-start gap-3 p-2.5 rounded-lg bg-[#161b22] border border-gray-800">
+                      <div className="flex items-start gap-3 p-2.5 rounded-lg bg-[#161b22] border border-[var(--stroke-subtle)]">
                           <div className="w-8 h-8 rounded border border-gray-600 bg-[#0d1117] flex items-center justify-center text-purple-400 shrink-0"><Zap className="w-4 h-4" /></div>
                           <div>
-                            <span className="text-sm font-semibold text-gray-200 block">Aprendizaje activo</span>
-                            <span className="text-xs text-gray-400 leading-tight mt-0.5 block">Proyectos, laboratorios y retos reales</span>
+                            <span className="text-sm font-semibold text-[var(--text-primary)] block">Aprendizaje activo</span>
+                            <span className="text-xs text-[var(--text-secondary)] leading-tight mt-0.5 block">Proyectos, laboratorios y retos reales</span>
                           </div>
                       </div>
                       <div className="flex justify-center -my-1">
                           <ChevronRight className="text-gray-600 w-4 h-4 rotate-90" />
                       </div>
-                      <div className="flex items-start gap-3 p-2.5 rounded-lg bg-[#161b22] border border-gray-800">
+                      <div className="flex items-start gap-3 p-2.5 rounded-lg bg-[#161b22] border border-[var(--stroke-subtle)]">
                           <div className="w-8 h-8 rounded border border-gray-600 bg-[#0d1117] flex items-center justify-center text-blue-400 shrink-0"><TrendingUp className="w-4 h-4" /></div>
                           <div>
-                            <span className="text-sm font-semibold text-gray-200 block">Seguimiento</span>
-                            <span className="text-xs text-gray-400 leading-tight mt-0.5 block">Analiza progreso y ajusta la ruta</span>
+                            <span className="text-sm font-semibold text-[var(--text-primary)] block">Seguimiento</span>
+                            <span className="text-xs text-[var(--text-secondary)] leading-tight mt-0.5 block">Analiza progreso y ajusta la ruta</span>
                           </div>
                       </div>
                       <div className="flex justify-center -my-1">
                           <ChevronRight className="text-gray-600 w-4 h-4 rotate-90" />
                       </div>
-                      <div className="flex items-start gap-3 p-2.5 rounded-lg bg-[#161b22] border border-gray-800">
+                      <div className="flex items-start gap-3 p-2.5 rounded-lg bg-[#161b22] border border-[var(--stroke-subtle)]">
                           <div className="w-8 h-8 rounded border border-gray-600 bg-[#0d1117] flex items-center justify-center text-orange-400 shrink-0"><Shield className="w-4 h-4" /></div>
                           <div>
-                            <span className="text-sm font-semibold text-gray-200 block">Evaluación continua</span>
-                            <span className="text-xs text-gray-400 leading-tight mt-0.5 block">Mide competencias y certifica logros</span>
+                            <span className="text-sm font-semibold text-[var(--text-primary)] block">Evaluación continua</span>
+                            <span className="text-xs text-[var(--text-secondary)] leading-tight mt-0.5 block">Mide competencias y certifica logros</span>
                           </div>
                       </div>
                   </div>
@@ -1022,23 +1022,23 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
           {activeTab === 'progreso' && (
             <div className="p-4 flex flex-col gap-4">
               <div className="bg-[#0d1117]/85 backdrop-blur-md border border-[#30363d] rounded-xl p-4">
-                  <h3 className="text-sm font-semibold text-gray-300 mb-4 text-center">Estado de tu progreso</h3>
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4 text-center">Estado de tu progreso</h3>
                   <div className="relative w-24 h-24 mx-auto mb-4">
                       <svg viewBox="0 0 36 36" className="w-full h-full text-green-500 stroke-current">
                           <path className="text-gray-700 stroke-current" strokeWidth={3} fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                           <path strokeDasharray={`${globalScore}, 100`} strokeWidth={3} fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <span className="text-xl font-bold text-white">{globalScore}%</span>
-                          <span className="text-xs text-gray-400">Mastery</span>
+                          <span className="text-xl font-bold text-[var(--text-primary)]">{globalScore}%</span>
+                          <span className="text-xs text-[var(--text-secondary)]">Mastery</span>
                       </div>
                   </div>
-                  <div className="flex flex-col gap-2.5 text-sm border-t border-gray-800 pt-3">
-                      <div className="flex justify-between items-center"><span className="flex items-center gap-2 text-gray-300"><span className="w-2.5 h-2.5 rounded-full bg-green-500"></span> Dominadas</span> <span className="text-white font-medium">{masteredCount}</span></div>
-                      <div className="flex justify-between items-center"><span className="flex items-center gap-2 text-gray-300"><span className="w-2.5 h-2.5 rounded-full bg-yellow-500"></span> En práctica</span> <span className="text-white font-medium">{practicingCount}</span></div>
-                      <div className="flex justify-between items-center"><span className="flex items-center gap-2 text-gray-300"><span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Por iniciar</span> <span className="text-white font-medium">{unstartedCount}</span></div>
-                      <div className="flex justify-between items-center"><span className="flex items-center gap-2 text-gray-300"><span className="w-2.5 h-2.5 rounded-full bg-purple-500"></span> En revisión</span> <span className="text-white font-medium">{reviewCount}</span></div>
-                      <div className="flex justify-between items-center"><span className="flex items-center gap-2 text-gray-300"><span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> Bloqueadas</span> <span className="text-white font-medium">{blockedCount}</span></div>
+                  <div className="flex flex-col gap-2.5 text-sm border-t border-[var(--stroke-subtle)] pt-3">
+                      <div className="flex justify-between items-center"><span className="flex items-center gap-2 text-[var(--text-primary)]"><span className="w-2.5 h-2.5 rounded-full bg-green-500"></span> Dominadas</span> <span className="text-[var(--text-primary)] font-medium">{masteredCount}</span></div>
+                      <div className="flex justify-between items-center"><span className="flex items-center gap-2 text-[var(--text-primary)]"><span className="w-2.5 h-2.5 rounded-full bg-yellow-500"></span> En práctica</span> <span className="text-[var(--text-primary)] font-medium">{practicingCount}</span></div>
+                      <div className="flex justify-between items-center"><span className="flex items-center gap-2 text-[var(--text-primary)]"><span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Por iniciar</span> <span className="text-[var(--text-primary)] font-medium">{unstartedCount}</span></div>
+                      <div className="flex justify-between items-center"><span className="flex items-center gap-2 text-[var(--text-primary)]"><span className="w-2.5 h-2.5 rounded-full bg-purple-500"></span> En revisión</span> <span className="text-[var(--text-primary)] font-medium">{reviewCount}</span></div>
+                      <div className="flex justify-between items-center"><span className="flex items-center gap-2 text-[var(--text-primary)]"><span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> Bloqueadas</span> <span className="text-[var(--text-primary)] font-medium">{blockedCount}</span></div>
                   </div>
               </div>
             </div>
@@ -1047,8 +1047,8 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
 
           {/* Próxima recomendación panel */}
           {activeTab === 'info' && selectedNode && (
-                <div className="flex-none mt-auto border-t border-gray-800 p-4 bg-black">
-                    <h4 className="text-sm font-semibold text-gray-300 mb-2">Próxima recomendación</h4>
+                <div className="flex-none mt-auto border-t border-[var(--stroke-subtle)] p-4 bg-[var(--surface-canvas)]">
+                    <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-2">Próxima recomendación</h4>
                     <div className="bg-[#161b22] border border-blue-900 rounded-lg p-3 relative overflow-hidden">
                         <div className="absolute inset-0 bg-blue-500 opacity-5"></div>
                         <div className="relative z-10 flex gap-3">
@@ -1056,15 +1056,15 @@ export function KnowledgeGraph3D(props: KnowledgeGraph3DProps) {
                                 <AlertCircle className="w-4 h-4" />
                             </div>
                             <div>
-                                <h5 className="text-sm font-bold text-white">
+                                <h5 className="text-sm font-bold text-[var(--text-primary)]">
                                   FLOW ARCHITECT AI - LAB
                                 </h5>
-                                <p className="text-xs text-gray-400 mt-1 mb-2 leading-tight">
+                                <p className="text-xs text-[var(--text-secondary)] mt-1 mb-2 leading-tight">
                                   Completa la práctica para avanzar en este nodo del grafo.
                                 </p>
                                 <button 
                                   onClick={() => handleLaunchMission(selectedNode.id)}
-                                  className="w-full bg-[#1f6feb] hover:bg-blue-600 text-white text-sm py-1 rounded transition"
+                                  className="w-full bg-[#1f6feb] hover:bg-blue-600 text-[var(--text-primary)] text-sm py-1 rounded transition"
                                 >
                                   Ir a la misión &rarr;
                                 </button>

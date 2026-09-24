@@ -1,0 +1,114 @@
+=== RESULTADO DE LA FORJA (FASE 3) ===
+
+Soy el **Revisor de Cohesión**. He analizado la arquitectura propuesta por el Forjador en respuesta a la crítica del Red Teamer.
+
+La integración del nodo de seguridad (Node_03) es necesaria, pero existen **tres fricciones críticas de cohesión y flujo de datos** que impedirían la ejecución real o crearían cuellos de botella inmanejables. Además, falta la definición explícita de los contratos de entrada/salida (I/O) para algunos nodos.
+
+A continuación, presento el **Análisis de Cohesión y Ajustes de Contratos**:
+
+### 1. Análisis de Fricciones y Errores Lógicos
+
+#### **Fricción A: El "Cuello de Botella" del Esquema (Node_03 vs Node_02)**
+*   **Problema:** El texto indica que el *Arquitecto* define el esquema, pero el *Guardián (Node_03)* valida contra él. Sin embargo, **Node_02 (LLM)** no recibe el esquema en su entrada inicial.
+*   **Riesgo:** Si Node_02 genera un JSON sin conocer el esquema estricto definido por Node_01/Arquitecto, es probable que falle la validación estructural en Node_03 no por seguridad (PII), sino por formato. Esto generaría un *false positive* de seguridad o un bucle infinito de corrección por errores estructurales, confundiendo al agente de seguridad.
+*   **Solución:** El contrato de entrada de Node_02 debe incluir obligatoriamente el `strict_schema` generado previamente. Node_03 debe validar primero la estructura, luego la seguridad.
+
+#### **Fricción B: El Flujo de Corrección (Node_04 → Node_02)**
+*   **Problema:** Node_04 envía una señal a Node_02. Node_02 es un generador "crudo". Si Node_04 solo envía "Regenera eliminando PII", Node_02 no sabe *qué* PII ni *cómo* eliminarla sin contexto.
+*   **Riesgo:** Algoritmos de "aplastar y rezar". Node_02 podría eliminar columnas necesarias para evitar falsos positivos de PII, rompiendo la integridad del esquema.
+*   **Solución:** Node_04 debe inyectar el **contexto de fallo específico** (el reporte de Node_03) en el prompt de Node_02. Además, se debe asegurar que el *System Prompt* de Node_02 contenga las reglas de sanitización por defecto.
+
+#### **Fricción C: El Orquestador y el Arquitecto (Falta de Node_00/Arquitecto en el flujo)**
+*   **Problema:** Se menciona al "Arquitecto de Datos" como perfil, pero no aparece en la lista de Nodos (Node_01 a Node_06).
+*   **Riesgo:** ¿Quién genera el esquema estricto que Node_03 usa para validar? Si no es un nodo explícito, el flujo se rompe.
+*   **Solución:** Debemos integrar al Arquitecto como **Node_00** o fusionar su lógica en **Node_01** (Input Ingestion) para que el esquema esté listo *antes* de que Node_02 genere nada.
+
+---
+
+### 2. Ajuste de Contratos I/O (Input/Output Contracts)
+
+Para garantizar la cohesión, redefino los contratos de datos entre nodos. Estos contratos son inquebrantables para el sistema.
+
+#### **Nuevo Flujo Corregido:**
+
+1.  **Node_00: Schema_Definer (Arquitecto)**
+    *   *Entrada:* Requerimiento de Negocio (de Node_01).
+    *   *Salida:* `strict_json_schema` + `security_policy_rules`.
+    *   *Destino:* Node_02 y Node_03.
+
+2.  **Node_01: Input_Ingestion**
+    *   *Entrada:* User Prompt.
+    *   *Salida:* `user_intent` + `context_metadata`.
+    *   *Conexión:* Envía a Node_00 (para generar esquema) Y a Node_02 (como contexto).
+
+3.  **Node_02: LLM_Generation_Node (Reforzado)**
+    *   *Entrada:*
+        *   `user_intent` (de Node_01)
+        *   `strict_json_schema` (de Node_00)
+        *   `security_policy_rules` (de Node_00)
+    *   *Proceso:* Genera JSON *conociendo* las restricciones.
+    *   *Salida:* `raw_output_json`.
+    *   *Conexión:* Envía a Node_03.
+
+4.  **Node_03: DLP_Security_Check (El Guardián)**
+    *   *Entrada:* `raw_output_json`.
+    *   *Proceso:*
+        1.  Validar contra `strict_json_schema` (Estructura).
+        2.  Escanear contra `security_policy_rules` (PII/Claves).
+    *   *Salida:*
+        *   `PASS`: `clean_output_json`.
+        *   `FAIL`: `error_report` (contiene `reason_code`, `sensitive_fields`, `suggestions`).
+    *   *Conexión:*
+        *   Si PASS → Node_05.
+        *   Si FAIL → Node_04.
+
+5.  **Node_04: Correction_Loop (Inteligente)**
+    *   *Entrada:* `error_report` (de Node_03) + `user_intent` (de Node_01).
+    *   *Proceso:* Construye un nuevo prompt para Node_02: *"Tu salida falló en: [reason]. Regenera manteniendo la estructura pero reemplazando [sensitive_fields] con placeholders seguros."*
+    *   *Salida:* `corrected_prompt`.
+    *   *Conexión:* Envía a Node_02.
+    *   *Lógica de Bucle:* Lleva un contador interno. Si intentos > 3, envía a Node_06.
+
+6.  **Node_05: Final_Scribe_Node**
+    *   *Entrada:* `clean_output_json` (de Node_03).
+    *   *Salida:* Documento Final.
+
+7.  **Node_06: Human_Escalation**
+    *   *Entrada:* `failed_attempts_log`.
+    *   *Acción:* Alerta.
+
+---
+
+### 3. Validación de Puertos Huérfanos
+
+*   **Node_00 (Schema_Definer):** Antes era implícito. Ahora es explícito. **Puerto OK.**
+*   **Node_02 (LLM):** Recibe esquema y política. **Puerto OK.**
+*   **Node_03 (DLP):** Recibe salida cruda. **Puerto OK.**
+*   **Node_04 (Loop):** Recibe error de Node_03 y contexto de Node_01. **Puerto OK.**
+*   **Node_05 (Scribe):** Recibe salida limpia de Node_03. **Puerto OK.**
+*   **Node_06 (Escalation):** Recibe fallo de Node_04. **Puerto OK.**
+
+**Veredicto:** No hay puertos huérfanos. Todos los nodos tienen una fuente de entrada definida y una salida clara.
+
+### 4. Confirmación para el Escribano y el Forjador
+
+El **Revisor de Cohesión** aprueba la arquitectura bajo las siguientes condiciones de implementación:
+
+1.  **El Arquitecto (Node_00) debe ejecutarse en paralelo o antes que el LLM.** El LLM no puede ser "ciego" al esquema.
+2.  **El Feedback Loop (Node_04) debe ser contextual.** No puede ser un simple "reintenta". Debe incluir el reporte de errores de Node_03.
+3.  **Seguridad por Defecto:** El prompt de Node_02 debe incluir instrucciones de "Safety by Design" (ej. "Nunca generes claves reales, usa 'PLACEHOLDER_KEY'").
+
+**Respuesta al Escribano:**
+> "El esquema de base de datos debe ser generado ahora, pero **no directamente por el LLM final**. El proceso debe ser:
+> 1.  El Arquitecto define el JSON Schema.
+> 2.  El LLM genera el contenido siguiendo ese schema y las reglas DLP.
+> 3.  El Guardián valida.
+> 4.  El Escribano formatea el resultado final.
+>
+> Procedo a validar la cohesión del **Esquema de Base de Datos** una vez que el Forjador confirme que el nodo 'Schema_Definer' está activo en la ejecución."
+
+**¿Confirmas la activación del Node_00 (Schema_Definer) como prerrequisito para el Node_02
+===================================
+Tiene <nodes>: False
+Tiene <edges>: False
+Tiene <agents>: False

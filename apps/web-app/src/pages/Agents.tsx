@@ -708,7 +708,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
     <div
       key={cat.id || idx}
       onClick={() => handleCategoryClick(cat)}
-      className="bg-gray-900 border border-orange-400 rounded-2xl p-4 cursor-pointer hover:border-orange-400 hover:shadow-xl hover:-translate-y-0.5 transition-all flex flex-col justify-between min-h-[10.5rem]"
+      className="bg-[var(--surface-card)] border border-orange-400 rounded-2xl p-4 cursor-pointer hover:border-orange-400 hover:shadow-xl hover:-translate-y-0.5 transition-all flex flex-col justify-between min-h-[10.5rem]"
     >
       <div>
         <div className="flex justify-between items-start mb-2">
@@ -720,7 +720,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
           </div>
           <button
             onClick={(e) => handleSpeak(e, `${cat.title}. Category with ${cat.subCategories.length} subcategories.`)}
-            className="text-gray-400 hover:text-white bg-gray-800 p-1.5 rounded-full transition-colors flex-shrink-0"
+            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--surface-elevated)] p-1.5 rounded-full transition-colors flex-shrink-0"
             title="Traducir y Escuchar"
           >
             <SpeakerHigh size={15} />
@@ -731,7 +731,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
       
       <div className="overflow-hidden">
         {cat.subCategories.slice(0, 4).map((sub, i) => (
-          <div key={i} className="text-xs text-gray-500 truncate flex items-center gap-1 mb-0.5 leading-snug">
+          <div key={i} className="text-xs text-[var(--text-secondary)] truncate flex items-center gap-1 mb-0.5 leading-snug">
             <CaretRight size={10} className="text-blue-500/70 flex-shrink-0" /> <span className="truncate">{sub.name}</span>
             <span className="text-gray-600 ml-auto flex-shrink-0 text-[11px]">{sub.count}</span>
           </div>
@@ -778,16 +778,16 @@ ${inspectedAgent.instructions || inspectedAgent.content}
   }, [allAgents, agentHistory]);
 
   return (
-    <div className="flex h-screen bg-[#0a0c10] text-gray-200 font-sans overflow-hidden">
+    <div className="flex h-screen bg-[var(--surface-canvas)] text-[var(--text-primary)] font-sans overflow-hidden">
       
       {/* Left Column: Directory */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
 
         {/* Fixed Top Section: Header, Search & Filters */}
-        <div className="flex-shrink-0 px-8 pt-5 pb-3 bg-[#0a0c10]/95 backdrop-blur-md border-b border-orange-400/80 z-20 shadow-md">
+        <div className="flex-shrink-0 px-8 pt-5 pb-3 bg-[var(--surface-canvas)]/95 backdrop-blur-md border-b border-orange-400/80 z-20 shadow-md">
           <header className="mb-4 text-center">
             <h1 className="text-3xl font-bold text-orange-400 tracking-wide">Directorio de Agentes</h1>
-            <p className="text-gray-400 mt-1 text-xs">Análisis Milimétrico de Skills y Agentes de IA</p>
+            <p className="text-[var(--text-secondary)] mt-1 text-xs">Análisis Milimétrico de Skills y Agentes de IA</p>
           </header>
 
           {/* ─── SEARCH BOX ─────────────────────────────────────────────────────── */}
@@ -800,7 +800,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="flex-1 bg-gray-900 border border-orange-400 rounded-xl p-3.5 text-white outline-none focus:border-blue-500 transition-colors shadow-lg text-sm"
+                  className="flex-1 bg-[var(--surface-card)] border border-orange-400 rounded-xl p-3.5 text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors shadow-lg text-sm"
                 />
                 <button
                   onClick={handleImprove}
@@ -810,23 +810,23 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                 </button>
                 <button
                   onClick={handleSearch}
-                  className="bg-transparent border border-orange-400 text-orange-400 hover:bg-cyan-500/20 font-bold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 whitespace-nowrap text-sm"
+                  className="bg-transparent border border-orange-400 text-orange-400 hover:bg-[var(--theme-border)]/20 font-bold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 whitespace-nowrap text-sm"
                 >
                   <MagnifyingGlass size={18} /> Buscar
                 </button>
                 <button
                   onClick={handleSuggestFlows}
                   disabled={isSuggesting}
-                  className="bg-transparent border border-orange-400 text-orange-400 hover:bg-cyan-500/20 font-bold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-wait text-sm"
+                  className="bg-transparent border border-orange-400 text-orange-400 hover:bg-[var(--theme-border)]/20 font-bold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-wait text-sm"
                   title="La IA mejora tu texto y diseña el flujo de trabajo ideal + 5 alternativas"
                 >
                   <Sparkle size={18} /> {isSuggesting ? 'Diseñando...' : 'Diseñar Flujo'}
                 </button>
               </div>
               {isSearchMode && searchResults !== null && (
-                <p className="text-xs text-gray-500 pl-1">
+                <p className="text-xs text-[var(--text-secondary)] pl-1">
                   <span className="text-blue-400 font-bold">{searchResults.length}</span> agentes relevantes encontrados para: 
-                  <span className="text-white"> "{searchQuery}"</span>
+                  <span className="text-[var(--text-primary)]"> "{searchQuery}"</span>
                   <span className="text-gray-600"> — Puedes seleccionar varios con </span>
                   <span className="text-purple-400">☑</span>
                   <span className="text-gray-600"> y encadenarlos en el Builder como un flujo de trabajo.</span>
@@ -835,7 +835,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
 
               {/* ─── FLOW SUGGESTION PANEL ─── */}
               {(isSuggesting || recommendedFlow || flowAlternatives.length > 0 || suggestError || enhancedQuery) && (
-                <div className="mt-2 bg-gray-900/90 border border-orange-400 rounded-2xl p-4 shadow-2xl max-h-56 overflow-y-auto custom-scrollbar">
+                <div className="mt-2 bg-[var(--surface-card)]/90 border border-orange-400 rounded-2xl p-4 shadow-2xl max-h-56 overflow-y-auto custom-scrollbar">
                   {isSuggesting && (
                     <div className="flex items-center gap-3 text-emerald-300 text-sm">
                       <span className="animate-spin text-lg">⚙️</span>
@@ -859,11 +859,11 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <div className="text-[10px] uppercase tracking-widest text-emerald-400 font-bold mb-1">⭐ Flujo Recomendado por la IA</div>
-                          <h4 className="text-white font-bold text-sm">{recommendedFlow.name}</h4>
-                          <p className="text-xs text-gray-400 mt-1">{recommendedFlow.description}</p>
+                          <h4 className="text-[var(--text-primary)] font-bold text-sm">{recommendedFlow.name}</h4>
+                          <p className="text-xs text-[var(--text-secondary)] mt-1">{recommendedFlow.description}</p>
                           <div className="flex gap-2 mt-2 text-xs">
                             <span className="px-2 py-0.5 rounded-full bg-emerald-900/50 text-emerald-300 border border-emerald-700/50">{recommendedFlow.framework}</span>
-                            <span className="px-2 py-0.5 rounded-full bg-gray-800 text-gray-300">{recommendedFlow.nodes.length} agentes</span>
+                            <span className="px-2 py-0.5 rounded-full bg-[var(--surface-elevated)] text-[var(--text-primary)]">{recommendedFlow.nodes.length} agentes</span>
                           </div>
                           <div className="flex flex-wrap gap-1.5 mt-3">
                             {recommendedFlow.nodes.map((n) => (
@@ -876,13 +876,13 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                         <div className="flex flex-col gap-2 flex-shrink-0">
                           <button
                             onClick={() => launchFlowInBuilder(recommendedFlow)}
-                            className="bg-transparent border border-orange-400 text-orange-400 hover:bg-cyan-500/20 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                            className="bg-transparent border border-orange-400 text-orange-400 hover:bg-[var(--theme-border)]/20 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                           >
                             Abrir en Builder →
                           </button>
                           <button
                             onClick={() => saveFlowToNexus(recommendedFlow)}
-                            className="bg-transparent border border-orange-400 text-orange-400 hover:bg-cyan-500/20 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                            className="bg-transparent border border-orange-400 text-orange-400 hover:bg-[var(--theme-border)]/20 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                           >
                             Guardar en Nexus
                           </button>
@@ -893,19 +893,19 @@ ${inspectedAgent.instructions || inspectedAgent.content}
 
                   {flowAlternatives.length > 0 && (
                     <div>
-                      <span className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2 block">Flujos alternativos</span>
+                      <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2 block">Flujos alternativos</span>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {flowAlternatives.map((alt) => (
                           <button
                             key={alt.id}
                             onClick={() => navigate('/flows')}
-                            className="text-left bg-gray-800/60 hover:bg-gray-800 border border-orange-400 hover:border-emerald-600/60 rounded-xl p-2.5 transition-all group"
+                            className="text-left bg-[var(--surface-elevated)]/60 hover:bg-[var(--surface-elevated)] border border-orange-400 hover:border-emerald-600/60 rounded-xl p-2.5 transition-all group"
                           >
-                            <div className="text-xs font-semibold text-gray-200 group-hover:text-emerald-300 flex items-center justify-between">
+                            <div className="text-xs font-semibold text-[var(--text-primary)] group-hover:text-emerald-300 flex items-center justify-between">
                               <span>{alt.name}</span>
                               <span className="text-[10px] text-emerald-500">Ver flujo ›</span>
                             </div>
-                            <div className="text-[10px] text-gray-500 mt-0.5">{alt.engine} · {alt.category}</div>
+                            <div className="text-[10px] text-[var(--text-secondary)] mt-0.5">{alt.engine} · {alt.category}</div>
                           </button>
                         ))}
                       </div>
@@ -921,7 +921,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
             <div className="mt-3">
               <button
                 onClick={goBack}
-                className="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors px-3 py-1.5 bg-gray-900 rounded-lg w-fit border border-orange-400"
+                className="flex items-center gap-2 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors px-3 py-1.5 bg-[var(--surface-card)] rounded-lg w-fit border border-orange-400"
               >
                 <ArrowLeft size={16} />
                 {view === 'subcategories' ? 'Volver a Categorías' : selectedSubCategory ? `Volver a ${selectedCategory?.title}` : 'Volver a Categorías'}
@@ -951,13 +951,13 @@ ${inspectedAgent.instructions || inspectedAgent.content}
         /* ─── SUBCATEGORÍAS ───────────────────────────────────────────────── */
         <div>
           <h2 className="text-2xl font-bold text-orange-400 mb-1">{selectedCategory.title}</h2>
-          <p className="text-gray-500 mb-6">{selectedCategory.totalCount.toLocaleString()} agentes en {selectedCategory.subCategories.length} subcategorías</p>
+          <p className="text-[var(--text-secondary)] mb-6">{selectedCategory.totalCount.toLocaleString()} agentes en {selectedCategory.subCategories.length} subcategorías</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {selectedCategory.subCategories.map((sub, idx) => (
               <div
                 key={idx}
                 onClick={() => handleSubCategoryClick(sub.name)}
-                className="bg-gray-900 border border-orange-400 rounded-xl p-5 cursor-pointer hover:border-orange-400 hover:shadow-lg hover:-translate-y-1 transition-all flex flex-col justify-between min-h-[8rem]"
+                className="bg-[var(--surface-card)] border border-orange-400 rounded-xl p-5 cursor-pointer hover:border-orange-400 hover:shadow-lg hover:-translate-y-1 transition-all flex flex-col justify-between min-h-[8rem]"
               >
                 <h3 className="font-semibold text-orange-400 text-md leading-snug">{sub.name}</h3>
                 <span className="mt-3 bg-blue-900/30 text-blue-400 text-xs font-bold px-2 py-1 rounded-full border border-orange-400/40 w-fit">
@@ -975,7 +975,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
           {selectedCategory && selectedSubCategory && (
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-orange-400">{selectedSubCategory}</h2>
-              <p className="text-gray-500">{selectedCategory.title} › {selectedSubCategory} — {displayAgentes.length} agentes</p>
+              <p className="text-[var(--text-secondary)]">{selectedCategory.title} › {selectedSubCategory} — {displayAgentes.length} agentes</p>
             </div>
           )}
 
@@ -1005,22 +1005,22 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                   }}
                   className={`border rounded-2xl p-6 flex flex-col h-80 relative cursor-pointer transition-all group ${
                     inChain
-                      ? (isGenerated ? 'bg-black/80 border-orange-400' : 'bg-black/80 border-orange-400')
+                      ? (isGenerated ? 'bg-[var(--surface-canvas)]/80 border-orange-400' : 'bg-[var(--surface-canvas)]/80 border-orange-400')
                       : isInspected
                         ? activeClass
-                        : (isGenerated ? 'bg-black/40 border-orange-400 hover:border-orange-400' : 'bg-black/40 border-orange-500/50 hover:border-orange-500')
+                        : (isGenerated ? 'bg-[var(--surface-canvas)]/40 border-orange-400 hover:border-orange-400' : 'bg-[var(--surface-canvas)]/40 border-orange-500/50 hover:border-orange-500')
                   }`}
                 >
                   {/* Chain position badge */}
                   {inChain && (
-                    <div className="absolute -top-3 -left-3 w-7 h-7 bg-purple-600 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg z-10">
+                    <div className="absolute -top-3 -left-3 w-7 h-7 bg-purple-600 rounded-full flex items-center justify-center text-xs font-bold text-[var(--text-primary)] shadow-lg z-10">
                       {chainPos + 1}
                     </div>
                   )}
 
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex flex-col gap-1">
-                      <span className="text-gray-500 text-xs font-bold bg-gray-800 px-3 py-1 rounded-full w-fit">#{idx + 1}</span>
+                      <span className="text-[var(--text-secondary)] text-xs font-bold bg-[var(--surface-elevated)] px-3 py-1 rounded-full w-fit">#{idx + 1}</span>
                       {lastOpened && (
                         <span className={`${isGenerated ? 'text-blue-400/70' : 'text-green-500/70'} text-[10px] leading-tight`}>🕐 {formatDate(lastOpened)}</span>
                       )}
@@ -1029,7 +1029,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                       {/* Chain / Selection toggle — always visible */}
                       <button
                         onClick={(e) => toggleChainSelect(e, agent)}
-                        className={`p-2 rounded-full border transition-colors ${inChain ? 'bg-orange-500 border-orange-400 text-white' : 'border-orange-400 text-orange-400 bg-transparent hover:bg-orange-900/30'}`}
+                        className={`p-2 rounded-full border transition-colors ${inChain ? 'bg-orange-500 border-orange-400 text-[var(--text-primary)]' : 'border-orange-400 text-orange-400 bg-transparent hover:bg-orange-900/30'}`}
                         title={inChain ? 'Quitar del flujo' : 'Seleccionar agente'}
                       >
                         {inChain ? <CheckSquare size={16} /> : <Square size={16} />}
@@ -1037,7 +1037,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                       {/* TTS */}
                       <button
                         onClick={(e) => handleSpeak(e, `${agent.title}. ${agent.content || ''}`)}
-                        className="text-gray-400 hover:text-white bg-gray-800 p-2.5 rounded-full transition-colors"
+                        className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--surface-elevated)] p-2.5 rounded-full transition-colors"
                         title="Traducir y Escuchar"
                       >
                         <SpeakerHigh size={16} />
@@ -1053,7 +1053,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                           e.stopPropagation();
                           setExplanationPopup({ title: agent.title, text: agent.upgradeExplanation! });
                         }}
-                        className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-blue-900/40 text-blue-400 hover:bg-blue-600 hover:text-white transition-colors border border-blue-700/50 shadow-sm"
+                        className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-blue-900/40 text-blue-400 hover:bg-blue-600 hover:text-[var(--text-primary)] transition-colors border border-blue-700/50 shadow-sm"
                         title="¿Por qué es mejor este agente?"
                       >
                         ?
@@ -1064,19 +1064,19 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                   {agent.isMultiAgent && agent.chain ? (
                     <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-2 mt-1 pr-1 custom-scrollbar">
                       {agent.chain.map((step, i) => (
-                        <div key={i} className="flex items-start gap-3 text-sm text-gray-300 bg-gray-800/40 p-2.5 rounded-lg border border-orange-400/50">
+                        <div key={i} className="flex items-start gap-3 text-sm text-[var(--text-primary)] bg-[var(--surface-elevated)]/40 p-2.5 rounded-lg border border-orange-400/50">
                           <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-xs border border-orange-500/30 mt-0.5">
                             {i + 1}
                           </div>
                           <div className="flex-1 flex flex-col">
-                            <span className="font-semibold text-gray-200 line-clamp-1">{step.title}</span>
-                            <span className="text-xs text-gray-500 line-clamp-1">{step.content}</span>
+                            <span className="font-semibold text-[var(--text-primary)] line-clamp-1">{step.title}</span>
+                            <span className="text-xs text-[var(--text-secondary)] line-clamp-1">{step.content}</span>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className={`text-sm line-clamp-4 flex-1 leading-relaxed ${isGenerated ? 'text-blue-400/80' : 'text-gray-400'}`}>{agent.instructions || agent.content}</p>
+                    <p className={`text-sm line-clamp-4 flex-1 leading-relaxed ${isGenerated ? 'text-blue-400/80' : 'text-[var(--text-secondary)]'}`}>{agent.instructions || agent.content}</p>
                   )}
 
                   <div className="mt-4">
@@ -1086,7 +1086,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
               );
             })}
             {displayAgentes.length === 0 && (
-              <div className="col-span-full text-center text-gray-500 py-10 text-lg">
+              <div className="col-span-full text-center text-[var(--text-secondary)] py-10 text-lg">
                 No se encontraron agentes.
               </div>
             )}
@@ -1098,20 +1098,20 @@ ${inspectedAgent.instructions || inspectedAgent.content}
 
         {/* ─── CHAIN TOOLBAR ──────────────────────────────────────────────────── */}
         {selectedForChain.length > 0 && (
-          <div className="absolute bottom-[230px] left-1/2 -translate-x-1/2 z-50 bg-gray-900 border border-orange-500 rounded-2xl shadow-2xl px-6 py-4 flex items-center gap-4 max-w-3xl w-full mx-4">
+          <div className="absolute bottom-[230px] left-1/2 -translate-x-1/2 z-50 bg-[var(--surface-card)] border border-orange-500 rounded-2xl shadow-2xl px-6 py-4 flex items-center gap-4 max-w-3xl w-full mx-4">
             <div className="flex-1">
               <p className="text-purple-400 font-bold text-sm">{selectedForChain.length} agentes seleccionados para el flujo</p>
               <div className="flex flex-wrap gap-1 mt-1">
                 {selectedForChain.map((p, i) => (
                   <span key={i} className="bg-purple-900/40 text-purple-300 text-xs px-2 py-0.5 rounded-full border border-purple-800/50 flex items-center gap-1">
                     {i + 1}. {p.title.slice(0, 25)}{p.title.length > 25 ? '…' : ''}
-                    <button onClick={(e) => toggleChainSelect(e, p)} className="hover:text-white ml-1"><X size={10} /></button>
+                    <button onClick={(e) => toggleChainSelect(e, p)} className="hover:text-[var(--text-primary)] ml-1"><X size={10} /></button>
                   </span>
                 ))}
               </div>
             </div>
             <></>
-            <button onClick={() => setSelectedForChain([])} className="text-gray-500 hover:text-white p-2">
+            <button onClick={() => setSelectedForChain([])} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-2">
               <X size={18} />
             </button>
           </div>
@@ -1119,7 +1119,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
 
         {/* ─── FIXED BOTTOM TICKER: CINTA DE AGENTES RECIÉN ABIERTOS (IGUAL A ATLAS) ─── */}
         {recentAgents.length > 0 && (
-          <div className="flex-shrink-0 border-t border-orange-400/80 bg-[#0a0c10]/95 backdrop-blur-md z-20 py-4 px-6 shadow-[0_-10px_30px_rgba(0,0,0,0.6)]">
+          <div className="flex-shrink-0 border-t border-orange-400/80 bg-[var(--surface-canvas)]/95 backdrop-blur-md z-20 py-4 px-6 shadow-[0_-10px_30px_rgba(0,0,0,0.6)]">
             <div className="flex items-center gap-2 mb-3 px-2">
               <Clock weight="fill" className="text-green-500" size={20} />
               <h3 className="text-sm font-bold text-orange-400 tracking-wide uppercase">Agentes Recién Abiertos</h3>
@@ -1157,7 +1157,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                       className={`w-[320px] h-36 rounded-2xl p-4 shrink-0 shadow-lg relative cursor-pointer transition-colors flex flex-col justify-between overflow-hidden group border ${
                         isInspected 
                           ? activeClass 
-                          : (isGenerated ? 'bg-black/40 border-orange-400 hover:border-orange-400' : 'bg-black/40 border-orange-500/50 hover:border-gray-500')
+                          : (isGenerated ? 'bg-[var(--surface-canvas)]/40 border-orange-400 hover:border-orange-400' : 'bg-[var(--surface-canvas)]/40 border-orange-500/50 hover:border-gray-500')
                       }`}
                     >
                       <div>
@@ -1167,7 +1167,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                             <span className="text-[10px] font-bold bg-blue-900/40 text-blue-400 border border-orange-400 px-1.5 py-0.5 rounded-full flex-shrink-0">IA</span>
                           )}
                         </div>
-                        <p className={`text-xs mt-1.5 line-clamp-2 leading-relaxed ${isGenerated ? 'text-blue-400/80' : 'text-gray-500'}`}>
+                        <p className={`text-xs mt-1.5 line-clamp-2 leading-relaxed ${isGenerated ? 'text-blue-400/80' : 'text-[var(--text-secondary)]'}`}>
                           {agent.instructions || agent.content}
                         </p>
                       </div>
@@ -1186,10 +1186,10 @@ ${inspectedAgent.instructions || inspectedAgent.content}
 
       {/* Right Column: AI & Inspected Agent */}
       <div className="w-96 md:w-[600px] border-l border-orange-400 bg-[#0f111a] flex flex-col z-20 flex-shrink-0 shadow-2xl">
-        <div className="p-5 border-b border-orange-400 flex items-center justify-between bg-gray-900/50">
+        <div className="p-5 border-b border-orange-400 flex items-center justify-between bg-[var(--surface-card)]/50">
           <h2 className="font-bold text-orange-400 flex items-center gap-2"><Sparkle size={18} className="text-blue-400" /> Panel del Agente</h2>
           {inspectedAgent && (
-            <button onClick={() => setInspectedAgent(null)} className="text-gray-500 hover:text-white transition-colors">
+            <button onClick={() => setInspectedAgent(null)} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
               <X size={16} />
             </button>
           )}
@@ -1204,25 +1204,25 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                 
                 {/* Herramientas IA en la parte superior */}
                 <div className="flex flex-col gap-2 mb-6">
-                  <div className="text-[10px] uppercase font-bold text-gray-500 tracking-widest border-b border-orange-400 pb-2 mb-1">Herramientas IA</div>
+                  <div className="text-[10px] uppercase font-bold text-[var(--text-secondary)] tracking-widest border-b border-orange-400 pb-2 mb-1">Herramientas IA</div>
                   <div className="flex flex-wrap gap-2">
                     <button 
                       onClick={handleUpgrade} 
                       disabled={isUpgrading}
-                      className="rounded bg-gray-800 hover:bg-gray-700 border border-transparent hover:border-orange-400 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] disabled:opacity-50"
+                      className="rounded bg-[var(--surface-elevated)] hover:bg-gray-700 border border-transparent hover:border-orange-400 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] disabled:opacity-50"
                     >
                       {isUpgrading ? '⚡ Upgrade...' : '✨ Upgrade'}
                     </button>
                     <button 
                       onClick={handleTTS}
                       disabled={isTranslating}
-                      className="rounded bg-gray-800 hover:bg-gray-700 border border-transparent hover:border-orange-400 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] disabled:opacity-50"
+                      className="rounded bg-[var(--surface-elevated)] hover:bg-gray-700 border border-transparent hover:border-orange-400 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] disabled:opacity-50"
                     >
                       {isTranslating ? '🔊 Traduciendo...' : '🗣️ TTS'}
                     </button>
                     <button 
                       onClick={handleLogic}
-                      className={`rounded bg-gray-800 hover:bg-gray-700 border border-transparent hover:border-orange-400 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] ${panelTab === 'logic' ? 'text-blue-400 border-blue-500 bg-blue-950/30' : ''}`}
+                      className={`rounded bg-[var(--surface-elevated)] hover:bg-gray-700 border border-transparent hover:border-orange-400 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-all shadow-sm flex-1 min-w-[100px] ${panelTab === 'logic' ? 'text-blue-400 border-blue-500 bg-blue-950/30' : ''}`}
                     >
                       {currentLogicTask?.isRunning ? '🧠 Analizando...' : '🧠 Lógica'}
                     </button>
@@ -1231,7 +1231,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                   <div className="flex gap-2 mt-2 w-full">
                     <button 
                       onClick={() => setPanelTab('content')} 
-                      className={`flex-1 text-sm font-bold px-3 py-2 rounded border transition-colors flex items-center justify-center gap-2 shadow-sm ${panelTab === 'content' ? 'bg-gray-800 text-white border-gray-500' : 'bg-transparent text-gray-400 border-orange-400 hover:text-gray-200'}`}
+                      className={`flex-1 text-sm font-bold px-3 py-2 rounded border transition-colors flex items-center justify-center gap-2 shadow-sm ${panelTab === 'content' ? 'bg-[var(--surface-elevated)] text-[var(--text-primary)] border-gray-500' : 'bg-transparent text-[var(--text-secondary)] border-orange-400 hover:text-[var(--text-primary)]'}`}
                     >
                       💬 Original
                     </button>
@@ -1246,11 +1246,11 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                   {/* Progress Bar for Upgrade */}
                   {isUpgrading && (
                     <div className="mt-2 flex flex-col gap-1">
-                      <div className="flex justify-between text-xs text-[#7B9C7F] font-medium">
+                      <div className="flex justify-between text-xs text-[var(--theme-border)] font-medium">
                         <span>Generando mejora...</span>
                         <span>{upgradeProgress}% ({upgradeTimeLeft})</span>
                       </div>
-                      <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden border border-orange-500/50">
+                      <div className="w-full bg-[var(--surface-card)] rounded-full h-1.5 overflow-hidden border border-orange-500/50">
                         <div 
                           className="h-full rounded-full transition-all duration-300 ease-out"
                           style={{ width: `${upgradeProgress}%`, backgroundColor: '#4ade80', boxShadow: '0 0 10px rgba(74,222,128,0.5)' }}
@@ -1266,7 +1266,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                         <span>Analizando lógica interna...</span>
                         <span>{currentLogicTask.progress}% ({currentLogicTask.timeLeft})</span>
                       </div>
-                      <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden border border-orange-500/50">
+                      <div className="w-full bg-[var(--surface-card)] rounded-full h-1.5 overflow-hidden border border-orange-500/50">
                         <div 
                           className="h-full rounded-full transition-all duration-300 ease-out"
                           style={{ width: `${currentLogicTask.progress}%`, backgroundColor: '#3b82f6', boxShadow: '0 0 10px rgba(59,130,246,0.5)' }}
@@ -1280,14 +1280,14 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                 <div className="flex items-center justify-between mb-4">
                   <div className="pr-2">
                     <span className={`text-xs font-bold uppercase tracking-widest ${isGeneratedAgent(inspectedAgent) ? 'text-blue-400' : 'text-emerald-400'}`}>{inspectedAgent.category?.split(' > ').pop() || 'Agente'}</span>
-                    <h3 className={`text-2xl font-bold mt-1 leading-tight ${isGeneratedAgent(inspectedAgent) ? 'text-blue-300' : 'text-white'}`}>{inspectedAgent.title}</h3>
+                    <h3 className={`text-2xl font-bold mt-1 leading-tight ${isGeneratedAgent(inspectedAgent) ? 'text-blue-300' : 'text-[var(--text-primary)]'}`}>{inspectedAgent.title}</h3>
                   </div>
                 </div>
                 
                 {/* Contenido (Markdown) */}
-                <div className={`p-6 rounded-xl border border-orange-400 leading-relaxed prose prose-invert max-w-none shadow-inner bg-gray-900/80 ${
+                <div className={`p-6 rounded-xl border border-orange-400 leading-relaxed prose prose-invert max-w-none shadow-inner bg-[var(--surface-card)]/80 ${
                   panelTab === 'logic' 
-                    ? 'text-sm text-gray-300 prose-sm prose-headings:text-blue-400 prose-a:text-blue-400' 
+                    ? 'text-sm text-[var(--text-primary)] prose-sm prose-headings:text-blue-400 prose-a:text-blue-400' 
                     : isGeneratedAgent(inspectedAgent)
                       ? 'prose-p:text-blue-400 prose-headings:text-blue-400 prose-strong:text-blue-400 text-blue-400' 
                       : 'prose-p:text-[#4ade80] prose-headings:text-[#4ade80] prose-strong:text-[#4ade80] text-[#4ade80]'
@@ -1333,13 +1333,13 @@ ${inspectedAgent.instructions || inspectedAgent.content}
               to { opacity: 1; transform: scale(1); }
             }
           `}</style>
-          <div className="bg-[#0a0c10] border border-orange-400 rounded-2xl p-6 max-w-md w-full relative">
+          <div className="bg-[var(--surface-canvas)] border border-orange-400 rounded-2xl p-6 max-w-md w-full relative">
             <button 
               onClick={() => {
                 if ('speechSynthesis' in window) window.speechSynthesis.cancel();
                 setExplanationPopup(null);
               }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white bg-gray-800 rounded-full p-1 transition-colors"
+              className="absolute top-4 right-4 text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--surface-elevated)] rounded-full p-1 transition-colors"
             >
               <X size={16} />
             </button>
@@ -1347,10 +1347,10 @@ ${inspectedAgent.instructions || inspectedAgent.content}
               <Sparkle weight="fill" className="text-blue-400" size={24} />
               <h3 className="text-xl font-bold text-orange-400">Mejora Aplicada</h3>
             </div>
-            <p className="text-sm text-gray-400 mb-4">
+            <p className="text-sm text-[var(--text-secondary)] mb-4">
               Explicación de la optimización y cambios en <strong>{explanationPopup.title}</strong>:
             </p>
-            <div className="bg-gray-900 border border-orange-400 p-4 rounded-xl text-gray-300 text-sm leading-relaxed custom-scrollbar max-h-48 overflow-y-auto">
+            <div className="bg-[var(--surface-card)] border border-orange-400 p-4 rounded-xl text-[var(--text-primary)] text-sm leading-relaxed custom-scrollbar max-h-48 overflow-y-auto">
               {explanationPopup.text}
             </div>
             <div className="mt-6 flex justify-between items-center">
@@ -1364,7 +1364,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                     window.speechSynthesis.speak(utterance);
                   }
                 }}
-                className="bg-transparent border border-orange-400 text-orange-400 hover:bg-cyan-500/20 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                className="bg-transparent border border-orange-400 text-orange-400 hover:bg-[var(--theme-border)]/20 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
               >
                 🔊 Escuchar
               </button>
@@ -1373,7 +1373,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
                   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
                   setExplanationPopup(null);
                 }}
-                className="bg-transparent border border-orange-400 text-orange-400 hover:bg-cyan-500/20 px-6 py-2 rounded-lg font-medium transition-colors"
+                className="bg-transparent border border-orange-400 text-orange-400 hover:bg-[var(--theme-border)]/20 px-6 py-2 rounded-lg font-medium transition-colors"
               >
                 Entendido
               </button>
@@ -1386,3 +1386,4 @@ ${inspectedAgent.instructions || inspectedAgent.content}
 };
 
 export default Agents;
+
