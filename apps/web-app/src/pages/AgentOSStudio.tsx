@@ -427,7 +427,7 @@ const FlowArchitect: React.FC = () => {
         </div>
       </div>
 
-      <div className={`px-4 pt-[1.5cm] pb-[0.5cm] shrink-0 flex flex-col gap-6 transition-all duration-300 overflow-hidden ${showSwarmSlider ? 'h-[260px] opacity-100' : 'h-0 opacity-0 !pb-0'}`}>
+      <div className={`px-4 pt-4 pb-2 shrink-0 flex flex-col gap-6 transition-all duration-300 overflow-hidden ${showSwarmSlider ? 'h-[320px] opacity-100' : 'h-0 opacity-0 !pb-0'}`}>
         {/* Fixed AI Tools Carousel */}
         <div className="flex justify-center mb-1 relative">
           <div className="flex gap-2 items-center mx-auto relative left-[0px]">
@@ -438,7 +438,7 @@ const FlowArchitect: React.FC = () => {
 
         <div 
           id="agent-carousel"
-          className="flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory gap-4 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
+          className="flex overflow-x-auto overflow-y-visible snap-x snap-mandatory gap-4 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           onScroll={(e) => {
             const slide = Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth);
@@ -446,7 +446,7 @@ const FlowArchitect: React.FC = () => {
           }}
         >
           {/* Slide 1: Swarms */}
-          <div className="shrink-0 w-full snap-center h-full flex flex-col justify-center">
+          <div className="shrink-0 w-full snap-center h-full flex flex-col pt-[1.5cm] pb-[0.5cm]">
             <div className="grid grid-cols-3 gap-1.5">
               {/* Col 1: Enjambre Radar */}
               <div className="flex flex-col gap-1.5">
