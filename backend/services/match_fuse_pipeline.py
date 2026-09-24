@@ -47,11 +47,13 @@ Debes devolver UNICAMENTE un JSON ARRAY válido que contenga 1 o más objetos Ag
 No incluyas markdown (```json), solo el raw JSON.
 """
 
-    LOCAL_MODELS = {"hermes3:8b", "llama3.1:8b", "mistral", "qwen2.5:7b", "phi3:3.8b"}
+    LOCAL_MODELS = {"hermes3:8b", "llama3.1:8b", "mistral", "qwen2.5:7b", "phi3:3.8b", "qwen2.5:3b", "qwen2.5:1.5b"}
     is_local = model_name in LOCAL_MODELS or ":" in model_name
 
     if is_local:
-        base_url = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:8080/v1")
+        # Ollama expone OpenAI-compatible en el puerto 11434/v1
+        # El 8080 es Open WebUI (HTML, no compatible con el SDK)
+        base_url = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
         final_model = model_name
     else:
         base_url = "https://api.free.ai/v1"
