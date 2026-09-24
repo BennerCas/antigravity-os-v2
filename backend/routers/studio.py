@@ -6,6 +6,7 @@ import httpx
 import os
 from google.antigravity import Agent, CapabilitiesConfig
 from google.antigravity.connections.local.local_openai_connection_config import LocalOpenAIAgentConfig
+from backend.services.agent_factory import AgentFactory
 
 router = APIRouter(prefix="/api/v1/studio", tags=["Studio"])
 
@@ -110,7 +111,7 @@ async def _call_ollama(user: str, system: str, model: str) -> ChatResponse:
         "stream": False,
     }
     try:
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with httpx.AsyncClient(timeout=600.0) as client:
             resp = await client.post(
                 f"{OLLAMA_BASE}/chat/completions",
                 json=payload,
@@ -125,7 +126,7 @@ async def _call_ollama(user: str, system: str, model: str) -> ChatResponse:
                     engine="error"
                 )
     except httpx.TimeoutException:
-        return ChatResponse(response=f"[ERROR Ollama] Timeout después de 120s con modelo {model}", model_used=model, engine="error")
+        return ChatResponse(response=f"[ERROR Ollama] Timeout después de 600s con modelo {model}", model_used=model, engine="error")
     except Exception as e:
         return ChatResponse(response=f"[ERROR Ollama] {str(e)}", model_used=model, engine="error")
 
@@ -267,6 +268,15 @@ async def _execute_swarm_pipeline(data_str: str, model: str, pipeline_roles: Lis
         system_prompt = role_config["system"]
         role_name = role_config["name"]
         
+        await manager.broadcast({
+            "type": "ACTIVITY_LOG",
+            "log": {
+                "source": role_name,
+                "message": f"Iniciando análisis y generación con {model}...",
+                "status": "PENDING"
+            }
+        })
+        
         user_message = f"Contexto actual / Entrada anterior:\n{context}\n\nTu tarea como {role_name}: {role_config['task']}"
         
         is_local = role_config.get("is_local", False) or ":" in model or model in LOCAL_MODELS
@@ -281,85 +291,236 @@ async def _execute_swarm_pipeline(data_str: str, model: str, pipeline_roles: Lis
         context = resp.response
         results.append({"role": role_name, "output": context})
         
+        await manager.broadcast({
+            "type": "ACTIVITY_LOG",
+            "log": {
+                "source": role_name,
+                "message": f"Procesamiento completado exitosamente.",
+                "status": "APPROVED"
+            }
+        })
+        
     return {"final_output": context, "steps": results}
 
 async def run_triage_swarm(data: Any):
     """
-    Enjambre Radar & Triage
+    Enjambre Radar & Triage - REWIRED TO QUANTUM ENGINE
     """
+    input_text = str(data)
     
-    
-    pipeline_roles = [
-        {
-            "name": "Clasificador",
-            "system": "Eres el Clasificador de Triage. Tu tono es ultra natural, humano, directo y conversacional. El usuario se llama Benner. Dirígete a él por su nombre. JAMÁS uses tercera persona como 'el humano' ni etiquetas raras como [RESPONSE].",
-            "task": "Debes elegir UN solo camino:\nCAMINO 1 (Faltan detalles): Hazle a Benner máximo 2 preguntas integradas en una charla natural para entender qué quiere construir. Si eliges este camino, DEBES añadir al final la etiqueta: [ES_ENTREVISTA].\nCAMINO 2 (Idea completa y técnica): No hagas preguntas. Haz un breve resumen amigable de la arquitectura a construir y DEBES añadir al final la etiqueta: [ES_APROBADO]."
-        },
-
-        {
-            "name": "Especialista de Seguridad",
-            "system": "Eres el Especialista de Seguridad. Actúas como el filtro final antes de hablar con Benner.",
-            "task": "REGLA DE ORO: Si el Clasificador eligió el CAMINO 1 (usó [ES_ENTREVISTA]), repite las preguntas de forma natural y añade al final OBLIGATORIAMENTE [ES_ENTREVISTA]. Si el Clasificador eligió el CAMINO 2 (usó [ES_APROBADO]), repite el resumen y añade al final OBLIGATORIAMENTE [ES_APROBADO]. PROHIBIDO mezclar las etiquetas."
-        }
+    agent_ids = [
+        "radar-entrevistador",
+        "radar-francotirador",
+        "radar-analista-viabilidad",
+        "radar-profiler"
     ]
-    model = data.get("model", "anthropic/claude-3.5-sonnet") if isinstance(data, dict) else "anthropic/claude-3.5-sonnet"
-    model = model.replace("free.ai/", "").replace("ollama/", "")
     
-    result = await _execute_swarm_pipeline(str(data), model, pipeline_roles)
-    return {"triage_result": result["final_output"], "swarm_trace": result["steps"]}
+    friendly_names = {
+        "radar-entrevistador": "Entrevistador Socrático",
+        "radar-francotirador": "Francotirador de Industria",
+        "radar-analista-viabilidad": "Analista de Viabilidad",
+        "radar-profiler": "Profiler Psicológico"
+    }
+
+    accumulated_context = input_text
+    steps = []
+
+    for idx, agent_id in enumerate(agent_ids):
+        role_name = friendly_names.get(agent_id, agent_id)
+        
+        await manager.broadcast({
+            "type": "ACTIVITY_LOG",
+            "log": {
+                "source": role_name,
+                "message": f"Analizando intención desde el sub-espacio {agent_id}...",
+                "status": "PENDING"
+            }
+        })
+        
+        # Override for the final agent to strictly output the routing tag
+        override_instructions = None
+        if idx == len(agent_ids) - 1:
+            override_instructions = (
+                "IMPORTANTE: Como el nodo final del Enjambre Radar, debes cerrar tu respuesta OBLIGATORIAMENTE con una de estas dos etiquetas en la última línea:\n"
+                "- Si la idea del usuario no es clara o requiere más detalles, usa [ES_ENTREVISTA]\n"
+                "- Si la idea ya es suficientemente madura para crear un plan y el usuario quiere avanzar, usa [ES_APROBADO]\n"
+                "Habla directo a Benner. Eres la voz de AureliOS asimilando todo el perfilaje anterior."
+            )
+
+        try:
+            resp_text = await AgentFactory.chat_one_shot(
+                agent_id=agent_id,
+                user_prompt=accumulated_context,
+                override_instructions=override_instructions,
+                model=None, # Deja que el Factory decida
+                use_tools=False # Evita errores de compatibilidad en Ollama
+            )
+            
+            accumulated_context = f"{accumulated_context}\n\n--- [Aporte de {role_name}] ---\n{resp_text}"
+            steps.append({"role": role_name, "output": resp_text})
+            
+            await manager.broadcast({
+                "type": "ACTIVITY_LOG",
+                "log": {
+                    "source": role_name,
+                    "message": f"Análisis de {role_name} completado exitosamente.",
+                    "status": "SUCCESS"
+                }
+            })
+        except Exception as e:
+            await manager.broadcast({
+                "type": "ACTIVITY_LOG",
+                "log": {
+                    "source": role_name,
+                    "message": f"Error: {str(e)}",
+                    "status": "ERROR"
+                }
+            })
+            raise e
+            
+    final_output = steps[-1]["output"]
+    return {"triage_result": final_output, "swarm_trace": steps}
 
 async def run_extraction_swarm(data: Any):
     """
-    El Enjambre Inquisidor
-    Pipeline: Arquitecto -> Red Teamer -> Escribano
+    El Enjambre Inquisidor - REWIRED TO QUANTUM ENGINE
     """
+    input_text = str(data)
     
     pipeline_roles = [
         {
-            "name": "Arquitecto",
-            "system": "Eres el Arquitecto de IA. Defines la estructura técnica de manera fluida y conversacional. Hablas directamente con el usuario, que se llama Benner. PROHIBIDO generar código o usar tags XML.",
-            "task": "Propone a Benner una arquitectura de alto nivel. Si faltan datos técnicos clave, pregúntale de forma natural en medio de la charla y detente."
+            "id": "inquisidor-arquitecto",
+            "name": "Estratega Principal",
+            "prompt": "Eres el Estratega Principal. Defines el plan de accion, estructura o arquitectura de manera fluida y conversacional. Hablas con Benner. PROHIBIDO generar codigo o usar tags XML.\nTAREA: Propon a Benner un plan o estructura de alto nivel. Si faltan datos clave, preguntale de forma natural y detente."
         },
-
         {
-            "name": "Red Teamer",
-            "system": "Eres el Red Teamer. Eres analítico pero cercano, hablas directamente con Benner. Buscas romper la arquitectura sin usar código.",
-            "task": "Critica la arquitectura amigablemente. Encuentra cuellos de botella y hazle 1 pregunta de estrés a Benner. PROHIBIDO usar tags XML."
+            "id": "inquisidor-red-teamer",
+            "name": "Auditor de Riesgos",
+            "prompt": "Eres el Auditor de Riesgos. Eres analitico pero cercano, hablas directamente con Benner. Evalúas el plan propuesto por el Estratega buscando puntos debiles.\nTAREA: Critica el plan amigablemente. Encuentra posibles falencias y hazle 1 pregunta de estres a Benner. PROHIBIDO usar tags XML."
         },
-
         {
-            "name": "Escribano",
-            "system": "Eres el Escribano. Sintetizas la arquitectura. PROHIBIDO programar o usar herramientas.",
-            "task": "REGLA DE ORO: Si hicieron preguntas, preséntalas a Benner en un párrafo amigable y fluido. Si hay consenso, redacta el Documento de Arquitectura y añade obligatoriamente [READY_FOR_BLUEPRINT] al final."
+            "id": "inquisidor-escribano",
+            "name": "Sintetizador",
+            "prompt": "Eres el Sintetizador. Tu rol es resumir el plan. PROHIBIDO programar o usar herramientas.\nTAREA: Analiza la discusion. Si hay dudas criticas, presentalas a Benner. Pero si el plan es solido, redacta un Documento de Estrategia final y anade obligatoriamente [READY_FOR_BLUEPRINT] al final de tu mensaje."
         }
     ]
-    model = data.get("model", "anthropic/claude-3.5-sonnet") if isinstance(data, dict) else "anthropic/claude-3.5-sonnet"
-    model = model.replace("free.ai/", "").replace("ollama/", "")
-    
-    result = await _execute_swarm_pipeline(str(data), model, pipeline_roles)
-    return {"extraction_result": result["final_output"], "swarm_trace": result["steps"]}
+
+    accumulated_context = input_text
+    steps = []
+
+    for role in pipeline_roles:
+        agent_id = role["id"]
+        role_name = role["name"]
+        
+        await manager.broadcast({
+            "type": "ACTIVITY_LOG",
+            "log": {
+                "source": role_name,
+                "message": f"Construyendo blueprint desde sub-espacio {agent_id}...",
+                "status": "PENDING"
+            }
+        })
+        
+        try:
+            resp_text = await AgentFactory.chat_one_shot(
+                agent_id=agent_id,
+                user_prompt=accumulated_context,
+                override_instructions=role["prompt"],
+                model=None, # Quantum engine routing applies
+                use_tools=False
+            )
+            
+            accumulated_context = f"{accumulated_context}\n\n--- [Aporte de {role_name}] ---\n{resp_text}"
+            steps.append({"role": role_name, "output": resp_text})
+            
+            await manager.broadcast({
+                "type": "ACTIVITY_LOG",
+                "log": {
+                    "source": role_name,
+                    "message": f"Aporte de {role_name} forjado exitosamente.",
+                    "status": "SUCCESS"
+                }
+            })
+        except Exception as e:
+            await manager.broadcast({
+                "type": "ACTIVITY_LOG",
+                "log": {
+                    "source": role_name,
+                    "message": f"Error: {str(e)}",
+                    "status": "ERROR"
+                }
+            })
+            raise e
+            
+    final_output = steps[-1]["output"]
+    return {"extraction_result": final_output, "swarm_trace": steps}
 
 async def run_blueprint_swarm(data: Any):
     """
-    La Forja
+    La Forja - REWIRED TO QUANTUM ENGINE
     Generate architecture nodes, edges, agent cards.
     """
+    input_text = str(data)
     
     pipeline_roles = [
         {
+            "id": "forja-arquitecto",
             "name": "Forjador",
-            "system": "Eres el Forjador (System Designer). Tu rol es traducir la arquitectura aprobada en nodos visuales, aristas y perfiles de agentes para el motor Antigravity. PROHIBIDO usar XML como <THINKING> o <tool_call>.",
-            "task": "Genera el diseño final. DEBES devolver EXACTAMENTE tres bloques etiquetados así: <nodes> [array de objetos JSON con id, tipo, label] </nodes>, <edges> [array de objetos JSON con id, source, target, label] </edges>, <agents> [array de objetos JSON con name, role, system] </agents>."
+            "prompt": "Eres el Forjador (System Designer). Tu rol es traducir la estrategia o plan aprobado en un listado paso a paso para que el motor visual genere un diagrama de flujo. DEBES usar viñetas o listas numeradas Markdown.\nTAREA: Genera el diseño final basado en el plan. DEBES devolver un flujo de trabajo estructurado. Para cada paso o nodo, usa un título corto con viñeta seguido de una breve descripción de 1 párrafo. PROHIBIDO usar código o JSON."
         },
-
         {
+            "id": "forja-revisor",
             "name": "Revisor de Cohesión",
-            "system": "Eres el Revisor de Cohesión (Auditor Cero-Trust). Validarás que el código de la Forja esté limpio. PROHIBIDO programar o alucinar tool_calls.",
-            "task": "Valida que los bloques <nodes>, <edges> y <agents> sean JSON válido y estén presentes. No elimines los bloques generados por el Forjador. Solo corrige JSON roto y devuelve los tres bloques intactos o mejorados."
+            "prompt": "Eres el Revisor de Cohesión. Tu trabajo es asegurar que el Forjador haya entregado un listado Markdown limpio y claro sin introducciones.\nTAREA: Toma el texto anterior. Si no está en formato de lista Markdown, conviértelo a lista. Elimina saludos. Devuelve solo la lista Markdown estructurada. NO anadas explicaciones adicionales."
         }
     ]
-    model = data.get("model", "anthropic/claude-3.5-sonnet") if isinstance(data, dict) else "anthropic/claude-3.5-sonnet"
-    model = model.replace("free.ai/", "").replace("ollama/", "")
-    
-    result = await _execute_swarm_pipeline(str(data), model, pipeline_roles)
-    return {"blueprint_result": result["final_output"], "swarm_trace": result["steps"]}
+
+    accumulated_context = input_text
+    steps = []
+
+    for role in pipeline_roles:
+        agent_id = role["id"]
+        role_name = role["name"]
+        
+        await manager.broadcast({
+            "type": "ACTIVITY_LOG",
+            "log": {
+                "source": role_name,
+                "message": f"Construyendo blueprint desde sub-espacio {agent_id}...",
+                "status": "PENDING"
+            }
+        })
+        
+        try:
+            resp_text = await AgentFactory.chat_one_shot(
+                agent_id=agent_id,
+                user_prompt=accumulated_context,
+                override_instructions=role["prompt"],
+                model=None, # Quantum engine routing applies
+                use_tools=False
+            )
+            
+            accumulated_context = f"{accumulated_context}\n\n--- [Aporte de {role_name}] ---\n{resp_text}"
+            steps.append({"role": role_name, "output": resp_text})
+            
+            await manager.broadcast({
+                "type": "ACTIVITY_LOG",
+                "log": {
+                    "source": role_name,
+                    "message": f"Aporte de {role_name} forjado exitosamente.",
+                    "status": "SUCCESS"
+                }
+            })
+        except Exception as e:
+            await manager.broadcast({
+                "type": "ACTIVITY_LOG",
+                "log": {
+                    "source": role_name,
+                    "message": f"Error: {str(e)}",
+                    "status": "ERROR"
+                }
+            })
+            raise e
+            
+    final_output = steps[-1]["output"]
+    return {"blueprint_result": final_output, "swarm_trace": steps}
