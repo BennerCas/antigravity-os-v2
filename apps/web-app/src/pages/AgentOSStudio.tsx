@@ -146,7 +146,7 @@ const FlowArchitect: React.FC = () => {
 
   const activateAmdGpu = async () => {
     try {
-      const res = await fetch('http://localhost:8000/api/v1/studio/amd-gpu/activate', { method: 'POST' });
+      const res = await fetch(`${API_URL}/studio/amd-gpu/activate`, { method: 'POST' });
       const data = await res.json();
       if(data.status === 'success') {
         setGpuActive(true);
