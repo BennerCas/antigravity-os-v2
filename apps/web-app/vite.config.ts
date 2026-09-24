@@ -15,7 +15,11 @@ export default defineConfig({
       '/api': {
         target: 'http://127.0.0.1:8001',
         changeOrigin: true,
-        ws: true
+        ws: true,
+        // El pipeline Match & Fuse SDK tiene 3 etapas y tarda ~90s en Ollama.
+        // Sin esto Vite corta a los 5s → "Failed to fetch" en UI.
+        timeout: 300000,       // 5 minutos
+        proxyTimeout: 300000,  // 5 minutos
       }
     }
   }

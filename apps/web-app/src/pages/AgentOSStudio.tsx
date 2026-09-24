@@ -1084,19 +1084,25 @@ export const CanvasTabs: React.FC = () => {
     if (flowNodes.length === 0) return;
 
     setIsSynthesizing(true);
+    // AbortController con 5 minutos — el pipeline SDK tiene 3 etapas y puede tardar ~90s en Ollama
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+
     try {
-      const selectedModel = localStorage.getItem('aurelios_model') || 'free.ai/auto';
+      const selectedModel = localStorage.getItem('aurelios_model') || 'ollama/hermes3:8b';
       
       const res = await fetch(`${API_URL}/studio/match_fuse`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({ 
           nodes: flowNodes.map(n => n.data),
           model: selectedModel 
         })
       });
       
-      if (!res.ok) throw new Error("Backend SDK request failed");
+      clearTimeout(timeoutId);
+      if (!res.ok) throw new Error(`Backend error: ${res.status}`);
       const data = await res.json();
       const rawText = data.response || "";
 
