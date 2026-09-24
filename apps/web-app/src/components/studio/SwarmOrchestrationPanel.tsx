@@ -167,17 +167,17 @@ export const SwarmOrchestrationPanel: React.FC = () => {
         <div id="zone2-content" className="flex-1 flex flex-col overflow-hidden relative">
           
           {/* ── OKR & Checklist ── */}
-          <div className={zone2ActiveTab === 'okr' ? 'flex-1 overflow-y-auto p-8 custom-scrollbar block relative' : 'hidden'}>
+          <div className={zone2ActiveTab === 'okr' ? 'flex-1 overflow-y-auto p-10 custom-scrollbar block relative' : 'hidden'}>
             
             {/* Background elements */}
             <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
               <Crosshair size={300} weight="thin" />
             </div>
 
-            <div className="max-w-3xl mx-auto space-y-12 animate-fade-in relative z-10">
+            <div className="max-w-3xl mx-auto space-y-20 animate-fade-in relative z-10 pb-12">
               
               {/* Header Progress */}
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-semibold text-white tracking-wide flex items-center gap-3">
                     <Target size={28} className="text-blue-400" weight="duotone" />
@@ -201,39 +201,39 @@ export const SwarmOrchestrationPanel: React.FC = () => {
 
               {/* Objetivo Principal */}
               <div className="relative">
-                <div className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500/0 via-emerald-500 to-emerald-500/0 opacity-50 rounded-full" />
-                <h3 className="text-sm font-mono text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <div className="absolute -left-5 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500/0 via-emerald-500 to-emerald-500/0 opacity-50 rounded-full" />
+                <h3 className="text-sm font-mono text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2">
                   <TrendUp size={16} /> Vector de Intención
                 </h3>
                 
                 {phase1Complete && triageSummary ? (
-                  <div className="p-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 shadow-[0_0_30px_rgba(16,185,129,0.05)]">
-                    <div className="flex items-start gap-4">
-                      <div className="shrink-0 p-3 bg-emerald-500/10 rounded-xl">
-                        <Checks size={24} className="text-emerald-400" weight="duotone" />
+                  <div className="p-8 rounded-3xl border border-emerald-500/20 bg-emerald-500/5 shadow-[0_0_30px_rgba(16,185,129,0.05)]">
+                    <div className="flex items-start gap-5">
+                      <div className="shrink-0 p-4 bg-emerald-500/10 rounded-2xl">
+                        <Checks size={28} className="text-emerald-400" weight="duotone" />
                       </div>
-                      <div className="markdown-body text-[15px] leading-relaxed text-emerald-100 user-answer-block">
+                      <div className="markdown-body text-[15px] leading-relaxed text-emerald-100 user-answer-block pt-1">
                         <ReactMarkdown>{triageSummary}</ReactMarkdown>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="p-8 rounded-2xl border border-dashed border-zinc-700/50 bg-zinc-900/20 flex flex-col items-center justify-center text-center gap-4">
-                    <div className="w-16 h-16 rounded-full border border-zinc-800 bg-zinc-900/50 flex items-center justify-center relative">
+                  <div className="p-10 rounded-3xl border border-dashed border-zinc-700/50 bg-zinc-900/20 flex flex-col items-center justify-center text-center gap-5">
+                    <div className="w-20 h-20 rounded-full border border-zinc-800 bg-zinc-900/50 flex items-center justify-center relative">
                       {phase1Interview ? (
                         <>
                           <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping" />
-                          <TrendUp size={28} className="text-blue-400 animate-pulse" weight="duotone" />
+                          <TrendUp size={32} className="text-blue-400 animate-pulse" weight="duotone" />
                         </>
                       ) : (
-                        <Brain size={28} className="text-zinc-600" weight="duotone" />
+                        <Brain size={32} className="text-zinc-600" weight="duotone" />
                       )}
                     </div>
                     <div>
-                      <h4 className="text-zinc-300 font-medium text-lg mb-1">
+                      <h4 className="text-zinc-300 font-medium text-lg mb-2">
                         {phase1Interview ? "El Enjambre 1 está perfilando tu idea..." : "A la espera de un objetivo"}
                       </h4>
-                      <p className="text-zinc-500 text-sm max-w-sm mx-auto">
+                      <p className="text-zinc-500 text-sm max-w-sm mx-auto leading-relaxed">
                         {phase1Interview 
                           ? "Responde las preguntas en la pestaña Triage para que AureliOS extraiga el Requerimiento Principal."
                           : "Escribe en el chat qué quieres construir. AureliOS despertará al Enjambre 1 para entrevistarte."}
@@ -245,99 +245,99 @@ export const SwarmOrchestrationPanel: React.FC = () => {
               
               {/* Timeline Stepper */}
               <div>
-                <h3 className="text-sm font-mono text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                <h3 className="text-sm font-mono text-zinc-400 uppercase tracking-widest mb-8 flex items-center gap-2">
                   <ListChecks size={16} /> Secuencia de Orquestación
                 </h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   
                   {/* Step 1 */}
-                  <div className={`p-5 rounded-xl border transition-all ${
+                  <div className={`p-6 rounded-2xl border transition-all ${
                     phase1Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 
                     phase1Interview ? 'border-blue-500/50 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.1)]' : 
                     'border-zinc-800/50 bg-zinc-900/30 opacity-60'
                   }`}>
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                         phase1Complete ? 'bg-emerald-500/20 text-emerald-400' : 
                         phase1Interview ? 'bg-blue-500/20 text-blue-400 animate-pulse' : 
                         'bg-zinc-800 text-zinc-500'
                       }`}>
-                        <Brain size={18} weight="duotone" />
+                        <Brain size={20} weight="duotone" />
                       </div>
-                      <h4 className={`font-semibold ${phase1Complete ? 'text-emerald-400' : phase1Interview ? 'text-blue-400' : 'text-zinc-400'}`}>
+                      <h4 className={`text-base font-semibold ${phase1Complete ? 'text-emerald-400' : phase1Interview ? 'text-blue-400' : 'text-zinc-400'}`}>
                         Fase 1: Triage Inicial
                       </h4>
                     </div>
-                    <p className="text-sm text-zinc-500 pl-11">
+                    <p className="text-[15px] text-zinc-500 pl-14 leading-relaxed">
                       El equipo Radar realiza una entrevista socrática adaptativa para destilar tu idea cruda en un contrato sólido.
                     </p>
                   </div>
 
                   {/* Step 2 */}
-                  <div className={`p-5 rounded-xl border transition-all ${
+                  <div className={`p-6 rounded-2xl border transition-all ${
                     phase2Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 
                     (phase1Complete && !phase2Complete) ? 'border-purple-500/50 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.1)]' : 
                     'border-zinc-800/50 bg-zinc-900/30 opacity-60'
                   }`}>
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                         phase2Complete ? 'bg-emerald-500/20 text-emerald-400' : 
                         (phase1Complete && !phase2Complete) ? 'bg-purple-500/20 text-purple-400 animate-pulse' : 
                         'bg-zinc-800 text-zinc-500'
                       }`}>
-                        <Robot size={18} weight="duotone" />
+                        <Robot size={20} weight="duotone" />
                       </div>
-                      <h4 className={`font-semibold ${phase2Complete ? 'text-emerald-400' : (phase1Complete && !phase2Complete) ? 'text-purple-400' : 'text-zinc-400'}`}>
+                      <h4 className={`text-base font-semibold ${phase2Complete ? 'text-emerald-400' : (phase1Complete && !phase2Complete) ? 'text-purple-400' : 'text-zinc-400'}`}>
                         Fase 2: Extracción Técnica
                       </h4>
                     </div>
-                    <p className="text-sm text-zinc-500 pl-11">
+                    <p className="text-[15px] text-zinc-500 pl-14 leading-relaxed">
                       El Enjambre Clandestino analiza riesgos, arquitecturas posibles y extrae los requisitos técnicos precisos.
                     </p>
                   </div>
 
                   {/* Step 3 */}
-                  <div className={`p-5 rounded-xl border transition-all ${
+                  <div className={`p-6 rounded-2xl border transition-all ${
                     phase3Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 
                     (phase2Complete && !phase3Complete) ? 'border-amber-500/50 bg-amber-500/10 shadow-[0_0_20px_rgba(245,158,11,0.1)]' : 
                     'border-zinc-800/50 bg-zinc-900/30 opacity-60'
                   }`}>
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                         phase3Complete ? 'bg-emerald-500/20 text-emerald-400' : 
                         (phase2Complete && !phase3Complete) ? 'bg-amber-500/20 text-amber-400 animate-pulse' : 
                         'bg-zinc-800 text-zinc-500'
                       }`}>
-                        <Lightning size={18} weight="duotone" />
+                        <Lightning size={20} weight="duotone" />
                       </div>
-                      <h4 className={`font-semibold ${phase3Complete ? 'text-emerald-400' : (phase2Complete && !phase3Complete) ? 'text-amber-400' : 'text-zinc-400'}`}>
+                      <h4 className={`text-base font-semibold ${phase3Complete ? 'text-emerald-400' : (phase2Complete && !phase3Complete) ? 'text-amber-400' : 'text-zinc-400'}`}>
                         Fase 3: Blueprint MD
                       </h4>
                     </div>
-                    <p className="text-sm text-zinc-500 pl-11">
+                    <p className="text-[15px] text-zinc-500 pl-14 leading-relaxed">
                       Se consolida toda la información en un Blueprint Maestro (Markdown) listo para que los ingenieros generen el código.
                     </p>
                   </div>
 
                   {/* Step 4 */}
-                  <div className={`p-5 rounded-xl border transition-all ${
+                  <div className={`p-6 rounded-2xl border transition-all ${
                     phase3Complete ? 'border-cyan-500/50 bg-cyan-500/10 shadow-[0_0_20px_rgba(6,182,212,0.2)]' : 
                     'border-zinc-800/50 bg-zinc-900/30 opacity-60'
                   }`}>
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                         phase3Complete ? 'bg-cyan-500/20 text-cyan-400 animate-pulse' : 
                         'bg-zinc-800 text-zinc-500'
                       }`}>
-                        <RocketLaunch size={18} weight="duotone" />
+                        <RocketLaunch size={20} weight="duotone" />
                       </div>
-                      <h4 className={`font-semibold ${phase3Complete ? 'text-cyan-400' : 'text-zinc-400'}`}>
-                        Fase 4: Ejecución Final
+                      <h4 className={`text-base font-semibold ${phase3Complete ? 'text-cyan-400' : 'text-zinc-400'}`}>
+                        Ensamblaje (Match & Fuse)
                       </h4>
                     </div>
-                    <p className="text-sm text-zinc-500 pl-11">
-                      El blueprint es transferido a Antigravity OS para el auto-desarrollo (Match & Fuse).
+                    <p className="text-[15px] text-zinc-500 pl-14 leading-relaxed">
+                      El blueprint es transferido a Antigravity OS para el auto-desarrollo.
                     </p>
                   </div>
 
@@ -352,10 +352,21 @@ export const SwarmOrchestrationPanel: React.FC = () => {
               <>
                 {/* Header fijo */}
                 <div className="shrink-0 pt-8 pb-4 px-8 w-full">
-                  <div className="max-w-3xl mx-auto">
+                  <div className="max-w-3xl mx-auto flex items-center justify-between">
                     <h2 className="text-xl text-[var(--text-primary)] font-semibold flex items-center gap-2">
                       <Brain size={24} weight="duotone" className="text-blue-400" /> Entrevista de Triage
                     </h2>
+                    {(() => {
+                      const ansCount = phase1Interview ? phase1Interview.split('===USER_ANSWER_START===').length - 1 : 0;
+                      // Ej: con 0 respuestas falta 85%, con 1 falta 40%, etc.
+                      const missingPercent = Math.max(0, 85 - (ansCount * 45));
+                      return missingPercent > 0 ? (
+                        <div className="px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-mono font-medium flex items-center gap-1.5 animate-pulse">
+                          <span>Falta</span>
+                          <span>-{missingPercent}%</span>
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
                 </div>
 
@@ -433,7 +444,8 @@ export const SwarmOrchestrationPanel: React.FC = () => {
                             const current = useStudioStore.getState().phase1Interview || '';
                             useStudioStore.getState().setPhase1Interview(current + `\n\n---\n**💡 Tus respuestas enviadas:**\n\n===USER_ANSWER_START===\n${val}\n===USER_ANSWER_END===\n\n---\n*AureliOS está analizando tus respuestas...*`);
                             (document.getElementById('phase1-input') as HTMLTextAreaElement).value = '';
-                            trigger(val);
+                            // FIXED: El backend necesita "--- [Respuesta" o "Respuestas del usuario:" para detectar que es la segunda pasada y poder aprobar.
+                            trigger("--- [Respuesta del usuario] ---\n" + val);
                           }
                         }}
                         className="px-6 py-2.5 bg-white text-black hover:bg-zinc-200 rounded-lg font-bold transition-colors"
