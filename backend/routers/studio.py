@@ -360,7 +360,7 @@ async def run_triage_swarm(data: Any):
                 )
 
         is_final_node = (idx == len(agent_ids) - 1)
-        target_model = None if is_final_node else "minicpm-v4.6:1b"
+        target_model = None if is_final_node else "qwen2.5:1.5b"
 
         try:
             resp_text = await AgentFactory.chat_one_shot(
@@ -461,7 +461,7 @@ async def run_extraction_swarm(data: Any):
         })
         
         is_final_node = (idx == len(pipeline_roles) - 1)
-        target_model = None if is_final_node else "minicpm-v4.6:1b"
+        target_model = None if is_final_node else "qwen2.5:1.5b"
 
         try:
             resp_text = await AgentFactory.chat_one_shot(
@@ -534,7 +534,7 @@ async def run_blueprint_swarm(data: Any):
         })
         
         is_final_node = (idx == len(pipeline_roles) - 1)
-        target_model = None if is_final_node else "minicpm-v4.6:1b"
+        target_model = None if is_final_node else "qwen2.5:1.5b"
 
         try:
             resp_text = await AgentFactory.chat_one_shot(
