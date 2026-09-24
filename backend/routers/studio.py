@@ -309,20 +309,12 @@ async def run_triage_swarm(data: Any):
     """
     input_text = str(data)
     
-    import os
-    is_local = os.getenv("GEMINI_API_KEY", "dummy_key_for_ollama") == "dummy_key_for_ollama"
-    
-    if is_local:
-        agent_ids = [
-            "radar-entrevistador" # Modo Rápido Local: 1 solo agente para evitar colapso de GPU
-        ]
-    else:
-        agent_ids = [
-            "radar-entrevistador",
-            "radar-francotirador",
-            "radar-analista-viabilidad",
-            "radar-profiler"
-        ]
+    agent_ids = [
+        "radar-entrevistador",
+        "radar-francotirador",
+        "radar-analista-viabilidad",
+        "radar-profiler"
+    ]
     
     friendly_names = {
         "radar-entrevistador": "Entrevistador Socrático",
@@ -431,35 +423,23 @@ async def run_extraction_swarm(data: Any):
     """
     input_text = str(data)
     
-    import os
-    is_local = os.getenv("GEMINI_API_KEY", "dummy_key_for_ollama") == "dummy_key_for_ollama"
-
-    if is_local:
-        pipeline_roles = [
-            {
-                "id": "inquisidor-escribano",
-                "name": "Estratega y Sintetizador",
-                "prompt": "Eres el Estratega Principal. Hablas directamente con Benner. Propones un plan o estructura de alto nivel. \nTAREA: Si faltan datos clave, pregúntale a Benner de forma natural. Si el plan ya está claro según la información, redacta la Estrategia Final y añade obligatoriamente [READY_FOR_BLUEPRINT] al final de tu mensaje. PROHIBIDO generar código."
-            }
-        ]
-    else:
-        pipeline_roles = [
-            {
-                "id": "inquisidor-arquitecto",
-                "name": "Estratega Principal",
-                "prompt": "Eres el Estratega Principal. Defines el plan de accion, estructura o arquitectura de manera fluida y conversacional. Hablas con Benner. PROHIBIDO generar codigo o usar tags XML.\nTAREA: Propon a Benner un plan o estructura de alto nivel. Si faltan datos clave, preguntale de forma natural y detente."
-            },
-            {
-                "id": "inquisidor-red-teamer",
-                "name": "Auditor de Riesgos",
-                "prompt": "Eres el Auditor de Riesgos. Eres analitico pero cercano, hablas directamente con Benner. Evalúas el plan propuesto por el Estratega buscando puntos debiles.\nTAREA: Critica el plan amigablemente. Encuentra posibles falencias y hazle 1 pregunta de estres a Benner. PROHIBIDO usar tags XML."
-            },
-            {
-                "id": "inquisidor-escribano",
-                "name": "Sintetizador",
-                "prompt": "Eres el Sintetizador. Tu rol es resumir el plan. PROHIBIDO programar o usar herramientas.\nTAREA: Analiza la discusion. Si hay dudas criticas, presentalas a Benner. Pero si el plan es solido, redacta un Documento de Estrategia final y anade obligatoriamente [READY_FOR_BLUEPRINT] al final de tu mensaje."
-            }
-        ]
+    pipeline_roles = [
+        {
+            "id": "inquisidor-arquitecto",
+            "name": "Estratega Principal",
+            "prompt": "Eres el Estratega Principal. Defines el plan de accion, estructura o arquitectura de manera fluida y conversacional. Hablas con Benner. PROHIBIDO generar codigo o usar tags XML.\nTAREA: Propon a Benner un plan o estructura de alto nivel. Si faltan datos clave, preguntale de forma natural y detente."
+        },
+        {
+            "id": "inquisidor-red-teamer",
+            "name": "Auditor de Riesgos",
+            "prompt": "Eres el Auditor de Riesgos. Eres analitico pero cercano, hablas directamente con Benner. Evalúas el plan propuesto por el Estratega buscando puntos debiles.\nTAREA: Critica el plan amigablemente. Encuentra posibles falencias y hazle 1 pregunta de estres a Benner. PROHIBIDO usar tags XML."
+        },
+        {
+            "id": "inquisidor-escribano",
+            "name": "Sintetizador",
+            "prompt": "Eres el Sintetizador. Tu rol es resumir el plan. PROHIBIDO programar o usar herramientas.\nTAREA: Analiza la discusion. Si hay dudas criticas, presentalas a Benner. Pero si el plan es solido, redacta un Documento de Estrategia final y anade obligatoriamente [READY_FOR_BLUEPRINT] al final de tu mensaje."
+        }
+    ]
 
     accumulated_context = input_text
     steps = []
@@ -518,30 +498,18 @@ async def run_blueprint_swarm(data: Any):
     """
     input_text = str(data)
     
-    import os
-    is_local = os.getenv("GEMINI_API_KEY", "dummy_key_for_ollama") == "dummy_key_for_ollama"
-
-    if is_local:
-        pipeline_roles = [
-            {
-                "id": "forja-arquitecto",
-                "name": "Forjador de Sistemas",
-                "prompt": "Eres el Forjador (System Designer). Tu rol es traducir la estrategia o plan aprobado en un listado paso a paso para que el motor visual genere un diagrama de flujo. DEBES usar viñetas o listas numeradas Markdown limpios, sin saludos ni explicaciones adicionales.\nTAREA: Genera el diseño final basado en el plan devolviendo únicamente un flujo de trabajo estructurado. Para cada paso o nodo, usa un título corto con viñeta seguido de una breve descripción de 1 párrafo. PROHIBIDO usar código o JSON."
-            }
-        ]
-    else:
-        pipeline_roles = [
-            {
-                "id": "forja-arquitecto",
-                "name": "Forjador",
-                "prompt": "Eres el Forjador (System Designer). Tu rol es traducir la estrategia o plan aprobado en un listado paso a paso para que el motor visual genere un diagrama de flujo. DEBES usar viñetas o listas numeradas Markdown.\nTAREA: Genera el diseño final basado en el plan. DEBES devolver un flujo de trabajo estructurado. Para cada paso o nodo, usa un título corto con viñeta seguido de una breve descripción de 1 párrafo. PROHIBIDO usar código o JSON."
-            },
-            {
-                "id": "forja-revisor",
-                "name": "Revisor de Cohesión",
-                "prompt": "Eres el Revisor de Cohesión. Tu trabajo es asegurar que el Forjador haya entregado un listado Markdown limpio y claro sin introducciones.\nTAREA: Toma el texto anterior. Si no está en formato de lista Markdown, conviértelo a lista. Elimina saludos. Devuelve solo la lista Markdown estructurada. NO anadas explicaciones adicionales."
-            }
-        ]
+    pipeline_roles = [
+        {
+            "id": "forja-arquitecto",
+            "name": "Forjador",
+            "prompt": "Eres el Forjador (System Designer). Tu rol es traducir la estrategia o plan aprobado en un listado paso a paso para que el motor visual genere un diagrama de flujo. DEBES usar viñetas o listas numeradas Markdown.\nTAREA: Genera el diseño final basado en el plan. DEBES devolver un flujo de trabajo estructurado. Para cada paso o nodo, usa un título corto con viñeta seguido de una breve descripción de 1 párrafo. PROHIBIDO usar código o JSON."
+        },
+        {
+            "id": "forja-revisor",
+            "name": "Revisor de Cohesión",
+            "prompt": "Eres el Revisor de Cohesión. Tu trabajo es asegurar que el Forjador haya entregado un listado Markdown limpio y claro sin introducciones.\nTAREA: Toma el texto anterior. Si no está en formato de lista Markdown, conviértelo a lista. Elimina saludos. Devuelve solo la lista Markdown estructurada. NO anadas explicaciones adicionales."
+        }
+    ]
 
     accumulated_context = input_text
     steps = []
