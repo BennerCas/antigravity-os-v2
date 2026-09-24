@@ -232,7 +232,7 @@ export const useStudioStore = create<StudioState>()(
       ],
       addChatMessage: (msg) =>
         set((state) => ({
-          chatMessages: [...state.chatMessages, { ...msg, id: Date.now().toString() }],
+          chatMessages: [...state.chatMessages, { ...msg, id: Date.now().toString() + Math.random().toString() }],
         })),
       setChatMessages: (messages) => set({ chatMessages: messages }),
       clearMessages: () =>

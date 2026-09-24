@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { API_URL } from '../lib/api';
 import { useTTSStore } from '../lib/ttsStore';
 import ReactMarkdown from 'react-markdown';
-import { Star, Cpu, MagnifyingGlass, CheckCircle, Compass, Hammer, Brain, Gear, Rocket, Database, TerminalWindow, Lightning, LockKey, CaretRight, Sparkle, Check, Copy, CloudArrowDown , Target, Users, ShieldCheck, Graph, GraduationCap, PenNib} from '@phosphor-icons/react';
+import { Star, Cpu, MagnifyingGlass, CheckCircle, Compass, Hammer, Brain, Gear, Rocket, Database, TerminalWindow, Lightning, LockKey, CaretRight, Sparkle, Check, Copy, CloudArrowDown , Target, Users, ShieldCheck, Graph, GraduationCap, PenNib, Globe } from '@phosphor-icons/react';
 import { logicTaskManager, LogicTaskState } from '../lib/logicTaskManager';
 import { useNavigate } from 'react-router-dom';
 import { SystemEvolutionPanel } from '../components/architecture/SystemEvolutionPanel';
@@ -66,8 +66,8 @@ export default function Architecture() {
   const [panelTab, setPanelTab] = useState<'content' | 'logic'>(() => {
     return (localStorage.getItem('arch_panel_tab') as 'content' | 'logic') || 'content';
   });
-  const [mainTab, setMainTab] = useState<'map' | 'evolution' | 'library'>(() => {
-    return (localStorage.getItem('arch_main_view') as 'map' | 'evolution' | 'library') || 'map';
+  const [mainTab, setMainTab] = useState<'map' | 'evolution' | 'library' | 'atlas'>(() => {
+    return (localStorage.getItem('arch_main_view') as 'map' | 'evolution' | 'library' | 'atlas') || 'map';
   });
   const [currentLogicTask, setCurrentLogicTask] = useState<LogicTaskState | null>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -553,6 +553,17 @@ export default function Architecture() {
               <Brain size={18} className={mainTab === 'library' ? 'text-[#8080ff]' : ''} />
               <span>Biblioteca</span>
             </button>
+            <button
+              onClick={() => setMainTab('atlas')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${
+                mainTab === 'atlas'
+                  ? 'bg-[#1a0a0a] border border-[#5e2a2a] text-[#ff8080]'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'
+              }`}
+            >
+              <Database size={18} className={mainTab === 'atlas' ? 'text-[#ff8080]' : ''} />
+              <span>Atlas Forge</span>
+            </button>
           </div>
 
           {/* Motor Híbrido Compacto */}
@@ -673,6 +684,13 @@ export default function Architecture() {
               <span style={{fontSize:'13px', fontWeight:700, color:'#8080cc'}}>📚 Atlas KB ({libPrompts.length})</span>
               <input value={libKBSearch} onChange={e=>setLibKBSearch(e.target.value)} placeholder="Buscar conocimiento..."
                 style={{flex:1, backgroundColor:'#0d0d0d', border:'1px solid #1a1a1a', borderRadius:'6px', padding:'5px 10px', fontSize:'12px', color:'#ccc', outline:'none'}} />
+              <button 
+                onClick={() => setMainTab('atlas')}
+                className="bg-[#1a0a0a] border border-[#5e2a2a] text-[#ff8080] px-3 py-1.5 rounded text-xs font-bold hover:bg-[#2a1010] transition-colors"
+                title="Forjar Nuevo Conocimiento"
+              >
+                + Forge
+              </button>
             </div>
             <div style={{flex:1, overflowY:'auto', padding:'8px'}}>
               {libPrompts.filter(p=>p.title?.toLowerCase().includes(libKBSearch.toLowerCase())||(p.category||'').toLowerCase().includes(libKBSearch.toLowerCase())).map((prompt,i)=>(
@@ -714,6 +732,48 @@ export default function Architecture() {
         </div>
       ) : mainTab === 'evolution' ? (
         <SystemEvolutionPanel data={data} />
+      ) : mainTab === 'atlas' ? (
+        <div className="flex flex-col h-full bg-[#050505] border border-[#1a1a1a] rounded-xl p-6 overflow-y-auto">
+          <h2 className="text-xl font-bold text-[#ff8080] mb-4 flex items-center gap-2"><Database weight="duotone" /> Atlas Forge Pipeline</h2>
+          <p className="text-[#888] mb-8">Arrastra archivos masivos o introduce nichos para que el enjambre de 8 agentes transmute conocimiento crudo en Master Prompts.</p>
+          
+          <div className="flex gap-6 h-full">
+            {/* Zona de Ingesta */}
+            <div className="flex-1 flex flex-col gap-4 border border-[#1a1a1a] rounded-lg p-6 bg-[#0a0a0a]">
+              <h3 className="text-sm font-bold text-[#ccc] mb-2 flex items-center gap-2"><Globe size={16}/> Modo Web (20 Fuentes de Élite)</h3>
+              <div className="flex gap-2">
+                <input type="text" placeholder="Ej. Arquitectura Clean, Ciberseguridad..." className="flex-1 bg-[#050505] border border-[#222] rounded px-3 py-2 text-sm text-white" />
+                <button className="bg-[#1a0a0a] border border-[#5e2a2a] text-[#ff8080] px-4 py-2 rounded text-sm font-bold hover:bg-[#2a1010] transition-colors">Escanear Web</button>
+              </div>
+              
+              <div className="my-4 border-t border-[#1a1a1a]"></div>
+              
+              <h3 className="text-sm font-bold text-[#ccc] mb-2 flex items-center gap-2"><CloudArrowDown size={16}/> Modo Archivo (PDF, MD, TXT hasta 1GB)</h3>
+              <div className="flex-1 border-2 border-dashed border-[#222] rounded-lg flex flex-col items-center justify-center text-[#555] hover:border-[#ff8080] hover:text-[#ff8080] transition-colors cursor-pointer bg-[#050505]">
+                <CloudArrowDown size={48} className="mb-2 opacity-50" />
+                <span className="text-sm font-semibold">Arrastra un archivo aquí</span>
+                <span className="text-xs opacity-60 mt-1">Soporta PDF, MD, TXT (Chunking Semántico Automático)</span>
+              </div>
+            </div>
+
+            {/* Zona de Pipeline / Monitoreo */}
+            <div className="flex-[1.5] border border-[#1a1a1a] rounded-lg p-6 bg-[#0a0a0a] flex flex-col">
+              <h3 className="text-sm font-bold text-[#ccc] mb-4 flex items-center gap-2"><Brain size={16}/> Telemetría del Enjambre (8 Nodos)</h3>
+              <div className="flex-1 flex flex-col gap-2 overflow-y-auto pr-2">
+                {/* Mocks de nodos para la UI inicial */}
+                {['Recolector', 'Destilador', 'Analista Táctico', 'Transmutador', 'Inquisidor', 'Optimizador', 'Curador', 'Escribano'].map((node, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 rounded bg-[#050505] border border-[#111]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-6 h-6 rounded-full bg-[#111] border border-[#333] flex items-center justify-center text-[10px] text-[#666] font-mono">{idx+1}</div>
+                      <span className="text-sm text-[#888] font-medium">{node}</span>
+                    </div>
+                    <span className="text-xs font-mono text-[#444]">Esperando datos...</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       ) : (
       /* Master-Detail-Subdetail Layout */
       <div className="flex gap-6 flex-1 min-h-0">

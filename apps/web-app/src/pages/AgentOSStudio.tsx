@@ -7,12 +7,12 @@ import { studioNodeTypes, KIND_META } from '../components/StudioNodes';
 import { SwarmOrchestrationPanel } from '../components/studio/SwarmOrchestrationPanel';
 import { useStudioStore, TabId, parseAIResponseToFlow } from '../stores/useStudioStore';
 import { API_URL, WS_STUDIO_ACTIVITY_URL } from '../lib/api';
-import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock, Stop } from '@phosphor-icons/react';
+import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock, Stop, Microphone } from '@phosphor-icons/react';
 
 
 const AURELIOS_THEMES: Record<string, any> = {
   obsidian: {
-    name: 'Obsidian Emperor', bg: 'bg-zinc-950', text: 'text-zinc-100', border: 'border-zinc-800',
+    name: 'Obsidian Emperor', bg: 'bg-zinc-950', text: 'text-white', border: 'border-zinc-800',
     panelBg: 'bg-zinc-900', panelBorder: 'border-zinc-700', primary: 'text-cyan-400',
     toolBg: 'bg-zinc-800', toolHover: 'hover:border-zinc-500', aiBubble: 'bg-zinc-900 border-zinc-700 text-zinc-100',
     humanBubble: 'bg-cyan-600 text-white', inputBg: 'bg-zinc-900 border-zinc-700', inputFocus: 'focus:border-cyan-400',
@@ -99,7 +99,51 @@ const AURELIOS_THEMES: Record<string, any> = {
 
 const FlowArchitect: React.FC = () => {
     const { chatMessages, addChatMessage, setFlow, setAgentCards, setBlueprintMd, setTriggerChatSend, activityLogs, quantumPhase, setQuantumPhase } = useStudioStore();
-  const [input, setInput] = useState('');
+      const [input, setInput] = useState('');
+    const [isListening, setIsListening] = useState(false);
+    const recognitionRef = useRef<any>(null);
+
+    const toggleListen = () => {
+      if (isListening) {
+        recognitionRef.current?.stop();
+        setIsListening(false);
+        return;
+      }
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Tu navegador no soporta el dictado por voz de forma nativa. Usa Chrome o Edge.");
+        return;
+      }
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'es-ES';
+      recognition.continuous = true;
+      recognition.interimResults = false;
+
+      recognition.onresult = (event: any) => {
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          }
+        }
+        if (finalTranscript) {
+          setInput(prev => prev ? prev + ' ' + finalTranscript.trim() : finalTranscript.trim());
+        }
+      };
+
+      recognition.onerror = (e: any) => {
+        console.error("Speech rec error:", e);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+      setIsListening(true);
+      recognitionRef.current = recognition;
+    };
     const [isTyping, setIsTyping] = useState(false);
   const [thinkingPhrase, setThinkingPhrase] = useState('');
   const [showSetup, setShowSetup] = useState(false);
@@ -244,15 +288,21 @@ const FlowArchitect: React.FC = () => {
             currentData = summaryToSave;
           } else if (text.includes('[ES_ENTREVISTA]')) {
             // El agente necesita información o está charlando. Pausar la máquina.
-            const cleanText = text.replace('[ES_ENTREVISTA]', '').trim();
+            const cleanText = text.replace(/\[ES_ENTREVISTA\]/g, '').trim();
+            console.log('[AureliOS] Triage needs interview. Clean text:', cleanText);
             // Mostrar la respuesta del agente también en el chat para que el usuario pueda "charlar" y leer las aclaraciones
             addChatMessage({ role: 'agent', content: cleanText, model: selectedModel });
-            addChatMessage({ role: 'agent', content: '> [AureliOS] Triage ha actualizado las preguntas. Puedes responder aquí o en la pestaña **Fase 1: Triage**.', model: 'Orchestrator' });
+            
+            // Usar un setTimeout mínimo para garantizar que el ID cambie incluso si la máquina es absurdamente rápida (aunque con Math.random() ya está solucionado).
+            setTimeout(() => {
+              addChatMessage({ role: 'agent', content: '> [AureliOS] Triage ha actualizado las preguntas. Puedes responder aquí o en la pestaña **Fase 1: Triage**.', model: 'Orchestrator' });
+            }, 10);
             
             const currentPhase1 = useStudioStore.getState().phase1Interview || '';
             const newPhase1 = currentPhase1 
               ? currentPhase1.replace('\n\n---\n*AureliOS está analizando tus respuestas...*', '') + `\n\n---\n**🤖 Respuesta/Entrevista del Enjambre:**\n\n${cleanText}`
               : cleanText;
+            console.log('[AureliOS] Setting phase1Interview to:', newPhase1);
             useStudioStore.getState().setPhase1Interview(newPhase1);
             useStudioStore.getState().setZone2ActiveTab('phase1');
             setQuantumPhase('phase1_triage');
@@ -658,14 +708,27 @@ const FlowArchitect: React.FC = () => {
             >
               <span className="text-sm font-bold uppercase tracking-wider">Detener</span>
             </button>
-          ) : (
-            <button
-              onClick={() => handleSend()}
-              className={`p-3 rounded-xl transition-all shadow-md flex items-center justify-center shrink-0 ${input.trim() && !isTyping ? `${t.sendActive} hover:scale-105` : `${t.sendDisabled} cursor-not-allowed`}`}
-            >
-              <PaperPlaneRight weight="fill" size={22} />
-            </button>
-          )}
+                      ) : (
+              <>
+                <button
+                  onClick={toggleListen}
+                  className={`p-3 rounded-xl transition-all shadow-md flex items-center justify-center shrink-0 ${
+                    isListening ? 'bg-emerald-500 text-emerald-950 animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.5)]' : t.sendDisabled
+                  } hover:scale-105`}
+                  title={isListening ? "Detener grabación" : "Dictar por voz"}
+                >
+                  <Microphone weight={isListening ? "fill" : "duotone"} size={22} />
+                </button>
+                <button
+                  onClick={() => handleSend()}
+                  className={`p-3 rounded-xl transition-all shadow-md flex items-center justify-center shrink-0 ${
+                    input.trim() && !isTyping ? `${t.sendActive} hover:scale-105` : `${t.sendDisabled} cursor-not-allowed`
+                  }`}
+                >
+                  <PaperPlaneRight weight="fill" size={22} />
+                </button>
+              </>
+            )}
         </div>
         <div className="text-center mt-3">
           <span className="text-[11px]  font-bold tracking-widest uppercase">{selectedAgentData.title} • STOIC AI ORCHESTRATOR</span>

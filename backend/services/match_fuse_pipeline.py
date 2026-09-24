@@ -17,7 +17,15 @@ async def run_match_fuse(nodes_or_prompt, model_name="qwen3-8b", progress_callba
             except Exception:
                 pass
 
-    prompt = str(nodes_or_prompt)
+    if isinstance(nodes_or_prompt, list):
+        # Es una lista de nodos
+        intent_text = "Nodos actuales en el lienzo:\n"
+        for n in nodes_or_prompt:
+            intent_text += f"- Tarea/Agente: {n.get('label', 'Desconocido')} (Rol: {n.get('role', '')})\n"
+            intent_text += f"  Contexto: {n.get('fullDescription', '')}\n"
+        prompt = intent_text
+    else:
+        prompt = str(nodes_or_prompt)
 
     await emit("🔍 Recuperando genes y conocimientos del Atlas...", 5)
     agent_genes = vector_db.search_agents(prompt, n_results=3)
@@ -26,7 +34,7 @@ async def run_match_fuse(nodes_or_prompt, model_name="qwen3-8b", progress_callba
     context_agents = "\n---\n".join(agent_genes) if agent_genes else "Sin agentes base."
     context_atlas = "\n---\n".join(atlas_knowledge) if atlas_knowledge else "Sin conocimiento extra."
 
-    system_prompt = f"""Act as a Principal Cognitive Systems Architect specializing in multi-agent frameworks. Your objective is to design highly specialized AI agents based on the user's intent, base genes, and atlas knowledge, and output their configurations in a strict JSON format.
+    system_prompt = f"""Act as a Principal Cognitive Systems Architect specializing in multi-agent frameworks. Your objective is to design a cohesive SWARM of highly specialized AI agents based on the user's intent. You MUST decompose the user's request into AT LEAST 3 distinct, complementary agents that work together.
 
 USER INTENT: "{prompt}"
 

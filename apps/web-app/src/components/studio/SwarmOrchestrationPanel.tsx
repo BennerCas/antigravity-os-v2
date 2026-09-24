@@ -1,3 +1,4 @@
+import { useTTSStore } from '../../lib/ttsStore';
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useStudioStore } from '../../stores/useStudioStore';
