@@ -180,21 +180,24 @@ export const SwarmOrchestrationPanel: React.FC = () => {
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-semibold text-white tracking-wide flex items-center gap-3">
-                    <Target size={28} className="text-blue-400" weight="duotone" />
+                    <Target size={28} style={{ color: 'var(--accent-solid)' }} weight="duotone" />
                     Radar de Arquitectura
                   </h2>
                   <div className="text-right">
-                    <div className="text-xs font-mono text-blue-400/70 tracking-widest uppercase mb-1">Progreso Global</div>
-                    <div className="text-xl font-bold text-blue-400">
+                    <div className="text-xs font-mono tracking-widest uppercase mb-1" style={{ color: 'var(--accent-solid)', opacity: 0.6 }}>Progreso Global</div>
+                    <div className="text-xl font-bold" style={{ color: 'var(--accent-solid)' }}>
                       {phase3Complete ? '100%' : phase2Complete ? '75%' : phase1Complete ? '50%' : phase1Interview ? '25%' : '0%'}
                     </div>
                   </div>
                 </div>
                 {/* Progress Bar */}
-                <div className="h-2 w-full bg-blue-950/50 rounded-full overflow-hidden border border-blue-900/30">
+                <div className="h-2 w-full rounded-full overflow-hidden" style={{ background: 'var(--accent-soft)', border: '1px solid var(--stroke-subtle)' }}>
                   <div 
-                    className="h-full bg-gradient-to-r from-blue-600 to-cyan-400 transition-all duration-1000 ease-out"
-                    style={{ width: phase3Complete ? '100%' : phase2Complete ? '75%' : phase1Complete ? '50%' : phase1Interview ? '25%' : '0%' }}
+                    className="h-full transition-all duration-1000 ease-out"
+                    style={{ 
+                      width: phase3Complete ? '100%' : phase2Complete ? '75%' : phase1Complete ? '50%' : phase1Interview ? '25%' : '0%',
+                      background: 'linear-gradient(to right, var(--accent-solid), var(--accent-cyan))'
+                    }}
                   />
                 </div>
               </div>
