@@ -74,6 +74,20 @@ interface StudioState {
   setTriggerChatSend: (fn: ((text: string) => void) | null) => void;
   setBlueprintMd: (md: string) => void;
 
+  // Phase completion tracking — alimenta el checklist reactivo del OKR
+  phase1Complete: boolean;
+  phase2Complete: boolean;
+  phase3Complete: boolean;
+  setPhase1Complete: (v: boolean) => void;
+  setPhase2Complete: (v: boolean) => void;
+  setPhase3Complete: (v: boolean) => void;
+
+  // Phase content — resultados reales mostrados en pestañas Fase2 y Fase3
+  phase2Content: string | null;
+  phase3Content: string | null;
+  setPhase2Content: (text: string | null) => void;
+  setPhase3Content: (text: string | null) => void;
+
   // Focus mode (AgentCarousel)
   focusedAgent: AgentCard | null;
   setFocusedAgent: (agent: AgentCard | null) => void;
@@ -88,6 +102,7 @@ interface StudioState {
   selectedVoiceURI: string | null;
   setSelectedVoiceURI: (uri: string | null) => void;
 }
+
 
 const KIND_COLORS: Record<string,string> = {
   agent:'#3b82f6', trigger:'#10b981', tool:'#f59e0b',
@@ -513,6 +528,20 @@ export const useStudioStore = create<StudioState>()(
       setPhase1Interview: (phase1Interview) => set({ phase1Interview }),
       triggerChatSend: null,
       setTriggerChatSend: (triggerChatSend) => set({ triggerChatSend }),
+
+      // Phase completion tracking — checklist reactivo
+      phase1Complete: false,
+      phase2Complete: false,
+      phase3Complete: false,
+      setPhase1Complete: (phase1Complete) => set({ phase1Complete }),
+      setPhase2Complete: (phase2Complete) => set({ phase2Complete }),
+      setPhase3Complete: (phase3Complete) => set({ phase3Complete }),
+
+      // Phase content — contenido real para las pestañas
+      phase2Content: null,
+      phase3Content: null,
+      setPhase2Content: (phase2Content) => set({ phase2Content }),
+      setPhase3Content: (phase3Content) => set({ phase3Content }),
 
       focusedAgent: null,
       setFocusedAgent: (focusedAgent) => set({ focusedAgent }),

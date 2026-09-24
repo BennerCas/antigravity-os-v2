@@ -156,6 +156,12 @@ const FlowArchitect: React.FC = () => {
       // Limpiar Espacio 2 (Zone 2)
       phase1Interview: null,
       zone2ActiveTab: 'okr',
+      // Resetear checklist y contenido de fases
+      phase1Complete: false,
+      phase2Complete: false,
+      phase3Complete: false,
+      phase2Content: null,
+      phase3Content: null,
     });
     setQuantumPhase('phase1_triage');
   };
@@ -197,7 +203,9 @@ const FlowArchitect: React.FC = () => {
     const signal = abortControllerRef.current.signal;
 
     try {
-      const { setZone2ActiveTab, chatMessages, setFlow, setAgentCards, setBlueprintMd } = useStudioStore.getState();
+      const { setZone2ActiveTab, chatMessages, setFlow, setAgentCards, setBlueprintMd,
+              setPhase1Complete, setPhase2Complete, setPhase3Complete,
+              setPhase2Content, setPhase3Content } = useStudioStore.getState();
       
       // Pasar todo el historial para que el enjambre tenga el contexto de la conversación
       const historyStr = chatMessages.map(m => `${m.role}: ${m.content}`).join('\n') + `\nhuman: ${textToSend}`;
@@ -223,9 +231,10 @@ const FlowArchitect: React.FC = () => {
               addChatMessage({ role: 'agent', content: `**[Aprobado por Triage]** (El agente avanzó sin resumen. Analizando requerimientos directos...)`, model: selectedModel });
               text = currentData; // Evita enviar un string vacío a la Fase 2
             }
+            // ✅ Marcar Fase 1 como completada en el checklist
+            setPhase1Complete(true);
             currentPhase = 'phase2_extraction';
             currentData = text; // Pasa el output pulido a la siguiente fase
-            // El bucle continuará automáticamente a Extraction
           } else {
             // El agente necesita información. Pausar la máquina.
             text = text.replace('[ES_ENTREVISTA]', '').trim();
@@ -251,11 +260,15 @@ const FlowArchitect: React.FC = () => {
             if (text) {
               addChatMessage({ role: 'agent', content: `**[Arquitectura Aprobada]**\n${text}`, model: selectedModel });
             }
+            // ✅ Guardar contenido y marcar Fase 2 como completada
+            setPhase2Content(text);
+            setPhase2Complete(true);
             currentPhase = 'phase3_blueprint';
             currentData = text;
-            // El bucle continuará automáticamente a Forja
           } else {
-            // El agente arquitecto tiene dudas. Pausar.
+            // El agente arquitecto tiene dudas. Guardar y pausar.
+            // ✅ Guardar en pestaña Fase2 aunque no esté "completo"
+            setPhase2Content(text);
             addChatMessage({ role: 'agent', content: text, model: selectedModel });
             setQuantumPhase('phase2_extraction');
             break;
@@ -271,6 +284,9 @@ const FlowArchitect: React.FC = () => {
           const data = await res.json();
           let text = typeof data.result === 'string' ? data.result : (data.result?.triage_result || data.result?.extraction_result || data.result?.blueprint_result || data.result?.final_output || JSON.stringify(data.result));
           
+          // ✅ Guardar contenido, marcar Fase 3 completada y volver a OKR
+          setPhase3Content(text);
+          setPhase3Complete(true);
           setZone2ActiveTab('okr');
           addChatMessage({ role: 'agent', content: text, model: selectedModel });
           setQuantumPhase('phase1_triage'); // Resetear para el siguiente requerimiento nuevo
