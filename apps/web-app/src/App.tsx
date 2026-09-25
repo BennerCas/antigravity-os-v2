@@ -25,6 +25,7 @@ function InitialRedirect() {
 import { Sidebar } from './components/Sidebar';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { InteractiveTour } from './components/InteractiveTour';
+import { GlobalTTSListener } from './components/GlobalTTSListener';
 
 const AgentOS = lazy(() => import('./pages/AgentOS'));
 const Academy = lazy(() => import('./pages/Academy'));
@@ -80,6 +81,7 @@ function App(): React.ReactElement {
 
   return (
     <Router basename={import.meta.env.BASE_URL.replace(/\/$/, '') || '/'}>
+      <GlobalTTSListener />
       <RouteTracker />
       <InteractiveTour runTour={runTour} onComplete={handleTourComplete} />
       <div className="flex h-screen bg-[var(--surface-canvas)] text-[var(--text-primary)] overflow-hidden">
