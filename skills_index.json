@@ -30823,28 +30823,6 @@
     }
   },
   {
-    "id": "windows-privilege-escalation",
-    "path": "skills/windows-privilege-escalation",
-    "category": "security",
-    "name": "windows-privilege-escalation",
-    "description": "Provide systematic methodologies for discovering and exploiting privilege escalation vulnerabilities on Windows systems during penetration testing engagements.",
-    "risk": "offensive",
-    "source": "community",
-    "date_added": "2026-02-27",
-    "plugin": {
-      "targets": {
-        "codex": "supported",
-        "claude": "supported"
-      },
-      "setup": {
-        "type": "none",
-        "summary": "",
-        "docs": null
-      },
-      "reasons": []
-    }
-  },
-  {
     "id": "windows-shell-reliability",
     "path": "skills/windows-shell-reliability",
     "category": "uncategorized",
