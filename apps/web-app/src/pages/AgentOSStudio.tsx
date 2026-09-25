@@ -1081,7 +1081,7 @@ const FlowDiagram: React.FC = () => {
                 const Icon = meta.Icon;
                 return (
                   <div key={k} className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded flex items-center justify-center" style={{ backgroundColor: ${meta.color}22, border: 1px solid 66 }}>
+                    <div className="w-6 h-6 rounded flex items-center justify-center" style={{ backgroundColor: `${meta.color}22`, border: `1px solid ${meta.color}66` }}>
                       <Icon size={14} weight="bold" style={{ color: meta.color }} />
                     </div>
                     <span className="text-xs font-semibold" style={{ color: '#cbd5e1' }}>{meta.label}</span>
