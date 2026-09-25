@@ -135,7 +135,7 @@ const KIND_COLORS: Record<string,string> = {
   router:'#a855f7', human:'#ec4899', sink:'#64748b',
 };
 
-function detectKind(name: string, desc: string): string {
+export function detectKind(name: string, desc: string): string {
   const t = (name + ' ' + desc).toLowerCase();
   if (/\b(trigger|webhook|cron|inicio|start|entrada|input|event|scheduler)\b/.test(t)) return 'trigger';
   if (/\b(router|switch|decision|if|condition|branch|bifurc|selector|dispatch)\b/.test(t)) return 'router';

@@ -5,7 +5,7 @@ import { ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState 
 import '@xyflow/react/dist/style.css';
 import { studioNodeTypes, KIND_META } from '../components/StudioNodes';
 import { SwarmOrchestrationPanel } from '../components/studio/SwarmOrchestrationPanel';
-import { useStudioStore, TabId, parseAIResponseToFlow } from '../stores/useStudioStore';
+import { useStudioStore, TabId, parseAIResponseToFlow, detectKind } from '../stores/useStudioStore';
 import { useHistoryStore } from '../stores/useHistoryStore';
 import { API_URL, WS_STUDIO_ACTIVITY_URL } from '../lib/api';
 import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock, Stop, Microphone, Database, Globe, TerminalWindow, FileText, CodeBlock, Scan, AppWindow, File, MaskHappy, Chats, ArrowUUpLeft, ArrowUUpRight } from '@phosphor-icons/react';
@@ -1073,7 +1073,24 @@ const FlowDiagram: React.FC = () => {
         minZoom={0.2}
         attributionPosition="bottom-left"
       >
-        <Background color="#0f172a" gap={24} size={1} />
+        
+          <Panel position="top-left" className="!m-4">
+            <div className="bg-[#0d1117]/90 backdrop-blur-md border border-[#1e293b] rounded-xl p-3 flex flex-col gap-2 shadow-xl">
+              <h3 className="text-xs font-bold text-gray-400 mb-1 uppercase tracking-widest">Leyenda de Nodos</h3>
+              {Object.entries(KIND_META).map(([k, meta]) => {
+                const Icon = meta.Icon;
+                return (
+                  <div key={k} className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded flex items-center justify-center" style={{ backgroundColor: ${meta.color}22, border: 1px solid 66 }}>
+                      <Icon size={14} weight="bold" style={{ color: meta.color }} />
+                    </div>
+                    <span className="text-xs font-semibold" style={{ color: '#cbd5e1' }}>{meta.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </Panel>
+<Background color="#0f172a" gap={24} size={1} />
         <Controls position="bottom-left" className="!bg-[#0d1117] !border-[#1e293b] !rounded-xl" />
         <MiniMap
           position="bottom-left"
@@ -1566,10 +1583,10 @@ const ArchitectureBlueprint: React.FC = () => {
           cardIndex++;
           return {
             ...node,
-            type: 'agent',
+            type: node.type || detectKind(card.name, card.description),
             data: {
               ...node.data,
-              kind: 'agent',
+              kind: node.data?.kind || detectKind(card.name, card.description),
               label: card.name,
               role: card.role,
               fullDescription: card.description,
@@ -1589,12 +1606,13 @@ const ArchitectureBlueprint: React.FC = () => {
       const newNodes = [];
       for (let i = cardIndex; i < agentCards.length; i++) {
         const card = agentCards[i];
+        const inferredKind = detectKind(card.name, card.description);
         newNodes.push({
           id: card.id,
-          type: 'agent',
+          type: inferredKind,
           position: { x: 100 + ((i - cardIndex) % 3) * 350, y: startY + Math.floor((i - cardIndex) / 3) * 200 },
           data: {
-            kind: 'agent',
+            kind: inferredKind,
             label: card.name,
             role: card.role,
             fullDescription: card.description,
@@ -1707,10 +1725,10 @@ const ArchitectureBlueprint: React.FC = () => {
           cardIndex++;
           return {
             ...node,
-            type: 'agent',
+            type: node.type || detectKind(card.name, card.description),
             data: {
               ...node.data,
-              kind: 'agent',
+              kind: node.data?.kind || detectKind(card.name, card.description),
               label: card.name,
               role: card.role,
               fullDescription: card.description,
@@ -1730,12 +1748,13 @@ const ArchitectureBlueprint: React.FC = () => {
       const newNodes = [];
       for (let i = cardIndex; i < agentCards.length; i++) {
         const card = agentCards[i];
+        const inferredKind = detectKind(card.name, card.description);
         newNodes.push({
           id: card.id,
-          type: 'agent',
+          type: inferredKind,
           position: { x: 100 + ((i - cardIndex) % 3) * 350, y: startY + Math.floor((i - cardIndex) / 3) * 200 },
           data: {
-            kind: 'agent',
+            kind: inferredKind,
             label: card.name,
             role: card.role,
             fullDescription: card.description,
