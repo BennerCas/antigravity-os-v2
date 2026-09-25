@@ -1558,26 +1558,57 @@ const ArchitectureBlueprint: React.FC = () => {
       
       saveFlowState(); // Guardar historial antes de modificar
 
-      // Encontrar la posición más baja de los nodos existentes para colocar los nuevos debajo
+      let cardIndex = 0;
+      const updatedNodes = flowNodes.map(node => {
+        // Actualizamos los nodos abstractos con los perfiles detallados
+        if ((node.type === 'agent' || node.type === 'mainPrompt' || node.data?.kind === 'agent') && cardIndex < agentCards.length) {
+          const card = agentCards[cardIndex];
+          cardIndex++;
+          return {
+            ...node,
+            type: 'agent',
+            data: {
+              ...node.data,
+              kind: 'agent',
+              label: card.name,
+              role: card.role,
+              fullDescription: card.description,
+              allTools: card.requiredTools || [],
+              inputPort: card.inputOutputContract?.split('->')[0] || '',
+              outputPort: card.inputOutputContract?.split('->')[1] || ''
+            }
+          };
+        }
+        return node;
+      });
+
+      // Si el motor descubrió más agentes de los que había en el grafo original, los añadimos debajo
       const maxExistingY = flowNodes.reduce((max, node) => Math.max(max, node.position.y), 0);
       const startY = maxExistingY > 0 ? maxExistingY + 250 : 100;
 
-      const newNodes = agentCards.map((card, i) => ({
-        id: card.id,
-        type: 'agent',
-        position: { x: 100 + (i % 3) * 350, y: startY + Math.floor(i / 3) * 200 },
-        data: {
-          label: card.name,
-          role: card.role,
-          fullDescription: card.description,
-          allTools: card.requiredTools || [],
-          inputPort: card.inputOutputContract?.split('->')[0] || '',
-          outputPort: card.inputOutputContract?.split('->')[1] || ''
-        }
-      }));
-      setFlow([...flowNodes, ...newNodes], flowEdges);
+      const newNodes = [];
+      for (let i = cardIndex; i < agentCards.length; i++) {
+        const card = agentCards[i];
+        newNodes.push({
+          id: card.id,
+          type: 'agent',
+          position: { x: 100 + ((i - cardIndex) % 3) * 350, y: startY + Math.floor((i - cardIndex) / 3) * 200 },
+          data: {
+            kind: 'agent',
+            label: card.name,
+            role: card.role,
+            fullDescription: card.description,
+            allTools: card.requiredTools || [],
+            inputPort: card.inputOutputContract?.split('->')[0] || '',
+            outputPort: card.inputOutputContract?.split('->')[1] || ''
+          }
+        });
+      }
+
+      // Reemplazamos los nodos fusionados y añadimos los nuevos
+      setFlow([...updatedNodes, ...newNodes], flowEdges);
       setActiveTab('discovery');
-      addChatMessage({ role: 'agent', content: '✅ CHECKLIST COMPLETADO: Nodos de los AgentCards agregados al Infinity Board manteniendo el flujo anterior.', model: 'aurelios' });
+      addChatMessage({ role: 'agent', content: '✨ FUSIÓN COMPLETADA: Los perfiles sintetizados se han inyectado en el grafo, actualizando los nodos base y preservando sus conexiones.', model: 'aurelios' });
     };
 
     const runMatchAndFusePipeline = async () => {
@@ -1668,26 +1699,55 @@ const ArchitectureBlueprint: React.FC = () => {
       // 1. Restaurar los nodos originales desde el markdown base
       const { nodes: baseNodes, edges: baseEdges } = parseAIResponseToFlow(phase3Content);
       
-      // 2. Conservar los AgentCards y reposicionarlos debajo
+      // 2. Fusionar las tarjetas (AgentCards) con los nodos base
+      let cardIndex = 0;
+      const updatedNodes = baseNodes.map(node => {
+        if ((node.type === 'agent' || node.type === 'mainPrompt' || node.data?.kind === 'agent') && cardIndex < agentCards.length) {
+          const card = agentCards[cardIndex];
+          cardIndex++;
+          return {
+            ...node,
+            type: 'agent',
+            data: {
+              ...node.data,
+              kind: 'agent',
+              label: card.name,
+              role: card.role,
+              fullDescription: card.description,
+              allTools: card.requiredTools || [],
+              inputPort: card.inputOutputContract?.split('->')[0] || '',
+              outputPort: card.inputOutputContract?.split('->')[1] || ''
+            }
+          };
+        }
+        return node;
+      });
+
+      // Si sobran agentCards, se añaden debajo
       const maxExistingY = baseNodes.reduce((max, node) => Math.max(max, node.position.y), 0);
       const startY = maxExistingY > 0 ? maxExistingY + 250 : 100;
 
-      const cardNodes = agentCards.map((card, i) => ({
-        id: card.id,
-        type: 'agent',
-        position: { x: 100 + (i % 3) * 350, y: startY + Math.floor(i / 3) * 200 },
-        data: {
-          label: card.name,
-          role: card.role,
-          fullDescription: card.description,
-          allTools: card.requiredTools || [],
-          inputPort: card.inputOutputContract?.split('->')[0] || '',
-          outputPort: card.inputOutputContract?.split('->')[1] || ''
-        }
-      }));
+      const newNodes = [];
+      for (let i = cardIndex; i < agentCards.length; i++) {
+        const card = agentCards[i];
+        newNodes.push({
+          id: card.id,
+          type: 'agent',
+          position: { x: 100 + ((i - cardIndex) % 3) * 350, y: startY + Math.floor((i - cardIndex) / 3) * 200 },
+          data: {
+            kind: 'agent',
+            label: card.name,
+            role: card.role,
+            fullDescription: card.description,
+            allTools: card.requiredTools || [],
+            inputPort: card.inputOutputContract?.split('->')[0] || '',
+            outputPort: card.inputOutputContract?.split('->')[1] || ''
+          }
+        });
+      }
 
-      // 3. Fusionar el grafo original con las tarjetas
-      setFlow([...baseNodes, ...cardNodes], baseEdges);
+      // 3. Establecer el grafo fusionado
+      setFlow([...updatedNodes, ...newNodes], baseEdges);
     } else {
       console.warn("No base markdown content found to recover.");
     }
