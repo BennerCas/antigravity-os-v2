@@ -34,7 +34,7 @@ export interface ActivityLog {
   id: string;
   source: string;
   message: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'INFO';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'INFO' | 'FREECHAT';
   timestamp: string;
 }
 
@@ -44,6 +44,15 @@ interface StudioState {
   addActivityLog: (log: Omit<ActivityLog, 'id' | 'timestamp'>) => void;
   zone2ActiveTab: 'okr' | 'phase1' | 'phase2' | 'phase3';
   setZone2ActiveTab: (tab: 'okr' | 'phase1' | 'phase2' | 'phase3') => void;
+
+  // FreeChat Mode
+  isFreeChat: boolean;
+  setFreeChat: (val: boolean) => void;
+  freeChatFiles: File[];
+  addFreeChatFiles: (files: File[]) => void;
+  removeFreeChatFile: (index: number) => void;
+  screenStream: MediaStream | null;
+  setScreenStream: (stream: MediaStream | null) => void;
 
   // Chat
   activeTab: TabId;
@@ -217,6 +226,15 @@ export const useStudioStore = create<StudioState>()(
       })),
       zone2ActiveTab: 'okr',
       setZone2ActiveTab: (tab) => set({ zone2ActiveTab: tab }),
+      isFreeChat: false,
+      setFreeChat: (val) => set({ isFreeChat: val }),
+      freeChatFiles: [],
+      addFreeChatFiles: (files) => set((state) => ({ freeChatFiles: [...state.freeChatFiles, ...files] })),
+      removeFreeChatFile: (index) => set((state) => ({
+        freeChatFiles: state.freeChatFiles.filter((_, i) => i !== index)
+      })),
+      screenStream: null,
+      setScreenStream: (stream) => set({ screenStream: stream }),
       isSynthesizing: false,
       setIsSynthesizing: (val) => set({ isSynthesizing: val }),
       synthStartTime: null,

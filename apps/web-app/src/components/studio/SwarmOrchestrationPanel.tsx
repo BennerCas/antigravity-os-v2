@@ -2,16 +2,16 @@ import { useTTSStore } from '../../lib/ttsStore';
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useStudioStore } from '../../stores/useStudioStore';
-import { CheckCircle, XCircle, Clock, Info, ListChecks, Target, Brain, Robot, SpeakerHigh, Trash, CheckSquare, Square, Lightning, Crosshair, RocketLaunch, Checks, TrendUp, PaintBrush } from '@phosphor-icons/react';
+import { CheckCircle, XCircle, Clock, Info, ListChecks, Target, Brain, Robot, SpeakerHigh, Trash, CheckSquare, Square, Lightning, Crosshair, RocketLaunch, Checks, TrendUp, PaintBrush, Database, Globe, TerminalWindow, File, UploadSimple, CodeBlock, HardDrives, Scan, Network, AppWindow } from '@phosphor-icons/react';
 import { WS_STUDIO_ACTIVITY_URL } from '../../lib/api';
 
-export const SwarmOrchestrationPanel: React.FC = () => {
+const SwarmOrchestrationPanel: React.FC = () => {
   const {
     activityLogs, addActivityLog,
     zone2ActiveTab, setZone2ActiveTab,
     phase1Interview,
     phase1Complete, phase2Complete, phase3Complete,
-    phase2Content, phase3Content, triageSummary
+    phase2Content, phase3Content, triageSummary, isFreeChat
   } = useStudioStore();
 
   const [isSpeaking, setIsSpeaking] = React.useState(false);
@@ -189,6 +189,7 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
       case 'APPROVED': return <CheckCircle size={16} className="text-emerald-400" />;
       case 'REJECTED': return <XCircle size={16} className="text-red-400" />;
       case 'PENDING': return <Clock size={16} className="text-amber-400" />;
+      case 'FREECHAT': return <Brain size={16} weight="duotone" className="text-cyan-400" />;
       default: return <Info size={16} className="text-blue-400" />;
     }
   };
@@ -199,33 +200,36 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
     <div className="w-full h-full flex bg-[var(--surface-canvas)] text-[var(--text-primary)]">
       
       {/* ZONE 1: Activity Log */}
-      <div className="flex-1 min-w-0 h-full border-r border-[var(--stroke-subtle)] flex flex-col bg-[var(--surface-canvas)]">
-        <div className="flex items-center h-16 px-4 border-b border-[var(--stroke-subtle)] shrink-0">
-          <h3 className="text-xs font-bold text-zinc-400 tracking-widest uppercase flex items-center gap-2">
-            <Robot size={16} weight="duotone" className="text-cyan-400" /> Activity Log
-          </h3>
-        </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 font-mono text-[11px]">
-          {activityLogs.map(log => (
-            <div key={log.id} className="flex flex-col gap-1 pb-3 border-b border-[var(--stroke-subtle)]/50">
-              <div className="flex items-center justify-between text-zinc-500">
-                <span className="font-bold text-[var(--text-primary)]">[{log.source}]</span>
-                <span>{new Date(log.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</span>
+      {!isFreeChat && (
+        <div className="flex-1 min-w-0 h-full border-r border-[var(--stroke-subtle)] flex flex-col bg-[var(--surface-canvas)]">
+          <div className="flex items-center h-16 px-4 border-b border-[var(--stroke-subtle)] shrink-0">
+            <h3 className="text-xs font-bold text-zinc-400 tracking-widest uppercase flex items-center gap-2">
+              <Robot size={16} weight="duotone" className="text-cyan-400" /> Activity Log
+            </h3>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 font-mono text-[11px]">
+            {activityLogs.map(log => (
+              <div key={log.id} className="flex flex-col gap-1 pb-3 border-b border-[var(--stroke-subtle)]/50">
+                <div className="flex items-center justify-between text-zinc-500">
+                  <span className="font-bold text-[var(--text-primary)]">[{log.source}]</span>
+                  <span>{new Date(log.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="mt-0.5 shrink-0">{getStatusIcon(log.status)}</div>
+                  <span className={`leading-relaxed text-[var(--text-primary)]`}>{log.message}</span>
+                </div>
               </div>
-              <div className="flex items-start gap-2">
-                <div className="mt-0.5 shrink-0">{getStatusIcon(log.status)}</div>
-                <span className="leading-relaxed text-[var(--text-primary)]">{log.message}</span>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ZONE 2: Results Panel */}
-      <div className="flex-[2] min-w-0 h-full flex flex-col bg-[var(--surface-canvas)]">
-        
-        {/* Sandwich Menu */}
-        <div className="flex items-center h-16 px-4 gap-2 border-b border-[var(--stroke-subtle)] shrink-0 bg-[var(--surface-canvas)]">
+      <div className={`${isFreeChat ? 'flex-1' : 'flex-[2]'} min-w-0 h-full flex flex-col bg-[var(--surface-canvas)]`}>
+        {isFreeChat ? null : (
+          <>
+            {/* Sandwich Menu */}
+            <div className="flex items-center h-16 px-4 gap-2 border-b border-[var(--stroke-subtle)] shrink-0 bg-[var(--surface-canvas)]">
           <button 
             onClick={() => setZone2ActiveTab('okr')}
             className={`px-4 py-2 rounded text-xs font-bold flex items-center gap-2 transition-all ${zone2ActiveTab === 'okr' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30' : 'text-zinc-500 hover:text-[var(--text-primary)]'}`}
@@ -804,6 +808,8 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
           </div>
 
         </div>
+          </>
+        )}
       </div>
       
       <style dangerouslySetInnerHTML={{__html: `
@@ -828,4 +834,9 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
     </div>
   );
 };
+
+
+
+
+export { SwarmOrchestrationPanel };
 

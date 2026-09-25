@@ -7,7 +7,7 @@ import { studioNodeTypes, KIND_META } from '../components/StudioNodes';
 import { SwarmOrchestrationPanel } from '../components/studio/SwarmOrchestrationPanel';
 import { useStudioStore, TabId, parseAIResponseToFlow } from '../stores/useStudioStore';
 import { API_URL, WS_STUDIO_ACTIVITY_URL } from '../lib/api';
-import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock, Stop, Microphone } from '@phosphor-icons/react';
+import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock, Stop, Microphone, Database, Globe, TerminalWindow, FileText, CodeBlock, Scan, AppWindow, File } from '@phosphor-icons/react';
 
 
 const AURELIOS_THEMES: Record<string, any> = {
@@ -15,7 +15,7 @@ const AURELIOS_THEMES: Record<string, any> = {
     name: 'Obsidian Emperor', bg: 'bg-zinc-950', text: 'text-white', border: 'border-zinc-800',
     panelBg: 'bg-zinc-900', panelBorder: 'border-zinc-700', primary: 'text-cyan-400',
     toolBg: 'bg-zinc-800', toolHover: 'hover:border-zinc-500', aiBubble: 'bg-zinc-900 border-zinc-700 text-zinc-100',
-    humanBubble: 'bg-cyan-600 text-white', inputBg: 'bg-zinc-900 border-zinc-700', inputFocus: 'focus:border-cyan-400',
+    humanBubble: 'bg-green-500/10 border border-green-500/30 text-green-400', inputBg: 'bg-zinc-900 border-zinc-700', inputFocus: 'focus:border-cyan-400',
     sendActive: 'bg-cyan-400 text-black hover:bg-cyan-300', sendDisabled: 'bg-zinc-800 text-zinc-600'
   },
   marble: {
@@ -97,8 +97,99 @@ const AURELIOS_THEMES: Record<string, any> = {
   }
 };
 
+const FreeChatCapabilitiesGrid = () => {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const { freeChatFiles, addFreeChatFiles, screenStream, setScreenStream } = useStudioStore();
+
+  React.useEffect(() => {
+    if (videoRef.current && screenStream) {
+      videoRef.current.srcObject = screenStream;
+    }
+  }, [screenStream]);
+
+  const toggleScreenShare = async () => {
+    if (screenStream) {
+      screenStream.getTracks().forEach(track => track.stop());
+      setScreenStream(null);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+        setScreenStream(stream);
+        stream.getVideoTracks()[0].onended = () => { setScreenStream(null); };
+      } catch (err) { console.error("Error sharing screen", err); }
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      addFreeChatFiles(Array.from(e.target.files));
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  return (
+    <div className="grid grid-cols-2 gap-2 mt-4 px-4 pb-2 w-full animate-in fade-in slide-in-from-top-2 duration-300">
+      <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} accept=".txt,.pdf,.md,.csv,.json" />
+      
+      <div onClick={() => fileInputRef.current?.click()} className="bg-black/40 border border-white/5 rounded-xl p-2.5 hover:border-green-500/50 transition-colors cursor-pointer group flex flex-col justify-center">
+        <h4 className="font-bold text-[11px] text-gray-300 flex items-center gap-1.5 mb-0.5 group-hover:text-green-400"><Database size={14}/> Ingesta Archivos</h4>
+        <p className="text-[9px] text-gray-500 leading-tight">Sube PDFs, TXTs, MDs.</p>
+        {freeChatFiles.length > 0 && <p className="text-[9px] text-green-400 mt-0.5">{freeChatFiles.length} listos</p>}
+      </div>
+      
+      <div className="bg-black/40 border border-white/5 rounded-xl p-2.5 hover:border-green-500/50 transition-colors cursor-pointer group flex flex-col justify-center">
+        <h4 className="font-bold text-[11px] text-gray-300 flex items-center gap-1.5 mb-0.5 group-hover:text-green-400"><Globe size={14}/> Búsqueda Web</h4>
+        <p className="text-[9px] text-gray-500 leading-tight">Info real en internet.</p>
+      </div>
+      
+      <div onClick={toggleScreenShare} className={`bg-black/40 border ${screenStream ? 'border-cyan-500' : 'border-white/5'} rounded-xl p-2.5 hover:border-cyan-500/50 transition-colors cursor-pointer group flex flex-col justify-center`}>
+        <h4 className={`font-bold text-[11px] flex items-center gap-1.5 mb-0.5 ${screenStream ? 'text-cyan-400' : 'text-gray-300 group-hover:text-cyan-400'}`}>
+          <TerminalWindow size={14}/> {screenStream ? 'Pantalla Activa' : 'Compartir Pantalla'}
+        </h4>
+        <p className="text-[9px] text-gray-500 leading-tight">Transmite pantalla.</p>
+      </div>
+
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-2.5 flex flex-col justify-center cursor-not-allowed">
+        <h4 className="font-bold text-[11px] text-gray-400 flex items-center gap-1.5 mb-0.5"><TerminalWindow size={14}/> Terminal</h4>
+        <p className="text-[9px] text-gray-500 leading-tight">Acceso CLI.</p>
+      </div>
+
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-2.5 flex flex-col justify-center cursor-not-allowed">
+        <h4 className="font-bold text-[11px] text-gray-400 flex items-center gap-1.5 mb-0.5"><PaintBrush size={14}/> UI Previews</h4>
+        <p className="text-[9px] text-gray-500 leading-tight">Render UI en vivo.</p>
+      </div>
+
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-2.5 flex flex-col justify-center cursor-not-allowed">
+        <h4 className="font-bold text-[11px] text-gray-400 flex items-center gap-1.5 mb-0.5"><HardDrives size={14}/> Memoria</h4>
+        <p className="text-[9px] text-gray-500 leading-tight">Contexto RAG.</p>
+      </div>
+
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-2.5 flex flex-col justify-center cursor-not-allowed">
+        <h4 className="font-bold text-[11px] text-gray-400 flex items-center gap-1.5 mb-0.5"><Scan size={14}/> Web Crawler</h4>
+        <p className="text-[9px] text-gray-500 leading-tight">Scraping profundo.</p>
+      </div>
+
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-2.5 flex flex-col justify-center cursor-not-allowed">
+        <h4 className="font-bold text-[11px] text-gray-400 flex items-center gap-1.5 mb-0.5"><CodeBlock size={14}/> Sandbox</h4>
+        <p className="text-[9px] text-gray-500 leading-tight">Ejecución aislada.</p>
+      </div>
+
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-2.5 flex flex-col justify-center cursor-not-allowed">
+        <h4 className="font-bold text-[11px] text-gray-400 flex items-center gap-1.5 mb-0.5"><AppWindow size={14}/> Computer Use</h4>
+        <p className="text-[9px] text-gray-500 leading-tight">Control de GUI.</p>
+      </div>
+      
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-2.5 flex flex-col justify-center cursor-not-allowed">
+        <h4 className="font-bold text-[11px] text-gray-400 flex items-center gap-1.5 mb-0.5"><Network size={14}/> Enjambres</h4>
+        <p className="text-[9px] text-gray-500 leading-tight">Agentes paralelos.</p>
+      </div>
+    </div>
+  );
+};
+
 const FlowArchitect: React.FC = () => {
-    const { chatMessages, addChatMessage, setFlow, setAgentCards, setBlueprintMd, setTriggerChatSend, activityLogs, quantumPhase, setQuantumPhase } = useStudioStore();
+    const { chatMessages, addChatMessage, addActivityLog, setFlow, setAgentCards, setBlueprintMd, setTriggerChatSend, activityLogs, quantumPhase, setQuantumPhase, isFreeChat, setFreeChat } = useStudioStore();
       const [input, setInput] = useState('');
     const [isListening, setIsListening] = useState(false);
     const recognitionRef = useRef<any>(null);
@@ -245,6 +336,57 @@ const FlowArchitect: React.FC = () => {
     
     setThinkingPhrase(THINKING_PHRASES[Math.floor(Math.random() * THINKING_PHRASES.length)]);
     setIsTyping(true);
+
+    if (isFreeChat) {
+      addActivityLog({ source: 'AureliOS FreeChat', message: 'Enviando prompt e ingestando archivos al Modo Libre...', status: 'FREECHAT' });
+      
+      const doFreeChat = async () => {
+        try {
+          const { freeChatFiles } = useStudioStore.getState();
+          let finalPrompt = textToSend;
+          
+          if (freeChatFiles && freeChatFiles.length > 0) {
+            addActivityLog({ source: 'AureliOS FreeChat', message: `Procesando ${freeChatFiles.length} archivo(s)...`, status: 'FREECHAT' });
+            let fileContents = "";
+            for (const file of freeChatFiles) {
+              const text = await file.text();
+              fileContents += `\n\n--- Archivo: ${file.name} ---\n${text}\n---------------------------\n`;
+            }
+            finalPrompt += `\n\n[El usuario ha adjuntado los siguientes archivos para tu contexto]\n${fileContents}`;
+            useStudioStore.setState({ freeChatFiles: [] }); // Clear after sending
+          }
+
+          const payload = {
+            messages: chatMessages.concat({ role: 'human', content: finalPrompt, id: crypto.randomUUID() })
+          };
+
+          const res = await fetch(`${API_URL}/studio/freechat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          
+          const data = await res.json();
+          let responseText = data.response?.content || "No se pudo leer la respuesta del agente.";
+          
+          addChatMessage({ role: 'agent', content: responseText, model: 'AureliOS (Libre)' });
+          addActivityLog({ source: 'AureliOS FreeChat', message: 'Respuesta completada.', status: 'FREECHAT' });
+          speak(responseText);
+
+        } catch (err: any) {
+          addChatMessage({ role: 'agent', content: `[ERROR] Falló la conexión: ${err.message}`, model: 'AureliOS (Libre)' });
+          addActivityLog({ source: 'AureliOS FreeChat', message: `Error: ${err.message}`, status: 'FREECHAT' });
+        } finally {
+          isHandlingSendRef.current = false;
+          setIsTyping(false);
+        }
+      };
+      
+      doFreeChat();
+      return;
+    }
 
     abortControllerRef.current = new AbortController();
     const signal = abortControllerRef.current.signal;
@@ -476,30 +618,36 @@ const FlowArchitect: React.FC = () => {
             <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M21.5,13.5C21.5,12.12 20.38,11 19,11C18.67,11 18.36,11.07 18.07,11.18L16,8H17C18.1,8 19,7.1 19,6C19,4.9 18.1,4 17,4H14V5C14,6.1 13.1,7 12,7C10.9,7 10,6.1 10,5V4H7C5.9,4 5,4.9 5,6C5,7.1 5.9,8 7,8H8L5.93,11.18C5.64,11.07 5.33,11 5,11C3.62,11 2.5,12.12 2.5,13.5C2.5,14.88 3.62,16 5,16H7.13L8.54,19.31C8.28,19.68 8.12,20.12 8.12,20.6C8.12,21.93 9.19,23 10.52,23C11.6,23 12.52,22.28 12.82,21.28L15.46,19.31C15.87,19.74 16.45,20 17.1,20C18.35,20 19.37,19.04 19.49,17.8L21.5,13.5Z" /></svg>
           </button>
         </div>
+        </div>
       </div>
 
-      <div className={`px-4 pt-4 pb-2 shrink-0 flex flex-col transition-all duration-300 overflow-hidden ${showSwarmSlider ? 'h-[270px] opacity-100' : 'h-0 opacity-0 !pb-0'}`}>
-        {/* Fixed AI Tools Header */}
-        <div className="flex flex-col items-center gap-2 mb-4 relative z-10">
+      {/* Model Pill (Always visible) */}
+      <div className="flex flex-col items-center gap-2 mb-2 relative z-10 px-4 pt-4 shrink-0">
+        {!isFreeChat && (
           <div className="flex gap-2 items-center mx-auto">
             <button onClick={() => document.getElementById("agent-carousel")?.scrollTo({ left: 0, behavior: "smooth" })} className={`w-2 h-2 rounded-full transition-colors duration-300 ${carouselSlide === 0 ? t.primary : "bg-gray-500 opacity-40"}`} />
             <button onClick={() => document.getElementById("agent-carousel")?.scrollTo({ left: window.innerWidth, behavior: "smooth" })} className={`w-2 h-2 rounded-full transition-colors duration-300 ${carouselSlide === 1 ? t.primary : "bg-gray-500 opacity-40"}`} />
           </div>
-          
-          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/30 border border-white/5 shadow-inner text-[11px] font-mono tracking-widest text-emerald-400/90 font-semibold backdrop-blur-sm">
-            <Brain size={14} className="text-emerald-400" weight="duotone" />
-            <span>{selectedModel.startsWith('ollama/') ? `LOCAL | ${selectedModel.replace('ollama/', '')}` : `NUBE | ${selectedModel}`}</span>
-            {activeAgentName && (
-              <>
-                <span className="text-emerald-400/50">|</span>
-                <span className="text-cyan-400 flex items-center gap-1.5 animate-pulse">
-                  <Robot size={12} weight="duotone" /> {activeAgentName}
-                </span>
-              </>
-            )}
-          </div>
+        )}
+        
+        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/30 border border-white/5 shadow-inner text-[11px] font-mono tracking-widest text-emerald-400/90 font-semibold backdrop-blur-sm">
+          <Brain size={14} className="text-emerald-400" weight="duotone" />
+          <span>{selectedModel.startsWith('ollama/') ? `LOCAL | ${selectedModel.replace('ollama/', '')}` : `NUBE | ${selectedModel}`}</span>
+          {activeAgentName && !isFreeChat && (
+            <>
+              <span className="text-emerald-400/50">|</span>
+              <span className="text-cyan-400 flex items-center gap-1.5 animate-pulse">
+                <Robot size={12} weight="duotone" /> {activeAgentName}
+              </span>
+            </>
+          )}
         </div>
+      </div>
 
+      <div className={`shrink-0 flex flex-col transition-all duration-300 overflow-hidden ${showSwarmSlider ? (isFreeChat ? 'h-[360px] opacity-100' : 'h-[240px] opacity-100') : 'h-0 opacity-0 !pb-0'}`}>
+        {isFreeChat ? (
+            <FreeChatCapabilitiesGrid />
+          ) : (
         <div 
           id="agent-carousel"
           className="flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory gap-4 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
@@ -628,6 +776,7 @@ const FlowArchitect: React.FC = () => {
             </div>
           </div>
         </div>
+        )}
       </div>
 
       {/* Chat History / Invisible Scroll */}
@@ -639,13 +788,17 @@ const FlowArchitect: React.FC = () => {
         ) : (
           chatMessages.map(msg => (
             <div key={msg.id} className={`flex flex-col max-w-[90%] min-w-0 ${msg.role === 'human' ? 'ml-auto' : 'mr-auto'}`}>
-              <div className={`p-3 text-[14px] leading-relaxed border break-words ${
-                msg.role === 'human' ? `${t.humanBubble} border-transparent rounded-xl rounded-tr-sm font-medium` : `${t.aiBubble} rounded-xl rounded-tl-sm shadow-sm`
+              <div className={`p-3 text-[14px] leading-relaxed break-words ${
+                msg.role === 'human' ? `${t.humanBubble} rounded-xl rounded-tr-sm font-medium` : `${t.aiBubble} border rounded-xl rounded-tl-sm shadow-sm`
               } transition-colors duration-500`}>
-                <div className={`markdown-body max-w-none break-words ${msg.role === 'agent' ? t.text : 'text-inherit'}`}>
-                  <ReactMarkdown>
-                    {msg.content}
-                  </ReactMarkdown>
+                <div className={msg.role === 'agent' ? `markdown-body max-w-none break-words ${t.text}` : 'whitespace-pre-wrap'}>
+                  {msg.role === 'agent' ? (
+                    <ReactMarkdown>
+                      {msg.content}
+                    </ReactMarkdown>
+                  ) : (
+                    msg.content
+                  )}
                 </div>
               </div>
               {msg.role === 'human' && (
@@ -708,8 +861,19 @@ const FlowArchitect: React.FC = () => {
             >
               <span className="text-sm font-bold uppercase tracking-wider">Detener</span>
             </button>
-                      ) : (
-              <>
+          ) : (
+            <>
+              <button
+                onClick={() => { setFreeChat(!isFreeChat) }}
+                  className={`p-3 rounded-xl transition-all shadow-md flex items-center justify-center shrink-0 hover:scale-105 border ${
+                    isFreeChat 
+                      ? 'bg-green-500 text-white border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.6)]' 
+                      : 'bg-cyan-500 text-white border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.6)]'
+                  }`}
+                  title={isFreeChat ? "Modo FreeChat Activo" : "Modo Orquestación Activo"}
+                >
+                  <Brain weight="fill" size={22} />
+                </button>
                 <button
                   onClick={toggleListen}
                   className={`p-3 rounded-xl transition-all shadow-md flex items-center justify-center shrink-0 ${
@@ -1375,8 +1539,10 @@ const THINKING_PHRASES = [
   'Consultando oráculos...'
 ];
 
+
+
 export default function AgentOSStudio() {
-  const { isSynthesizing, setPipelineProgress } = useStudioStore();
+  const { isSynthesizing, setPipelineProgress, isFreeChat } = useStudioStore();
 
   React.useEffect(() => {
     if (!isSynthesizing) return;
@@ -1411,10 +1577,22 @@ export default function AgentOSStudio() {
       </div>
 
       {/* Columna 2 — 70% — Swarm Orchestration */}
-      <div style={{ width: '70%', height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0, position: 'relative' }}>
-        <SwarmOrchestrationPanel />
+      <div style={{ width: '70%', height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0, position: 'relative', padding: isFreeChat ? '0.5cm' : '0' }}>
+        {isFreeChat ? null : <SwarmOrchestrationPanel />}
       </div>
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
 

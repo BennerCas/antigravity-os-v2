@@ -65,6 +65,20 @@ async def startup_event():
 def read_root():
     return {"message": "Welcome to Antigravity_OS Backend", "version": "0.2.0"}
 
+from pydantic import BaseModel
+from typing import List, Dict, Any, Optional
+
+class FreeChatRequest(BaseModel):
+    messages: List[Dict[str, Any]]
+    files: Optional[List[Dict[str, Any]]] = None
+
+@app.post("/studio/freechat")
+async def freechat_endpoint(request: FreeChatRequest):
+    from services.freechat_pipeline import FreechatPipeline
+    pipeline = FreechatPipeline()
+    result = pipeline.process_chat(request.messages)
+    return result
+
 
 if __name__ == "__main__":
     import uvicorn
