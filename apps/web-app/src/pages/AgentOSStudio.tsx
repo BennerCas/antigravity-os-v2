@@ -132,102 +132,102 @@ const FreeChatCapabilitiesGrid = () => {
     <div className="grid grid-cols-4 gap-1.5 mt-4 px-2 pb-2 w-full animate-in fade-in slide-in-from-top-2 duration-300">
       <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} accept=".txt,.pdf,.md,.csv,.json" />
       
-      <div onClick={() => fileInputRef.current?.click()} className="bg-black/40 border border-white/5 rounded-none pl-[0.5cm] py-1.5 pr-1.5 hover:border-green-500/50 transition-colors cursor-pointer group flex items-center gap-2">
-        <Database size={24} className="text-gray-400 group-hover:text-green-400 shrink-0"/>
+      <div onClick={() => fileInputRef.current?.click()} className="bg-black/40 border border-white/5 rounded-none pl-[0.5cm] py-3 pr-2 hover:border-green-500/50 transition-colors cursor-pointer group flex items-center gap-3">
+        <Database size={32} className="text-gray-400 group-hover:text-green-400 shrink-0"/>
         <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[11px] text-gray-300 group-hover:text-green-400 leading-tight">Ingesta</h4>
-          <p className="text-[9px] text-gray-500 leading-tight">Docs locales</p>
-          {freeChatFiles.length > 0 && <p className="text-[9px] text-green-400 mt-0.5 leading-tight">{freeChatFiles.length} listos</p>}
+          <h4 className="font-bold text-[13px] text-gray-300 group-hover:text-green-400 leading-tight">Ingesta</h4>
+          <p className="text-[11px] text-gray-500 leading-tight">Docs locales</p>
+          {freeChatFiles.length > 0 && <p className="text-[11px] text-green-400 mt-0.5 leading-tight">{freeChatFiles.length} listos</p>}
         </div>
       </div>
       
-      <div className="bg-black/40 border border-white/5 rounded-none pl-[0.5cm] py-1.5 pr-1.5 hover:border-green-500/50 transition-colors cursor-pointer group flex items-center gap-2">
-        <Globe size={24} className="text-gray-400 group-hover:text-green-400 shrink-0"/>
+      <div className="bg-black/40 border border-white/5 rounded-none pl-[0.5cm] py-3 pr-2 hover:border-green-500/50 transition-colors cursor-pointer group flex items-center gap-3">
+        <Globe size={32} className="text-gray-400 group-hover:text-green-400 shrink-0"/>
         <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[11px] text-gray-300 group-hover:text-green-400 leading-tight">Web</h4>
-          <p className="text-[9px] text-gray-500 leading-tight">Internet real</p>
+          <h4 className="font-bold text-[13px] text-gray-300 group-hover:text-green-400 leading-tight">Web</h4>
+          <p className="text-[11px] text-gray-500 leading-tight">Internet real</p>
         </div>
       </div>
       
-      <div onClick={toggleScreenShare} className={`bg-black/40 border ${screenStream ? 'border-cyan-500' : 'border-white/5'} rounded-none pl-[0.5cm] py-1.5 pr-1.5 hover:border-cyan-500/50 transition-colors cursor-pointer group flex items-center gap-2`}>
-        <TerminalWindow size={24} className={`${screenStream ? 'text-cyan-400' : 'text-gray-400 group-hover:text-cyan-400'} shrink-0`}/>
+      <div onClick={toggleScreenShare} className={`bg-black/40 border ${screenStream ? 'border-cyan-500' : 'border-white/5'} rounded-none pl-[0.5cm] py-3 pr-2 hover:border-cyan-500/50 transition-colors cursor-pointer group flex items-center gap-3`}>
+        <TerminalWindow size={32} className={`${screenStream ? 'text-cyan-400' : 'text-gray-400 group-hover:text-cyan-400'} shrink-0`}/>
         <div className="flex flex-col justify-center">
-          <h4 className={`font-bold text-[11px] leading-tight ${screenStream ? 'text-cyan-400' : 'text-gray-300 group-hover:text-cyan-400'}`}>
+          <h4 className={`font-bold text-[13px] leading-tight ${screenStream ? 'text-cyan-400' : 'text-gray-300 group-hover:text-cyan-400'}`}>
             {screenStream ? 'Activa' : 'Pantalla'}
           </h4>
-          <p className="text-[9px] text-gray-500 leading-tight">Transmite PC</p>
+          <p className="text-[11px] text-gray-500 leading-tight">Transmite PC</p>
         </div>
       </div>
 
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-1.5 pr-1.5 flex items-center gap-2 cursor-not-allowed">
-        <MaskHappy size={24} className="text-gray-400 shrink-0"/>
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
+        <MaskHappy size={32} className="text-gray-400 shrink-0"/>
         <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[11px] text-gray-400 leading-tight">RolPlay</h4>
-          <p className="text-[9px] text-gray-500 leading-tight">Personajes</p>
+          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">RolPlay</h4>
+          <p className="text-[11px] text-gray-500 leading-tight">Personajes</p>
         </div>
       </div>
 
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-1.5 pr-1.5 flex items-center gap-2 cursor-not-allowed">
-        <Chats size={24} className="text-gray-400 shrink-0"/>
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
+        <Chats size={32} className="text-gray-400 shrink-0"/>
         <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[11px] text-gray-400 leading-tight">Talk</h4>
-          <p className="text-[9px] text-gray-500 leading-tight">Voz fluida</p>
+          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Talk</h4>
+          <p className="text-[11px] text-gray-500 leading-tight">Voz fluida</p>
         </div>
       </div>
 
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-1.5 pr-1.5 flex items-center gap-2 cursor-not-allowed">
-        <TerminalWindow size={24} className="text-gray-400 shrink-0"/>
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
+        <TerminalWindow size={32} className="text-gray-400 shrink-0"/>
         <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[11px] text-gray-400 leading-tight">CLI</h4>
-          <p className="text-[9px] text-gray-500 leading-tight">Terminal</p>
+          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">CLI</h4>
+          <p className="text-[11px] text-gray-500 leading-tight">Terminal</p>
         </div>
       </div>
 
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-1.5 pr-1.5 flex items-center gap-2 cursor-not-allowed">
-        <PaintBrush size={24} className="text-gray-400 shrink-0"/>
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
+        <PaintBrush size={32} className="text-gray-400 shrink-0"/>
         <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[11px] text-gray-400 leading-tight">UI</h4>
-          <p className="text-[9px] text-gray-500 leading-tight">Render vivo</p>
+          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">UI</h4>
+          <p className="text-[11px] text-gray-500 leading-tight">Render vivo</p>
         </div>
       </div>
 
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-1.5 pr-1.5 flex items-center gap-2 cursor-not-allowed">
-        <HardDrives size={24} className="text-gray-400 shrink-0"/>
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
+        <HardDrives size={32} className="text-gray-400 shrink-0"/>
         <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[11px] text-gray-400 leading-tight">RAG</h4>
-          <p className="text-[9px] text-gray-500 leading-tight">Memoria</p>
+          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">RAG</h4>
+          <p className="text-[11px] text-gray-500 leading-tight">Memoria</p>
         </div>
       </div>
 
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-1.5 pr-1.5 flex items-center gap-2 cursor-not-allowed">
-        <Scan size={24} className="text-gray-400 shrink-0"/>
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
+        <Scan size={32} className="text-gray-400 shrink-0"/>
         <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[11px] text-gray-400 leading-tight">Crawler</h4>
-          <p className="text-[9px] text-gray-500 leading-tight">Scraping</p>
+          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Crawler</h4>
+          <p className="text-[11px] text-gray-500 leading-tight">Scraping</p>
         </div>
       </div>
 
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-1.5 pr-1.5 flex items-center gap-2 cursor-not-allowed">
-        <CodeBlock size={24} className="text-gray-400 shrink-0"/>
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
+        <CodeBlock size={32} className="text-gray-400 shrink-0"/>
         <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[11px] text-gray-400 leading-tight">Sandbox</h4>
-          <p className="text-[9px] text-gray-500 leading-tight">Aislado</p>
+          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Sandbox</h4>
+          <p className="text-[11px] text-gray-500 leading-tight">Aislado</p>
         </div>
       </div>
 
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-1.5 pr-1.5 flex items-center gap-2 cursor-not-allowed">
-        <AppWindow size={24} className="text-gray-400 shrink-0"/>
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
+        <AppWindow size={32} className="text-gray-400 shrink-0"/>
         <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[11px] text-gray-400 leading-tight">Control</h4>
-          <p className="text-[9px] text-gray-500 leading-tight">Computer</p>
+          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Control</h4>
+          <p className="text-[11px] text-gray-500 leading-tight">Computer</p>
         </div>
       </div>
       
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-1.5 pr-1.5 flex items-center gap-2 cursor-not-allowed">
-        <Network size={24} className="text-gray-400 shrink-0"/>
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
+        <Network size={32} className="text-gray-400 shrink-0"/>
         <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[11px] text-gray-400 leading-tight">Enjambre</h4>
-          <p className="text-[9px] text-gray-500 leading-tight">Paralelo</p>
+          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Enjambre</h4>
+          <p className="text-[11px] text-gray-500 leading-tight">Paralelo</p>
         </div>
       </div>
     </div>
