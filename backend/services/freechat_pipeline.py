@@ -19,22 +19,41 @@ class FreechatPipeline:
         )
         self.tools = [web_search, process_document]
 
-    def process_chat(self, messages: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def process_chat(self, messages: List[Dict[str, Any]], files: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
         """
         messages: Lista de mensajes estilo OpenAI: [{"role": "user", "content": "..."}]
+        files: Lista de diccionarios {"name": "...", "mime_type": "...", "data": "base64_string"}
         """
+        import base64
+        
         contents = []
-        for msg in messages:
+        for i, msg in enumerate(messages):
             role = msg.get("role", "user")
-            # En Gemini: "user" -> "user", "assistant" -> "model"
             gemini_role = "user" if role == "user" else "model"
             content = msg.get("content", "")
             
-            # En un entorno real se procesarían también las imágenes adjuntas.
+            parts = []
+            
+            # Si es el último mensaje del usuario y hay archivos, los adjuntamos a este mensaje
+            if i == len(messages) - 1 and gemini_role == "user" and files:
+                for f in files:
+                    try:
+                        mime_type = f.get("mime_type", "application/octet-stream")
+                        if not mime_type: # Some browsers send empty mime types for unknown files
+                           mime_type = "application/octet-stream"
+                        file_data = base64.b64decode(f["data"])
+                        parts.append(
+                            types.Part.from_bytes(data=file_data, mime_type=mime_type)
+                        )
+                    except Exception as e:
+                        logger.error(f"Error procesando archivo {f.get('name')}: {e}")
+            
+            parts.append(types.Part.from_text(text=content))
+            
             contents.append(
                 types.Content(
                     role=gemini_role,
-                    parts=[types.Part.from_text(text=content)]
+                    parts=parts
                 )
             )
 

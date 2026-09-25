@@ -345,19 +345,29 @@ const FlowArchitect: React.FC = () => {
           const { freeChatFiles } = useStudioStore.getState();
           let finalPrompt = textToSend;
           
+          let uploadedFiles = [];
+          
           if (freeChatFiles && freeChatFiles.length > 0) {
             addActivityLog({ source: 'AureliOS FreeChat', message: `Procesando ${freeChatFiles.length} archivo(s)...`, status: 'FREECHAT' });
-            let fileContents = "";
+            
             for (const file of freeChatFiles) {
-              const text = await file.text();
-              fileContents += `\n\n--- Archivo: ${file.name} ---\n${text}\n---------------------------\n`;
+              const buffer = await file.arrayBuffer();
+              const base64Str = btoa(
+                new Uint8Array(buffer)
+                  .reduce((data, byte) => data + String.fromCharCode(byte), '')
+              );
+              uploadedFiles.push({
+                name: file.name,
+                mime_type: file.type || 'application/octet-stream',
+                data: base64Str
+              });
             }
-            finalPrompt += `\n\n[El usuario ha adjuntado los siguientes archivos para tu contexto]\n${fileContents}`;
-            useStudioStore.setState({ freeChatFiles: [] }); // Clear after sending
+            useStudioStore.setState({ freeChatFiles: [] });
           }
 
           const payload = {
-            messages: chatMessages.concat({ role: 'human', content: finalPrompt, id: crypto.randomUUID() })
+            messages: chatMessages.concat({ role: 'human', content: finalPrompt, id: crypto.randomUUID() }),
+            files: uploadedFiles.length > 0 ? uploadedFiles : undefined
           };
 
           const res = await fetch(`${API_URL}/studio/freechat`, {

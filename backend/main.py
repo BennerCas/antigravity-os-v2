@@ -76,7 +76,7 @@ class FreeChatRequest(BaseModel):
 async def freechat_endpoint(request: FreeChatRequest):
     from services.freechat_pipeline import FreechatPipeline
     pipeline = FreechatPipeline()
-    result = pipeline.process_chat(request.messages)
+    result = pipeline.process_chat(request.messages, files=request.files)
     return result
 
 
