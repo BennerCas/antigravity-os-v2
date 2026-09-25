@@ -157,6 +157,11 @@ After completing your <thinking> phase, output ONLY a valid JSON ARRAY containin
                     final_text = final_text[:-3]
                 final_text = final_text.strip()
 
+                import re
+                json_match = re.search(r'\[[\s\S]*\]|\{[\s\S]*\}', final_text)
+                if json_match:
+                    final_text = json_match.group(0)
+
                 parsed = json.loads(final_text)
                 if isinstance(parsed, dict):
                     if "agent_profile" in parsed:

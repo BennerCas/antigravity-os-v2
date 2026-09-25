@@ -6,8 +6,9 @@ import '@xyflow/react/dist/style.css';
 import { studioNodeTypes, KIND_META } from '../components/StudioNodes';
 import { SwarmOrchestrationPanel } from '../components/studio/SwarmOrchestrationPanel';
 import { useStudioStore, TabId, parseAIResponseToFlow } from '../stores/useStudioStore';
+import { useHistoryStore } from '../stores/useHistoryStore';
 import { API_URL, WS_STUDIO_ACTIVITY_URL } from '../lib/api';
-import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock, Stop, Microphone, Database, Globe, TerminalWindow, FileText, CodeBlock, Scan, AppWindow, File, MaskHappy, Chats } from '@phosphor-icons/react';
+import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock, Stop, Microphone, Database, Globe, TerminalWindow, FileText, CodeBlock, Scan, AppWindow, File, MaskHappy, Chats, ArrowUUpLeft, ArrowUUpRight } from '@phosphor-icons/react';
 
 
 const AURELIOS_THEMES: Record<string, any> = {
@@ -327,11 +328,6 @@ const FlowArchitect: React.FC = () => {
   const clearChat = () => {
     useStudioStore.setState({ 
       chatMessages: [],
-      flowNodes: [],
-      flowEdges: [],
-      agentCards: [],
-      blueprintMd: '',
-      activeTab: 'discovery',
       // Limpiar Espacio 1 (Activity Log)
       activityLogs: [
         { id: '0', source: 'AureliOS', message: 'Sistema reiniciado. Esperando intenciones del usuario.', status: 'INFO', timestamp: new Date().toISOString() }
@@ -460,7 +456,7 @@ const FlowArchitect: React.FC = () => {
 
       while (true) {
         if (currentPhase === 'phase1_triage') {
-          setZone2ActiveTab('phase1');
+          setZone2ActiveTab('phases');
           if (quantumPhase === 'phase1_triage') addChatMessage({ role: 'agent', content: '> [AureliOS] Ejecutando Triage...', model: 'Orchestrator' });
           
           const res = await fetch(`${API_URL}/studio/state/transition`, { method: 'POST', body: JSON.stringify({ phase: currentPhase, data: currentData }), headers: { 'Content-Type': 'application/json' }, signal });
@@ -502,7 +498,7 @@ const FlowArchitect: React.FC = () => {
               : cleanText;
             console.log('[AureliOS] Setting phase1Interview to:', newPhase1);
             useStudioStore.getState().setPhase1Interview(newPhase1);
-            useStudioStore.getState().setZone2ActiveTab('phase1');
+            useStudioStore.getState().setZone2ActiveTab('phases');
             setQuantumPhase('phase1_triage');
             break; 
           } else {
@@ -513,7 +509,17 @@ const FlowArchitect: React.FC = () => {
         }
 
         if (currentPhase === 'phase2_extraction') {
-          setZone2ActiveTab('phase2');
+          setZone2ActiveTab('phases');
+
+          // Si el usuario aceptó explícitamente, saltamos la validación del LLM y sellamos la fase
+          if (currentData.includes('Acepto el contrato de la fase 2')) {
+            addChatMessage({ role: 'agent', content: '> [AureliOS] Contrato Aprobado. Procediendo a Fase 3...', model: 'Orchestrator' });
+            setPhase2Complete(true);
+            currentPhase = 'phase3_blueprint';
+            currentData = useStudioStore.getState().phase2Content || '';
+            continue;
+          }
+
           addChatMessage({ role: 'agent', content: '> [AureliOS] Ejecutando Extracción...', model: 'Orchestrator' });
           
           const res = await fetch(`${API_URL}/studio/state/transition`, { method: 'POST', body: JSON.stringify({ phase: currentPhase, data: currentData }), headers: { 'Content-Type': 'application/json' }, signal });
@@ -542,7 +548,7 @@ const FlowArchitect: React.FC = () => {
         }
 
         if (currentPhase === 'phase3_blueprint') {
-          setZone2ActiveTab('phase3');
+          setZone2ActiveTab('phases');
           addChatMessage({ role: 'agent', content: '> [AureliOS] Ejecutando Forja...', model: 'Orchestrator' });
           
           const res = await fetch(`${API_URL}/studio/state/transition`, { method: 'POST', body: JSON.stringify({ phase: currentPhase, data: currentData }), headers: { 'Content-Type': 'application/json' }, signal });
@@ -1041,6 +1047,14 @@ const FlowDiagram: React.FC = () => {
 
   const meta = selectedNode ? (KIND_META[selectedNode.data?.kind || 'agent'] || KIND_META.agent) : null;
 
+  const handleNodeDragStart = () => {
+    useStudioStore.getState().saveFlowState();
+  };
+
+  const handleNodeDragStop = () => {
+    useStudioStore.getState().setFlow(nodes, edges);
+  };
+
   return (
     <div style={{ flex: 1, minHeight: 0, position: 'relative', background: 'transparent' }}>
       <ReactFlow
@@ -1049,6 +1063,8 @@ const FlowDiagram: React.FC = () => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodeTypes={studioNodeTypes}
+        onNodeDragStart={handleNodeDragStart}
+        onNodeDragStop={handleNodeDragStop}
         onNodeClick={(_, node) => setSelectedNode(node)}
         onPaneClick={() => setSelectedNode(null)}
         fitView
@@ -1180,6 +1196,9 @@ const AgentCarousel: React.FC = () => {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [timeLeft, setTimeLeft] = React.useState(300);
 
+  const [dragStartX, setDragStartX] = React.useState<number | null>(null);
+  const [isDragging, setIsDragging] = React.useState(false);
+
   React.useEffect(() => {
     if (!isSynthesizing || !synthStartTime) { setTimeLeft(300); return; }
     const calcTime = () => Math.max(0, 900 - Math.floor((Date.now() - synthStartTime) / 1000));
@@ -1194,6 +1213,30 @@ const AgentCarousel: React.FC = () => {
     if (focusedAgent) return;
     if (e.deltaY > 0) setCurrentIndex(prev => Math.min(agentCards.length - 1, prev + 1));
     else if (e.deltaY < 0) setCurrentIndex(prev => Math.max(0, prev - 1));
+  };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (focusedAgent) return;
+    setDragStartX(e.clientX);
+    setIsDragging(false);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (dragStartX !== null) {
+      if (Math.abs(e.clientX - dragStartX) > 10) setIsDragging(true);
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (focusedAgent || dragStartX === null) return;
+    const deltaX = e.clientX - dragStartX;
+    if (deltaX > 50) {
+      setCurrentIndex(prev => Math.max(0, prev - 1));
+    } else if (deltaX < -50) {
+      setCurrentIndex(prev => Math.min(agentCards.length - 1, prev + 1));
+    }
+    setDragStartX(null);
+    setTimeout(() => setIsDragging(false), 50);
   };
 
   if (isSynthesizing) {
@@ -1272,39 +1315,116 @@ const AgentCarousel: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="w-2/3 h-full flex flex-col pt-12">
-          <h2 className="text-2xl font-bold text-white/90 mb-8 flex items-center gap-3">
-            <div className="w-3 h-3 rounded-full" style={{ background: card.color }}></div> Triángulo Dorado
-          </h2>
-          <div className="grid grid-cols-2 gap-6">
-            <div className="bg-white/5 border border-white/10 p-6 rounded-xl flex flex-col">
-              <div className="text-sm font-bold text-blue-400 uppercase tracking-wider mb-4">1. Decomposer (Genes)</div>
-              <div className="flex flex-col gap-2">
-                {card.genes?.map((g: any, i: number) => (
-                  <div key={i} className="flex flex-col bg-black/40 p-3 rounded-lg border border-white/5">
-                    <span className="text-xs text-white/40 font-bold mb-1">{g.kind}</span>
-                    <span className="text-sm text-white/80">{g.value}</span>
+        <div className="w-2/3 h-full flex flex-col pt-8 pl-4 pb-8">
+          <div className="mb-8">
+            <h2 className="text-3xl font-black text-white flex items-center gap-4 tracking-tight">
+              <div className="w-4 h-4 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.5)]" style={{ background: card.color }}></div> 
+              Triángulo Dorado
+            </h2>
+            <p className="text-white/40 mt-2 text-sm ml-8">Análisis forense de la creación autónoma del agente</p>
+          </div>
+          
+          <div className="flex items-stretch gap-3 flex-1 h-0">
+            {/* Step 1: Decomposer */}
+            <div className="flex-1 bg-[#111318] border border-blue-500/20 rounded-2xl flex flex-col relative overflow-hidden shadow-lg group hover:border-blue-500/40 transition-colors">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-blue-400 opacity-80 group-hover:opacity-100 transition-opacity"></div>
+              <div className="p-5 flex flex-col h-full">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-400">
+                    <Network size={24} weight="duotone" />
                   </div>
-                ))}
-              </div>
-            </div>
-            <div className="flex flex-col gap-6">
-              <div className="bg-white/5 border border-white/10 p-6 rounded-xl">
-                <div className="text-sm font-bold text-purple-400 uppercase tracking-wider mb-4">2. Synthesizer</div>
-                <div className="text-sm text-white/70 bg-black/40 p-4 rounded-lg font-mono">
-                  {card.inputOutputContract}
+                  <div>
+                    <div className="text-[10px] font-black text-blue-500/80 uppercase tracking-widest">Etapa 1</div>
+                    <div className="text-lg font-bold text-white/90 tracking-tight">Decomposer</div>
+                  </div>
                 </div>
-              </div>
-              <div className="bg-white/5 border border-white/10 p-6 rounded-xl flex-1">
-                <div className="text-sm font-bold text-emerald-400 uppercase tracking-wider mb-4">3. Sandbox Umpire</div>
-                <div className="flex flex-wrap gap-2">
-                  {card.requiredTools?.map((t: string) => (
-                    <span key={t} className="bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-lg text-sm font-mono border border-emerald-500/20">{t}</span>
+                <p className="text-[13px] text-white/40 mb-5 leading-relaxed">Extracción del ADN cognitivo, políticas y directrices operativas a partir del contexto.</p>
+                
+                <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-3 scrollbar-thin scrollbar-thumb-white/10">
+                  {card.genes?.map((g: any, i: number) => (
+                    <div key={i} className="flex flex-col bg-black/30 p-3.5 rounded-xl border border-white/5 relative">
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500/40 rounded-l-xl"></div>
+                      <span className="text-[11px] text-blue-300 font-bold mb-1.5 pl-2 uppercase tracking-wide">{g.kind}</span>
+                      <span className="text-[13px] text-white/70 pl-2 leading-relaxed">{g.value}</span>
+                    </div>
                   ))}
-                  {(!card.requiredTools || card.requiredTools.length === 0) && <span className="text-white/30 text-sm">No tools required</span>}
                 </div>
               </div>
             </div>
+
+            {/* Arrow */}
+            <div className="flex items-center justify-center text-white/10">
+               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </div>
+
+            {/* Step 2: Synthesizer */}
+            <div className="flex-1 bg-[#111318] border border-purple-500/20 rounded-2xl flex flex-col relative overflow-hidden shadow-lg group hover:border-purple-500/40 transition-colors">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-600 to-purple-400 opacity-80 group-hover:opacity-100 transition-opacity"></div>
+              <div className="p-5 flex flex-col h-full">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2.5 bg-purple-500/10 rounded-xl text-purple-400">
+                    <Cpu size={24} weight="duotone" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-black text-purple-500/80 uppercase tracking-widest">Etapa 2</div>
+                    <div className="text-lg font-bold text-white/90 tracking-tight">Synthesizer</div>
+                  </div>
+                </div>
+                <p className="text-[13px] text-white/40 mb-5 leading-relaxed">Fusión de genes en un contrato de entrada/salida estructurado para el bucle de razonamiento.</p>
+                
+                <div className="flex-1 flex flex-col">
+                   <div className="bg-black/30 border border-purple-500/10 rounded-xl p-4 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
+                      <div className="text-[10px] text-purple-400/70 font-bold uppercase tracking-widest mb-3">Contrato I/O</div>
+                      <div className="font-mono text-[13px] text-white/80 leading-loose">
+                         {card.inputOutputContract?.includes('->') ? card.inputOutputContract.split('->').map((part: string, idx: number) => (
+                            <div key={idx} className="mb-3 bg-white/5 p-3 rounded-lg border border-white/5">
+                               {idx === 0 ? <span className="text-purple-400 font-bold block mb-1">IN:</span> : <span className="text-pink-400 font-bold block mb-1">OUT:</span>}
+                               {part.replace('IN:','').replace('OUT:','').trim()}
+                            </div>
+                         )) : <div className="bg-white/5 p-3 rounded-lg border border-white/5">{card.inputOutputContract}</div>}
+                      </div>
+                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Arrow */}
+            <div className="flex items-center justify-center text-white/10">
+               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </div>
+
+            {/* Step 3: Sandbox */}
+            <div className="flex-1 bg-[#111318] border border-emerald-500/20 rounded-2xl flex flex-col relative overflow-hidden shadow-lg group hover:border-emerald-500/40 transition-colors">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-600 to-emerald-400 opacity-80 group-hover:opacity-100 transition-opacity"></div>
+              <div className="p-5 flex flex-col h-full">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-400">
+                    <Wrench size={24} weight="duotone" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-black text-emerald-500/80 uppercase tracking-widest">Etapa 3</div>
+                    <div className="text-lg font-bold text-white/90 tracking-tight">Sandbox Umpire</div>
+                  </div>
+                </div>
+                <p className="text-[13px] text-white/40 mb-5 leading-relaxed">Simulación de ejecución y dotación de herramientas y APIs accionables para el mundo real.</p>
+                
+                <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-3 scrollbar-thin scrollbar-thumb-white/10">
+                  <div className="text-[10px] text-emerald-400/70 font-bold uppercase tracking-widest mb-1">Caja de Herramientas</div>
+                  {card.requiredTools?.map((t: string) => (
+                    <div key={t} className="flex items-start gap-3 bg-black/30 p-3.5 rounded-xl border border-emerald-500/10">
+                       <TerminalWindow size={16} className="text-emerald-500/60 mt-0.5 flex-shrink-0" weight="duotone" />
+                       <span className="text-[13px] font-mono text-emerald-100/90 leading-snug break-words">{t}</span>
+                    </div>
+                  ))}
+                  {(!card.requiredTools || card.requiredTools.length === 0) && (
+                     <div className="flex items-center justify-center h-20 border border-dashed border-white/10 rounded-xl text-white/30 text-xs">
+                        Operación puramente cognitiva
+                     </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
@@ -1312,12 +1432,20 @@ const AgentCarousel: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 bg-transparent overflow-hidden relative flex flex-col" style={{ perspective: '1200px' }} onWheel={handleWheel}>
+    <div 
+      className="flex-1 bg-transparent overflow-hidden relative flex flex-col touch-pan-y" 
+      style={{ perspective: '1200px' }} 
+      onWheel={handleWheel}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+    >
       <div className="absolute top-6 w-full flex justify-center z-50">
-        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-full px-6 py-2 text-sm text-white/60 font-medium tracking-wide flex items-center gap-6 shadow-xl">
-            <button onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))} disabled={currentIndex === 0} className="hover:text-white disabled:opacity-30 transition-colors">← Prev</button>
-            <span className="font-mono">{currentIndex + 1} / {agentCards.length}</span>
-            <button onClick={() => setCurrentIndex(Math.min(agentCards.length - 1, currentIndex + 1))} disabled={currentIndex === agentCards.length - 1} className="hover:text-white disabled:opacity-30 transition-colors">Next →</button>
+        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-full px-6 py-2 text-sm text-white/60 font-medium tracking-wide flex items-center gap-6 shadow-xl pointer-events-auto">
+            <button onClick={(e) => { e.stopPropagation(); setCurrentIndex(Math.max(0, currentIndex - 1)); }} disabled={currentIndex === 0} className="hover:text-white disabled:opacity-30 transition-colors">← Prev</button>
+            <span className="font-mono cursor-default">{currentIndex + 1} / {agentCards.length}</span>
+            <button onClick={(e) => { e.stopPropagation(); setCurrentIndex(Math.min(agentCards.length - 1, currentIndex + 1)); }} disabled={currentIndex === agentCards.length - 1} className="hover:text-white disabled:opacity-30 transition-colors">Next →</button>
         </div>
       </div>
       <div ref={containerRef} className="flex-1 relative transform-gpu mt-12" style={{ transformStyle: 'preserve-3d' }}>
@@ -1325,9 +1453,9 @@ const AgentCarousel: React.FC = () => {
           const offset = index - currentIndex;
           const absOffset = Math.abs(offset);
           let zIndex = 100 - absOffset;
-          let translateX = offset * 220;
-          let rotateY = offset === 0 ? 0 : offset > 0 ? -25 : 25;
-          let translateZ = absOffset * -300;
+          let translateX = offset * 320; // Increased spacing for even larger cards
+          let rotateY = offset === 0 ? 0 : offset > 0 ? -20 : 20; 
+          let translateZ = absOffset * -350; 
           let opacity = absOffset > 3 ? 0 : 1 - absOffset * 0.2;
           let scale = offset === 0 ? 1 : 0.85;
           
@@ -1337,15 +1465,16 @@ const AgentCarousel: React.FC = () => {
             <div 
               key={card.id}
               onClick={() => {
+                if (isDragging) return;
                 if (offset === 0) setFocusedAgent(card);
                 else setCurrentIndex(index);
               }}
               className="absolute left-1/2 top-1/2 cursor-pointer transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
               style={{
-                width: '320px',
-                height: '480px',
-                marginLeft: '-160px',
-                marginTop: '-240px',
+                width: '460px', // Extra large
+                height: '660px', // Extra large
+                marginLeft: '-230px',
+                marginTop: '-330px',
                 transform: `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
                 zIndex, opacity,
                 pointerEvents: (opacity === 0 ? 'none' : 'auto') as any,
@@ -1355,34 +1484,36 @@ const AgentCarousel: React.FC = () => {
               <div className="w-full h-full rounded-2xl shadow-2xl relative overflow-hidden flex flex-col group border transition-colors duration-300" 
                    style={{ backgroundColor: '#1a1d21', borderColor: offset === 0 ? (card.color || '#333') : '#222' }}>
                 <div className="h-1.5 w-full opacity-80" style={{ backgroundColor: card.color }}></div>
-                <div className="p-6 flex flex-col h-full relative z-10">
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-2xl font-bold text-white tracking-tight leading-tight">{card.name}</h3>
+                <div className="p-8 flex flex-col h-full relative z-10">
+                  <div className="flex justify-between items-start mb-5">
+                    <h3 className="text-3xl font-bold text-white tracking-tight leading-tight">{card.name}</h3>
                     <button 
                       onClick={(e) => { 
                         e.stopPropagation();
                         if (isPlayingThis) stop(); 
                         else play(card.description, card.id); 
                       }} 
-                      className={`p-2 rounded-full transition-all flex-shrink-0 ml-2 ${isPlayingThis ? 'bg-red-500/20 text-red-400' : 'bg-white/5 text-white/50 hover:text-white hover:bg-white/10'}`}
+                      className={`p-3 rounded-full transition-all flex-shrink-0 ml-3 ${isPlayingThis ? 'bg-red-500/20 text-red-400' : 'bg-white/5 text-white/50 hover:text-white hover:bg-white/10'}`}
                     >
-                      {isPlayingThis ? <Stop size={16} weight="fill" /> : <SpeakerHigh size={16} weight="duotone" />}
+                      {isPlayingThis ? <Stop size={20} weight="fill" /> : <SpeakerHigh size={20} weight="duotone" />}
                     </button>
                   </div>
-                  <div className="text-xs font-bold text-white/50 uppercase tracking-widest mb-6 flex items-center gap-1.5">
-                    <Robot size={16} weight="duotone" style={{ color: card.color }} /> {card.role}
+                  <div className="text-sm font-bold text-white/50 uppercase tracking-widest mb-6 flex items-center gap-2">
+                    <Robot size={20} weight="duotone" style={{ color: card.color }} /> {card.role}
                   </div>
-                  <p className="text-[15px] text-white/80 leading-relaxed mb-6 flex-1 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 8, WebkitBoxOrient: 'vertical' }}>
-                    {card.description}
-                  </p>
+                  <div className="flex-1 overflow-y-auto pr-2 mb-6 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+                    <p className="text-[16px] text-white/80 leading-relaxed">
+                      {card.description}
+                    </p>
+                  </div>
                   {card.genes && (
-                    <div className="flex flex-wrap gap-1.5 mt-auto">
+                    <div className="flex flex-wrap gap-2 mt-auto">
                        {card.genes.slice(0, 3).map((g: any, i: number) => (
-                          <span key={i} className="text-[10px] px-2 py-1 rounded bg-black/40 text-white/70 border border-white/5">
+                          <span key={i} className="text-xs px-2.5 py-1.5 rounded-md bg-black/40 text-white/70 border border-white/5">
                             {g.kind}
                           </span>
                        ))}
-                       {card.genes.length > 3 && <span className="text-[10px] px-2 py-1 rounded bg-black/40 text-white/40">+{card.genes.length-3}</span>}
+                       {card.genes.length > 3 && <span className="text-xs px-2.5 py-1.5 rounded-md bg-black/40 text-white/40">+{card.genes.length-3}</span>}
                     </div>
                   )}
                 </div>
@@ -1422,11 +1553,18 @@ const ArchitectureBlueprint: React.FC = () => {
     const { activeTab, setActiveTab, isSynthesizing } = useStudioStore();
 
     const go2WF = () => {
-      const { agentCards, setFlow, setActiveTab, addChatMessage } = useStudioStore.getState();
-      const nodes = agentCards.map((card, i) => ({
+      const { agentCards, flowNodes, flowEdges, setFlow, saveFlowState, setActiveTab, addChatMessage } = useStudioStore.getState();
+      
+      saveFlowState(); // Guardar historial antes de modificar
+
+      // Encontrar la posición más baja de los nodos existentes para colocar los nuevos debajo
+      const maxExistingY = flowNodes.reduce((max, node) => Math.max(max, node.position.y), 0);
+      const startY = maxExistingY > 0 ? maxExistingY + 250 : 100;
+
+      const newNodes = agentCards.map((card, i) => ({
         id: card.id,
         type: 'agent',
-        position: { x: 100 + (i % 3) * 350, y: 100 + Math.floor(i / 3) * 200 },
+        position: { x: 100 + (i % 3) * 350, y: startY + Math.floor(i / 3) * 200 },
         data: {
           label: card.name,
           role: card.role,
@@ -1436,9 +1574,9 @@ const ArchitectureBlueprint: React.FC = () => {
           outputPort: card.inputOutputContract?.split('->')[1] || ''
         }
       }));
-      setFlow(nodes, []);
+      setFlow([...flowNodes, ...newNodes], flowEdges);
       setActiveTab('discovery');
-      addChatMessage({ role: 'agent', content: '✅ CHECKLIST COMPLETADO: Flujo actualizado con los AgentCards.', model: 'aurelios' });
+      addChatMessage({ role: 'agent', content: '✅ CHECKLIST COMPLETADO: Nodos de los AgentCards agregados al Infinity Board manteniendo el flujo anterior.', model: 'aurelios' });
     };
 
     const runMatchAndFusePipeline = async () => {
@@ -1479,7 +1617,7 @@ const ArchitectureBlueprint: React.FC = () => {
       const rawText = data.response || "";
 
       let jsonStr = rawText;
-      const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+      const jsonMatch = rawText.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
       if (jsonMatch) jsonStr = jsonMatch[0];
       
       try {
@@ -1521,26 +1659,93 @@ const ArchitectureBlueprint: React.FC = () => {
     }
   };
 
+  const recoverBaseFlow = () => {
+    const { phase3Content, agentCards, setFlow, saveFlowState } = useStudioStore.getState();
+    if (phase3Content) {
+      saveFlowState(); // Guardar antes de modificar
+
+      // 1. Restaurar los nodos originales desde el markdown base
+      const { nodes: baseNodes, edges: baseEdges } = parseAIResponseToFlow(phase3Content);
+      
+      // 2. Conservar los AgentCards y reposicionarlos debajo
+      const maxExistingY = baseNodes.reduce((max, node) => Math.max(max, node.position.y), 0);
+      const startY = maxExistingY > 0 ? maxExistingY + 250 : 100;
+
+      const cardNodes = agentCards.map((card, i) => ({
+        id: card.id,
+        type: 'agent',
+        position: { x: 100 + (i % 3) * 350, y: startY + Math.floor(i / 3) * 200 },
+        data: {
+          label: card.name,
+          role: card.role,
+          fullDescription: card.description,
+          allTools: card.requiredTools || [],
+          inputPort: card.inputOutputContract?.split('->')[0] || '',
+          outputPort: card.inputOutputContract?.split('->')[1] || ''
+        }
+      }));
+
+      // 3. Fusionar el grafo original con las tarjetas
+      setFlow([...baseNodes, ...cardNodes], baseEdges);
+    } else {
+      console.warn("No base markdown content found to recover.");
+    }
+  };
+
+  const { undoFlow, redoFlow, pastFlows, futureFlows } = useStudioStore();
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'transparent', minHeight: 0 }}>
-      <div className="flex shrink-0 h-16 bg-transparent">
-        {(['discovery', 'synthesis', 'blueprint'] as TabId[]).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{ borderRadius: 0, borderTop: 'none', borderLeft: 'none', borderRight: 'none' }}
-            className={`px-6 h-full font-medium text-sm transition-colors flex items-center border-b-2 ${
-              activeTab === tab
-                ? 'text-blue-400 border-blue-400 bg-white/5'
-                : 'text-gray-400 border-transparent hover:text-gray-200 hover:bg-white/5'
-            }`}
-          >
-            {tab === 'discovery' && '1 Descubrir'}
-            {tab === 'synthesis' && '2 Sintetizar'}
-            {tab === 'blueprint' && '3 Blueprint'}
-          </button>
-        ))}
+      <div className="flex shrink-0 h-16 bg-transparent items-center pr-4">
+        <div className="flex h-full">
+          {(['discovery', 'synthesis', 'blueprint'] as TabId[]).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{ borderRadius: 0, borderTop: 'none', borderLeft: 'none', borderRight: 'none' }}
+              className={`px-6 h-full font-medium text-sm transition-colors flex items-center border-b-2 ${
+                activeTab === tab
+                  ? 'text-blue-400 border-blue-400 bg-white/5'
+                  : 'text-gray-400 border-transparent hover:text-gray-200 hover:bg-white/5'
+              }`}
+            >
+              {tab === 'discovery' && '1 Descubrir'}
+              {tab === 'synthesis' && '2 Sintetizar'}
+              {tab === 'blueprint' && '3 Blueprint'}
+            </button>
+          ))}
+        </div>
         <div className="flex-1" />
+        {activeTab === 'discovery' && (
+          <div className="flex items-center gap-3">
+            <div className="flex bg-black/40 rounded-full overflow-hidden border border-white/10">
+              <button 
+                onClick={undoFlow}
+                disabled={pastFlows.length === 0}
+                title="Deshacer acción en el flujo"
+                className="flex items-center gap-1.5 px-3 py-1.5 transition-all text-xs font-bold text-gray-400 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed border-r border-white/10"
+              >
+                <ArrowUUpLeft size={14} weight="bold" />
+              </button>
+              <button 
+                onClick={redoFlow}
+                disabled={futureFlows.length === 0}
+                title="Rehacer acción en el flujo"
+                className="flex items-center gap-1.5 px-3 py-1.5 transition-all text-xs font-bold text-gray-400 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ArrowUUpRight size={14} weight="bold" />
+              </button>
+            </div>
+            
+            <button 
+              onClick={recoverBaseFlow}
+              title="Recuperar Flujo Base"
+              className="flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs font-bold bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10"
+            >
+              <ArrowsClockwise size={14} /> Restaurar Flujo
+            </button>
+          </div>
+        )}
       </div>
       <div className="flex-1 flex flex-col relative min-h-0 p-4 md:p-5" style={{ background: '#030712' }}>
         <div className="flex-1 flex flex-col relative overflow-hidden bg-transparent">
@@ -1598,6 +1803,31 @@ const THINKING_PHRASES = [
 
 export default function AgentOSStudio() {
   const { isSynthesizing, setPipelineProgress, isFreeChat } = useStudioStore();
+
+  React.useEffect(() => {
+    let timeoutId: any;
+    const unsub = useStudioStore.subscribe((state, prevState) => {
+      if (
+        state.chatMessages !== prevState.chatMessages ||
+        state.phase1Interview !== prevState.phase1Interview ||
+        state.triageSummary !== prevState.triageSummary ||
+        state.phase2Content !== prevState.phase2Content ||
+        state.phase3Content !== prevState.phase3Content ||
+        state.phase1Complete !== prevState.phase1Complete ||
+        state.phase2Complete !== prevState.phase2Complete ||
+        state.phase3Complete !== prevState.phase3Complete ||
+        state.flowNodes !== prevState.flowNodes
+      ) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+           if (state.chatMessages.length > 1 || state.triageSummary) {
+             useHistoryStore.getState().saveCurrentToHistory(state);
+           }
+        }, 3000);
+      }
+    });
+    return () => { unsub(); clearTimeout(timeoutId); };
+  }, []);
 
   React.useEffect(() => {
     if (!isSynthesizing) return;

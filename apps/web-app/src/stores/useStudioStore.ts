@@ -42,8 +42,8 @@ interface StudioState {
   // Zones 1 and 2
   activityLogs: ActivityLog[];
   addActivityLog: (log: Omit<ActivityLog, 'id' | 'timestamp'>) => void;
-  zone2ActiveTab: 'okr' | 'phase1' | 'phase2' | 'phase3';
-  setZone2ActiveTab: (tab: 'okr' | 'phase1' | 'phase2' | 'phase3') => void;
+  zone2ActiveTab: 'okr' | 'phases' | 'history';
+  setZone2ActiveTab: (tab: 'okr' | 'phases' | 'history') => void;
 
   // FreeChat Mode
   isFreeChat: boolean;
@@ -75,6 +75,13 @@ interface StudioState {
   flowNodes: Node[];
   flowEdges: Edge[];
   setFlow: (nodes: Node[], edges: Edge[]) => void;
+  
+  // History Undo/Redo
+  pastFlows: { nodes: Node[], edges: Edge[] }[];
+  futureFlows: { nodes: Node[], edges: Edge[] }[];
+  saveFlowState: () => void;
+  undoFlow: () => void;
+  redoFlow: () => void;
 
   // Agent Carousel
   agentCards: AgentCard[];
@@ -405,6 +412,32 @@ export const useStudioStore = create<StudioState>()(
 
       flowNodes: [],
       flowEdges: [],
+      pastFlows: [],
+      futureFlows: [],
+      saveFlowState: () => set((state) => ({
+         pastFlows: [...state.pastFlows, { nodes: state.flowNodes, edges: state.flowEdges }],
+         futureFlows: []
+      })),
+      undoFlow: () => set((state) => {
+         if (state.pastFlows.length === 0) return state;
+         const previous = state.pastFlows[state.pastFlows.length - 1];
+         return {
+            pastFlows: state.pastFlows.slice(0, -1),
+            futureFlows: [{ nodes: state.flowNodes, edges: state.flowEdges }, ...state.futureFlows],
+            flowNodes: previous.nodes,
+            flowEdges: previous.edges
+         };
+      }),
+      redoFlow: () => set((state) => {
+         if (state.futureFlows.length === 0) return state;
+         const next = state.futureFlows[0];
+         return {
+            pastFlows: [...state.pastFlows, { nodes: state.flowNodes, edges: state.flowEdges }],
+            futureFlows: state.futureFlows.slice(1),
+            flowNodes: next.nodes,
+            flowEdges: next.edges
+         };
+      }),
       setFlow: (flowNodes, flowEdges) => set({ flowNodes, flowEdges }),
 
       agentCards: [
