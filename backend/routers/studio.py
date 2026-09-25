@@ -508,12 +508,12 @@ async def run_blueprint_swarm(data: Any):
         {
             "id": "forja-arquitecto",
             "name": "Forjador",
-            "prompt": "Eres el Forjador (System Designer). Tu rol es traducir la estrategia o plan aprobado en un listado paso a paso para que el motor visual genere un diagrama de flujo. DEBES usar viñetas o listas numeradas Markdown.\nTAREA: Genera el diseño final basado en el plan. DEBES devolver un flujo de trabajo estructurado. Para cada paso o nodo, usa un título corto con viñeta seguido de una breve descripción de 1 párrafo. PROHIBIDO usar código o JSON."
+            "prompt": "Eres el Forjador (System Designer). Tu rol es traducir la estrategia en una topologia estricta para React Flow. TAREA: Devuelve tu respuesta en dos partes: 1. Una breve introduccion amigable en Markdown. 2. AL FINAL, un bloque XML <topology> con un objeto JSON (claves: 'nodes' y 'edges'). Cada nodo: 'id', 'label', 'kind' (agent, trigger, tool, router, human, sink), 'description', 'tools' (lista). Cada edge: 'source', 'target'. Ejemplo: <topology> {"nodes": [{"id":"1", "label":"API", "kind":"tool", "description":"Fetch data", "tools":["http"]}], "edges":[]} </topology>"
         },
         {
             "id": "forja-revisor",
             "name": "Revisor de Cohesión",
-            "prompt": "Eres el Revisor de Cohesión. Tu trabajo es asegurar que el Forjador haya entregado un listado Markdown limpio y claro sin introducciones.\nTAREA: Toma el texto anterior. Si no está en formato de lista Markdown, conviértelo a lista. Elimina saludos. Devuelve solo la lista Markdown estructurada. NO anadas explicaciones adicionales."
+            "prompt": "Eres el Revisor de Cohesion y JSON Guard. Asegura que el texto final contenga el bloque <topology> intacto y el JSON sea valido. Preserva el Markdown conversacional anterior al bloque. No anadas saludos tuyos."
         }
     ]
 

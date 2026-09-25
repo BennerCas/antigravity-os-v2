@@ -156,8 +156,68 @@ function extractTools(desc: string): string[] {
 }
 
 /** Parse AI response text → rich ReactFlow nodes + edges + agent cards */
-export function parseAIResponseToFlow(text: string): { nodes: Node[]; edges: Edge[]; cards: AgentCard[]; md: string } {
-  const lines = text.split('\n');
+  export function parseAIResponseToFlow(text: string): { nodes: Node[]; edges: Edge[]; cards: AgentCard[]; md: string } {
+    let cleanMd = text;
+    let jsonNodes: any[] = [];
+    let jsonEdges: any[] = [];
+    const topRegex = /<topology>[\s\S]*?\{([\s\S]*?)\}[\s\S]*?<\/topology>/;
+    const match = text.match(topRegex);
+    
+    if (match) {
+        try {
+            // Find the JSON boundaries inside the topology tag
+            const fullMatch = match[0];
+            const jsonStr = fullMatch.substring(fullMatch.indexOf('{'), fullMatch.lastIndexOf('}') + 1);
+            const parsed = JSON.parse(jsonStr);
+            jsonNodes = parsed.nodes || [];
+            jsonEdges = parsed.edges || [];
+            cleanMd = text.replace(topRegex, '').trim();
+        } catch(e) {
+            console.error("Failed to parse JSON topology", e);
+        }
+    }
+    
+    const nodes: Node[] = [];
+    const edges: Edge[] = [];
+    
+    if (jsonNodes.length > 0) {
+        jsonNodes.forEach((n, idx) => {
+            const col = idx % 3, row = Math.floor(idx / 3);
+            const kind = n.kind || 'agent';
+            nodes.push({
+                id: n.id || `node_${idx}`,
+                type: kind,
+                position: { x: 60 + col * 270, y: 60 + row * 190 },
+                data: {
+                    label: n.label || `Nodo ${idx}`,
+                    kind: kind,
+                    description: n.description || '',
+                    tools: n.tools || [],
+                    inputPort: n.inputPort || (idx > 0 ? 'input' : ''),
+                    outputPort: n.outputPort || 'output',
+                    cost: n.cost || '',
+                    status: n.status || '',
+                    fullDescription: n.description || '',
+                    allTools: n.tools || []
+                }
+            });
+        });
+        
+        jsonEdges.forEach(e => {
+            edges.push({
+                id: e.id || `e_${e.source}-${e.target}`,
+                source: e.source,
+                target: e.target,
+                animated: true,
+                style: { stroke: '#94a3b8', strokeWidth: 2 }
+            });
+        });
+        
+        return { nodes, edges, cards: [], md: cleanMd };
+    }
+
+    // LEGACY FALLBACK
+    const lines = text.split('\n');
   const cards: AgentCard[] = [];
   const nodes: Node[] = [];
   const edges: Edge[] = [];
