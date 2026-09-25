@@ -77,8 +77,8 @@ interface StudioState {
   setFlow: (nodes: Node[], edges: Edge[]) => void;
   
   // History Undo/Redo
-  pastFlows: { nodes: Node[], edges: Edge[] }[];
-  futureFlows: { nodes: Node[], edges: Edge[] }[];
+  pastFlows: any[];
+  futureFlows: any[];
   saveFlowState: () => void;
   undoFlow: () => void;
   redoFlow: () => void;
@@ -415,7 +415,21 @@ export const useStudioStore = create<StudioState>()(
       pastFlows: [],
       futureFlows: [],
       saveFlowState: () => set((state) => ({
-         pastFlows: [...state.pastFlows, { nodes: state.flowNodes, edges: state.flowEdges }],
+         pastFlows: [...state.pastFlows, { 
+            nodes: state.flowNodes, 
+            edges: state.flowEdges,
+            chatMessages: state.chatMessages,
+            activityLogs: state.activityLogs,
+            agentCards: state.agentCards,
+            blueprintMd: state.blueprintMd,
+            phase1Interview: state.phase1Interview,
+            phase1Complete: state.phase1Complete,
+            phase2Complete: state.phase2Complete,
+            phase3Complete: state.phase3Complete,
+            phase2Content: state.phase2Content,
+            phase3Content: state.phase3Content,
+            triageSummary: state.triageSummary
+         }],
          futureFlows: []
       })),
       undoFlow: () => set((state) => {
@@ -423,19 +437,69 @@ export const useStudioStore = create<StudioState>()(
          const previous = state.pastFlows[state.pastFlows.length - 1];
          return {
             pastFlows: state.pastFlows.slice(0, -1),
-            futureFlows: [{ nodes: state.flowNodes, edges: state.flowEdges }, ...state.futureFlows],
-            flowNodes: previous.nodes,
-            flowEdges: previous.edges
+            futureFlows: [{ 
+               nodes: state.flowNodes, 
+               edges: state.flowEdges,
+               chatMessages: state.chatMessages,
+               activityLogs: state.activityLogs,
+               agentCards: state.agentCards,
+               blueprintMd: state.blueprintMd,
+               phase1Interview: state.phase1Interview,
+               phase1Complete: state.phase1Complete,
+               phase2Complete: state.phase2Complete,
+               phase3Complete: state.phase3Complete,
+               phase2Content: state.phase2Content,
+               phase3Content: state.phase3Content,
+               triageSummary: state.triageSummary
+            }, ...state.futureFlows],
+            flowNodes: previous.nodes || previous.flowNodes || [],
+            flowEdges: previous.edges || previous.flowEdges || [],
+            chatMessages: previous.chatMessages || state.chatMessages,
+            activityLogs: previous.activityLogs || state.activityLogs,
+            agentCards: previous.agentCards || state.agentCards,
+            blueprintMd: previous.blueprintMd !== undefined ? previous.blueprintMd : state.blueprintMd,
+            phase1Interview: previous.phase1Interview !== undefined ? previous.phase1Interview : state.phase1Interview,
+            phase1Complete: previous.phase1Complete !== undefined ? previous.phase1Complete : state.phase1Complete,
+            phase2Complete: previous.phase2Complete !== undefined ? previous.phase2Complete : state.phase2Complete,
+            phase3Complete: previous.phase3Complete !== undefined ? previous.phase3Complete : state.phase3Complete,
+            phase2Content: previous.phase2Content !== undefined ? previous.phase2Content : state.phase2Content,
+            phase3Content: previous.phase3Content !== undefined ? previous.phase3Content : state.phase3Content,
+            triageSummary: previous.triageSummary !== undefined ? previous.triageSummary : state.triageSummary
          };
       }),
       redoFlow: () => set((state) => {
          if (state.futureFlows.length === 0) return state;
          const next = state.futureFlows[0];
          return {
-            pastFlows: [...state.pastFlows, { nodes: state.flowNodes, edges: state.flowEdges }],
+            pastFlows: [...state.pastFlows, { 
+               nodes: state.flowNodes, 
+               edges: state.flowEdges,
+               chatMessages: state.chatMessages,
+               activityLogs: state.activityLogs,
+               agentCards: state.agentCards,
+               blueprintMd: state.blueprintMd,
+               phase1Interview: state.phase1Interview,
+               phase1Complete: state.phase1Complete,
+               phase2Complete: state.phase2Complete,
+               phase3Complete: state.phase3Complete,
+               phase2Content: state.phase2Content,
+               phase3Content: state.phase3Content,
+               triageSummary: state.triageSummary
+            }],
             futureFlows: state.futureFlows.slice(1),
-            flowNodes: next.nodes,
-            flowEdges: next.edges
+            flowNodes: next.nodes || next.flowNodes || [],
+            flowEdges: next.edges || next.flowEdges || [],
+            chatMessages: next.chatMessages || state.chatMessages,
+            activityLogs: next.activityLogs || state.activityLogs,
+            agentCards: next.agentCards || state.agentCards,
+            blueprintMd: next.blueprintMd !== undefined ? next.blueprintMd : state.blueprintMd,
+            phase1Interview: next.phase1Interview !== undefined ? next.phase1Interview : state.phase1Interview,
+            phase1Complete: next.phase1Complete !== undefined ? next.phase1Complete : state.phase1Complete,
+            phase2Complete: next.phase2Complete !== undefined ? next.phase2Complete : state.phase2Complete,
+            phase3Complete: next.phase3Complete !== undefined ? next.phase3Complete : state.phase3Complete,
+            phase2Content: next.phase2Content !== undefined ? next.phase2Content : state.phase2Content,
+            phase3Content: next.phase3Content !== undefined ? next.phase3Content : state.phase3Content,
+            triageSummary: next.triageSummary !== undefined ? next.triageSummary : state.triageSummary
          };
       }),
       setFlow: (flowNodes, flowEdges) => set({ flowNodes, flowEdges }),

@@ -326,6 +326,7 @@ const FlowArchitect: React.FC = () => {
 
 
   const clearChat = () => {
+    useStudioStore.getState().saveFlowState(); // Punto de retorno antes de borrar TODO
     useStudioStore.setState({ 
       chatMessages: [],
       // Limpiar Espacio 1 (Activity Log)
