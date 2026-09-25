@@ -7,7 +7,7 @@ import { studioNodeTypes, KIND_META } from '../components/StudioNodes';
 import { SwarmOrchestrationPanel } from '../components/studio/SwarmOrchestrationPanel';
 import { useStudioStore, TabId, parseAIResponseToFlow } from '../stores/useStudioStore';
 import { API_URL, WS_STUDIO_ACTIVITY_URL } from '../lib/api';
-import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock, Stop, Microphone, Database, Globe, TerminalWindow, FileText, CodeBlock, Scan, AppWindow, File } from '@phosphor-icons/react';
+import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock, Stop, Microphone, Database, Globe, TerminalWindow, FileText, CodeBlock, Scan, AppWindow, File, MaskHappy, Chats } from '@phosphor-icons/react';
 
 
 const AURELIOS_THEMES: Record<string, any> = {
@@ -129,60 +129,70 @@ const FreeChatCapabilitiesGrid = () => {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-2 mt-4 px-4 pb-2 w-full animate-in fade-in slide-in-from-top-2 duration-300">
+    <div className="grid grid-cols-4 gap-1.5 mt-4 px-2 pb-2 w-full animate-in fade-in slide-in-from-top-2 duration-300">
       <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} accept=".txt,.pdf,.md,.csv,.json" />
       
-      <div onClick={() => fileInputRef.current?.click()} className="bg-black/40 border border-white/5 rounded-xl p-2.5 hover:border-green-500/50 transition-colors cursor-pointer group flex flex-col justify-center">
-        <h4 className="font-bold text-[11px] text-gray-300 flex items-center gap-1.5 mb-0.5 group-hover:text-green-400"><Database size={14}/> Ingesta Archivos</h4>
-        <p className="text-[9px] text-gray-500 leading-tight">Sube PDFs, TXTs, MDs.</p>
-        {freeChatFiles.length > 0 && <p className="text-[9px] text-green-400 mt-0.5">{freeChatFiles.length} listos</p>}
+      <div onClick={() => fileInputRef.current?.click()} className="bg-black/40 border border-white/5 rounded-xl p-1.5 hover:border-green-500/50 transition-colors cursor-pointer group flex flex-col justify-center">
+        <h4 className="font-bold text-[9px] text-gray-300 flex items-center gap-1 mb-0.5 group-hover:text-green-400"><Database size={12}/> Ingesta</h4>
+        <p className="text-[8px] text-gray-500 leading-tight">Docs locales</p>
+        {freeChatFiles.length > 0 && <p className="text-[8px] text-green-400 mt-0.5">{freeChatFiles.length} listos</p>}
       </div>
       
-      <div className="bg-black/40 border border-white/5 rounded-xl p-2.5 hover:border-green-500/50 transition-colors cursor-pointer group flex flex-col justify-center">
-        <h4 className="font-bold text-[11px] text-gray-300 flex items-center gap-1.5 mb-0.5 group-hover:text-green-400"><Globe size={14}/> Búsqueda Web</h4>
-        <p className="text-[9px] text-gray-500 leading-tight">Info real en internet.</p>
+      <div className="bg-black/40 border border-white/5 rounded-xl p-1.5 hover:border-green-500/50 transition-colors cursor-pointer group flex flex-col justify-center">
+        <h4 className="font-bold text-[9px] text-gray-300 flex items-center gap-1 mb-0.5 group-hover:text-green-400"><Globe size={12}/> Web</h4>
+        <p className="text-[8px] text-gray-500 leading-tight">Internet real</p>
       </div>
       
-      <div onClick={toggleScreenShare} className={`bg-black/40 border ${screenStream ? 'border-cyan-500' : 'border-white/5'} rounded-xl p-2.5 hover:border-cyan-500/50 transition-colors cursor-pointer group flex flex-col justify-center`}>
-        <h4 className={`font-bold text-[11px] flex items-center gap-1.5 mb-0.5 ${screenStream ? 'text-cyan-400' : 'text-gray-300 group-hover:text-cyan-400'}`}>
-          <TerminalWindow size={14}/> {screenStream ? 'Pantalla Activa' : 'Compartir Pantalla'}
+      <div onClick={toggleScreenShare} className={`bg-black/40 border ${screenStream ? 'border-cyan-500' : 'border-white/5'} rounded-xl p-1.5 hover:border-cyan-500/50 transition-colors cursor-pointer group flex flex-col justify-center`}>
+        <h4 className={`font-bold text-[9px] flex items-center gap-1 mb-0.5 ${screenStream ? 'text-cyan-400' : 'text-gray-300 group-hover:text-cyan-400'}`}>
+          <TerminalWindow size={12}/> {screenStream ? 'Activa' : 'Pantalla'}
         </h4>
-        <p className="text-[9px] text-gray-500 leading-tight">Transmite pantalla.</p>
+        <p className="text-[8px] text-gray-500 leading-tight">Transmite PC</p>
       </div>
 
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-2.5 flex flex-col justify-center cursor-not-allowed">
-        <h4 className="font-bold text-[11px] text-gray-400 flex items-center gap-1.5 mb-0.5"><TerminalWindow size={14}/> Terminal</h4>
-        <p className="text-[9px] text-gray-500 leading-tight">Acceso CLI.</p>
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-1.5 flex flex-col justify-center cursor-not-allowed">
+        <h4 className="font-bold text-[9px] text-gray-400 flex items-center gap-1 mb-0.5"><MaskHappy size={12}/> RolPlay</h4>
+        <p className="text-[8px] text-gray-500 leading-tight">Personajes</p>
       </div>
 
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-2.5 flex flex-col justify-center cursor-not-allowed">
-        <h4 className="font-bold text-[11px] text-gray-400 flex items-center gap-1.5 mb-0.5"><PaintBrush size={14}/> UI Previews</h4>
-        <p className="text-[9px] text-gray-500 leading-tight">Render UI en vivo.</p>
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-1.5 flex flex-col justify-center cursor-not-allowed">
+        <h4 className="font-bold text-[9px] text-gray-400 flex items-center gap-1 mb-0.5"><Chats size={12}/> Talk</h4>
+        <p className="text-[8px] text-gray-500 leading-tight">Voz fluida</p>
       </div>
 
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-2.5 flex flex-col justify-center cursor-not-allowed">
-        <h4 className="font-bold text-[11px] text-gray-400 flex items-center gap-1.5 mb-0.5"><HardDrives size={14}/> Memoria</h4>
-        <p className="text-[9px] text-gray-500 leading-tight">Contexto RAG.</p>
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-1.5 flex flex-col justify-center cursor-not-allowed">
+        <h4 className="font-bold text-[9px] text-gray-400 flex items-center gap-1 mb-0.5"><TerminalWindow size={12}/> CLI</h4>
+        <p className="text-[8px] text-gray-500 leading-tight">Terminal</p>
       </div>
 
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-2.5 flex flex-col justify-center cursor-not-allowed">
-        <h4 className="font-bold text-[11px] text-gray-400 flex items-center gap-1.5 mb-0.5"><Scan size={14}/> Web Crawler</h4>
-        <p className="text-[9px] text-gray-500 leading-tight">Scraping profundo.</p>
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-1.5 flex flex-col justify-center cursor-not-allowed">
+        <h4 className="font-bold text-[9px] text-gray-400 flex items-center gap-1 mb-0.5"><PaintBrush size={12}/> UI</h4>
+        <p className="text-[8px] text-gray-500 leading-tight">Render vivo</p>
       </div>
 
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-2.5 flex flex-col justify-center cursor-not-allowed">
-        <h4 className="font-bold text-[11px] text-gray-400 flex items-center gap-1.5 mb-0.5"><CodeBlock size={14}/> Sandbox</h4>
-        <p className="text-[9px] text-gray-500 leading-tight">Ejecución aislada.</p>
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-1.5 flex flex-col justify-center cursor-not-allowed">
+        <h4 className="font-bold text-[9px] text-gray-400 flex items-center gap-1 mb-0.5"><HardDrives size={12}/> RAG</h4>
+        <p className="text-[8px] text-gray-500 leading-tight">Memoria</p>
       </div>
 
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-2.5 flex flex-col justify-center cursor-not-allowed">
-        <h4 className="font-bold text-[11px] text-gray-400 flex items-center gap-1.5 mb-0.5"><AppWindow size={14}/> Computer Use</h4>
-        <p className="text-[9px] text-gray-500 leading-tight">Control de GUI.</p>
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-1.5 flex flex-col justify-center cursor-not-allowed">
+        <h4 className="font-bold text-[9px] text-gray-400 flex items-center gap-1 mb-0.5"><Scan size={12}/> Crawler</h4>
+        <p className="text-[8px] text-gray-500 leading-tight">Scraping</p>
+      </div>
+
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-1.5 flex flex-col justify-center cursor-not-allowed">
+        <h4 className="font-bold text-[9px] text-gray-400 flex items-center gap-1 mb-0.5"><CodeBlock size={12}/> Sandbox</h4>
+        <p className="text-[8px] text-gray-500 leading-tight">Aislado</p>
+      </div>
+
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-1.5 flex flex-col justify-center cursor-not-allowed">
+        <h4 className="font-bold text-[9px] text-gray-400 flex items-center gap-1 mb-0.5"><AppWindow size={12}/> Control</h4>
+        <p className="text-[8px] text-gray-500 leading-tight">Computer</p>
       </div>
       
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-2.5 flex flex-col justify-center cursor-not-allowed">
-        <h4 className="font-bold text-[11px] text-gray-400 flex items-center gap-1.5 mb-0.5"><Network size={14}/> Enjambres</h4>
-        <p className="text-[9px] text-gray-500 leading-tight">Agentes paralelos.</p>
+      <div className="bg-black/40 border border-white/5 opacity-40 rounded-xl p-1.5 flex flex-col justify-center cursor-not-allowed">
+        <h4 className="font-bold text-[9px] text-gray-400 flex items-center gap-1 mb-0.5"><Network size={12}/> Enjambre</h4>
+        <p className="text-[8px] text-gray-500 leading-tight">Paralelo</p>
       </div>
     </div>
   );
