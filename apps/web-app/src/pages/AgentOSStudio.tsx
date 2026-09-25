@@ -697,7 +697,266 @@ const FlowArchitect: React.FC = () => {
           <h2 className="text-[20px] font-bold tracking-tight">AureliOS</h2>
         </div>
         <div className="flex items-center gap-4">
+          <button onClick={() => setSelectedChatAgentId('aurelios-core')} title="Reset to Core" className={`hover:brightness-125 transition-opacity ${t.text}`}>
+            <ArrowsClockwise size={18} />
+          </button>
+          <button onClick={clearChat} title="Limpiar chat" className={`hover:brightness-125 transition-opacity ${t.text}`}>
+            <Trash size={18} />
+          </button>
+
           
+          <button onClick={() => setShowSetup(true)} title="Configuración de Modelo y Tema" className={`hover:brightness-125 transition-opacity ${t.text}`}>
+            <Gear size={18} />
+          </button>
+          <button onClick={() => setShowSwarmSlider(!showSwarmSlider)} title="Ocultar/Mostrar herramientas" className={`hover:brightness-125 transition-opacity ${t.text} ${!showSwarmSlider ? 'opacity-50' : ''}`}>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M21.5,13.5C21.5,12.12 20.38,11 19,11C18.67,11 18.36,11.07 18.07,11.18L16,8H17C18.1,8 19,7.1 19,6C19,4.9 18.1,4 17,4H14V5C14,6.1 13.1,7 12,7C10.9,7 10,6.1 10,5V4H7C5.9,4 5,4.9 5,6C5,7.1 5.9,8 7,8H8L5.93,11.18C5.64,11.07 5.33,11 5,11C3.62,11 2.5,12.12 2.5,13.5C2.5,14.88 3.62,16 5,16H7.13L8.54,19.31C8.28,19.68 8.12,20.12 8.12,20.6C8.12,21.93 9.19,23 10.52,23C11.6,23 12.52,22.28 12.82,21.28L15.46,19.31C15.87,19.74 16.45,20 17.1,20C18.35,20 19.37,19.04 19.49,17.8L21.5,13.5Z" /></svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Model Pill (Always visible) */}
+      <div className="flex flex-col items-center gap-2 mb-2 relative z-10 px-4 pt-4 shrink-0">
+        {quantumPhase !== 'omni' && (
+          <div className="flex gap-2 items-center mx-auto">
+            <button onClick={() => document.getElementById("agent-carousel")?.scrollTo({ left: 0, behavior: "smooth" })} className={`w-2 h-2 rounded-full transition-colors duration-300 ${carouselSlide === 0 ? t.primary : "bg-gray-500 opacity-40"}`} />
+            <button onClick={() => document.getElementById("agent-carousel")?.scrollTo({ left: window.innerWidth, behavior: "smooth" })} className={`w-2 h-2 rounded-full transition-colors duration-300 ${carouselSlide === 1 ? t.primary : "bg-gray-500 opacity-40"}`} />
+          </div>
+        )}
+        
+        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/30 border border-white/5 shadow-inner text-[11px] font-mono tracking-widest text-emerald-400/90 font-semibold backdrop-blur-sm">
+          <Brain size={14} className="text-emerald-400" weight="duotone" />
+          <span>{selectedModel.startsWith('ollama/') ? `LOCAL | ${selectedModel.replace('ollama/', '')}` : `NUBE | ${selectedModel}`}</span>
+          {activeAgentName && quantumPhase !== 'omni' && (
+            <>
+              <span className="text-emerald-400/50">|</span>
+              <span className="text-cyan-400 flex items-center gap-1.5 animate-pulse">
+                <Robot size={12} weight="duotone" /> {activeAgentName}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className={`shrink-0 flex flex-col transition-all duration-300 overflow-hidden ${showSwarmSlider ? (quantumPhase === 'omni' ? 'h-[360px] opacity-100' : 'h-[240px] opacity-100') : 'h-0 opacity-0 !pb-0'}`}>
+        {quantumPhase === 'omni' ? (
+            <FreeChatCapabilitiesGrid />
+          ) : (
+        <div 
+          id="agent-carousel"
+          className="flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory gap-4 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          onScroll={(e) => {
+            const slide = Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth);
+            if (slide !== carouselSlide) setCarouselSlide(slide);
+          }}
+        >
+          {/* Slide 1: Swarms */}
+          <div className="shrink-0 w-full snap-center h-full flex flex-col pt-0 pb-2">
+            <div className="grid grid-cols-3 gap-1.5">
+              {/* Col 1: Enjambre Radar */}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[9px] font-bold tracking-widest uppercase opacity-70 mb-0.5 text-center flex justify-center items-center gap-1"><Wrench size={12} /> Radar</span>
+                {swarm1.map(tool => (
+                  <div key={tool.id} className="relative group">
+                    <button 
+                      onClick={() => setSelectedChatAgentId(tool.id)} 
+                      className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${selectedChatAgentId === tool.id ? `border-current ${t.primary}` : t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden ml-1">
+                        <div className="shrink-0">{tool.icon}</div>
+                        <span className={`text-[10px] font-bold truncate group-hover:brightness-125 transition-all ${selectedChatAgentId === tool.id ? t.primary : ""}`}>{tool.title}</span>
+                      </div>
+                      <div 
+                        onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
+                        className={` hover:brightness-125 ${t.primary} shrink-0 ml-1 cursor-pointer transition-opacity`}
+                        title="Escuchar descripción"
+                      >
+                        <SpeakerHigh size={12} weight="fill" />
+                      </div>
+                    </button>
+                    {/* Invisible custom tooltip */}
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-3 bg-black border border-[#444] text-[13px] text-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.9)] opacity-0 invisible group-hover:brightness-125 group-hover:visible transition-all z-[999] pointer-events-none text-center font-medium leading-relaxed">
+                      {tool.desc}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Col 2: Enjambre Inquisidor */}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[9px] font-bold tracking-widest uppercase opacity-70 mb-0.5 text-center flex justify-center items-center gap-1"><BugBeetle size={12} /> Inquisidor</span>
+                {swarm2.map(tool => (
+                  <div key={tool.id} className="relative group">
+                    <button 
+                      onClick={() => setSelectedChatAgentId(tool.id)} 
+                      className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${selectedChatAgentId === tool.id ? `border-current ${t.primary}` : t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden ml-1">
+                        <div className="shrink-0">{tool.icon}</div>
+                        <span className={`text-[10px] font-bold truncate group-hover:brightness-125 transition-all ${selectedChatAgentId === tool.id ? t.primary : ""}`}>{tool.title}</span>
+                      </div>
+                      <div 
+                        onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
+                        className={` hover:brightness-125 ${t.primary} shrink-0 ml-1 cursor-pointer transition-opacity`}
+                        title="Escuchar descripción"
+                      >
+                        <SpeakerHigh size={12} weight="fill" />
+                      </div>
+                    </button>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-3 bg-black border border-[#444] text-[13px] text-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.9)] opacity-0 invisible group-hover:brightness-125 group-hover:visible transition-all z-[999] pointer-events-none text-center font-medium leading-relaxed">
+                      {tool.desc}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Col 3: Enjambre Forja */}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[9px] font-bold tracking-widest uppercase opacity-70 mb-0.5 text-center flex justify-center items-center gap-1"><ShieldCheck size={12} /> Forja</span>
+                {swarm3.map(tool => (
+                  <div key={tool.id} className="relative group">
+                    <button 
+                      onClick={() => setSelectedChatAgentId(tool.id)} 
+                      className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${selectedChatAgentId === tool.id ? `border-current ${t.primary}` : t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden ml-1">
+                        <div className="shrink-0">{tool.icon}</div>
+                        <span className={`text-[10px] font-bold truncate group-hover:brightness-125 transition-all ${selectedChatAgentId === tool.id ? t.primary : ""}`}>{tool.title}</span>
+                      </div>
+                      <div 
+                        onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
+                        className={` hover:brightness-125 ${t.primary} shrink-0 ml-1 cursor-pointer transition-opacity`}
+                        title="Escuchar descripción"
+                      >
+                        <SpeakerHigh size={12} weight="fill" />
+                      </div>
+                    </button>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-3 bg-black border border-[#444] text-[13px] text-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.9)] opacity-0 invisible group-hover:brightness-125 group-hover:visible transition-all z-[999] pointer-events-none text-center font-medium leading-relaxed">
+                      {tool.desc}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Slide 2: Classic Agents */}
+          <div className="shrink-0 w-full snap-center h-full flex flex-col pt-0 pb-2">
+            <span className="text-[9px] font-bold tracking-widest uppercase opacity-70 mb-2 text-center flex justify-center items-center gap-1"><Wrench size={12} /> God-Tier Prompts</span>
+            <div className="grid grid-cols-3 gap-1.5">
+              {aiTools.map(tool => (
+                <div key={tool.id} className="relative group">
+                    <button 
+                      onClick={() => setSelectedChatAgentId(tool.id)} 
+                      className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${selectedChatAgentId === tool.id ? `border-current ${t.primary}` : t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden ml-1">
+                        <div className="shrink-0">{tool.icon}</div>
+                        <span className={`text-[11px] font-bold truncate group-hover:brightness-125 transition-all ${selectedChatAgentId === tool.id ? t.primary : ''}`}>{tool.title}</span>
+                      </div>
+                      <div 
+                        onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
+                        className={` hover:brightness-125 ${t.primary} shrink-0 ml-2 cursor-pointer transition-opacity`}
+                        title="Escuchar descripción"
+                      >
+                        <SpeakerHigh size={14} weight="fill" />
+                      </div>
+                    </button>
+                    {/* Invisible custom tooltip */}
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-3 bg-black border border-[#444] text-[13px] text-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.9)] opacity-0 invisible group-hover:brightness-125 group-hover:visible transition-all z-[999] pointer-events-none text-center font-medium leading-relaxed">
+                      {tool.desc}
+                    </div>
+                  </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        )}
+      </div>
+
+      {/* Chat History / Invisible Scroll */}
+      <div className="flex-1 overflow-y-auto px-4 py-2 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {chatMessages.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-center  text-base px-8 font-medium leading-relaxed">
+            Selecciona un pilar de AureliOS o escribe tu visión arquitectónica para comenzar.
+          </div>
+        ) : (
+          chatMessages.map(msg => (
+            <div key={msg.id} className={`flex flex-col max-w-[90%] min-w-0 ${msg.role === 'human' ? 'ml-auto' : 'mr-auto'}`}>
+              <div className={`p-3 text-[14px] leading-relaxed break-words ${
+                msg.role === 'human' ? `${t.humanBubble} rounded-xl rounded-tr-sm font-medium` : `${t.aiBubble} border rounded-xl rounded-tl-sm shadow-sm`
+              } transition-colors duration-500`}>
+                <div className={msg.role === 'agent' ? `markdown-body max-w-none break-words ${t.text}` : 'whitespace-pre-wrap'}>
+                  {msg.role === 'agent' ? (
+                    <ReactMarkdown>
+                      {msg.content}
+                    </ReactMarkdown>
+                  ) : (
+                    msg.content
+                  )}
+                </div>
+              </div>
+              {msg.role === 'human' && (
+                <div className="flex justify-end mt-1 px-1">
+                  <button 
+                    onClick={() => navigator.clipboard.writeText(msg.content)}
+                    className="text-zinc-500 hover:text-blue-400 transition-colors"
+                    title="Copiar mensaje"
+                  >
+                    <Copy size={14} />
+                  </button>
+                </div>
+              )}
+              {msg.role === 'agent' && (
+                <div className={`flex items-center gap-3 mt-1.5 px-1 text-[11px] font-bold ${t.primary} uppercase tracking-widest opacity-75 flex-nowrap`}>
+                  <Cpu size={12} />
+                  <span className="opacity-90 normal-case font-semibold truncate max-w-[160px]">{msg.model || 'AureliOS'}</span>
+                  <Clock size={12} className="opacity-50 ml-1 shrink-0" />
+                  <span className="opacity-50 normal-case font-semibold whitespace-nowrap">{new Date(parseInt(msg.id) > 10000000000 ? parseInt(msg.id) : Date.now()).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}</span>
+                  <div className="flex items-center gap-2 ml-auto shrink-0">
+                    <button onClick={() => navigator.clipboard.writeText(msg.content)} title="Copiar" style={{all:'unset',cursor:'pointer'}} className="hover:opacity-100 opacity-60 transition-opacity"><Copy size={13} /></button>
+                    <button onClick={() => speak(msg.content)} title="Escuchar" style={{all:'unset',cursor:'pointer'}} className="hover:opacity-100 opacity-60 transition-opacity"><SpeakerHigh size={13} /></button>
+                    <button onClick={handleRegenerate} title="Regenerar" style={{all:'unset',cursor:'pointer'}} className="hover:opacity-100 opacity-60 transition-opacity"><ArrowsClockwise size={13} /></button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+        {isTyping && (
+          <div className="flex flex-col max-w-[85%] mr-auto mt-4">
+            <div className={`p-4 rounded-xl rounded-tl-sm shadow-sm font-medium ${t.aiBubble} border animate-pulse flex items-center gap-3`}>
+              <div className="flex gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" style={{ animationDelay: '300ms' }}></span>
+              </div>
+              <span className="text-sm tracking-wide">{thinkingPhrase}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Input Box */}
+      <div className="shrink-0 px-4 pt-2 mb-5">
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            className={`flex-1 ${t.inputBg} border rounded-xl px-4 py-3 text-base placeholder- focus:outline-none ${t.inputFocus} shadow-inner transition-colors duration-500`}
+            placeholder={`Comanda a ${selectedAgentData.title}...`}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+          />
+          {isTyping ? (
+            <button
+              onClick={handleStop}
+              className={`px-4 py-3 rounded-xl transition-all shadow-md flex items-center justify-center shrink-0 bg-red-600/20 text-red-500 hover:bg-red-600/30 border border-red-500/50`}
+              title="Detener ejecución"
+            >
+              <span className="text-sm font-bold uppercase tracking-wider">Detener</span>
+            </button>
+          ) : (
+            <>
+              
                 <button
                   onClick={toggleListen}
                   className={`p-3 rounded-xl transition-all shadow-md flex items-center justify-center shrink-0 ${
