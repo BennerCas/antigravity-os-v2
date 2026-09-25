@@ -56,7 +56,7 @@ export default function AgentOS() {
         {/* TAB NAVIGATION */}
         {[
           { id:'studio', label:'The AureliOS', icon:<Target size={15}/> },
-          { id:'infinityboard', label:'InfinityBoard', icon:<Kanban size={15}/> },
+          // { id:'infinityboard', label:'InfinityBoard', icon:<Kanban size={15}/> }, // Movido a AgentOSStudio
           { id:'agentland', label:'Agentland', icon:<HardDrives size={15}/> },
           { id:'interact', label:'Interactuar', icon:<ChatCircle size={15}/> },
           { id:'flowboard', label:'Flowboard', icon:<Graph size={15}/> },

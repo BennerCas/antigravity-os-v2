@@ -5,6 +5,7 @@ import { useStudioStore } from '../../stores/useStudioStore';
 import { useHistoryStore } from '../../stores/useHistoryStore';
 import { CheckCircle, XCircle, Clock, Info, ListChecks, Target, Brain, Robot, SpeakerHigh, Trash, CheckSquare, Square, Lightning, Crosshair, RocketLaunch, Checks, TrendUp, PaintBrush, Database, Globe, TerminalWindow, File, UploadSimple, CodeBlock, HardDrives, Scan, Network, AppWindow, Layout, ClockCounterClockwise, Microphone } from '@phosphor-icons/react';
 import { WS_STUDIO_ACTIVITY_URL } from '../../lib/api';
+import { CanvasTabs } from '../../pages/AgentOSStudio';
 
 const SwarmOrchestrationPanel: React.FC = () => {
   const {
@@ -490,7 +491,7 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
                   <div 
                     onClick={() => {
                       if (phase3Complete) {
-                        window.dispatchEvent(new CustomEvent('agentos:navigate', { detail: { view: 'infinityboard', fitView: true } }));
+                        useStudioStore.getState().setZone2ActiveTab('infinityboard');
                       }
                     }}
                     className={`p-4 rounded-xl border transition-all ${phase3Complete ? 'cursor-pointer hover:scale-[1.02]' : 'cursor-not-allowed'} ${
@@ -835,6 +836,12 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
         )}
       </div>
       
+      
+            {/* InfinityBoard Tab */}
+            <div className={zone2ActiveTab === 'infinityboard' ? 'flex-1 flex flex-col h-full bg-[#030712] relative overflow-hidden' : 'hidden'}>
+               <CanvasTabs />
+            </div>
+
       <style dangerouslySetInnerHTML={{__html: `
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }

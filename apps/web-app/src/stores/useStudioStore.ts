@@ -42,8 +42,8 @@ interface StudioState {
   // Zones 1 and 2
   activityLogs: ActivityLog[];
   addActivityLog: (log: Omit<ActivityLog, 'id' | 'timestamp'>) => void;
-  zone2ActiveTab: 'okr' | 'phases' | 'history';
-  setZone2ActiveTab: (tab: 'okr' | 'phases' | 'history') => void;
+  zone2ActiveTab: 'okr' | 'phases' | 'history' | 'infinityboard';
+  setZone2ActiveTab: (tab: 'okr' | 'phases' | 'history' | 'infinityboard') => void;
 
   // FreeChat Mode
   isFreeChat: boolean;
