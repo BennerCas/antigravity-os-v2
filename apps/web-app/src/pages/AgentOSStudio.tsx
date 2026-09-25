@@ -1721,14 +1721,7 @@ const ArchitectureBlueprint: React.FC = () => {
     }
   };
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'discovery': return <FlowDiagram />;
-      case 'synthesis': return <AgentCarousel />;
-      case 'blueprint': return <ArchitectureBlueprint />;
-      default: return null;
-    }
-  };
+  const renderContent = () => <FlowDiagram />;
 
   const recoverBaseFlow = () => {
     const { phase3Content, agentCards, setFlow, saveFlowState } = useStudioStore.getState();
@@ -1798,26 +1791,9 @@ const ArchitectureBlueprint: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'transparent', minHeight: 0 }}>
       <div className="flex shrink-0 h-16 bg-transparent items-center pr-4">
-        <div className="flex h-full">
-          {(['discovery', 'synthesis', 'blueprint'] as TabId[]).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              style={{ borderRadius: 0, borderTop: 'none', borderLeft: 'none', borderRight: 'none' }}
-              className={`px-6 h-full font-medium text-sm transition-colors flex items-center border-b-2 ${
-                activeTab === tab
-                  ? 'text-blue-400 border-blue-400 bg-white/5'
-                  : 'text-gray-400 border-transparent hover:text-gray-200 hover:bg-white/5'
-              }`}
-            >
-              {tab === 'discovery' && '1 Descubrir'}
-              {tab === 'synthesis' && '2 Sintetizar'}
-              {tab === 'blueprint' && '3 Blueprint'}
-            </button>
-          ))}
-        </div>
+        
         <div className="flex-1" />
-        {activeTab === 'discovery' && (
+        {true && (
           <div className="flex items-center gap-3">
             <div className="flex bg-black/40 rounded-full overflow-hidden border border-white/10">
               <button 
