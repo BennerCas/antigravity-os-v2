@@ -446,7 +446,7 @@ const FlowArchitect: React.FC = () => {
                try {
                  const topologyMatch = data.reply.match(/<topology>([\s\S]*?)<\/topology>/);
                  if (topologyMatch) {
-                    const { parseAIResponseToFlow } = useStudioStore.getState();
+                    
                     const { nodes, edges } = parseAIResponseToFlow(topologyMatch[0]);
                     useStudioStore.getState().setFlow(nodes, edges);
                     useStudioStore.getState().setZone2ActiveTab('infinityboard');

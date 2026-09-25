@@ -111,8 +111,8 @@ interface StudioState {
   setPhase3Content: (text: string | null) => void;
   setTriageSummary: (text: string | null) => void;
 
-  quantumPhase: 'phase1_triage' | 'phase2_extraction' | 'phase3_blueprint';
-  setQuantumPhase: (phase: 'phase1_triage' | 'phase2_extraction' | 'phase3_blueprint') => void;
+  quantumPhase: 'omni' | 'phase1_triage' | 'phase2_extraction' | 'phase3_blueprint';
+  setQuantumPhase: (phase: 'omni' | 'phase1_triage' | 'phase2_extraction' | 'phase3_blueprint') => void;
 
   // Focus mode (AgentCarousel)
   focusedAgent: AgentCard | null;
@@ -219,8 +219,8 @@ function extractTools(desc: string): string[] {
     // LEGACY FALLBACK
     const lines = text.split('\n');
   const cards: AgentCard[] = [];
-  const nodes: Node[] = [];
-  const edges: Edge[] = [];
+  nodes.length = 0;
+  edges.length = 0;
   const headingRe  = /^#{1,4}\s+(.{3,60})/;
   const bulletRe   = /^[-*•]\s+\*{0,2}(.{3,60?})\*{0,2}[:—–]/;
   const numberedRe = /^\d+[.)]\s+\*{0,2}(.{3,60})\*{0,2}/;

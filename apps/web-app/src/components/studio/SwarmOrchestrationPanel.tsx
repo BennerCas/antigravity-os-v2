@@ -13,7 +13,7 @@ const SwarmOrchestrationPanel: React.FC = () => {
     zone2ActiveTab, setZone2ActiveTab,
     phase1Interview,
     phase1Complete, phase2Complete, phase3Complete,
-    phase2Content, phase3Content, triageSummary, isFreeChat
+    phase2Content, phase3Content, triageSummary, quantumPhase
   } = useStudioStore();
 
   const { historyItems, loadHistoryItem, deleteHistoryItem, currentHistoryId } = useHistoryStore();
@@ -207,7 +207,7 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
       
       {/* ZONE 2: Results Panel */}
       <div className="flex-1 min-w-0 h-full flex flex-col bg-[var(--surface-canvas)]">
-        {isFreeChat ? null : (
+        {quantumPhase === 'omni' && zone2ActiveTab !== 'infinityboard' ? null : (
           <>
             {/* Sandwich Menu */}
             <div className="flex items-center h-16 px-4 gap-2 border-b border-[var(--stroke-subtle)] shrink-0 bg-[var(--surface-canvas)]">
