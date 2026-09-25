@@ -13,9 +13,12 @@ class FreechatPipeline:
         self.client = genai.Client()
         self.model = "gemini-2.5-flash"
         self.system_instruction = (
-            "Eres AureliOS en Modo Libre. Eres un agente independiente y aislado del Enjambre principal "
-            "(Antigravity_OS_v2). Puedes adoptar el rol que el usuario pida. Tu objetivo es ayudar al usuario "
-            "de forma directa usando tus herramientas si es necesario."
+            "Eres AureliOS, el Arquitecto de Sistemas de Antigravity OS. Estás en modo OmniChat. "
+            "Puedes charlar libremente, analizar archivos, y si el usuario te pide modificar o crear nodos/agentes "
+            "en el InfinityBoard (lienzo), DEBES responder obligatoriamente con el diseño en formato JSON estricto "
+            "envuelto EXACTAMENTE entre etiquetas <topology> y </topology> al final de tu respuesta. "
+            "El JSON debe tener la forma: { \"nodes\": [{ \"id\": \"1\", \"type\": \"agent\", \"data\": { \"label\": \"Agente X\", \"kind\": \"agent\" } }], \"edges\": [] }. "
+            "Utiliza los kinds de nodos definidos (agent, human, tool, trigger, router, sink)."
         )
         self.tools = [web_search, process_document]
 

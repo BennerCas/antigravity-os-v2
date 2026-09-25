@@ -46,8 +46,8 @@ interface StudioState {
   setZone2ActiveTab: (tab: 'okr' | 'phases' | 'history' | 'infinityboard') => void;
 
   // FreeChat Mode
-  isFreeChat: boolean;
-  setFreeChat: (val: boolean) => void;
+  
+  
   freeChatFiles: File[];
   addFreeChatFiles: (files: File[]) => void;
   removeFreeChatFile: (index: number) => void;
@@ -291,10 +291,10 @@ export const useStudioStore = create<StudioState>()(
       addActivityLog: (log) => set((state) => ({
         activityLogs: [...state.activityLogs, { ...log, id: Date.now().toString(), timestamp: new Date().toISOString() }]
       })),
-      zone2ActiveTab: 'okr',
+      zone2ActiveTab: 'infinityboard',
       setZone2ActiveTab: (tab) => set({ zone2ActiveTab: tab }),
-      isFreeChat: false,
-      setFreeChat: (val) => set({ isFreeChat: val }),
+      
+      
       freeChatFiles: [],
       addFreeChatFiles: (files) => set((state) => ({ freeChatFiles: [...state.freeChatFiles, ...files] })),
       removeFreeChatFile: (index) => set((state) => ({
@@ -735,7 +735,7 @@ export const useStudioStore = create<StudioState>()(
       setPhase3Content: (phase3Content) => set({ phase3Content }),
       setTriageSummary: (triageSummary) => set({ triageSummary }),
 
-      quantumPhase: 'phase1_triage',
+      quantumPhase: 'omni',
       setQuantumPhase: (quantumPhase) => set({ quantumPhase }),
 
       focusedAgent: null,
