@@ -508,7 +508,7 @@ async def run_blueprint_swarm(data: Any):
         {
             "id": "forja-arquitecto",
             "name": "Forjador",
-            "prompt": "Eres el Forjador (System Designer). Tu rol es traducir la estrategia en una topologia estricta para React Flow. TAREA: Devuelve tu respuesta en dos partes: 1. Una breve introduccion amigable en Markdown. 2. AL FINAL, un bloque XML <topology> con un objeto JSON (claves: 'nodes' y 'edges'). Cada nodo: 'id', 'label', 'kind' (agent, trigger, tool, router, human, sink), 'description', 'tools' (lista). Cada edge: 'source', 'target'. Ejemplo: <topology> {"nodes": [{"id":"1", "label":"API", "kind":"tool", "description":"Fetch data", "tools":["http"]}], "edges":[]} </topology>"
+            "prompt": "Eres el Forjador (System Designer). Tu rol es traducir la estrategia en una topologia estricta para React Flow. TAREA: Devuelve tu respuesta en dos partes: 1. Una breve introduccion amigable en Markdown. 2. AL FINAL, un bloque XML <topology> con un objeto JSON (claves: 'nodes' y 'edges'). Cada nodo: 'id', 'label', 'kind' (agent, trigger, tool, router, human, sink), 'description', 'tools' (lista). Cada edge: 'source', 'target'. Ejemplo: <topology> {\"nodes\": [{\"id\":\"1\", \"label\":\"API\", \"kind\":\"tool\", \"description\":\"Fetch data\", \"tools\":[\"http\"]}], \"edges\":[]} </topology>"
         },
         {
             "id": "forja-revisor",

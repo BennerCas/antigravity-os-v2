@@ -39,6 +39,13 @@ export interface ActivityLog {
 }
 
 interface StudioState {
+
+  // Axiomas Parameters
+  quantumFriction: number;
+  setQuantumFriction: (val: number) => void;
+  atlasFileName: string | null;
+  setAtlasFileName: (name: string | null) => void;
+
   // Zones 1 and 2
   activityLogs: ActivityLog[];
   addActivityLog: (log: Omit<ActivityLog, 'id' | 'timestamp'>) => void;
@@ -110,6 +117,10 @@ interface StudioState {
   setPhase2Content: (text: string | null) => void;
   setPhase3Content: (text: string | null) => void;
   setTriageSummary: (text: string | null) => void;
+  showLegend: boolean;
+  setShowLegend: (v: boolean) => void;
+  showMiniMap: boolean;
+  setShowMiniMap: (v: boolean) => void;
 
   quantumPhase: 'omni' | 'phase1_triage' | 'phase2_extraction' | 'phase3_blueprint';
   setQuantumPhase: (phase: 'omni' | 'phase1_triage' | 'phase2_extraction' | 'phase3_blueprint') => void;
@@ -283,6 +294,12 @@ function extractTools(desc: string): string[] {
 export const useStudioStore = create<StudioState>()(
   persist(
     (set) => ({
+
+      // Axiomas Parameters
+      quantumFriction: 50,
+      setQuantumFriction: (val) => set({ quantumFriction: val }),
+      atlasFileName: null,
+      setAtlasFileName: (name) => set({ atlasFileName: name }),
       activeTab: 'discovery',
       setActiveTab: (tab) => set({ activeTab: tab }),
       activityLogs: [
@@ -734,6 +751,10 @@ export const useStudioStore = create<StudioState>()(
       setPhase2Content: (phase2Content) => set({ phase2Content }),
       setPhase3Content: (phase3Content) => set({ phase3Content }),
       setTriageSummary: (triageSummary) => set({ triageSummary }),
+        showLegend: false,
+        setShowLegend: (showLegend) => set({ showLegend }),
+        showMiniMap: false,
+        setShowMiniMap: (showMiniMap) => set({ showMiniMap }),
 
       quantumPhase: 'omni',
       setQuantumPhase: (quantumPhase) => set({ quantumPhase }),
@@ -770,7 +791,12 @@ export const useStudioStore = create<StudioState>()(
         phase3Complete: state.phase3Complete,
         zone2ActiveTab: state.zone2ActiveTab,
         quantumPhase: state.quantumPhase,
+        quantumFriction: state.quantumFriction,
+        atlasFileName: state.atlasFileName,
       }),
     }
   )
 );
+
+
+

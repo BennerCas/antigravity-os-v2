@@ -3,7 +3,7 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useStudioStore } from '../../stores/useStudioStore';
 import { useHistoryStore } from '../../stores/useHistoryStore';
-import { CheckCircle, XCircle, Clock, Info, ListChecks, Target, Brain, Robot, SpeakerHigh, Trash, CheckSquare, Square, Lightning, Crosshair, RocketLaunch, Checks, TrendUp, PaintBrush, Database, Globe, TerminalWindow, File, UploadSimple, CodeBlock, HardDrives, Scan, Network, AppWindow, Layout, ClockCounterClockwise, Microphone, Graph } from '@phosphor-icons/react';
+import { CheckCircle, XCircle, Clock, Info, ListChecks, Target, Brain, Robot, SpeakerHigh, Trash, CheckSquare, Square, Lightning, Crosshair, RocketLaunch, Checks, TrendUp, PaintBrush, Database, Globe, TerminalWindow, File, UploadSimple, CodeBlock, HardDrives, Scan, Network, AppWindow, Layout, ClockCounterClockwise, Microphone } from '@phosphor-icons/react';
 import { WS_STUDIO_ACTIVITY_URL } from '../../lib/api';
 import { CanvasTabs } from '../../pages/AgentOSStudio';
 
@@ -207,7 +207,7 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
       
       {/* ZONE 2: Results Panel */}
       <div className="flex-1 min-w-0 h-full flex flex-col bg-[var(--surface-canvas)]">
-        {false ? null : (
+        {quantumPhase === 'omni' && zone2ActiveTab !== 'infinityboard' ? null : (
           <>
             {/* Sandwich Menu */}
             <div className="flex items-center h-16 px-4 gap-2 border-b border-[var(--stroke-subtle)] shrink-0 bg-[var(--surface-canvas)]">
@@ -217,20 +217,13 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
           >
             <Target size={16} /> OKR's &amp; Checklist
           </button>
-          
           <button 
-              onClick={() => setZone2ActiveTab('infinityboard')}
-              className={`px-4 py-2 rounded text-xs font-bold flex items-center gap-2 transition-all ${zone2ActiveTab === 'infinityboard' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'text-zinc-500 hover:text-[var(--text-primary)]'}`}
-            >
-              <Graph size={16} /> Logos
-            </button>
-            <button 
-              onClick={() => setZone2ActiveTab('blueprint')}
-              className={`px-4 py-2 rounded text-xs font-bold flex items-center gap-2 transition-all ${zone2ActiveTab === 'blueprint' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'text-zinc-500 hover:text-[var(--text-primary)]'}`}
-            >
-              <File size={16} /> Blueprint
-            </button>
-            <button 
+            onClick={() => setZone2ActiveTab('phases')}
+            className={`px-4 py-2 rounded text-xs font-bold flex items-center gap-2 transition-all ${zone2ActiveTab === 'phases' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30' : 'text-zinc-500 hover:text-[var(--text-primary)]'}`}
+          >
+            <Layout size={16} /> Fases
+          </button>
+          <button 
             onClick={() => setZone2ActiveTab('history')}
             className={`px-4 py-2 rounded text-xs font-bold flex items-center gap-2 transition-all ${zone2ActiveTab === 'history' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' : 'text-zinc-500 hover:text-[var(--text-primary)]'}`}
           >
@@ -412,7 +405,7 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
                       </h4>
                       <p className="text-zinc-500 text-sm max-w-sm mx-auto leading-relaxed">
                         {phase1Interview 
-                          ? "Responde las preguntas en el chat para que AureliOS extraiga el Requerimiento Principal."
+                          ? "Responde las preguntas en la pestaña Fases para que AureliOS extraiga el Requerimiento Principal."
                           : "Escribe en el chat qué quieres construir. AureliOS despertará al Enjambre 1 para entrevistarte."}
                       </p>
                     </div>
@@ -430,7 +423,7 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
                   
                   {/* Step 1 */}
                   <div 
-                    
+                    onClick={() => setZone2ActiveTab('phases')}
                     className={`p-4 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] ${
                     phase1Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 
                     phase1Interview ? 'border-blue-500/50 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.1)]' : 
@@ -452,7 +445,7 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
 
                   {/* Step 2 */}
                   <div 
-                    
+                    onClick={() => setZone2ActiveTab('phases')}
                     className={`p-4 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] ${
                     phase2Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 
                     (phase1Complete && !phase2Complete) ? 'border-purple-500/50 bg-purple-500/10 shadow-[0_0_15px_rgba(168,85,247,0.1)]' : 
@@ -474,7 +467,7 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
 
                   {/* Step 3 */}
                   <div 
-                    
+                    onClick={() => setZone2ActiveTab('phases')}
                     className={`p-4 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] ${
                     phase3Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 
                     (phase2Complete && !phase3Complete) ? 'border-amber-500/50 bg-amber-500/10 shadow-[0_0_15px_rgba(245,158,11,0.1)]' : 
@@ -523,28 +516,267 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
             </div>
           </div>
 
-                    {/* 📜 Blueprint Tab */}
-          <div className={zone2ActiveTab === 'blueprint' ? 'flex-1 flex flex-col h-full bg-[var(--surface-canvas)] relative overflow-hidden' : 'hidden'}>
-            <div className="shrink-0 pt-8 pb-4 px-8 border-b border-[var(--stroke-subtle)] bg-zinc-900/30">
-               <h2 className="text-xl text-[var(--text-primary)] font-semibold flex items-center gap-2">
-                 <File size={24} className="text-amber-400" /> Códice Técnico (Blueprint)
-               </h2>
-               <p className="text-sm text-zinc-400 mt-1">El documento sagrado de arquitectura generado por AureliOS.</p>
-            </div>
+                    {/* ── Fases (Columnas 1, 2 y 3) ── */}
+          <div className={zone2ActiveTab === 'phases' ? 'flex-1 flex w-full h-full relative overflow-hidden bg-zinc-900/50' : 'hidden'}>
             
-            <div className="flex-1 overflow-y-auto px-10 py-8 custom-scrollbar">
-              {phase3Content ? (
-                <div className="text-[14px] leading-relaxed markdown-body animate-fade-in text-[var(--text-primary)] max-w-4xl mx-auto">
-                  <ReactMarkdown>{phase3Content}</ReactMarkdown>
+            {/* ── Columna 1: Triage ── */}
+            <div className="flex-1 flex flex-col h-full border-r border-[var(--stroke-subtle)] bg-[var(--surface-canvas)]">
+              <div className="shrink-0 pt-5 pb-4 px-6 border-b border-[var(--stroke-subtle)] bg-zinc-900/30">
+                <h2 className="text-[15px] text-[var(--text-primary)] font-semibold flex items-center gap-2">
+                  <Brain size={18} weight="duotone" className="text-blue-400" /> Fase 1: Entrevista de Triaje
+                </h2>
+              </div>
+              <div className="flex-1 overflow-y-auto px-6 py-4 custom-scrollbar">
+                {phase1Interview ? (
+                  <div className="text-[13px] leading-relaxed markdown-body animate-fade-in text-[var(--text-primary)]">
+                    {phase1Interview.split('===USER_ANSWER_START===').map((chunk1, i) => {
+                      if (i === 0) return <ReactMarkdown key={i}>{chunk1}</ReactMarkdown>;
+                      const parts = chunk1.split('===USER_ANSWER_END===');
+                      return (
+                        <React.Fragment key={i}>
+                          <div className="user-answer-block font-medium my-4 pl-4 border-l-2 border-emerald-400/50 bg-emerald-400/5 p-3 rounded-r-lg">
+                            <ReactMarkdown>{parts[0]}</ReactMarkdown>
+                          </div>
+                          {parts[1] && <ReactMarkdown>{parts[1]}</ReactMarkdown>}
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-zinc-500 text-center gap-3">
+                    <Brain size={28} weight="duotone" />
+                    <p className="text-xs">AureliOS está esperando tu petición en el chat.</p>
+                  </div>
+                )}
+              </div>
+              {!phase1Complete ? (
+                <div className="shrink-0 bg-black p-4 border-t border-[var(--stroke-subtle)] h-[160px] flex flex-col justify-end gap-3">
+                  <textarea 
+                    id="phase1-input"
+                    className="w-full h-20 p-3 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-blue-500/50 resize-none custom-scrollbar"
+                    placeholder="Escribe tu respuesta..."
+                  />
+                  <div className="flex justify-between items-center">
+                    <button className="p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors" title="Micrófono">
+                      <Microphone size={16} />
+                    </button>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={async () => {
+                          if (!phase1Interview) return;
+                          const textarea = document.getElementById('phase1-input') as HTMLTextAreaElement;
+                          const prevValue = textarea.value;
+                          textarea.value = "Generando respuesta con GenAI...";
+                          textarea.disabled = true;
+                          try {
+                            const hasText = prevValue.trim().length > 0;
+                            const prompt = hasText
+                              ? `Mejora, ordena y da formato profesional coherente a mi siguiente respuesta (NO inventes información, solo pule mi idea):\n\n${prevValue}`
+                              : `Actúa como el usuario experto o product owner. Responde a la siguiente entrevista de Triage de manera clara, creativa y directa, inventando los requerimientos lógicos que falten para que el proyecto sea viable.\n\nREGLAS ESTRICTAS:\n1. Responde OBLIGATORIAMENTE en ESPAÑOL.\n2. PROHIBIDO usar formato Markdown.\n3. Estructura de forma numerada.\n\nENTREVISTA:\n${phase1Interview}`;
+                            const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001/api/v1';
+                            const modelToUse = localStorage.getItem('aurelios_model') || 'free.ai/auto';
+                            const res = await fetch(`${API_URL}/studio/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: prompt, model: modelToUse }) });
+                            const data = await res.json();
+                            if (res.ok) textarea.value = data.response;
+                            else { textarea.value = "Error GenAI: " + (data.detail || "Error"); setTimeout(() => { textarea.value = prevValue; }, 3000); }
+                          } catch (e: any) { textarea.value = "Error de red."; setTimeout(() => { textarea.value = prevValue; }, 3000); }
+                          finally { textarea.disabled = false; }
+                        }}
+                        className="px-3 py-1.5 bg-purple-600/10 border border-purple-500/30 hover:bg-purple-600/20 text-purple-300 rounded-lg text-[11px] font-bold transition-colors flex items-center gap-1.5"
+                      >
+                        <Robot size={14} weight="duotone" /> GenAI
+                      </button>
+                      <button 
+                        onClick={() => {
+                          const val = (document.getElementById('phase1-input') as HTMLTextAreaElement).value;
+                          if (!val.trim() || val.includes("Generando")) return;
+                          const trigger = useStudioStore.getState().triggerChatSend;
+                          if (trigger) {
+                            const current = useStudioStore.getState().phase1Interview || '';
+                            useStudioStore.getState().setPhase1Interview(current + `\n\n---\n**💡 Tus respuestas enviadas:**\n\n===USER_ANSWER_START===\n${val}\n===USER_ANSWER_END===\n\n---\n*AureliOS está analizando tus respuestas...*`);
+                            (document.getElementById('phase1-input') as HTMLTextAreaElement).value = '';
+                            trigger("--- [Respuesta del usuario] ---\n" + val);
+                          }
+                        }}
+                        className="px-3 py-1.5 bg-white text-black hover:bg-zinc-200 rounded-lg text-[11px] font-bold transition-colors"
+                      >
+                        Enviar
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center h-full text-zinc-500 text-center gap-4">
-                  <File size={48} weight="duotone" className="opacity-20" />
-                  <p className="text-sm max-w-md">El Códice está en blanco. AureliOS escribirá aquí la arquitectura detallada (Blueprint) una vez que el Logos haya sido definido.</p>
+                <div className="shrink-0 bg-zinc-950 border-t border-[#eab308]/20 p-4 flex items-center justify-center text-[#eab308] h-[160px]">
+                  <div className="flex items-center gap-2 text-sm font-bold">
+                    <CheckCircle size={18} weight="fill" /> Fase 1: Triaje aprobada
+                  </div>
                 </div>
               )}
             </div>
+
+            {/* ── Columna 2: Extracción ── */}
+            <div className="flex-1 flex flex-col h-full border-r border-[var(--stroke-subtle)] bg-[var(--surface-canvas)]">
+              <div className="shrink-0 pt-5 pb-4 px-6 border-b border-[var(--stroke-subtle)] bg-zinc-900/30">
+                <h2 className="text-[15px] text-[var(--text-primary)] font-semibold flex items-center gap-2">
+                  <Robot size={18} weight="duotone" className="text-purple-400" /> Fase 2: Extracción
+                </h2>
+              </div>
+              <div className="flex-1 overflow-y-auto px-6 py-4 custom-scrollbar">
+                {phase2Content ? (
+                  <div className="text-[13px] leading-relaxed markdown-body animate-fade-in text-[var(--text-primary)]">
+                    <ReactMarkdown>{phase2Content}</ReactMarkdown>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-zinc-500 text-center gap-3">
+                    <Robot size={28} weight="duotone" />
+                    <p className="text-xs">Esperando aprobación de Fase 1.</p>
+                  </div>
+                )}
+              </div>
+              {!phase2Content && (
+                <div className="shrink-0 bg-[var(--surface-canvas)] border-t border-[var(--stroke-subtle)] h-[160px]" />
+              )}
+              {phase2Content && !phase2Complete && (
+                <div className="shrink-0 bg-black p-4 border-t border-[var(--stroke-subtle)] h-[160px] flex flex-col justify-end gap-3">
+                  <textarea 
+                    id="phase2-input"
+                    className="w-full h-20 p-3 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-purple-500/50 resize-none custom-scrollbar"
+                    placeholder="Escribe 'Acepto' o indica tus modificaciones..."
+                  />
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <button className="p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors" title="Micrófono">
+                        <Microphone size={16} />
+                      </button>
+                      <label className="flex items-center gap-1.5 text-xs text-zinc-400 cursor-pointer hover:text-white transition-colors">
+                        <input 
+                          type="checkbox" 
+                          checked={isPromptChecked}
+                          onChange={(e) => setIsPromptChecked(e.target.checked)}
+                          className="w-3.5 h-3.5 accent-purple-500 rounded bg-zinc-900 border-zinc-700" 
+                        />
+                        Prompt
+                      </label>
+                    </div>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={async () => {
+                          const textarea = document.getElementById('phase2-input') as HTMLTextAreaElement;
+                          const prevValue = textarea.value;
+                          if (!prevValue.trim()) {
+                            // GenAI Automático sin texto
+                            textarea.value = "Generando modificación automática con GenAI...";
+                            textarea.disabled = true;
+                            try {
+                              const prompt = `Analiza este contrato técnico y genera una revisión o corrección automática para mejorarlo según las buenas prácticas: \n${phase2Content}`;
+                              const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001/api/v1';
+                              const modelToUse = localStorage.getItem('aurelios_model') || 'free.ai/auto';
+                              const res = await fetch(`${API_URL}/studio/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: prompt, model: modelToUse }) });
+                              const data = await res.json();
+                              if (res.ok) textarea.value = data.response;
+                              else { textarea.value = "Error GenAI"; setTimeout(() => { textarea.value = prevValue; }, 3000); }
+                            } catch (e) { textarea.value = "Error de red."; setTimeout(() => { textarea.value = prevValue; }, 3000); }
+                            finally { textarea.disabled = false; }
+                          } else {
+                            // GenAI con texto
+                            textarea.disabled = true;
+                            const original = textarea.value;
+                            textarea.value = "Procesando con GenAI...";
+                            try {
+                              const prompt = isPromptChecked 
+                                ? `Actúa como asistente técnico. Tienes este contrato: \n${phase2Content}\n\nAplica estrictamente esta instrucción del usuario para modificarlo y entrégalo en el mismo formato:\n"${original}"`
+                                : `Mejora, ordena y da formato profesional coherente a mis correcciones sobre el contrato (NO inventes información, solo pule mis palabras):\n"${original}"`;
+                              const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001/api/v1';
+                              const modelToUse = localStorage.getItem('aurelios_model') || 'free.ai/auto';
+                              const res = await fetch(`${API_URL}/studio/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: prompt, model: modelToUse }) });
+                              const data = await res.json();
+                              if (res.ok) textarea.value = data.response;
+                              else { textarea.value = "Error GenAI"; setTimeout(() => { textarea.value = original; }, 3000); }
+                            } catch (e) { textarea.value = "Error de red."; setTimeout(() => { textarea.value = original; }, 3000); }
+                            finally { textarea.disabled = false; }
+                          }
+                        }}
+                        className="px-3 py-1.5 bg-purple-600/10 border border-purple-500/30 hover:bg-purple-600/20 text-purple-300 rounded-lg text-[11px] font-bold transition-colors flex items-center gap-1.5"
+                      >
+                        <Robot size={14} weight="duotone" /> GenAI
+                      </button>
+                      <button 
+                        onClick={() => {
+                          const val = (document.getElementById('phase2-input') as HTMLTextAreaElement).value;
+                          if (!val.trim() || val.includes("Generando") || val.includes("Procesando")) return;
+                          const trigger = useStudioStore.getState().triggerChatSend;
+                          if (trigger) {
+                            if (val.trim().toLowerCase() === "acepto" || val.trim().toLowerCase() === "aceptar") {
+                              trigger("Acepto el contrato de la fase 2. Procede a la fase 3 de Blueprint.");
+                            } else {
+                              trigger("--- [Corrección Fase 2] ---\n" + val);
+                            }
+                            (document.getElementById('phase2-input') as HTMLTextAreaElement).value = '';
+                          }
+                        }}
+                        className="px-3 py-1.5 bg-white text-black hover:bg-zinc-200 rounded-lg text-[11px] font-bold transition-colors"
+                      >
+                        Enviar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {phase2Complete && (
+                <div className="shrink-0 bg-zinc-950 border-t border-[#eab308]/20 p-4 flex items-center justify-center text-[#eab308] h-[160px]">
+                  <div className="flex items-center gap-2 text-sm font-bold">
+                    <CheckCircle size={18} weight="fill" /> Fase 2: Extracción aprobada
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ── Columna 3: Blueprint ── */}
+            <div className="flex-1 flex flex-col h-full bg-[var(--surface-canvas)]">
+              <div className="shrink-0 pt-5 pb-4 px-6 border-b border-[var(--stroke-subtle)] bg-zinc-900/30">
+                <h2 className="text-[15px] text-[var(--text-primary)] font-semibold flex items-center gap-2">
+                  <Lightning size={18} weight="duotone" className="text-amber-400" /> Fase 3: Blueprint
+                </h2>
+              </div>
+              <div className="flex-1 overflow-y-auto px-6 py-4 custom-scrollbar">
+                {phase3Content ? (
+                  <div className="text-[13px] leading-relaxed markdown-body animate-fade-in text-[var(--text-primary)]">
+                    <ReactMarkdown>{phase3Content}</ReactMarkdown>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-zinc-500 text-center gap-3">
+                    <Lightning size={28} weight="duotone" />
+                    <p className="text-xs">Esperando Extracción para diseñar Arquitectura.</p>
+                  </div>
+                )}
+              </div>
+              {!phase3Content && (
+                <div className="shrink-0 bg-[var(--surface-canvas)] border-t border-[var(--stroke-subtle)] h-[160px]" />
+              )}
+              {phase3Content && !phase3Complete && (
+                <div className="shrink-0 bg-black p-4 border-t border-[var(--stroke-subtle)] h-[160px] flex flex-col justify-end">
+                  <button 
+                    onClick={() => {
+                      const trigger = useStudioStore.getState().triggerChatSend;
+                      if (trigger) trigger("Acepto el Blueprint. Procede a enviarlo a Infinity Board.");
+                    }}
+                    className="w-full py-2.5 bg-cyan-500 text-zinc-950 hover:bg-cyan-400 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2"
+                  >
+                    <RocketLaunch size={16} /> Go2iboard
+                  </button>
+                </div>
+              )}
+              {phase3Complete && (
+                <div className="shrink-0 bg-emerald-500 p-4 flex items-center justify-center text-zinc-950 h-[160px]">
+                  <div className="flex items-center gap-2 text-sm font-bold">
+                    <CheckCircle size={18} weight="fill" /> Fase 3: Blueprint aprobada
+                  </div>
+                </div>
+              )}
+            </div>
+
           </div>
+
 
           {/* ── Historial de Chats (Ocupa toda la vista de Zone 2) ── */}
           <div className={zone2ActiveTab === 'history' ? 'flex-1 flex flex-col h-full bg-[var(--surface-canvas)] relative overflow-hidden' : 'hidden'}>

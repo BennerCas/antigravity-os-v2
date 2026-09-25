@@ -8,7 +8,7 @@ import { SwarmOrchestrationPanel } from '../components/studio/SwarmOrchestration
 import { useStudioStore, TabId, parseAIResponseToFlow, detectKind } from '../stores/useStudioStore';
 import { useHistoryStore } from '../stores/useHistoryStore';
 import { API_URL, WS_STUDIO_ACTIVITY_URL } from '../lib/api';
-import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock, Stop, Microphone, Database, Globe, TerminalWindow, FileText, CodeBlock, Scan, AppWindow, File, MaskHappy, Chats, ArrowUUpLeft, ArrowUUpRight } from '@phosphor-icons/react';
+import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock, Stop, Microphone, Database, Globe, TerminalWindow, FileText, CodeBlock, Scan, AppWindow, File, MaskHappy, Chats, ArrowUUpLeft, ArrowUUpRight, FloppyDisk } from '@phosphor-icons/react';
 
 
 const AURELIOS_THEMES: Record<string, any> = {
@@ -1049,7 +1049,7 @@ const FlowArchitect: React.FC = () => {
 };
 
 const FlowDiagram: React.FC = () => {
-  const { flowNodes, flowEdges, isSynthesizing, setPipelineProgress, pipelineStage, pipelineProgress } = useStudioStore();
+  const { flowNodes, flowEdges, isSynthesizing, setPipelineProgress, pipelineStage, pipelineProgress, showLegend, setShowLegend, showMiniMap, setShowMiniMap, undoFlow, redoFlow, pastFlows, futureFlows } = useStudioStore();
   const [nodes, setNodes, onNodesChange] = useNodesState(flowNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(flowEdges);
   const [selectedNode, setSelectedNode] = useState<any>(null);
@@ -1112,18 +1112,20 @@ const FlowDiagram: React.FC = () => {
             </div>
           </Panel>
 <Background color="#0f172a" gap={24} size={1} />
-        <Controls position="bottom-left" className="!bg-[#0d1117] !border-[#1e293b] !rounded-xl" />
+        
+        {showMiniMap && (
         <MiniMap
-          position="bottom-left"
-          style={{ left: 60, bottom: 0 }}
-          nodeColor={(n) => {
-            const k = (n.data?.kind as string) || 'agent';
-            const colors: Record<string,string> = { agent:'#3b82f6', trigger:'#10b981', tool:'#f59e0b', router:'#a855f7', human:'#ec4899', sink:'#64748b' };
-            return colors[k] || '#3b82f6';
-          }}
-          maskColor="rgba(0,0,0,0.85)"
-          className="!bg-[#0d1117] !border-[#1e293b]"
-        />
+                  position="bottom-left"
+                  style={{ left: 60, bottom: 0 }}
+                  nodeColor={(n) => {
+                    const k = (n.data?.kind as string) || 'agent';
+                    const colors: Record<string,string> = { agent:'#3b82f6', trigger:'#10b981', tool:'#f59e0b', router:'#a855f7', human:'#ec4899', sink:'#64748b' };
+                    return colors[k] || '#3b82f6';
+                  }}
+                  maskColor="rgba(0,0,0,0.85)"
+                  className="!bg-[#0d1117] !border-[#1e293b]"
+                />
+      )}
       </ReactFlow>
 
 
@@ -1240,7 +1242,7 @@ const AgentCarousel: React.FC = () => {
 
   React.useEffect(() => {
     if (!isSynthesizing || !synthStartTime) { setTimeLeft(300); return; }
-    const calcTime = () => Math.max(0, 900 - Math.floor((Date.now() - synthStartTime) / 1000));
+    const calcTime = () => Math.max(0, 1200 - Math.floor((Date.now() - synthStartTime) / 1000));
     setTimeLeft(calcTime());
     const interval = setInterval(() => setTimeLeft(calcTime()), 1000);
     return () => clearInterval(interval);
@@ -1650,7 +1652,8 @@ const ArchitectureBlueprint: React.FC = () => {
       addChatMessage({ role: 'agent', content: '✨ FUSIÓN COMPLETADA: Los perfiles sintetizados se han inyectado en el grafo, actualizando los nodos base y preservando sus conexiones.', model: 'aurelios' });
     };
 
-    const runMatchAndFusePipeline = async () => {
+        const runMatchAndFusePipeline = async () => {
+      (window as any).runMatchAndFuse = runMatchAndFusePipeline;
 
     const { flowNodes, setAgentCards, setActiveTab, setIsSynthesizing, isSynthesizing, setSynthStartTime } = useStudioStore.getState();
     if (isSynthesizing) return; // Prevent multiple concurrent executions
@@ -1667,7 +1670,7 @@ const ArchitectureBlueprint: React.FC = () => {
 
     // AbortController con 15 minutos — el pipeline SDK tiene 3 etapas y puede tardar ~90s en Ollama, pero con contexto largo y iGPU puede llegar a 8-10 min
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15 * 60 * 1000);
+    const timeoutId = setTimeout(() => controller.abort(), 20 * 60 * 1000);
 
     try {
       const selectedModel = localStorage.getItem('aurelios_model') || 'ollama/hermes3:8b';
@@ -1721,7 +1724,14 @@ const ArchitectureBlueprint: React.FC = () => {
     }
   };
 
-  const renderContent = () => <FlowDiagram />;
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'discovery': return <FlowDiagram />;
+      case 'synthesis': return <AgentCarousel />;
+      case 'blueprint': return <ArchitectureBlueprint />;
+      default: return null;
+    }
+  };
 
   const recoverBaseFlow = () => {
     const { phase3Content, agentCards, setFlow, saveFlowState } = useStudioStore.getState();
@@ -1791,10 +1801,50 @@ const ArchitectureBlueprint: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'transparent', minHeight: 0 }}>
       <div className="flex shrink-0 h-16 bg-transparent items-center pr-4">
-        
+        <div className="flex h-full">
+          {(['discovery', 'synthesis', 'blueprint'] as TabId[]).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{ borderRadius: 0, borderTop: 'none', borderLeft: 'none', borderRight: 'none' }}
+              className={`px-6 h-full font-medium text-sm transition-colors flex items-center border-b-2 ${
+                activeTab === tab
+                  ? 'text-blue-400 border-blue-400 bg-white/5'
+                  : 'text-gray-400 border-transparent hover:text-gray-200 hover:bg-white/5'
+              }`}
+            >
+              {tab === 'discovery' && '1 Descubrir'}
+              {tab === 'synthesis' && '2 Sintetizar'}
+              {tab === 'blueprint' && '3 Blueprint'}
+            </button>
+          ))}
+        </div>
         <div className="flex-1" />
-        {true && (
+        {activeTab === 'discovery' && (
           <div className="flex items-center gap-3">
+            
+            {/* New Toolbar Actions */}
+            <div className="flex bg-black/40 rounded-full overflow-hidden border border-white/10">
+              <button onClick={() => (window as any).runMatchAndFuse()} disabled={isSynthesizing} title="Detectar Agentes" className="flex items-center gap-1.5 px-3 py-1.5 transition-all text-xs font-bold hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed border-r border-white/10">
+                 <Brain size={16} weight={isSynthesizing ? "regular" : "duotone"} className={isSynthesizing ? "text-gray-500" : "text-[#00D9FF]"} />
+              </button>
+              <button onClick={() => alert('Fusión Infinita: El motor ahora analizará las conexiones (Edges) de tu grafo para orquestar y evolucionar todos los agentes cohesivamente.')} title="Upgrade" className="flex items-center gap-1.5 px-3 py-1.5 transition-all text-xs font-bold hover:bg-white/10 hover:text-white border-r border-white/10">
+                 <Network size={16} weight="duotone" className="text-purple-400" />
+              </button>
+              <button onClick={() => useStudioStore.getState().setShowLegend(!useStudioStore.getState().showLegend)} title="Toggle Nodos" className="flex items-center gap-1.5 px-3 py-1.5 transition-all text-xs font-bold hover:bg-white/10 hover:text-white border-r border-white/10">
+                 <div className="font-bold text-xs text-blue-400">N</div>
+              </button>
+              <button onClick={() => useStudioStore.getState().setShowMiniMap(!useStudioStore.getState().showMiniMap)} title="Toggle Mapa" className="flex items-center gap-1.5 px-3 py-1.5 transition-all text-xs font-bold hover:bg-white/10 hover:text-white">
+                 <div className="font-bold text-xs text-green-400">M</div>
+              </button>
+                <button onClick={() => { useStudioStore.getState().saveFlowState(); useStudioStore.getState().setFlow([], []); }} title="Limpiar Lienzo" className="flex items-center gap-1.5 px-3 py-1.5 transition-all text-xs font-bold hover:bg-red-500/20 hover:text-red-400 border-l border-white/10">
+                   <Trash size={16} weight="duotone" className="text-red-400" />
+                </button>
+                <button onClick={() => { useStudioStore.getState().saveFlowState(); alert("Estado guardado en el Historial (Autoguardado siempre activo en cache local)."); }} title="Guardar / Autoguardado" className="flex items-center gap-1.5 px-3 py-1.5 transition-all text-xs font-bold hover:bg-green-500/20 hover:text-green-400 border-l border-white/10">
+                   <FloppyDisk size={16} weight="duotone" className="text-green-400" />
+                </button>
+            </div>
+
             <div className="flex bg-black/40 rounded-full overflow-hidden border border-white/10">
               <button 
                 onClick={undoFlow}
@@ -1829,37 +1879,7 @@ const ArchitectureBlueprint: React.FC = () => {
           {renderContent()}
         </div>
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto flex gap-4">
-          {activeTab === 'synthesis' ? (
-            <button 
-              onClick={go2WF}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-full transition-all font-bold text-sm bg-emerald-500 text-white hover:brightness-110 shadow-[0_0_20px_rgba(16,185,129,0.4)]"
-            >
-              <Robot size={18} weight="duotone" />
-              Go2WF
-            </button>
-          ) : activeTab === 'discovery' ? (
-            <>
-              <button 
-                onClick={runMatchAndFusePipeline}
-                disabled={isSynthesizing}
-                className={`flex items-center gap-2 px-6 py-2.5 rounded-full transition-all font-bold text-sm ${
-                  isSynthesizing
-                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-50 shadow-none'
-                    : 'bg-[#00D9FF] text-black hover:brightness-110 shadow-[0_0_20px_rgba(0,217,255,0.3)]'
-                }`}
-              >
-                <Brain size={18} weight={isSynthesizing ? "regular" : "duotone"} />
-                {isSynthesizing ? 'Sintetizando...' : 'Detectar Agentes'}
-              </button>
-              <button 
-                onClick={() => alert('Fusión Infinita: El motor ahora analizará las conexiones (Edges) de tu grafo para orquestar y evolucionar todos los agentes cohesivamente.')}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-full transition-all font-bold text-sm bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:brightness-110 shadow-[0_0_20px_rgba(168,85,247,0.4)]"
-              >
-                <Network size={18} weight="duotone" />
-                Upgrade
-              </button>
-            </>
-          ) : null}
+          {null}
         </div>
       </div>
     </div>
@@ -1945,6 +1965,9 @@ export default function AgentOSStudio() {
     </div>
   );
 }
+
+
+
 
 
 
