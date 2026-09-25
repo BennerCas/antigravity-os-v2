@@ -199,33 +199,8 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
   return (
     <div className="w-full h-full flex bg-[var(--surface-canvas)] text-[var(--text-primary)]">
       
-      {/* ZONE 1: Activity Log */}
-      {!isFreeChat && (
-        <div className="flex-1 min-w-0 h-full border-r border-[var(--stroke-subtle)] flex flex-col bg-[var(--surface-canvas)]">
-          <div className="flex items-center h-16 px-4 border-b border-[var(--stroke-subtle)] shrink-0">
-            <h3 className="text-xs font-bold text-zinc-400 tracking-widest uppercase flex items-center gap-2">
-              <Robot size={16} weight="duotone" className="text-cyan-400" /> Activity Log
-            </h3>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 font-mono text-[11px]">
-            {activityLogs.map(log => (
-              <div key={log.id} className="flex flex-col gap-1 pb-3 border-b border-[var(--stroke-subtle)]/50">
-                <div className="flex items-center justify-between text-zinc-500">
-                  <span className="font-bold text-[var(--text-primary)]">[{log.source}]</span>
-                  <span>{new Date(log.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <div className="mt-0.5 shrink-0">{getStatusIcon(log.status)}</div>
-                  <span className={`leading-relaxed text-[var(--text-primary)]`}>{log.message}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* ZONE 2: Results Panel */}
-      <div className={`${isFreeChat ? 'flex-1' : 'flex-[2]'} min-w-0 h-full flex flex-col bg-[var(--surface-canvas)]`}>
+      <div className="flex-1 min-w-0 h-full flex flex-col bg-[var(--surface-canvas)]">
         {isFreeChat ? null : (
           <>
             {/* Sandwich Menu */}
