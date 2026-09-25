@@ -224,6 +224,12 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
             <Layout size={16} /> Fases
           </button>
           <button 
+              onClick={() => setZone2ActiveTab('infinityboard')}
+              className={`px-4 py-2 rounded text-xs font-bold flex items-center gap-2 transition-all ${zone2ActiveTab === 'infinityboard' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'text-zinc-500 hover:text-[var(--text-primary)]'}`}
+            >
+              <Graph size={16} /> InfinityBoard
+            </button>
+            <button 
             onClick={() => setZone2ActiveTab('history')}
             className={`px-4 py-2 rounded text-xs font-bold flex items-center gap-2 transition-all ${zone2ActiveTab === 'history' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' : 'text-zinc-500 hover:text-[var(--text-primary)]'}`}
           >
