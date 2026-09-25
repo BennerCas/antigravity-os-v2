@@ -3,7 +3,7 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useStudioStore } from '../../stores/useStudioStore';
 import { useHistoryStore } from '../../stores/useHistoryStore';
-import { CheckCircle, XCircle, Clock, Info, ListChecks, Target, Brain, Robot, SpeakerHigh, Trash, CheckSquare, Square, Lightning, Crosshair, RocketLaunch, Checks, TrendUp, PaintBrush, Database, Globe, TerminalWindow, File, UploadSimple, CodeBlock, HardDrives, Scan, Network, AppWindow, Layout, ClockCounterClockwise, Microphone } from '@phosphor-icons/react';
+import { CheckCircle, XCircle, Clock, Info, ListChecks, Target, Brain, Robot, SpeakerHigh, Trash, CheckSquare, Square, Lightning, Crosshair, RocketLaunch, Checks, TrendUp, PaintBrush, Database, Globe, TerminalWindow, File, UploadSimple, CodeBlock, HardDrives, Scan, Network, AppWindow, Layout, ClockCounterClockwise, Microphone, Graph } from '@phosphor-icons/react';
 import { WS_STUDIO_ACTIVITY_URL } from '../../lib/api';
 import { CanvasTabs } from '../../pages/AgentOSStudio';
 
@@ -207,7 +207,7 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
       
       {/* ZONE 2: Results Panel */}
       <div className="flex-1 min-w-0 h-full flex flex-col bg-[var(--surface-canvas)]">
-        {quantumPhase === 'omni' && zone2ActiveTab !== 'infinityboard' ? null : (
+        {false ? null : (
           <>
             {/* Sandwich Menu */}
             <div className="flex items-center h-16 px-4 gap-2 border-b border-[var(--stroke-subtle)] shrink-0 bg-[var(--surface-canvas)]">
