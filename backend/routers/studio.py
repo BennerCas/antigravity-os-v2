@@ -360,7 +360,7 @@ async def run_triage_swarm(data: Any):
                 )
 
         is_final_node = (idx == len(agent_ids) - 1)
-        target_model = None if is_final_node else "qwen2.5:3b"
+        target_model = "hermes3:8b"
 
         try:
             resp_text = await AgentFactory.chat_one_shot(
@@ -461,7 +461,7 @@ async def run_extraction_swarm(data: Any):
         })
         
         is_final_node = (idx == len(pipeline_roles) - 1)
-        target_model = None if is_final_node else "qwen2.5:3b"
+        target_model = "hermes3:8b"
 
         try:
             resp_text = await AgentFactory.chat_one_shot(
@@ -530,12 +530,40 @@ async def run_blueprint_swarm(data: Any):
         {
             "id": "forja-arquitecto",
             "name": "Forjador",
-            "prompt": "Eres el Forjador (System Designer). Tu rol es traducir la estrategia en una topologia estricta para React Flow basada en el patron Neuro-SAN. TAREA: Devuelve tu respuesta en dos partes: 1. Breve intro en Markdown. 2. AL FINAL, un bloque <json> que contenga UNICAMENTE un objeto JSON valido (claves: 'nodes' y 'edges'). ESTRICTAMENTE PROHIBIDO usar XML, SOLO JSON. Cada nodo del JSON MUST include: 'id' (string), 'type' (string, e.g. 'agent', 'tool'), 'data' (object con: 'name' (string), 'role' (string), 'system_prompt' (string), 'tools' (array de strings), 'test_queries' (array de 3-4 strings)). Cada edge MUST include: 'id' (string), 'source' (string), 'target' (string), 'label' (string). Ejemplo: <json> {\"nodes\": [{\"id\":\"1\", \"type\":\"agent\", \"data\": {\"name\": \"Agent 1\", \"role\": \"Analyzer\", \"system_prompt\": \"...\", \"tools\": [\"search\"], \"test_queries\": [\"test1\"]}}], \"edges\": [{\"id\": \"e1-2\", \"source\": \"1\", \"target\": \"2\", \"label\": \"routes to\"}]} </json>"
+            "prompt": """Eres el "Principal Cognitive Systems Architect".
+CONTEXTO: Debes traducir la estrategia del usuario a una topologia estricta de React Flow basada en el patron Neuro-SAN.
+REGLA 1 (COT): Usa OBLIGATORIAMENTE etiquetas <thinking> y </thinking> al inicio de tu respuesta para procesar la logica de la arquitectura ANTES del JSON. 
+REGLA 2: No uses NINGUN texto conversacional periferico (ni saludos, ni confirmaciones).
+REGLA 3: Despues del </thinking>, provee EXACTAMENTE un bloque <json> con el JSON estricto. ESTRICTAMENTE PROHIBIDO USAR NODOS XML PARA LA TOPOLOGIA.
+SCHEMA EXACTO DE JSON A GENERAR DENTRO DE <json>:
+{
+  "nodes": [
+    {
+      "id": "1",
+      "type": "agent",
+      "data": {
+        "name": "Nombre",
+        "role": "Rol",
+        "system_prompt": "prompt...",
+        "tools": ["tool1"],
+        "test_queries": ["q1", "q2", "q3"]
+      }
+    }
+  ],
+  "edges": [
+    {"id": "e1-2", "source": "1", "target": "2", "label": "routes to"}
+  ]
+}
+"""
         },
         {
             "id": "forja-revisor",
             "name": "Revisor de Cohesión",
-            "prompt": "Eres el Revisor de Cohesion y JSON Guard. Asegura que el texto final contenga el bloque <json> intacto y el JSON sea perfectamente valido cumpliendo el patron Neuro-SAN (nodos con id, type y un objeto data con name, role, system_prompt, tools, test_queries; edges con id, source, target, label). ESTRICTAMENTE PROHIBIDO generar nodos XML, debe ser puramente JSON delimitado por llaves { }. Preserva el Markdown conversacional anterior al bloque. No anadas saludos tuyos."
+            "prompt": """Eres el "Chief Validation Engineer & JSON Guard".
+CONTEXTO: Asegura que el output del Arquitecto contenga el bloque <json> intacto y sea JSON valido segun Neuro-SAN.
+REGLA 1 (COT): Usa OBLIGATORIAMENTE etiquetas <thinking> y </thinking> para verificar la validez del JSON.
+REGLA 2: Devuelve EXACTAMENTE el bloque <json> corregido y formateado.
+REGLA 3: PROHIBIDO conversar. CERO saludos."""
         }
     ]
 
@@ -556,7 +584,7 @@ async def run_blueprint_swarm(data: Any):
         })
         
         is_final_node = (idx == len(pipeline_roles) - 1)
-        target_model = None if is_final_node else "qwen2.5:3b"
+        target_model = "hermes3:8b"
 
         try:
             resp_text = await AgentFactory.chat_one_shot(

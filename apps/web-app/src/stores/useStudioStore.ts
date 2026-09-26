@@ -174,7 +174,7 @@ function extractTools(desc: string): string[] {
     let cleanMd = text;
     let jsonNodes: any[] = [];
     let jsonEdges: any[] = [];
-    const topRegex = /<topology>[\s\S]*?\{([\s\S]*?)\}[\s\S]*?<\/topology>/;
+    const topRegex = /<(?:topology|json)>[\s\S]*?\{([\s\S]*?)\}[\s\S]*?<\/(?:topology|json)>/;
     const match = text.match(topRegex);
     
     if (match) {
