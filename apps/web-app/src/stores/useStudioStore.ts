@@ -28,6 +28,9 @@ export interface AgentCard {
   inputOutputContract?: string;
   requiredTools?: string[];
   health?: 'green' | 'yellow' | 'red';
+  systemPrompt?: string;
+  tools?: string[];
+  testQueries?: string[];
 }
 
 export interface ActivityLog {
@@ -49,8 +52,8 @@ interface StudioState {
   // Zones 1 and 2
   activityLogs: ActivityLog[];
   addActivityLog: (log: Omit<ActivityLog, 'id' | 'timestamp'>) => void;
-  zone2ActiveTab: 'okr' | 'phases' | 'history' | 'infinityboard';
-  setZone2ActiveTab: (tab: 'okr' | 'phases' | 'history' | 'infinityboard') => void;
+  zone2ActiveTab: 'okr' | 'phases' | 'history' | 'infinityboard' | 'blueprint';
+  setZone2ActiveTab: (tab: 'okr' | 'phases' | 'history' | 'infinityboard' | 'blueprint') => void;
 
   // FreeChat Mode
   
@@ -204,6 +207,8 @@ function extractTools(desc: string): string[] {
                     kind: kind,
                     description: n.description || '',
                     tools: n.tools || [],
+                    systemPrompt: n.system_prompt || '',
+                    testQueries: n.test_queries || [],
                     inputPort: n.inputPort || (idx > 0 ? 'input' : ''),
                     outputPort: n.outputPort || 'output',
                     cost: n.cost || '',

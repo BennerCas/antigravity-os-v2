@@ -497,6 +497,28 @@ async def run_extraction_swarm(data: Any):
     final_output = steps[-1]["output"]
     return {"extraction_result": final_output, "swarm_trace": steps}
 
+class NeuroSANNodeData(BaseModel):
+    name: str
+    role: str
+    system_prompt: str
+    tools: List[str]
+    test_queries: List[str]
+
+class NeuroSANNode(BaseModel):
+    id: str
+    type: str
+    data: NeuroSANNodeData
+
+class NeuroSANEdge(BaseModel):
+    id: str
+    source: str
+    target: str
+    label: Optional[str] = ""
+
+class BlueprintTopology(BaseModel):
+    nodes: List[NeuroSANNode]
+    edges: List[NeuroSANEdge]
+
 async def run_blueprint_swarm(data: Any):
     """
     La Forja - REWIRED TO QUANTUM ENGINE
@@ -508,12 +530,12 @@ async def run_blueprint_swarm(data: Any):
         {
             "id": "forja-arquitecto",
             "name": "Forjador",
-            "prompt": "Eres el Forjador (System Designer). Tu rol es traducir la estrategia en una topologia estricta para React Flow. TAREA: Devuelve tu respuesta en dos partes: 1. Una breve introduccion amigable en Markdown. 2. AL FINAL, un bloque XML <topology> con un objeto JSON (claves: 'nodes' y 'edges'). Cada nodo: 'id', 'label', 'kind' (agent, trigger, tool, router, human, sink), 'description', 'tools' (lista). Cada edge: 'source', 'target'. Ejemplo: <topology> {\"nodes\": [{\"id\":\"1\", \"label\":\"API\", \"kind\":\"tool\", \"description\":\"Fetch data\", \"tools\":[\"http\"]}], \"edges\":[]} </topology>"
+            "prompt": "Eres el Forjador (System Designer). Tu rol es traducir la estrategia en una topologia estricta para React Flow basada en el patron Neuro-SAN. TAREA: Devuelve tu respuesta en dos partes: 1. Breve intro en Markdown. 2. AL FINAL, un bloque <json> que contenga UNICAMENTE un objeto JSON valido (claves: 'nodes' y 'edges'). ESTRICTAMENTE PROHIBIDO usar XML, SOLO JSON. Cada nodo del JSON MUST include: 'id' (string), 'type' (string, e.g. 'agent', 'tool'), 'data' (object con: 'name' (string), 'role' (string), 'system_prompt' (string), 'tools' (array de strings), 'test_queries' (array de 3-4 strings)). Cada edge MUST include: 'id' (string), 'source' (string), 'target' (string), 'label' (string). Ejemplo: <json> {\"nodes\": [{\"id\":\"1\", \"type\":\"agent\", \"data\": {\"name\": \"Agent 1\", \"role\": \"Analyzer\", \"system_prompt\": \"...\", \"tools\": [\"search\"], \"test_queries\": [\"test1\"]}}], \"edges\": [{\"id\": \"e1-2\", \"source\": \"1\", \"target\": \"2\", \"label\": \"routes to\"}]} </json>"
         },
         {
             "id": "forja-revisor",
             "name": "Revisor de Cohesión",
-            "prompt": "Eres el Revisor de Cohesion y JSON Guard. Asegura que el texto final contenga el bloque <topology> intacto y el JSON sea valido. Preserva el Markdown conversacional anterior al bloque. No anadas saludos tuyos."
+            "prompt": "Eres el Revisor de Cohesion y JSON Guard. Asegura que el texto final contenga el bloque <json> intacto y el JSON sea perfectamente valido cumpliendo el patron Neuro-SAN (nodos con id, type y un objeto data con name, role, system_prompt, tools, test_queries; edges con id, source, target, label). ESTRICTAMENTE PROHIBIDO generar nodos XML, debe ser puramente JSON delimitado por llaves { }. Preserva el Markdown conversacional anterior al bloque. No anadas saludos tuyos."
         }
     ]
 

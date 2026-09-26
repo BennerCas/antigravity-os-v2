@@ -290,7 +290,6 @@ const FlowArchitect: React.FC = () => {
   const [currentThemeKey, setCurrentThemeKey] = useState(() => localStorage.getItem('aurelios_theme') || 'obsidian');
   const [selectedChatAgentId, setSelectedChatAgentId] = useState('aurelios-core');
   const [carouselSlide, setCarouselSlide] = useState(0);
-  const [showSwarmSlider, setShowSwarmSlider] = useState(true);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isHandlingSendRef = useRef<boolean>(false);
   // Ref mutable para que el trigger del store siempre llame a la versión más reciente de handleSend
@@ -708,9 +707,6 @@ const FlowArchitect: React.FC = () => {
           <button onClick={() => setShowSetup(true)} title="Configuración de Modelo y Tema" className={`hover:brightness-125 transition-opacity ${t.text}`}>
             <Gear size={18} />
           </button>
-          <button onClick={() => setShowSwarmSlider(!showSwarmSlider)} title="Ocultar/Mostrar herramientas" className={`hover:brightness-125 transition-opacity ${t.text} ${!showSwarmSlider ? 'opacity-50' : ''}`}>
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M21.5,13.5C21.5,12.12 20.38,11 19,11C18.67,11 18.36,11.07 18.07,11.18L16,8H17C18.1,8 19,7.1 19,6C19,4.9 18.1,4 17,4H14V5C14,6.1 13.1,7 12,7C10.9,7 10,6.1 10,5V4H7C5.9,4 5,4.9 5,6C5,7.1 5.9,8 7,8H8L5.93,11.18C5.64,11.07 5.33,11 5,11C3.62,11 2.5,12.12 2.5,13.5C2.5,14.88 3.62,16 5,16H7.13L8.54,19.31C8.28,19.68 8.12,20.12 8.12,20.6C8.12,21.93 9.19,23 10.52,23C11.6,23 12.52,22.28 12.82,21.28L15.46,19.31C15.87,19.74 16.45,20 17.1,20C18.35,20 19.37,19.04 19.49,17.8L21.5,13.5Z" /></svg>
-          </button>
         </div>
       </div>
 
@@ -735,141 +731,6 @@ const FlowArchitect: React.FC = () => {
             </>
           )}
         </div>
-      </div>
-
-      <div className={`shrink-0 flex flex-col transition-all duration-300 overflow-hidden ${showSwarmSlider ? (quantumPhase === 'omni' ? 'h-[360px] opacity-100' : 'h-[240px] opacity-100') : 'h-0 opacity-0 !pb-0'}`}>
-        {quantumPhase === 'omni' ? (
-            <FreeChatCapabilitiesGrid />
-          ) : (
-        <div 
-          id="agent-carousel"
-          className="flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory gap-4 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          onScroll={(e) => {
-            const slide = Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth);
-            if (slide !== carouselSlide) setCarouselSlide(slide);
-          }}
-        >
-          {/* Slide 1: Swarms */}
-          <div className="shrink-0 w-full snap-center h-full flex flex-col pt-0 pb-2">
-            <div className="grid grid-cols-3 gap-1.5">
-              {/* Col 1: Enjambre Radar */}
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[9px] font-bold tracking-widest uppercase opacity-70 mb-0.5 text-center flex justify-center items-center gap-1"><Wrench size={12} /> Radar</span>
-                {swarm1.map(tool => (
-                  <div key={tool.id} className="relative group">
-                    <button 
-                      onClick={() => setSelectedChatAgentId(tool.id)} 
-                      className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${selectedChatAgentId === tool.id ? `border-current ${t.primary}` : t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
-                    >
-                      <div className="flex items-center gap-3 overflow-hidden ml-1">
-                        <div className="shrink-0">{tool.icon}</div>
-                        <span className={`text-[10px] font-bold truncate group-hover:brightness-125 transition-all ${selectedChatAgentId === tool.id ? t.primary : ""}`}>{tool.title}</span>
-                      </div>
-                      <div 
-                        onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
-                        className={` hover:brightness-125 ${t.primary} shrink-0 ml-1 cursor-pointer transition-opacity`}
-                        title="Escuchar descripción"
-                      >
-                        <SpeakerHigh size={12} weight="fill" />
-                      </div>
-                    </button>
-                    {/* Invisible custom tooltip */}
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-3 bg-black border border-[#444] text-[13px] text-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.9)] opacity-0 invisible group-hover:brightness-125 group-hover:visible transition-all z-[999] pointer-events-none text-center font-medium leading-relaxed">
-                      {tool.desc}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {/* Col 2: Enjambre Inquisidor */}
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[9px] font-bold tracking-widest uppercase opacity-70 mb-0.5 text-center flex justify-center items-center gap-1"><BugBeetle size={12} /> Inquisidor</span>
-                {swarm2.map(tool => (
-                  <div key={tool.id} className="relative group">
-                    <button 
-                      onClick={() => setSelectedChatAgentId(tool.id)} 
-                      className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${selectedChatAgentId === tool.id ? `border-current ${t.primary}` : t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
-                    >
-                      <div className="flex items-center gap-3 overflow-hidden ml-1">
-                        <div className="shrink-0">{tool.icon}</div>
-                        <span className={`text-[10px] font-bold truncate group-hover:brightness-125 transition-all ${selectedChatAgentId === tool.id ? t.primary : ""}`}>{tool.title}</span>
-                      </div>
-                      <div 
-                        onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
-                        className={` hover:brightness-125 ${t.primary} shrink-0 ml-1 cursor-pointer transition-opacity`}
-                        title="Escuchar descripción"
-                      >
-                        <SpeakerHigh size={12} weight="fill" />
-                      </div>
-                    </button>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-3 bg-black border border-[#444] text-[13px] text-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.9)] opacity-0 invisible group-hover:brightness-125 group-hover:visible transition-all z-[999] pointer-events-none text-center font-medium leading-relaxed">
-                      {tool.desc}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {/* Col 3: Enjambre Forja */}
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[9px] font-bold tracking-widest uppercase opacity-70 mb-0.5 text-center flex justify-center items-center gap-1"><ShieldCheck size={12} /> Forja</span>
-                {swarm3.map(tool => (
-                  <div key={tool.id} className="relative group">
-                    <button 
-                      onClick={() => setSelectedChatAgentId(tool.id)} 
-                      className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${selectedChatAgentId === tool.id ? `border-current ${t.primary}` : t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
-                    >
-                      <div className="flex items-center gap-3 overflow-hidden ml-1">
-                        <div className="shrink-0">{tool.icon}</div>
-                        <span className={`text-[10px] font-bold truncate group-hover:brightness-125 transition-all ${selectedChatAgentId === tool.id ? t.primary : ""}`}>{tool.title}</span>
-                      </div>
-                      <div 
-                        onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
-                        className={` hover:brightness-125 ${t.primary} shrink-0 ml-1 cursor-pointer transition-opacity`}
-                        title="Escuchar descripción"
-                      >
-                        <SpeakerHigh size={12} weight="fill" />
-                      </div>
-                    </button>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-3 bg-black border border-[#444] text-[13px] text-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.9)] opacity-0 invisible group-hover:brightness-125 group-hover:visible transition-all z-[999] pointer-events-none text-center font-medium leading-relaxed">
-                      {tool.desc}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Slide 2: Classic Agents */}
-          <div className="shrink-0 w-full snap-center h-full flex flex-col pt-0 pb-2">
-            <span className="text-[9px] font-bold tracking-widest uppercase opacity-70 mb-2 text-center flex justify-center items-center gap-1"><Wrench size={12} /> God-Tier Prompts</span>
-            <div className="grid grid-cols-3 gap-1.5">
-              {aiTools.map(tool => (
-                <div key={tool.id} className="relative group">
-                    <button 
-                      onClick={() => setSelectedChatAgentId(tool.id)} 
-                      className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${selectedChatAgentId === tool.id ? `border-current ${t.primary}` : t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
-                    >
-                      <div className="flex items-center gap-3 overflow-hidden ml-1">
-                        <div className="shrink-0">{tool.icon}</div>
-                        <span className={`text-[11px] font-bold truncate group-hover:brightness-125 transition-all ${selectedChatAgentId === tool.id ? t.primary : ''}`}>{tool.title}</span>
-                      </div>
-                      <div 
-                        onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
-                        className={` hover:brightness-125 ${t.primary} shrink-0 ml-2 cursor-pointer transition-opacity`}
-                        title="Escuchar descripción"
-                      >
-                        <SpeakerHigh size={14} weight="fill" />
-                      </div>
-                    </button>
-                    {/* Invisible custom tooltip */}
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-3 bg-black border border-[#444] text-[13px] text-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.9)] opacity-0 invisible group-hover:brightness-125 group-hover:visible transition-all z-[999] pointer-events-none text-center font-medium leading-relaxed">
-                      {tool.desc}
-                    </div>
-                  </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        )}
       </div>
 
       {/* Chat History / Invisible Scroll */}
