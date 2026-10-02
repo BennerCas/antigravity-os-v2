@@ -41,6 +41,13 @@ export interface ActivityLog {
   timestamp: string;
 }
 
+
+export interface ChecklistTask {
+  id: string;
+  title: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+}
+
 interface StudioState {
 
   // Axiomas Parameters
@@ -50,6 +57,12 @@ interface StudioState {
   setAtlasFileName: (name: string | null) => void;
 
   // Zones 1 and 2
+
+  // Dynamic Checklist
+  dynamicChecklist: ChecklistTask[];
+  setDynamicChecklist: (checklist: ChecklistTask[]) => void;
+  updateChecklistTask: (id: string, status: ChecklistTask['status']) => void;
+
   activityLogs: ActivityLog[];
   addActivityLog: (log: Omit<ActivityLog, 'id' | 'timestamp'>) => void;
   zone2ActiveTab: 'okr' | 'phases' | 'history' | 'infinityboard' | 'blueprint';
@@ -307,6 +320,29 @@ export const useStudioStore = create<StudioState>()(
       setAtlasFileName: (name) => set({ atlasFileName: name }),
       activeTab: 'discovery',
       setActiveTab: (tab) => set({ activeTab: tab }),
+
+      // Dynamic Checklist
+      dynamicChecklist: [
+        { id: 'triage', title: 'Triage & Extracción', status: 'pending' },
+        { id: 'blueprint', title: 'Generación de Blueprint', status: 'pending' },
+        { id: 'deploy', title: 'Despliegue Cuántico', status: 'pending' }
+      ],
+      setDynamicChecklist: (checklist) => set({ dynamicChecklist: checklist }),
+      updateChecklistTask: (id, status) => set((state) => {
+        const exists = state.dynamicChecklist.find(t => t.id === id);
+        if (exists) {
+            return {
+                dynamicChecklist: state.dynamicChecklist.map((task) => 
+                    task.id === id ? { ...task, status } : task
+                )
+            };
+        } else {
+            return {
+                dynamicChecklist: [...state.dynamicChecklist, { id, title: id, status }]
+            };
+        }
+      }),
+
       activityLogs: [
         { id: '0', source: 'AureliOS', message: 'Sistema Operativo inicializado. Esperando intenciones del usuario.', status: 'INFO', timestamp: new Date().toISOString() }
       ],
@@ -505,7 +541,8 @@ export const useStudioStore = create<StudioState>()(
             agentCards: state.agentCards,
             blueprintMd: state.blueprintMd,
             phase1Interview: state.phase1Interview,
-            phase1Complete: state.phase1Complete,
+            dynamicChecklist: state.dynamicChecklist,
+               phase1Complete: state.phase1Complete,
             phase2Complete: state.phase2Complete,
             phase3Complete: state.phase3Complete,
             phase2Content: state.phase2Content,
@@ -527,6 +564,7 @@ export const useStudioStore = create<StudioState>()(
                agentCards: state.agentCards,
                blueprintMd: state.blueprintMd,
                phase1Interview: state.phase1Interview,
+               dynamicChecklist: state.dynamicChecklist,
                phase1Complete: state.phase1Complete,
                phase2Complete: state.phase2Complete,
                phase3Complete: state.phase3Complete,
@@ -541,6 +579,7 @@ export const useStudioStore = create<StudioState>()(
             agentCards: previous.agentCards || state.agentCards,
             blueprintMd: previous.blueprintMd !== undefined ? previous.blueprintMd : state.blueprintMd,
             phase1Interview: previous.phase1Interview !== undefined ? previous.phase1Interview : state.phase1Interview,
+            dynamicChecklist: previous.dynamicChecklist !== undefined ? previous.dynamicChecklist : state.dynamicChecklist,
             phase1Complete: previous.phase1Complete !== undefined ? previous.phase1Complete : state.phase1Complete,
             phase2Complete: previous.phase2Complete !== undefined ? previous.phase2Complete : state.phase2Complete,
             phase3Complete: previous.phase3Complete !== undefined ? previous.phase3Complete : state.phase3Complete,
@@ -561,6 +600,7 @@ export const useStudioStore = create<StudioState>()(
                agentCards: state.agentCards,
                blueprintMd: state.blueprintMd,
                phase1Interview: state.phase1Interview,
+               dynamicChecklist: state.dynamicChecklist,
                phase1Complete: state.phase1Complete,
                phase2Complete: state.phase2Complete,
                phase3Complete: state.phase3Complete,
@@ -576,6 +616,7 @@ export const useStudioStore = create<StudioState>()(
             agentCards: next.agentCards || state.agentCards,
             blueprintMd: next.blueprintMd !== undefined ? next.blueprintMd : state.blueprintMd,
             phase1Interview: next.phase1Interview !== undefined ? next.phase1Interview : state.phase1Interview,
+            dynamicChecklist: next.dynamicChecklist !== undefined ? next.dynamicChecklist : state.dynamicChecklist,
             phase1Complete: next.phase1Complete !== undefined ? next.phase1Complete : state.phase1Complete,
             phase2Complete: next.phase2Complete !== undefined ? next.phase2Complete : state.phase2Complete,
             phase3Complete: next.phase3Complete !== undefined ? next.phase3Complete : state.phase3Complete,
@@ -791,7 +832,8 @@ export const useStudioStore = create<StudioState>()(
         triageSummary: state.triageSummary,
         phase2Content: state.phase2Content,
         phase3Content: state.phase3Content,
-        phase1Complete: state.phase1Complete,
+        dynamicChecklist: state.dynamicChecklist,
+               phase1Complete: state.phase1Complete,
         phase2Complete: state.phase2Complete,
         phase3Complete: state.phase3Complete,
         zone2ActiveTab: state.zone2ActiveTab,

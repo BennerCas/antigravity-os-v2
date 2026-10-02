@@ -94,7 +94,27 @@ def buscar_en_atlas(query: str) -> str:
         return f"Error buscando en Atlas: {e}"
 
 
+
+import asyncio
+
+def actualizar_checklist(tarea_id: str, estado: str) -> str:
+    """[Tool] Actualiza dinamicamente el 'Radar de Arquitectura' (Checklist) en el frontend.
+    IDs validos: 'triage', 'blueprint', 'deploy', o nuevos IDs que tu crees. estado puede ser 'completed', 'in_progress', 'failed', 'pending'."""
+    try:
+        from routers.studio import manager
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            loop.create_task(manager.broadcast({
+                "type": "UPDATE_CHECKLIST",
+                "payload": {"taskId": tarea_id, "status": estado}
+            }))
+        return f"Checklist actualizado: {tarea_id} -> {estado}"
+    except Exception as e:
+        return f"Error al actualizar checklist: {e}"
+
 TOOL_REGISTRY: List[Callable] = [
+    actualizar_checklist,
+
     obtener_estado_memoria,
     leer_documentacion_nodos,
     listar_agentes_disponibles,
@@ -144,12 +164,9 @@ def ensamblar_instrucciones(
         atlas = _cargar_conocimiento_atlas(atlas_knowledge_id)
         if atlas:
             base = f"{base}\n\n## CONOCIMIENTO MAESTRO DE ATLAS\n{atlas}"
-    base += (
-        "\n\n## REGLAS GLOBALES\n"
-        "- Responde SIEMPRE en espanol.\n"
-        "- Usa las herramientas disponibles cuando el usuario solicite informacion tecnica.\n"
-        "- Se conciso pero completo.\n"
-    )
+    
+    # We do NOT append global rules here anymore to prevent overriding Meta-Prompting.
+    # The agent system prompts are strict enough.
     return base
 
 
@@ -215,23 +232,84 @@ class AgentFactory:
                 "temperature": 0.7,
                 "options": {"num_ctx": 8192},
             }
+            
+            all_tools = []
+            if use_tools:
+                import inspect
+                all_tools = TOOL_REGISTRY.copy()
+                if extra_tools:
+                    all_tools.extend(extra_tools)
+                tools_payload = []
+                for t in all_tools:
+                    sig = inspect.signature(t)
+                    props = {}
+                    for name, param in sig.parameters.items():
+                        props[name] = {"type": "string"}
+                    tools_payload.append({
+                        "type": "function",
+                        "function": {
+                            "name": t.__name__,
+                            "description": t.__doc__ or "",
+                            "parameters": {
+                                "type": "object",
+                                "properties": props,
+                                "required": list(sig.parameters.keys())
+                            }
+                        }
+                    })
+                if tools_payload:
+                    payload["tools"] = tools_payload
+
             try:
                 async with httpx.AsyncClient(timeout=120.0) as client:
                     resp = await client.post(f"{ollama_url}/chat/completions", json=payload)
-                    
                     if resp.status_code == 404 or "model not found" in resp.text.lower():
-                        # Si el modelo default no existe, usamos el primero disponible
                         tags_resp = await client.get(f"{ollama_url.replace('/v1', '/api/tags')}")
                         if tags_resp.status_code == 200:
                             models = tags_resp.json().get("models", [])
                             if models:
-                                payload["model"] = models[-1]["name"]  # Usar el ltimo modelo instalado
+                                payload["model"] = models[-1]["name"]
                                 print(f"[Quantum Routing] Modelo original no encontrado. Usando fallback local: {payload['model']}")
                                 resp = await client.post(f"{ollama_url}/chat/completions", json=payload)
-                    
                     resp.raise_for_status()
-                    return resp.json()["choices"][0]["message"]["content"]
+                    
+                    data = resp.json()
+                    message = data["choices"][0]["message"]
+                    
+                    # Tool Loop handling (only 1 depth for now)
+                    if message.get("tool_calls"):
+                        tool_calls = message["tool_calls"]
+                        payload["messages"].append(message)
+                        for tc in tool_calls:
+                            func_name = tc["function"]["name"]
+                            args = json.loads(tc["function"]["arguments"])
+                            
+                            # Execute local tool
+                            tool_result = "Tool not found"
+                            for t in all_tools:
+                                if t.__name__ == func_name:
+                                    import inspect
+                                    if inspect.iscoroutinefunction(t):
+                                        tool_result = await t(**args)
+                                    else:
+                                        tool_result = t(**args)
+                                    break
+                            
+                            payload["messages"].append({
+                                "role": "tool",
+                                "name": func_name,
+                                "content": str(tool_result)
+                            })
+                            
+                        # Second call after tool execution
+                        resp2 = await client.post(f"{ollama_url}/chat/completions", json=payload)
+                        resp2.raise_for_status()
+                        return resp2.json()["choices"][0]["message"]["content"]
+                    else:
+                        return message["content"]
             except Exception as e:
+                import traceback
+                traceback.print_exc()
                 return f"[AgentFactory Error] El enjambre cuantico local fallo: Ollama no respondio correctamente. Verifica que este corriendo. Detalle: {e}"
 
                 
@@ -268,3 +346,5 @@ class AgentFactory:
             results.append({"agent": agent_id, "response": response})
             accumulated_context = f"{accumulated_context}\n\n[Respuesta de {agent_id}]: {response}"
         return results
+
+

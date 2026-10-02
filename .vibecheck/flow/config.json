@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0",
+  "projectName": "Antigravity_OS_v2",
+  "userName": "developer",
+  "skillLevel": "intermediate",
+  "outputFolder": ".vibecheck/flow",
+  "planningArtifacts": ".vibecheck\\flow\\planning-artifacts",
+  "implementationArtifacts": ".vibecheck\\flow\\implementation-artifacts",
+  "installedAt": "2026-09-25T23:47:53.402Z",
+  "ide": [
+    "vscode"
+  ]
+}

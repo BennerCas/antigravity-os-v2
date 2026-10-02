@@ -11,7 +11,7 @@ const SwarmOrchestrationPanel: React.FC = () => {
   const {
     activityLogs, addActivityLog,
     zone2ActiveTab, setZone2ActiveTab,
-    phase1Interview,
+    phase1Interview, dynamicChecklist,
     phase1Complete, phase2Complete, phase3Complete,
     phase2Content, phase3Content, triageSummary, quantumPhase
   } = useStudioStore();
@@ -169,6 +169,8 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
           const data = JSON.parse(event.data);
           if (data.type === 'ACTIVITY_LOG' && data.log) {
             addActivityLog(data.log);
+                    } else if (data.type === 'UPDATE_CHECKLIST' && data.payload) {
+            useStudioStore.getState().updateChecklistTask(data.payload.taskId, data.payload.status);
           } else if (data.type === 'STATE_UPDATE' && data.tab) {
             setZone2ActiveTab(data.tab);
           }
@@ -292,7 +294,7 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
                   <div className="text-right">
                     <div className="text-xs font-mono tracking-widest uppercase mb-1" style={{ color: 'var(--theme-border)', opacity: 0.7 }}>Progreso Global</div>
                     <div className="text-xl font-bold" style={{ color: 'var(--theme-border)' }}>
-                      {phase3Complete ? '100%' : phase2Complete ? '75%' : phase1Complete ? '50%' : phase1Interview ? '25%' : '0%'}
+                      {dynamicChecklist.length > 0 ? Math.round((dynamicChecklist.filter(t => t.status === 'completed').length / dynamicChecklist.length) * 100) : 0}%
                     </div>
                   </div>
                 </div>
@@ -301,7 +303,7 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
                   <div 
                     className="h-full transition-all duration-1000 ease-out"
                     style={{ 
-                      width: phase3Complete ? '100%' : phase2Complete ? '75%' : phase1Complete ? '50%' : phase1Interview ? '25%' : '0%',
+                      width: `${dynamicChecklist.length > 0 ? Math.round((dynamicChecklist.filter(t => t.status === 'completed').length / dynamicChecklist.length) * 100) : 0}%`,
                       background: 'var(--theme-border)',
                       boxShadow: '0 0 8px var(--theme-border)'
                     }}
@@ -316,7 +318,7 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
                   <TrendUp size={16} /> Vector de Intención
                 </h3>
                 
-                {phase1Complete && triageSummary ? (
+                {triageSummary ? (
                   <div className="flex-1 min-h-0 flex flex-col p-6 rounded-3xl border border-emerald-500/20 bg-emerald-500/5 shadow-[0_0_30px_rgba(16,185,129,0.05)] relative group">
                     <div className="flex-1 min-h-0 flex items-start gap-5 overflow-hidden">
                       <div className="shrink-0 p-4 bg-emerald-500/10 rounded-2xl">
@@ -427,97 +429,38 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
                 </h3>
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  
-                  {/* Step 1 */}
-                  <div 
-                    
-                    className={`p-4 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] ${
-                    phase1Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 
-                    phase1Interview ? 'border-blue-500/50 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.1)]' : 
-                    'border-zinc-800/50 bg-zinc-900/30 opacity-60'
-                  }`}>
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                        phase1Complete ? 'bg-emerald-500/20 text-emerald-400' : 
-                        phase1Interview ? 'bg-blue-500/20 text-blue-400 animate-pulse' : 
-                        'bg-zinc-800 text-zinc-500'
-                      }`}>
-                        <Brain size={16} weight="duotone" />
+                  {dynamicChecklist?.map((task) => (
+                    <div 
+                      key={task.id}
+                      className={`p-4 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] ${
+                        task.status === 'completed' ? 'border-emerald-500/30 bg-emerald-500/5' : 
+                        task.status === 'in_progress' ? 'border-blue-500/50 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.1)]' : 
+                        task.status === 'failed' ? 'border-red-500/50 bg-red-500/10' :
+                        'border-zinc-800/50 bg-zinc-900/30 opacity-60'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                          task.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' : 
+                          task.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400 animate-pulse' : 
+                          task.status === 'failed' ? 'bg-red-500/20 text-red-400' :
+                          'bg-zinc-800 text-zinc-500'
+                        }`}>
+                          {task.status === 'completed' ? <CheckCircle size={16} weight="bold" /> : 
+                           task.status === 'in_progress' ? <Brain size={16} weight="duotone" /> : 
+                           <ListChecks size={16} weight="bold" />}
+                        </div>
+                        <h4 className={`text-sm font-semibold leading-tight ${
+                          task.status === 'completed' ? 'text-emerald-400' : 
+                          task.status === 'in_progress' ? 'text-blue-400' : 
+                          task.status === 'failed' ? 'text-red-400' :
+                          'text-zinc-400'
+                        }`}>
+                          {task.title}
+                        </h4>
                       </div>
-                      <h4 className={`text-sm font-semibold leading-tight ${phase1Complete ? 'text-emerald-400' : phase1Interview ? 'text-blue-400' : 'text-zinc-400'}`}>
-                        Fase 1: Triage
-                      </h4>
                     </div>
-                  </div>
-
-                  {/* Step 2 */}
-                  <div 
-                    
-                    className={`p-4 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] ${
-                    phase2Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 
-                    (phase1Complete && !phase2Complete) ? 'border-purple-500/50 bg-purple-500/10 shadow-[0_0_15px_rgba(168,85,247,0.1)]' : 
-                    'border-zinc-800/50 bg-zinc-900/30 opacity-60'
-                  }`}>
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                        phase2Complete ? 'bg-emerald-500/20 text-emerald-400' : 
-                        (phase1Complete && !phase2Complete) ? 'bg-purple-500/20 text-purple-400 animate-pulse' : 
-                        'bg-zinc-800 text-zinc-500'
-                      }`}>
-                        <Robot size={16} weight="duotone" />
-                      </div>
-                      <h4 className={`text-sm font-semibold leading-tight ${phase2Complete ? 'text-emerald-400' : (phase1Complete && !phase2Complete) ? 'text-purple-400' : 'text-zinc-400'}`}>
-                        Fase 2: Extracción
-                      </h4>
-                    </div>
-                  </div>
-
-                  {/* Step 3 */}
-                  <div 
-                    
-                    className={`p-4 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] ${
-                    phase3Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 
-                    (phase2Complete && !phase3Complete) ? 'border-amber-500/50 bg-amber-500/10 shadow-[0_0_15px_rgba(245,158,11,0.1)]' : 
-                    'border-zinc-800/50 bg-zinc-900/30 opacity-60'
-                  }`}>
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                        phase3Complete ? 'bg-emerald-500/20 text-emerald-400' : 
-                        (phase2Complete && !phase3Complete) ? 'bg-amber-500/20 text-amber-400 animate-pulse' : 
-                        'bg-zinc-800 text-zinc-500'
-                      }`}>
-                        <Lightning size={16} weight="duotone" />
-                      </div>
-                      <h4 className={`text-sm font-semibold leading-tight ${phase3Complete ? 'text-emerald-400' : (phase2Complete && !phase3Complete) ? 'text-amber-400' : 'text-zinc-400'}`}>
-                        Fase 3: Blueprint
-                      </h4>
-                    </div>
-                  </div>
-
-                  {/* Step 4 */}
-                  <div 
-                    onClick={() => {
-                      if (phase3Complete) {
-                        useStudioStore.getState().setZone2ActiveTab('infinityboard');
-                      }
-                    }}
-                    className={`p-4 rounded-xl border transition-all ${phase3Complete ? 'cursor-pointer hover:scale-[1.02]' : 'cursor-not-allowed'} ${
-                    phase3Complete ? 'border-cyan-500/50 bg-cyan-500/10 shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 
-                    'border-zinc-800/50 bg-zinc-900/30 opacity-60'
-                  }`}>
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                        phase3Complete ? 'bg-cyan-500/20 text-cyan-400 animate-pulse' : 
-                        'bg-zinc-800 text-zinc-500'
-                      }`}>
-                        <RocketLaunch size={16} weight="duotone" />
-                      </div>
-                      <h4 className={`text-sm font-semibold leading-tight ${phase3Complete ? 'text-cyan-400' : 'text-zinc-400'}`}>
-                        Ensamblaje
-                      </h4>
-                    </div>
-                  </div>
-
+                  ))}
                 </div>
               </div>
             </div>
