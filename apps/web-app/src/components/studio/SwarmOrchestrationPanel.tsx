@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import { useStudioStore } from '../../stores/useStudioStore';
 import { useHistoryStore } from '../../stores/useHistoryStore';
 import { CheckCircle, XCircle, Clock, Info, ListChecks, Target, Brain, Robot, SpeakerHigh, Trash, CheckSquare, Square, Lightning, Crosshair, RocketLaunch, Checks, TrendUp, PaintBrush, Database, Globe, TerminalWindow, File, UploadSimple, CodeBlock, HardDrives, Scan, Network, AppWindow, Layout, ClockCounterClockwise, Microphone, Graph } from '@phosphor-icons/react';
-import { WS_STUDIO_ACTIVITY_URL } from '../../lib/api';
+import { WS_STUDIO_ACTIVITY_URL, API_URL } from '../../lib/api';
 import { CanvasTabs } from '../../pages/AgentOSStudio';
 
 const SwarmOrchestrationPanel: React.FC = () => {
@@ -202,7 +202,68 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
     }
   };
 
+  const handleGuardarSwarm = async () => {
+    const name = window.prompt("Ingrese el nombre del Swarm:");
+    if (!name) return;
 
+    try {
+      const state = useStudioStore.getState();
+      const payload = {
+        id: name.toLowerCase().replace(/\s+/g, '-'),
+        name: name,
+        description: "Generado en Phase 3",
+        nodes: state.flowNodes || [],
+        edges: state.flowEdges || []
+      };
+
+      const res = await fetch(`${API_URL}/studio/registries/swarms`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        alert("Swarm guardado correctamente.");
+      } else {
+        alert("Error al guardar el Swarm.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error al guardar el Swarm.");
+    }
+  };
+
+  const handleCargarSwarm = async () => {
+    try {
+      const res = await fetch(`${API_URL}/studio/registries/swarms`);
+      if (!res.ok) {
+        alert("Error al obtener los Swarms.");
+        return;
+      }
+      const data = await res.json();
+      
+      const swarms = Array.isArray(data) ? data : data.data || [];
+      if (swarms.length === 0) {
+        alert("No hay Swarms guardados.");
+        return;
+      }
+      
+      const swarmNames = swarms.map((s: any, i: number) => `${i + 1}. ${s.name}`).join('\\n');
+      const selection = window.prompt(`Seleccione el número del Swarm a cargar:\\n${swarmNames}`);
+      if (!selection) return;
+
+      const idx = parseInt(selection) - 1;
+      const selectedSwarm = swarms[idx];
+      if (selectedSwarm) {
+        useStudioStore.getState().setFlow(selectedSwarm.nodes || [], selectedSwarm.edges || []);
+        alert("Swarm cargado correctamente.");
+      } else {
+        alert("Selección inválida.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error al cargar el Swarm.");
+    }
+  };
 
   return (
     <div className="w-full h-full flex bg-[var(--surface-canvas)] text-[var(--text-primary)]">
@@ -469,10 +530,28 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
                     {/* 📜 Blueprint Tab */}
           <div className={zone2ActiveTab === 'blueprint' ? 'flex-1 flex flex-col h-full bg-[var(--surface-canvas)] relative overflow-hidden' : 'hidden'}>
             <div className="shrink-0 pt-8 pb-4 px-8 border-b border-[var(--stroke-subtle)] bg-zinc-900/30">
-               <h2 className="text-xl text-[var(--text-primary)] font-semibold flex items-center gap-2">
-                 <File size={24} className="text-amber-400" /> Códice Técnico (Blueprint)
-               </h2>
-               <p className="text-sm text-zinc-400 mt-1">El documento sagrado de arquitectura generado por AureliOS.</p>
+               <div className="flex justify-between items-start">
+                 <div>
+                   <h2 className="text-xl text-[var(--text-primary)] font-semibold flex items-center gap-2">
+                     <File size={24} className="text-amber-400" /> Códice Técnico (Blueprint)
+                   </h2>
+                   <p className="text-sm text-zinc-400 mt-1">El documento sagrado de arquitectura generado por AureliOS.</p>
+                 </div>
+                 <div className="flex gap-3">
+                   <button 
+                     onClick={handleGuardarSwarm}
+                     className="px-4 py-2 text-xs font-bold flex items-center gap-2 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded hover:bg-amber-500/20 transition-all"
+                   >
+                     Guardar Swarm
+                   </button>
+                   <button 
+                     onClick={handleCargarSwarm}
+                     className="px-4 py-2 text-xs font-bold flex items-center gap-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded hover:bg-emerald-500/20 transition-all"
+                   >
+                     Cargar Swarm
+                   </button>
+                 </div>
+               </div>
             </div>
             
             <div className="flex-1 overflow-y-auto px-10 py-8 custom-scrollbar">

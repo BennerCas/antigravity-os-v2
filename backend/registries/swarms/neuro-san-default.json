@@ -1,0 +1,21 @@
+{
+    "id": "neuro-san-default",
+    "name": "Neuro-SAN Default Swarm",
+    "description": "Plantilla por defecto Neuro-SAN",
+    "nodes": [
+        {
+            "id": "triage_agent",
+            "type": "agent",
+            "position": {"x": 100, "y": 100},
+            "data": {
+                "name": "Triage Agent",
+                "role": "Analista",
+                "systemPrompt": "Eres un analista de triage.",
+                "tools": [],
+                "testQueries": ["Hola"]
+            }
+        }
+    ],
+    "edges": [],
+    "created_at": "2026-10-02T00:00:00Z"
+}

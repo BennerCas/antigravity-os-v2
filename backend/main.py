@@ -49,6 +49,8 @@ app.include_router(flowboard.router)
 app.include_router(inspector.router)
 from routers.studio import router as studio_router
 app.include_router(studio_router)
+from routers.registries import router as registries_router
+app.include_router(registries_router)
 
 
 @app.on_event("startup")
@@ -83,3 +85,4 @@ async def freechat_endpoint(request: FreeChatRequest):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="127.0.0.1", port=8001, reload=True)
+
