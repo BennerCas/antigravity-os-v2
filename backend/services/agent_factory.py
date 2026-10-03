@@ -274,7 +274,7 @@ class AgentFactory:
                 payload["tools"] = tools_payload
 
         try:
-            async with httpx.AsyncClient(timeout=180.0) as client:
+            async with httpx.AsyncClient(timeout=300.0) as client:
                 resp = await client.post(f"{ollama_url}/chat/completions", json=payload)
                 
                 if resp.status_code == 404 or "model not found" in resp.text.lower():
@@ -329,10 +329,11 @@ class AgentFactory:
                     {"role": "system", "content": system_instructions},
                     {"role": "user", "content": user_prompt}
                 ],
-                "temperature": 0.7
+                "temperature": 0.7,
+                "max_tokens": 4096
             }
             try:
-                async with httpx.AsyncClient(timeout=60.0) as client:
+                async with httpx.AsyncClient(timeout=120.0) as client:
                     resp = await client.post(
                         f"{free_ai_base}/chat/completions", 
                         json=payload, 
