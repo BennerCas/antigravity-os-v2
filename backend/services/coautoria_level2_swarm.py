@@ -34,8 +34,7 @@ class SwarmOrchestrator:
         Ejecuta el enjambre de forma real, pasando el objetivo por los nodos.
         Genera un log de discusion y al final un artefacto.
         """
-        if len(self.agents) < 4:
-            raise ValueError(f"Swarm requires a minimum of 4 agents. Currently has {len(self.agents)}.")
+        # removed restriction to allow < 4 agents if Hermes decides so
 
         blackboard.set("swarm_status", "running")
         

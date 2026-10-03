@@ -7,7 +7,7 @@ from google.genai import types
 logger = logging.getLogger(__name__)
 
 # Initialize Gemini Client (assuming standard environment variable setup)
-client = genai.Client()
+# client = genai.Client()  # Removido para usar AgentFactory
 DEFAULT_MODEL = "gemini-2.5-flash"
 
 class MatchAndFuseV2:

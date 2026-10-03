@@ -1,12 +1,23 @@
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 
 class AgentCard(BaseModel):
     """Represents an available agent in the system."""
-    id: str
-    name: str
-    description: str
-    capabilities: List[str]
+    id: str = "agent"
+    name: str = ""
+    label: Optional[str] = None
+    description: str = ""
+    capabilities: List[str] = Field(default_factory=list)
+
+    @model_validator(mode="before")
+    @classmethod
+    def populate_name(cls, data: any):
+        if isinstance(data, dict):
+            if "name" not in data or not data["name"]:
+                data["name"] = data.get("label") or data.get("id") or "Agent"
+            if "label" not in data or not data["label"]:
+                data["label"] = data["name"]
+        return data
 
 class SupervisorRouter:
     """

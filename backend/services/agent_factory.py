@@ -226,94 +226,91 @@ class AgentFactory:
         )
         
         # --- REGLA 1: Local Hermes es la regla ---
-        # A menos que se fuerce cloud explicitly
-        force_cloud = os.getenv("ACTIVE_MODEL") == "cloud" or (model and ("gemini" in model or "gpt" in model or "free.ai" in model))
-        
-        if not force_cloud:
-            ollama_model = model if model and not ("gemini" in model or "gpt" in model) else os.getenv("OLLAMA_MODEL", "hermes3:8b")
-            ollama_url = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434").rstrip("/")
-            if not ollama_url.endswith("/v1"):
-                ollama_url += "/v1"
-                
-            payload = {
-                "model": ollama_model,
-                "messages": [
-                    {"role": "system", "content": system_instructions},
-                    {"role": "user", "content": user_prompt}
-                ],
-                "temperature": 0.7,
-                "options": {"num_ctx": 8192},
-            }
+        # Primero intentar Ollama local
+        ollama_model = model if model and not ("gemini" in model or "gpt" in model) else os.getenv("OLLAMA_MODEL", "hermes3:8b")
+        ollama_url = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434").rstrip("/")
+        if not ollama_url.endswith("/v1"):
+            ollama_url += "/v1"
             
-            all_tools = []
-            if use_tools:
-                import inspect
-                all_tools = TOOL_REGISTRY.copy()
-                if extra_tools:
-                    all_tools.extend(extra_tools)
-                tools_payload = []
-                for t in all_tools:
-                    sig = inspect.signature(t)
-                    props = {}
-                    for name, param in sig.parameters.items():
-                        props[name] = {"type": "string"}
-                    tools_payload.append({
-                        "type": "function",
-                        "function": {
-                            "name": t.__name__,
-                            "description": t.__doc__ or "",
-                            "parameters": {
-                                "type": "object",
-                                "properties": props,
-                                "required": list(sig.parameters.keys())
-                            }
+        payload = {
+            "model": ollama_model,
+            "messages": [
+                {"role": "system", "content": system_instructions},
+                {"role": "user", "content": user_prompt}
+            ],
+            "temperature": 0.7
+        }
+        
+        all_tools = []
+        if use_tools:
+            import inspect
+            all_tools = TOOL_REGISTRY.copy()
+            if extra_tools:
+                all_tools.extend(extra_tools)
+            tools_payload = []
+            for t in all_tools:
+                sig = inspect.signature(t)
+                props = {}
+                for name, param in sig.parameters.items():
+                    props[name] = {"type": "string"}
+                tools_payload.append({
+                    "type": "function",
+                    "function": {
+                        "name": t.__name__,
+                        "description": t.__doc__ or "",
+                        "parameters": {
+                            "type": "object",
+                            "properties": props,
+                            "required": list(sig.parameters.keys())
                         }
-                    })
-                if tools_payload:
-                    payload["tools"] = tools_payload
+                    }
+                })
+            if tools_payload:
+                payload["tools"] = tools_payload
 
-            try:
-                async with httpx.AsyncClient(timeout=30.0) as client:
-                    resp = await client.post(f"{ollama_url}/chat/completions", json=payload)
-                    
-                    if resp.status_code == 404 or "model not found" in resp.text.lower():
-                        tags_resp = await client.get(f"{ollama_url.replace('/v1', '/api/tags')}")
-                        if tags_resp.status_code == 200:
-                            models = tags_resp.json().get("models", [])
-                            if models:
-                                payload["model"] = models[-1]["name"]
-                                print(f"[Quantum Routing] Modelo original no encontrado. Usando fallback local: {payload['model']}")
-                                resp = await client.post(f"{ollama_url}/chat/completions", json=payload)
-                    
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        message = data["choices"][0]["message"]
-                        
-                        if message.get("tool_calls"):
-                            tool_calls = message["tool_calls"]
-                            payload["messages"].append(message)
-                            for tc in tool_calls:
-                                func_name = tc["function"]["name"]
-                                args = json.loads(tc["function"]["arguments"])
-                                tool_result = "Tool not found"
-                                for t in all_tools:
-                                    if t.__name__ == func_name:
-                                        import inspect
-                                        if inspect.iscoroutinefunction(t):
-                                            tool_result = await t(**args)
-                                        else:
-                                            tool_result = t(**args)
-                                        break
-                                payload["messages"].append({"role": "tool", "name": func_name, "content": str(tool_result)})
-                            resp2 = await client.post(f"{ollama_url}/chat/completions", json=payload)
-                            if resp2.status_code == 200:
-                                return resp2.json()["choices"][0]["message"]["content"]
-                        else:
-                            return message["content"]
-            except Exception as e:
-                print(f"[AgentFactory] Fallo local (Ollama). Procediendo a fallback de nube. Detalle: {e}")
-                pass # Continue to cloud fallback
+        try:
+            async with httpx.AsyncClient(timeout=180.0) as client:
+                resp = await client.post(f"{ollama_url}/chat/completions", json=payload)
                 
+                if resp.status_code == 404 or "model not found" in resp.text.lower():
+                    tags_resp = await client.get(f"{ollama_url.replace('/v1', '/api/tags')}")
+                    if tags_resp.status_code == 200:
+                        models = tags_resp.json().get("models", [])
+                        if models:
+                            payload["model"] = models[-1]["name"]
+                            print(f"[Quantum Routing] Modelo original no encontrado. Usando fallback local: {payload['model']}")
+                            resp = await client.post(f"{ollama_url}/chat/completions", json=payload)
+                
+                if resp.status_code == 200:
+                    data = resp.json()
+                    message = data["choices"][0]["message"]
+                    
+                    if message.get("tool_calls"):
+                        tool_calls = message["tool_calls"]
+                        payload["messages"].append(message)
+                        for tc in tool_calls:
+                            func_name = tc["function"]["name"]
+                            args = json.loads(tc["function"]["arguments"])
+                            tool_result = "Tool not found"
+                            for t in all_tools:
+                                if t.__name__ == func_name:
+                                    import inspect
+                                    if inspect.iscoroutinefunction(t):
+                                        tool_result = await t(**args)
+                                    else:
+                                        tool_result = t(**args)
+                                    break
+                            payload["messages"].append({"role": "tool", "name": func_name, "content": str(tool_result)})
+                        resp2 = await client.post(f"{ollama_url}/chat/completions", json=payload)
+                        if resp2.status_code == 200:
+                            return resp2.json()["choices"][0]["message"]["content"]
+                    else:
+                        return message["content"]
+        except Exception as e:
+            print(f"[AgentFactory] Fallo local (Ollama). Procediendo a fallback de nube. Detalle: {repr(e)}")
+            pass # Continue to cloud fallback
+            
+
         # --- REGLA 2: Si la app usa la nube debe utilizar free.ai ---
         free_ai_key = os.getenv("FREE_AI_API_KEY", "")
         free_ai_base = os.getenv("FREE_AI_BASE_URL", "https://api.free.ai/v1").rstrip("/")
@@ -322,7 +319,7 @@ class AgentFactory:
         # But the rule says "si la app usa la nube debe utilizar free.ai"
         if free_ai_key:
             payload = {
-                "model": "gpt-4o", # Model compatible con API Free.AI
+                "model": "qwen7b", # Model compatible con API Free.AI
                 "messages": [
                     {"role": "system", "content": system_instructions},
                     {"role": "user", "content": user_prompt}
@@ -341,7 +338,7 @@ class AgentFactory:
                     else:
                         print(f"[AgentFactory] Free.AI fallo (HTTP {resp.status_code}). Fallback a modelo similar (Gemini).")
             except Exception as e:
-                print(f"[AgentFactory] Error en Free.AI: {e}. Fallback a modelo similar (Gemini).")
+                print(f"[AgentFactory] Error en Free.AI: {repr(e)}. Fallback a modelo similar (Gemini).")
                 pass
 
         # --- REGLA 3: Si no funciona free.ai debe usar un modelo lo mas similar (Gemini SDK) ---
@@ -358,6 +355,79 @@ class AgentFactory:
                 return await response.text()
         except Exception as e:
             return f"[AgentFactory Error] Todos los motores fallaron (Local, Free.AI, Gemini). Último error: {type(e).__name__}: {e}"
+    @staticmethod
+    async def chat_stream(
+
+        agent_id: str,
+        user_prompt: str,
+        atlas_knowledge_id: Optional[str] = None,
+        override_instructions: Optional[str] = None,
+        model: Optional[str] = None,
+    ):
+        import os
+        import httpx
+        import json
+        
+        system_instructions = ensamblar_instrucciones(
+            agent_id, atlas_knowledge_id, override_instructions
+        )
+        
+        ollama_model = model if model and not ("gemini" in model or "gpt" in model) else os.getenv("OLLAMA_MODEL", "hermes3:8b")
+        ollama_url = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434").rstrip("/")
+        if not ollama_url.endswith("/v1"):
+            ollama_url += "/v1"
+            
+        payload = {
+            "model": ollama_model,
+            "messages": [
+                {"role": "system", "content": system_instructions},
+                {"role": "user", "content": user_prompt}
+            ],
+            "temperature": 0.7,
+            "stream": True
+        }
+        
+        try:
+            async with httpx.AsyncClient(timeout=180.0) as client:
+                async with client.stream("POST", f"{ollama_url}/chat/completions", json=payload) as response:
+                    if response.status_code == 200:
+                        async for line in response.aiter_lines():
+                            if line.startswith("data: ") and line != "data: [DONE]":
+                                try:
+                                    data = json.loads(line[6:])
+                                    chunk = data["choices"][0]["delta"].get("content", "")
+                                    if chunk:
+                                        yield chunk
+                                except:
+                                    pass
+                        return
+        except Exception as e:
+            print(f"[AgentFactory Stream] Fallo local (Ollama). Procediendo a fallback. Detalle: {repr(e)}")
+            
+        free_ai_key = os.getenv("FREE_AI_API_KEY", "")
+        free_ai_base = os.getenv("FREE_AI_BASE_URL", "https://api.free.ai/v1").rstrip("/")
+        
+        if free_ai_key:
+            payload["model"] = "qwen7b"
+            try:
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    async with client.stream("POST", f"{free_ai_base}/chat/completions", json=payload, headers={"Authorization": f"Bearer {free_ai_key}"}) as response:
+                        if response.status_code == 200:
+                            async for line in response.aiter_lines():
+                                if line.startswith("data: ") and line != "data: [DONE]":
+                                    try:
+                                        data = json.loads(line[6:])
+                                        chunk = data["choices"][0]["delta"].get("content", "")
+                                        if chunk:
+                                            yield chunk
+                                    except:
+                                        pass
+                            return
+            except Exception as e:
+                pass
+                
+        yield "[AgentFactory Error] Todos los motores fallaron en streaming."
+
 
     @classmethod
     async def swarm_chat(

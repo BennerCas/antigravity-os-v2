@@ -119,6 +119,7 @@ interface StudioState {
   chatMessages: ChatMessage[];
   chatHistories: ChatHistory[];
   addChatMessage: (msg: Omit<ChatMessage, 'id'>) => void;
+  updateLastChatMessage: (content: string) => void;
   setChatMessages: (messages: ChatMessage[]) => void;
   clearMessages: () => void;
   rollupCurrentChat: () => void;
@@ -219,21 +220,68 @@ function extractTools(desc: string): string[] {
     let cleanMd = text;
     let jsonNodes: any[] = [];
     let jsonEdges: any[] = [];
+    // 1. Try <topology> or <json> tag
     const topRegex = /<(?:topology|json)>[\s\S]*?\{([\s\S]*?)\}[\s\S]*?<\/(?:topology|json)>/;
-    const match = text.match(topRegex);
+    let match = text.match(topRegex);
+    let matchedTag = false;
     
     if (match) {
         try {
-            // Find the JSON boundaries inside the topology tag
             const fullMatch = match[0];
             const jsonStr = fullMatch.substring(fullMatch.indexOf('{'), fullMatch.lastIndexOf('}') + 1);
             const parsed = JSON.parse(jsonStr);
-            jsonNodes = parsed.nodes || [];
-            jsonEdges = parsed.edges || [];
+            const root = parsed.topology || parsed;
+            jsonNodes = root.nodes || [];
+            jsonEdges = root.edges || [];
             cleanMd = cleanMd.replace(topRegex, '').trim();
+            matchedTag = true;
         } catch(e) {
-            console.error("Failed to parse JSON topology", e);
+            console.error("Failed to parse <topology> tag", e);
         }
+    }
+
+    // 2. If no tag matched, try markdown ```json containing "nodes" or "topology"
+    if (jsonNodes.length === 0) {
+        const mdJsonRegex = /```(?:json)?\s*(\{[\s\S]*?\})\s*```/;
+        const mdMatch = text.match(mdJsonRegex);
+        if (mdMatch) {
+            try {
+                const fullMatch = mdMatch[0];
+                const jsonStr = fullMatch.substring(fullMatch.indexOf('{'), fullMatch.lastIndexOf('}') + 1);
+                const parsed = JSON.parse(jsonStr);
+                const root = parsed.topology || parsed;
+                if (root.nodes && Array.isArray(root.nodes)) {
+                    jsonNodes = root.nodes || [];
+                    jsonEdges = root.edges || [];
+                    cleanMd = cleanMd.replace(mdJsonRegex, '').trim();
+                    matchedTag = true;
+                }
+            } catch(e) {
+                console.error("Failed to parse markdown ```json topology", e);
+            }
+        }
+    }
+
+    // 3. Fallback: Search for any bare JSON containing "nodes" or "topology"
+    if (jsonNodes.length === 0) {
+        const bareJsonRegex = /\{\s*"(?:topology|nodes)"[\s\S]*\}\s*\}/;
+        const bareMatch = text.match(bareJsonRegex);
+        if (bareMatch) {
+            try {
+                const parsed = JSON.parse(bareMatch[0]);
+                const root = parsed.topology || parsed;
+                if (root.nodes && Array.isArray(root.nodes)) {
+                    jsonNodes = root.nodes || [];
+                    jsonEdges = root.edges || [];
+                    cleanMd = cleanMd.replace(bareMatch[0], '').trim();
+                    matchedTag = true;
+                }
+            } catch(e) {}
+        }
+    }
+
+    if (matchedTag && cleanMd === '') {
+        cleanMd = "> **Topología generada:** Nodos añadidos al lienzo (InfinityBoard).";
     }
 
     const artifactRegex = /<artifact\s+name="([^"]+)">([\s\S]*?)<\/artifact>/g;
@@ -257,46 +305,54 @@ function extractTools(desc: string): string[] {
     if (jsonNodes.length > 0) {
         jsonNodes.forEach((n, idx) => {
             const col = idx % 3, row = Math.floor(idx / 3);
-            const kind = n.kind || 'agent';
+            const kind = (n.data && n.data.kind) || n.kind || n.type || 'agent';
+            const label = (n.data && n.data.label) || n.label || n.name || `Nodo ${idx}`;
+            const description = (n.data && n.data.description) || n.description || '';
             nodes.push({
                 id: n.id || `node_${idx}`,
                 type: kind,
-                position: { x: 60 + col * 270, y: 60 + row * 190 },
+                position: n.position || { x: 60 + col * 270, y: 60 + row * 190 },
                 data: {
-                    label: n.label || `Nodo ${idx}`,
-                    kind: kind,
-                    description: n.description || '',
-                    tools: n.tools || [],
+                    label,
+                    kind,
+                    description,
+                    tools: n.tools || (n.data && n.data.tools) || [],
                     systemPrompt: n.system_prompt || '',
                     testQueries: n.test_queries || [],
                     inputPort: n.inputPort || (idx > 0 ? 'input' : ''),
                     outputPort: n.outputPort || 'output',
                     cost: n.cost || '',
                     status: n.status || '',
-                    fullDescription: n.description || '',
+                    fullDescription: description,
                     allTools: n.tools || []
                 }
             });
         });
         
         jsonEdges.forEach(e => {
-            edges.push({
-                id: e.id || `e_${e.source}-${e.target}`,
-                source: e.source,
-                target: e.target,
-                animated: true,
-                style: { stroke: '#94a3b8', strokeWidth: 2 }
-            });
+            const src = e.source || e.from || '';
+            const tgt = e.target || e.to || '';
+            if (src && tgt) {
+                edges.push({
+                    id: e.id || `e_${src}-${tgt}`,
+                    source: src,
+                    target: tgt,
+                    label: e.label || '',
+                    animated: true,
+                    style: { stroke: '#94a3b8', strokeWidth: 2 }
+                });
+            }
         });
         
         return { nodes, edges, cards: [], md: cleanMd };
     }
 
-    // LEGACY FALLBACK
-    const lines = text.split('\n');
-  const cards: AgentCard[] = [];
-  nodes.length = 0;
-  edges.length = 0;
+    // LEGACY FALLBACK (strip thinking blocks so internal reasoning is never parsed as nodes)
+    const textWithoutThinking = text.replace(/<thinking>[\s\S]*?<\/thinking>/g, '').trim();
+    const lines = textWithoutThinking.split('\n');
+    const cards: AgentCard[] = [];
+    nodes.length = 0;
+    edges.length = 0;
   const headingRe  = /^#{1,4}\s+(.{3,60})/;
   const bulletRe   = /^[-*•]\s+\*{0,2}(.{3,60?})\*{0,2}[:—–]/;
   const numberedRe = /^\d+[.)]\s+\*{0,2}(.{3,60})\*{0,2}/;
@@ -474,8 +530,18 @@ export const useStudioStore = create<StudioState>()(
       }),
       addChatMessage: (msg) =>
         set((state) => ({
-          chatMessages: [...state.chatMessages, { ...msg, id: Date.now().toString() + Math.random().toString() }],
+          chatMessages: [...state.chatMessages, { ...msg, id: Date.now().toString() + Math.random().toString().substring(1) }],
         })),
+      updateLastChatMessage: (content) =>
+        set((state) => {
+          if (state.chatMessages.length === 0) return state;
+          const newMessages = [...state.chatMessages];
+          newMessages[newMessages.length - 1] = {
+            ...newMessages[newMessages.length - 1],
+            content
+          };
+          return { chatMessages: newMessages };
+        }),
       setChatMessages: (messages) => set({ chatMessages: messages }),
       clearMessages: () =>
         set({

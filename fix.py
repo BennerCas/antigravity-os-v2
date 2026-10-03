@@ -1,12 +1,10 @@
-with open('backend/services/agent_factory.py', 'r', encoding='utf-8') as f:
-    c = f.read()
+with open("backend/services/freechat_pipeline.py", "r", encoding="utf-8") as f:
+    content = f.read()
 
-import re
-# The broken string spans multiple lines in the file
-broken_str = 'base = f"{base}\n\n## CONOCIMIENTO MAESTRO DE ATLAS\n{atlas}"'
-fixed_str = 'base = f"{base}\\n\\n## CONOCIMIENTO MAESTRO DE ATLAS\\n{atlas}"'
+content = content.replace("yield \"\n\n<swarm>", "yield \"\"\"\n\n<swarm>")
+content = content.replace("Motor Cuántico...\n\"", "Motor Cuántico...\n\"\"\"")
+content = content.replace("Motor Cuntico...\n\"", "Motor Cuntico...\n\"\"\"")
+content = content.replace("Calculando Colmena...\n\"", "Calculando Colmena...\n\"\"\"")
 
-c = c.replace(broken_str, fixed_str)
-
-with open('backend/services/agent_factory.py', 'w', encoding='utf-8') as f:
-    f.write(c)
+with open("backend/services/freechat_pipeline.py", "w", encoding="utf-8") as f:
+    f.write(content)

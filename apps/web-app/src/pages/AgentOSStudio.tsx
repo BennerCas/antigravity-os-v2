@@ -15,88 +15,88 @@ import remarkGfm from 'remark-gfm';
 
 const AURELIOS_THEMES: Record<string, any> = {
   obsidian: {
-    name: 'Obsidian Emperor', bg: 'bg-zinc-950', text: 'text-white', border: 'border-zinc-800',
+    name: 'Obsidian Emperor', bg: 'bg-zinc-950', text: 'text-zinc-100', border: 'border-zinc-800',
     panelBg: 'bg-zinc-900', panelBorder: 'border-zinc-700', primary: 'text-cyan-400',
     toolBg: 'bg-zinc-800', toolHover: 'hover:border-zinc-500', aiBubble: 'bg-zinc-900 border-zinc-700 text-zinc-100',
-    humanBubble: 'bg-green-500/10 border border-green-500/30 text-green-400', inputBg: 'bg-zinc-900 border-zinc-700', inputFocus: 'focus:border-cyan-400',
-    sendActive: 'bg-cyan-400 text-black hover:bg-cyan-300', sendDisabled: 'bg-zinc-800 text-zinc-600'
+    humanBubble: 'bg-green-900 border border-green-700 text-green-100', inputBg: 'bg-zinc-900 border-zinc-700', inputFocus: 'focus:border-cyan-400',
+    sendActive: 'bg-cyan-400 text-zinc-950 hover:bg-cyan-300', sendDisabled: 'bg-zinc-900 text-zinc-500'
   },
   marble: {
     name: 'Marble Stoic', bg: 'bg-gray-50', text: 'text-gray-900', border: 'border-gray-300',
-    panelBg: 'bg-white', panelBorder: 'border-gray-400', primary: 'text-amber-600',
-    toolBg: 'bg-gray-200', toolHover: 'hover:border-gray-500', aiBubble: 'bg-white border-gray-300 text-gray-900',
+    panelBg: 'bg-white', panelBorder: 'border-gray-400', primary: 'text-amber-700',
+    toolBg: 'bg-gray-200', toolHover: 'hover:border-gray-400', aiBubble: 'bg-white border-gray-300 text-gray-900',
     humanBubble: 'bg-blue-700 text-white', inputBg: 'bg-white border-gray-300', inputFocus: 'focus:border-blue-700',
-    sendActive: 'bg-blue-700 text-white hover:bg-blue-600', sendDisabled: 'bg-gray-200 text-gray-500'
+    sendActive: 'bg-blue-700 text-white hover:bg-blue-800', sendDisabled: 'bg-gray-200 text-gray-600'
   },
   crimson: {
     name: 'Crimson Forge', bg: 'bg-red-950', text: 'text-red-100', border: 'border-red-800',
-    panelBg: 'bg-red-900', panelBorder: 'border-red-700', primary: 'text-red-400',
+    panelBg: 'bg-red-900', panelBorder: 'border-red-700', primary: 'text-red-300',
     toolBg: 'bg-red-800', toolHover: 'hover:border-red-500', aiBubble: 'bg-red-900 border-red-700 text-red-100',
-    humanBubble: 'bg-red-600 text-white', inputBg: 'bg-red-900 border-red-800', inputFocus: 'focus:border-red-400',
-    sendActive: 'bg-red-600 text-white hover:bg-red-500', sendDisabled: 'bg-red-800 text-red-400'
+    humanBubble: 'bg-red-700 text-white', inputBg: 'bg-red-900 border-red-700', inputFocus: 'focus:border-red-400',
+    sendActive: 'bg-red-600 text-white hover:bg-red-500', sendDisabled: 'bg-red-900 text-red-400'
   },
   legion: {
     name: 'Cyber Legion', bg: 'bg-emerald-950', text: 'text-emerald-100', border: 'border-emerald-800',
-    panelBg: 'bg-emerald-900', panelBorder: 'border-emerald-700', primary: 'text-emerald-400',
+    panelBg: 'bg-emerald-900', panelBorder: 'border-emerald-700', primary: 'text-emerald-300',
     toolBg: 'bg-emerald-800', toolHover: 'hover:border-emerald-500', aiBubble: 'bg-emerald-900 border-emerald-700 text-emerald-100',
-    humanBubble: 'bg-emerald-600 text-white', inputBg: 'bg-emerald-900 border-emerald-800', inputFocus: 'focus:border-emerald-400',
-    sendActive: 'bg-emerald-600 text-white hover:bg-emerald-500', sendDisabled: 'bg-emerald-800 text-emerald-500'
+    humanBubble: 'bg-emerald-700 text-white', inputBg: 'bg-emerald-900 border-emerald-700', inputFocus: 'focus:border-emerald-400',
+    sendActive: 'bg-emerald-600 text-white hover:bg-emerald-500', sendDisabled: 'bg-emerald-900 text-emerald-400'
   },
   imperial: {
     name: 'Imperial Purple', bg: 'bg-purple-950', text: 'text-purple-100', border: 'border-purple-800',
-    panelBg: 'bg-purple-900', panelBorder: 'border-purple-700', primary: 'text-purple-400',
+    panelBg: 'bg-purple-900', panelBorder: 'border-purple-700', primary: 'text-purple-300',
     toolBg: 'bg-purple-800', toolHover: 'hover:border-purple-500', aiBubble: 'bg-purple-900 border-purple-700 text-purple-100',
-    humanBubble: 'bg-purple-600 text-white', inputBg: 'bg-purple-900 border-purple-800', inputFocus: 'focus:border-purple-400',
-    sendActive: 'bg-purple-600 text-white hover:bg-purple-500', sendDisabled: 'bg-purple-800 text-purple-500'
+    humanBubble: 'bg-purple-700 text-white', inputBg: 'bg-purple-900 border-purple-700', inputFocus: 'focus:border-purple-400',
+    sendActive: 'bg-purple-600 text-white hover:bg-purple-500', sendDisabled: 'bg-purple-900 text-purple-400'
   },
   solar: {
     name: 'Solar Flare', bg: 'bg-orange-950', text: 'text-orange-100', border: 'border-orange-800',
-    panelBg: 'bg-orange-900', panelBorder: 'border-orange-700', primary: 'text-amber-400',
+    panelBg: 'bg-orange-900', panelBorder: 'border-orange-700', primary: 'text-amber-300',
     toolBg: 'bg-orange-800', toolHover: 'hover:border-amber-500', aiBubble: 'bg-orange-900 border-orange-700 text-orange-100',
-    humanBubble: 'bg-amber-600 text-white', inputBg: 'bg-orange-900 border-orange-800', inputFocus: 'focus:border-amber-400',
-    sendActive: 'bg-amber-500 text-black hover:bg-amber-400', sendDisabled: 'bg-orange-800 text-orange-500'
+    humanBubble: 'bg-amber-700 text-white', inputBg: 'bg-orange-900 border-orange-700', inputFocus: 'focus:border-amber-400',
+    sendActive: 'bg-amber-500 text-black hover:bg-amber-400', sendDisabled: 'bg-orange-900 text-orange-400'
   },
   abyssal: {
-    name: 'Abyssal Ocean', bg: 'bg-slate-950', text: 'text-sky-100', border: 'border-sky-900',
-    panelBg: 'bg-slate-900', panelBorder: 'border-sky-800', primary: 'text-sky-400',
-    toolBg: 'bg-slate-800', toolHover: 'hover:border-sky-500', aiBubble: 'bg-slate-900 border-sky-800 text-sky-100',
-    humanBubble: 'bg-sky-500 text-white', inputBg: 'bg-slate-900 border-sky-900', inputFocus: 'focus:border-sky-400',
-    sendActive: 'bg-sky-500 text-white hover:bg-sky-400', sendDisabled: 'bg-slate-800 text-sky-700'
+    name: 'Abyssal Ocean', bg: 'bg-slate-950', text: 'text-sky-100', border: 'border-sky-800',
+    panelBg: 'bg-slate-900', panelBorder: 'border-sky-700', primary: 'text-sky-300',
+    toolBg: 'bg-slate-800', toolHover: 'hover:border-sky-500', aiBubble: 'bg-slate-900 border-sky-700 text-sky-100',
+    humanBubble: 'bg-sky-700 text-white', inputBg: 'bg-slate-900 border-sky-800', inputFocus: 'focus:border-sky-400',
+    sendActive: 'bg-sky-500 text-white hover:bg-sky-400', sendDisabled: 'bg-slate-900 text-sky-400'
   },
   toxic: {
-    name: 'Toxic Wasteland', bg: 'bg-stone-950', text: 'text-lime-100', border: 'border-lime-900',
-    panelBg: 'bg-stone-900', panelBorder: 'border-lime-800', primary: 'text-lime-400',
-    toolBg: 'bg-stone-800', toolHover: 'hover:border-lime-500', aiBubble: 'bg-stone-900 border-lime-800 text-lime-100',
-    humanBubble: 'bg-lime-600 text-white', inputBg: 'bg-stone-900 border-lime-900', inputFocus: 'focus:border-lime-400',
-    sendActive: 'bg-lime-500 text-black hover:bg-lime-400', sendDisabled: 'bg-stone-800 text-lime-700'
+    name: 'Toxic Wasteland', bg: 'bg-stone-950', text: 'text-lime-100', border: 'border-lime-800',
+    panelBg: 'bg-stone-900', panelBorder: 'border-lime-700', primary: 'text-lime-300',
+    toolBg: 'bg-stone-800', toolHover: 'hover:border-lime-500', aiBubble: 'bg-stone-900 border-lime-700 text-lime-100',
+    humanBubble: 'bg-lime-700 text-black', inputBg: 'bg-stone-900 border-lime-800', inputFocus: 'focus:border-lime-400',
+    sendActive: 'bg-lime-500 text-black hover:bg-lime-400', sendDisabled: 'bg-stone-900 text-lime-400'
   },
   midnight: {
-    name: 'Midnight Rose', bg: 'bg-rose-950', text: 'text-rose-100', border: 'border-rose-900',
-    panelBg: 'bg-rose-900', panelBorder: 'border-rose-800', primary: 'text-pink-400',
-    toolBg: 'bg-rose-800', toolHover: 'hover:border-pink-500', aiBubble: 'bg-rose-900 border-rose-800 text-rose-100',
-    humanBubble: 'bg-pink-600 text-white', inputBg: 'bg-rose-900 border-rose-900', inputFocus: 'focus:border-pink-400',
-    sendActive: 'bg-pink-600 text-white hover:bg-pink-500', sendDisabled: 'bg-rose-800 text-rose-500'
+    name: 'Midnight Rose', bg: 'bg-rose-950', text: 'text-rose-100', border: 'border-rose-800',
+    panelBg: 'bg-rose-900', panelBorder: 'border-rose-700', primary: 'text-pink-300',
+    toolBg: 'bg-rose-800', toolHover: 'hover:border-pink-500', aiBubble: 'bg-rose-900 border-rose-700 text-rose-100',
+    humanBubble: 'bg-pink-700 text-white', inputBg: 'bg-rose-900 border-rose-800', inputFocus: 'focus:border-pink-400',
+    sendActive: 'bg-pink-600 text-white hover:bg-pink-500', sendDisabled: 'bg-rose-900 text-rose-400'
   },
   monochrome: {
-    name: 'Monochrome Terminal', bg: 'bg-black', text: 'text-white', border: 'border-zinc-800',
-    panelBg: 'bg-zinc-900', panelBorder: 'border-zinc-700', primary: 'text-white',
-    toolBg: 'bg-zinc-800', toolHover: 'hover:border-zinc-500', aiBubble: 'bg-zinc-900 border-zinc-700 text-white',
-    humanBubble: 'bg-zinc-700 text-white', inputBg: 'bg-zinc-900 border-zinc-800', inputFocus: 'focus:border-white',
-    sendActive: 'bg-white text-black hover:bg-zinc-200', sendDisabled: 'bg-zinc-800 text-zinc-600'
+    name: 'Monochrome Terminal', bg: 'bg-black', text: 'text-zinc-100', border: 'border-zinc-800',
+    panelBg: 'bg-zinc-900', panelBorder: 'border-zinc-700', primary: 'text-zinc-200',
+    toolBg: 'bg-zinc-800', toolHover: 'hover:border-zinc-500', aiBubble: 'bg-zinc-900 border-zinc-700 text-zinc-100',
+    humanBubble: 'bg-zinc-800 text-white', inputBg: 'bg-zinc-900 border-zinc-700', inputFocus: 'focus:border-white',
+    sendActive: 'bg-zinc-200 text-black hover:bg-white', sendDisabled: 'bg-zinc-900 text-zinc-500'
   },
   claude: {
     name: 'Claude Elegance', bg: 'bg-orange-50', text: 'text-stone-900', border: 'border-stone-300',
     panelBg: 'bg-white', panelBorder: 'border-stone-400', primary: 'text-orange-700',
-    toolBg: 'bg-stone-200', toolHover: 'hover:border-orange-700', aiBubble: 'bg-white border-stone-300 text-stone-900',
+    toolBg: 'bg-stone-200', toolHover: 'hover:border-orange-500', aiBubble: 'bg-white border-stone-300 text-stone-900',
     humanBubble: 'bg-orange-700 text-white', inputBg: 'bg-white border-stone-300', inputFocus: 'focus:border-orange-700',
-    sendActive: 'bg-orange-700 text-white hover:bg-orange-600', sendDisabled: 'bg-stone-200 text-stone-400'
+    sendActive: 'bg-orange-700 text-white hover:bg-orange-800', sendDisabled: 'bg-stone-200 text-stone-600'
   },
   solargrid: {
-    name: 'Solar Grid (Retro)', bg: 'bg-violet-950', text: 'text-yellow-200', border: 'border-violet-800',
-    panelBg: 'bg-violet-900', panelBorder: 'border-purple-700', primary: 'text-orange-500',
-    toolBg: 'bg-violet-800', toolHover: 'hover:border-orange-500', aiBubble: 'bg-violet-900 border-purple-700 text-yellow-200',
-    humanBubble: 'bg-orange-500 text-white', inputBg: 'bg-violet-900 border-violet-800', inputFocus: 'focus:border-orange-500',
-    sendActive: 'bg-orange-500 text-white hover:bg-orange-400', sendDisabled: 'bg-violet-800 text-violet-400'
+    name: 'Solar Grid (Retro)', bg: 'bg-violet-950', text: 'text-yellow-100', border: 'border-violet-800',
+    panelBg: 'bg-violet-900', panelBorder: 'border-purple-700', primary: 'text-orange-400',
+    toolBg: 'bg-violet-800', toolHover: 'hover:border-orange-400', aiBubble: 'bg-violet-900 border-purple-700 text-yellow-100',
+    humanBubble: 'bg-orange-600 text-white', inputBg: 'bg-violet-900 border-violet-700', inputFocus: 'focus:border-orange-400',
+    sendActive: 'bg-orange-500 text-white hover:bg-orange-400', sendDisabled: 'bg-violet-900 text-violet-300'
   }
 };
 
@@ -431,7 +431,7 @@ const FlowArchitect: React.FC = () => {
               files: uploadedFiles.length > 0 ? uploadedFiles : undefined
             };
   
-            const res = await fetch(`${API_URL}/studio/freechat`, {
+            const res = await fetch(`${API_URL}/studio/freechat_stream`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload),
@@ -439,9 +439,54 @@ const FlowArchitect: React.FC = () => {
             });
             if (!res.ok) throw new Error(`Error en OmniChat: ${res.status}`);
             
-            const data = await res.json();
+            const reader = res.body?.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let rawReply = '';
             
-            let rawReply = data.reply || (data.response && data.response.content) || JSON.stringify(data);
+            // Crea un mensaje inicial vacio
+            addChatMessage({ role: 'agent', content: '...', model: selectedModel });
+            
+            if (reader) {
+                let hasParsedTopology = false;
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    const chunk = decoder.decode(value, { stream: true });
+                    rawReply += chunk;
+                    
+                    if (!hasParsedTopology && (rawReply.includes('</topology>') || (rawReply.includes('```') && (rawReply.includes('"nodes"') || rawReply.includes('"topology"'))))) {
+                        const { nodes, edges } = parseAIResponseToFlow(rawReply);
+                        if (nodes.length > 0) {
+                            hasParsedTopology = true;
+                            useStudioStore.getState().setFlow(nodes, edges);
+                            useStudioStore.getState().setZone2ActiveTab('infinityboard');
+                        }
+                    }
+                    
+                    let displayReply = rawReply;
+                    const topStart = displayReply.indexOf('<topology>');
+                    if (topStart !== -1) {
+                        const topEnd = displayReply.indexOf('</topology>');
+                        if (topEnd !== -1) {
+                            displayReply = displayReply.substring(0, topStart) + displayReply.substring(topEnd + 11);
+                        } else {
+                            displayReply = displayReply.substring(0, topStart) + "\n> *Generando Topología en InfinityBoard...*\n";
+                        }
+                    } else {
+                        const mdJsonMatch = displayReply.match(/```(?:json)?\s*\{[\s\S]*?"nodes"[\s\S]*?\}\s*```/);
+                        if (mdJsonMatch) {
+                            displayReply = displayReply.replace(mdJsonMatch[0], '\n> **Topología generada:** Arquitectura añadida al lienzo (InfinityBoard).\n');
+                        }
+                    }
+                    
+                    // Limpiar tags de enjambre y disparadores visualmente durante el stream para no romper Markdown
+                    displayReply = displayReply.replace(/<\/?swarm>/g, '');
+                    displayReply = displayReply.replace(/\[(?:EJECUTAR_SWARM|TRIGGER_DYNAMIC_SWARM|TRIGGER_HIVE|EJECUTAR_HIVE)\]/g, '');
+                    
+                    useStudioStore.getState().updateLastChatMessage(displayReply);
+                }
+            }
+
             const swarmRegex = /<swarm>([\s\S]*?)<\/swarm>/g;
             let swarmMatch;
             while ((swarmMatch = swarmRegex.exec(rawReply)) !== null) {
@@ -463,8 +508,28 @@ const FlowArchitect: React.FC = () => {
 
           } catch (error: any) {
             if (error.name !== 'AbortError') {
-              console.error(error);
-              addChatMessage({ role: 'agent', content: `[ERROR] No se pudo completar la operacion en modo Sandbox.`, model: 'System' });
+              console.error('[OmniChat Error]', error);
+              // Mostrar el error real, no un mensaje genérico
+              let errorDetail = error?.message || String(error) || 'Error desconocido';
+              let errorType = '🔴 Error de red';
+              if (errorDetail.includes('fetch') || errorDetail.includes('Failed to fetch') || errorDetail.includes('NetworkError')) {
+                errorType = '🔴 Backend no disponible';
+                errorDetail = 'El servidor Python no responde. ¿Está iniciado el backend en el puerto 8000?';
+              } else if (errorDetail.includes('JSON') || errorDetail.includes('parse') || errorDetail.includes('SyntaxError')) {
+                errorType = '🟡 Error de parsing';
+                errorDetail = 'El modelo generó JSON mal formado. Intenta de nuevo — el modelo regenerará la topología.';
+              } else if (errorDetail.includes('timeout') || errorDetail.includes('408')) {
+                errorType = '🟡 Timeout';
+                errorDetail = 'El modelo tardó demasiado en responder. La iGPU AMD puede estar sobrecargada. Espera 10s e intenta de nuevo.';
+              } else if (errorDetail.includes('500') || errorDetail.includes('Internal Server')) {
+                errorType = '🔴 Error interno del servidor';
+                errorDetail = 'Revisa los logs del backend Python para ver el stack trace completo.';
+              }
+              addChatMessage({
+                role: 'agent',
+                content: `**${errorType}**\n\n\`${errorDetail}\``,
+                model: 'System'
+              });
             }
             setIsTyping(false);
             isHandlingSendRef.current = false;
@@ -791,7 +856,7 @@ const FlowArchitect: React.FC = () => {
                           </summary>
                           <div className="p-4 flex flex-col gap-3 border-t bg-black/40" style={{ borderColor: 'inherit' }}>
                             <div className={`text-xs font-mono whitespace-pre-wrap ${t.text} opacity-80`}>
-                              {msg.content}
+                              {msg.content.replace(/<thinking>/g, '---\n**🧠 Proceso Cognitivo:**\n\n_').replace(/<\/thinking>/g, '_\n\n---')}
                             </div>
                           </div>
                         </details>
@@ -803,7 +868,15 @@ const FlowArchitect: React.FC = () => {
                             <Star size={16} weight={msg.starred ? 'fill' : 'regular'} />
                           </button>
                           <div className={msg.role === 'agent' ? `markdown-body max-w-none break-words ${t.text}` : 'whitespace-pre-wrap'}>
-                            {msg.role === 'agent' ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown> : msg.content}
+                            {msg.role === 'agent' ? <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
+  code({node, className, children, ...props}: any) {
+    const match = /language-(\w+)/.exec(className || '');
+    if (match && match[1] === 'countdown') {
+      return <CountdownTimer initialSeconds={parseInt(String(children).replace(/\n$/, '')) || 120} />;
+    }
+    return <code className={className} {...props}>{children}</code>;
+  }
+}}>{msg.content.replace(/<thinking>/g, '---\n**🧠 Proceso Cognitivo:**\n\n_').replace(/<\/thinking>/g, '_\n\n---')}</ReactMarkdown> : msg.content}
                           </div>
                         </div>
                       )}
@@ -826,7 +899,7 @@ const FlowArchitect: React.FC = () => {
                   </summary>
                   <div className="p-4 flex flex-col gap-3 border-t bg-black/40" style={{ borderColor: 'inherit' }}>
                     <div className={`text-xs font-mono whitespace-pre-wrap ${t.text} opacity-80`}>
-                      {msg.content}
+                      {msg.content.replace(/<thinking>/g, '---\n**🧠 Proceso Cognitivo:**\n\n_').replace(/<\/thinking>/g, '_\n\n---')}
                     </div>
                   </div>
                 </details>
@@ -839,9 +912,17 @@ const FlowArchitect: React.FC = () => {
                   </button>
                   <div className={msg.role === 'agent' ? `markdown-body max-w-none break-words ${t.text}` : 'whitespace-pre-wrap'}>
                     {msg.role === 'agent' ? (
-                      <ReactMarkdown>
-                        {msg.content}
-                      </ReactMarkdown>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
+                          code({node, className, children, ...props}: any) {
+                            const match = /language-(\w+)/.exec(className || '');
+                            if (match && match[1] === 'countdown') {
+                              return <CountdownTimer initialSeconds={parseInt(String(children).replace(/\n$/, '')) || 120} />;
+                            }
+                            return <code className={className} {...props}>{children}</code>;
+                          }
+                        }}>
+                          {msg.content.replace(/<thinking>/g, '---\n**🧠 Proceso Cognitivo:**\n\n_').replace(/<\/thinking>/g, '_\n\n---')}
+                        </ReactMarkdown>
                     ) : (
                       msg.content
                     )}
@@ -849,7 +930,14 @@ const FlowArchitect: React.FC = () => {
                 </div>
               )}
               {msg.role === 'human' && (
-                <div className="flex justify-end mt-1 px-1">
+                <div className="flex justify-end mt-1 px-1 gap-2">
+                  <button 
+                    onClick={() => toggleMessageStar(msg.id)}
+                    className={`${msg.starred ? 'text-amber-400' : 'text-zinc-500'} hover:text-amber-300 transition-colors`}
+                    title={msg.starred ? "Quitar destacado" : "Destacar mensaje"}
+                  >
+                    <Star size={14} weight={msg.starred ? "fill" : "regular"} />
+                  </button>
                   <button 
                     onClick={() => navigator.clipboard.writeText(msg.content)}
                     className="text-zinc-500 hover:text-blue-400 transition-colors"
@@ -1852,6 +1940,18 @@ const THINKING_PHRASES = [
   'Consultando oráculos...'
 ];
 
+
+
+
+const CountdownTimer = ({ initialSeconds }: { initialSeconds: number }) => {
+  const [timeLeft, setTimeLeft] = React.useState(initialSeconds);
+  React.useEffect(() => {
+    if (timeLeft <= 0) return;
+    const t = setInterval(() => setTimeLeft(l => l - 1), 1000);
+    return () => clearInterval(t);
+  }, [timeLeft]);
+  return <span className="font-mono bg-cyan-900/40 text-cyan-400 border border-cyan-800 px-3 py-1 rounded-md shadow-[0_0_15px_rgba(34,211,238,0.2)]">⏱️ {Math.floor(timeLeft/60)}:{(timeLeft%60).toString().padStart(2, '0')}</span>;
+};
 
 
 export default function AgentOSStudio() {
