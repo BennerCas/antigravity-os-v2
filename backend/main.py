@@ -86,3 +86,35 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="127.0.0.1", port=8001, reload=True)
 
+
+# ==========================================
+# SUPERVISOR & BLACKBOARD NEURO-SAN ROUTES
+# ==========================================
+from services.supervisor_router import SupervisorRouter, AgentCard
+from services.blackboard_manager import blackboard
+from security.sly_data_masking import mask_sensitive_data, unmask_sensitive_data
+
+class SupervisorRequest(BaseModel):
+    task_description: str
+    agents: List[dict]
+
+@app.post("/api/v1/orchestration/supervisor")
+async def supervisor_route(request: SupervisorRequest):
+    router = SupervisorRouter(use_llm=False)
+    # Convert dict to AgentCard
+    agent_cards = [AgentCard(**a) for a in request.agents]
+    selected_agent = router.route_task(request.task_description, agent_cards)
+    return {"assigned_agent": selected_agent.dict() if selected_agent else None}
+
+class BlackboardItem(BaseModel):
+    key: str
+    value: Any
+
+@app.post("/api/v1/orchestration/blackboard")
+async def set_blackboard(item: BlackboardItem):
+    blackboard.set(item.key, item.value)
+    return {"status": "success", "blackboard": blackboard.get_all()}
+
+@app.get("/api/v1/orchestration/blackboard")
+async def get_blackboard():
+    return {"blackboard": blackboard.get_all()}

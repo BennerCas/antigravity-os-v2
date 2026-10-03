@@ -28,12 +28,21 @@ class FreechatPipeline:
         files: Lista de diccionarios {"name": "...", "mime_type": "...", "data": "base64_string"}
         """
         import base64
+        from security.sly_data_masking import mask_sensitive_data, unmask_sensitive_data
         
         contents = []
+        token_maps = {}
         for i, msg in enumerate(messages):
             role = msg.get("role", "user")
             gemini_role = "user" if role == "user" else "model"
-            content = msg.get("content", "")
+            
+            raw_content = msg.get("content", "")
+            if role == "user":
+                masked_text, token_map = mask_sensitive_data(raw_content)
+                token_maps.update(token_map)
+                content = masked_text
+            else:
+                content = raw_content
             
             parts = []
             
@@ -127,11 +136,16 @@ class FreechatPipeline:
                     )
                 )
                 
+            # --- SLY-DATA UNMASKING ---
+            final_text = response.text
+            if token_maps:
+                final_text = unmask_sensitive_data(final_text, token_maps)
+                
             return {
                 "status": "success",
                 "response": {
                     "role": "assistant",
-                    "content": response.text
+                    "content": final_text
                 }
             }
         except Exception as e:

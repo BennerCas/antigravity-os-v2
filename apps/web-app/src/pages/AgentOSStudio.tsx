@@ -1814,13 +1814,13 @@ export default function AgentOSStudio() {
         fontFamily: 'inherit',
       }}
     >
-      {/* Columna 1 — 30% — Chat */}
-      <div style={{ width: '30%', height: '100%', display: 'flex', flexDirection: 'column', borderRight: '1px solid #2A2A2A', flexShrink: 0, minWidth: 0 }}>
+      {/* Columna 1 — 20% — Chat */}
+      <div style={{ width: '20%', height: '100%', display: 'flex', flexDirection: 'column', borderRight: '1px solid #2A2A2A', flexShrink: 0, minWidth: 0 }}>
         <FlowArchitect />
       </div>
 
-      {/* Columna 2 — 70% — Swarm Orchestration */}
-      <div style={{ width: '70%', height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0, position: 'relative', padding: '0' }}>
+      {/* Columna 2 — 80% — Swarm Orchestration */}
+      <div style={{ width: '80%', height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0, position: 'relative', padding: '0' }}>
         <SwarmOrchestrationPanel />
       </div>
     </div>

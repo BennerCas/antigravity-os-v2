@@ -113,12 +113,15 @@ const StudioNode: React.FC<NodeProps> = ({ data, selected }) => {
   );
 };
 
+import SupervisorNode from './nodes/SupervisorNode';
+
 /* Exportar un nodeTypes object para ReactFlow */
 export const studioNodeTypes = {
   agent:   StudioNode,
   trigger: StudioNode,
   tool:    StudioNode,
   router:  StudioNode,
+  supervisor: SupervisorNode,
   human:   StudioNode,
   sink:    StudioNode,
 };

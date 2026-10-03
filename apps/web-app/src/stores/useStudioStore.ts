@@ -48,13 +48,33 @@ export interface ChecklistTask {
   status: 'pending' | 'in_progress' | 'completed' | 'failed';
 }
 
+export interface AtlasArtifact {
+  id: string;
+  name: string;
+  type: 'file' | 'url' | 'github';
+  strategy: 'rag' | 'full';
+  namespace: string;
+  active: boolean;
+}
+
 interface StudioState {
 
   // Axiomas Parameters
   quantumFriction: number;
   setQuantumFriction: (val: number) => void;
+  quantumTemperature: number;
+  setQuantumTemperature: (val: number) => void;
+  quantumProfile: 'strict' | 'brainstorm' | 'devil_advocate' | 'balanced';
+  setQuantumProfile: (profile: 'strict' | 'brainstorm' | 'devil_advocate' | 'balanced') => void;
+  quantumCoT: boolean;
+  setQuantumCoT: (val: boolean) => void;
+
   atlasFileName: string | null;
   setAtlasFileName: (name: string | null) => void;
+  atlasArtifacts: AtlasArtifact[];
+  addAtlasArtifact: (artifact: Omit<AtlasArtifact, 'id'>) => void;
+  removeAtlasArtifact: (id: string) => void;
+  toggleAtlasArtifact: (id: string) => void;
 
   // Zones 1 and 2
 
@@ -316,8 +336,24 @@ export const useStudioStore = create<StudioState>()(
       // Axiomas Parameters
       quantumFriction: 50,
       setQuantumFriction: (val) => set({ quantumFriction: val }),
+      quantumTemperature: 0.7,
+      setQuantumTemperature: (val) => set({ quantumTemperature: val }),
+      quantumProfile: 'balanced',
+      setQuantumProfile: (profile) => set({ quantumProfile: profile }),
+      quantumCoT: true,
+      setQuantumCoT: (val) => set({ quantumCoT: val }),
       atlasFileName: null,
       setAtlasFileName: (name) => set({ atlasFileName: name }),
+      atlasArtifacts: [],
+      addAtlasArtifact: (artifact) => set((state) => ({
+        atlasArtifacts: [...state.atlasArtifacts, { ...artifact, id: crypto.randomUUID() }]
+      })),
+      removeAtlasArtifact: (id) => set((state) => ({
+        atlasArtifacts: state.atlasArtifacts.filter(a => a.id !== id)
+      })),
+      toggleAtlasArtifact: (id) => set((state) => ({
+        atlasArtifacts: state.atlasArtifacts.map(a => a.id === id ? { ...a, active: !a.active } : a)
+      })),
       activeTab: 'discovery',
       setActiveTab: (tab) => set({ activeTab: tab }),
 
@@ -839,7 +875,11 @@ export const useStudioStore = create<StudioState>()(
         zone2ActiveTab: state.zone2ActiveTab,
         quantumPhase: state.quantumPhase,
         quantumFriction: state.quantumFriction,
+        quantumTemperature: state.quantumTemperature,
+        quantumProfile: state.quantumProfile,
+        quantumCoT: state.quantumCoT,
         atlasFileName: state.atlasFileName,
+        atlasArtifacts: state.atlasArtifacts,
       }),
     }
   )
