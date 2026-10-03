@@ -218,18 +218,19 @@ class AgentFactory:
         model: Optional[str] = None, use_tools: bool = True,
     ) -> str:
         import os
+        import httpx
+        import json
         
-        # --- QUANTUM ROUTING: Bypassear a Ollama local si no hay herramientas ---
-        use_ollama = os.getenv("ACTIVE_MODEL") == "ollama" or (model and (":" in model or "hermes" in model))
-        if not use_tools:
-            use_ollama = True 
-            
-        if use_ollama:
-            import httpx
-            system_instructions = ensamblar_instrucciones(
-                agent_id, atlas_knowledge_id, override_instructions
-            )
-            ollama_model = model or os.getenv("OLLAMA_MODEL", "hermes3:8b")
+        system_instructions = ensamblar_instrucciones(
+            agent_id, atlas_knowledge_id, override_instructions
+        )
+        
+        # --- REGLA 1: Local Hermes es la regla ---
+        # A menos que se fuerce cloud explicitly
+        force_cloud = os.getenv("ACTIVE_MODEL") == "cloud" or (model and ("gemini" in model or "gpt" in model or "free.ai" in model))
+        
+        if not force_cloud:
+            ollama_model = model if model and not ("gemini" in model or "gpt" in model) else os.getenv("OLLAMA_MODEL", "hermes3:8b")
             ollama_url = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434").rstrip("/")
             if not ollama_url.endswith("/v1"):
                 ollama_url += "/v1"
@@ -272,8 +273,9 @@ class AgentFactory:
                     payload["tools"] = tools_payload
 
             try:
-                async with httpx.AsyncClient(timeout=120.0) as client:
+                async with httpx.AsyncClient(timeout=30.0) as client:
                     resp = await client.post(f"{ollama_url}/chat/completions", json=payload)
+                    
                     if resp.status_code == 404 or "model not found" in resp.text.lower():
                         tags_resp = await client.get(f"{ollama_url.replace('/v1', '/api/tags')}")
                         if tags_resp.status_code == 200:
@@ -282,62 +284,80 @@ class AgentFactory:
                                 payload["model"] = models[-1]["name"]
                                 print(f"[Quantum Routing] Modelo original no encontrado. Usando fallback local: {payload['model']}")
                                 resp = await client.post(f"{ollama_url}/chat/completions", json=payload)
-                    resp.raise_for_status()
                     
-                    data = resp.json()
-                    message = data["choices"][0]["message"]
-                    
-                    # Tool Loop handling (only 1 depth for now)
-                    if message.get("tool_calls"):
-                        tool_calls = message["tool_calls"]
-                        payload["messages"].append(message)
-                        for tc in tool_calls:
-                            func_name = tc["function"]["name"]
-                            args = json.loads(tc["function"]["arguments"])
-                            
-                            # Execute local tool
-                            tool_result = "Tool not found"
-                            for t in all_tools:
-                                if t.__name__ == func_name:
-                                    import inspect
-                                    if inspect.iscoroutinefunction(t):
-                                        tool_result = await t(**args)
-                                    else:
-                                        tool_result = t(**args)
-                                    break
-                            
-                            payload["messages"].append({
-                                "role": "tool",
-                                "name": func_name,
-                                "content": str(tool_result)
-                            })
-                            
-                        # Second call after tool execution
-                        resp2 = await client.post(f"{ollama_url}/chat/completions", json=payload)
-                        resp2.raise_for_status()
-                        return resp2.json()["choices"][0]["message"]["content"]
-                    else:
-                        return message["content"]
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        message = data["choices"][0]["message"]
+                        
+                        if message.get("tool_calls"):
+                            tool_calls = message["tool_calls"]
+                            payload["messages"].append(message)
+                            for tc in tool_calls:
+                                func_name = tc["function"]["name"]
+                                args = json.loads(tc["function"]["arguments"])
+                                tool_result = "Tool not found"
+                                for t in all_tools:
+                                    if t.__name__ == func_name:
+                                        import inspect
+                                        if inspect.iscoroutinefunction(t):
+                                            tool_result = await t(**args)
+                                        else:
+                                            tool_result = t(**args)
+                                        break
+                                payload["messages"].append({"role": "tool", "name": func_name, "content": str(tool_result)})
+                            resp2 = await client.post(f"{ollama_url}/chat/completions", json=payload)
+                            if resp2.status_code == 200:
+                                return resp2.json()["choices"][0]["message"]["content"]
+                        else:
+                            return message["content"]
             except Exception as e:
-                import traceback
-                traceback.print_exc()
-                return f"[AgentFactory Error] El enjambre cuantico local fallo: Ollama no respondio correctamente. Verifica que este corriendo. Detalle: {e}"
-
+                print(f"[AgentFactory] Fallo local (Ollama). Procediendo a fallback de nube. Detalle: {e}")
+                pass # Continue to cloud fallback
                 
-        # --- RUTEO POR DEFECTO: Google Antigravity SDK ---
+        # --- REGLA 2: Si la app usa la nube debe utilizar free.ai ---
+        free_ai_key = os.getenv("FREE_AI_API_KEY", "")
+        free_ai_base = os.getenv("FREE_AI_BASE_URL", "https://api.free.ai/v1").rstrip("/")
+        
+        # If the user forced gemini explicitly, don't use free.ai unless we want to override it.
+        # But the rule says "si la app usa la nube debe utilizar free.ai"
+        if free_ai_key:
+            payload = {
+                "model": "gpt-4o", # Model compatible con API Free.AI
+                "messages": [
+                    {"role": "system", "content": system_instructions},
+                    {"role": "user", "content": user_prompt}
+                ],
+                "temperature": 0.7
+            }
+            try:
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    resp = await client.post(
+                        f"{free_ai_base}/chat/completions", 
+                        json=payload, 
+                        headers={"Authorization": f"Bearer {free_ai_key}", "Content-Type": "application/json"}
+                    )
+                    if resp.status_code == 200:
+                        return resp.json()["choices"][0]["message"]["content"]
+                    else:
+                        print(f"[AgentFactory] Free.AI fallo (HTTP {resp.status_code}). Fallback a modelo similar (Gemini).")
+            except Exception as e:
+                print(f"[AgentFactory] Error en Free.AI: {e}. Fallback a modelo similar (Gemini).")
+                pass
+
+        # --- REGLA 3: Si no funciona free.ai debe usar un modelo lo mas similar (Gemini SDK) ---
         config = cls.build_config(
             agent_id=agent_id,
             atlas_knowledge_id=atlas_knowledge_id,
             override_instructions=override_instructions,
             extra_tools=extra_tools,
-            model=model, use_tools=use_tools,
+            model="gemini-2.5-flash", use_tools=use_tools,
         )
         try:
             async with Agent(config) as agent:
                 response = await agent.chat(user_prompt)
                 return await response.text()
         except Exception as e:
-            return f"[AgentFactory Error] {type(e).__name__}: {e}"
+            return f"[AgentFactory Error] Todos los motores fallaron (Local, Free.AI, Gemini). Último error: {type(e).__name__}: {e}"
 
     @classmethod
     async def swarm_chat(

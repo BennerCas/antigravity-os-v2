@@ -18,11 +18,13 @@ class FreechatPipeline:
             "STYLE: Técnico, denso, estrictamente funcional. Cero lenguaje conversacional periférico.\n\n"
             "CONSTRAINTS:\n"
             "1. Debes usar OBLIGATORIAMENTE etiquetas <thinking> y </thinking> para razonar la clasificación antes de responder.\n"
-            "2. Si el usuario pide crear O modificar nodos/agentes/flujos, genera un JSON estricto dentro de la etiqueta <topology>.\n"
-            "3. Si el usuario pide generar código, interfaces, dashboards, o sistemas complejos, tu respuesta POSTERIOR al thinking debe ser EXACTA Y ÚNICAMENTE la cadena de texto: [TRIGGER_REAL_SWARM]\n"
-            "4. Si es charla general, responde directamente después del thinking.\n\n"
-            "SCHEMA ESPERADO PARA RUTEO DE ENJAMBRE:\n"
-            "<thinking>\n1. Análisis de intención: Petición de código compleja detectada.\n2. Clasificación: Ruteo a Enjambre Táctico.\n</thinking>\n[TRIGGER_REAL_SWARM]"
+            "2. Si el usuario pide crear O modificar nodos/agentes/flujos simples, genera un JSON estricto dentro de la etiqueta <topology>.\n"
+            "3. Si el usuario pide un código complejo, dashboard o módulo, devuelve: [TRIGGER_DYNAMIC_SWARM] seguido de un JSON array con los roles de 4 a 15 especialistas necesarios.\n"
+            "4. Si pide un sistema colosal o ecosistema completo, devuelve: [TRIGGER_HIVE] seguido de un JSON array con las colmenas necesarias (ej. [{\"name\": \"Frontend Swarm\", \"objective\": \"...\"}]).\n\n"
+            "SCHEMA ESPERADO PARA SWARM:\n"
+            "<thinking>...</thinking>\n[TRIGGER_DYNAMIC_SWARM]\n[{\"id\": \"arq1\", \"name\": \"Architect\", \"description\": \"...\", \"capabilities\": [\"design\"]}]\n\n"
+            "SCHEMA ESPERADO PARA HIVE:\n"
+            "<thinking>...</thinking>\n[TRIGGER_HIVE]\n[{\"name\": \"Backend Swarm\", \"objective\": \"...\"}]"
         )
         self.tools = [web_search, process_document]
 
@@ -99,28 +101,50 @@ class FreechatPipeline:
                 
                 if not function_calls:
                     resp_text = response.text
-                    if "[TRIGGER_REAL_SWARM]" in resp_text:
+                    
+                    # Extraer el objetivo del último mensaje del usuario
+                    last_user_prompt = "Crear sistema"
+                    for m in reversed(messages):
+                        if m.get("role") == "user":
+                            last_user_prompt = m.get("content", "")
+                            break
+                    
+                    if "[TRIGGER_DYNAMIC_SWARM]" in resp_text:
+                        import json
                         from backend.services.coautoria_level2_swarm import SwarmOrchestrator
                         from backend.services.supervisor_router import AgentCard
                         
-                        # Definimos el equipo táctico base
-                        tactical_team = [
-                            AgentCard(id="arq1", name="Principal Solutions Architect", description="Define la arquitectura base, patrones de diseño y stack tecnológico. Aplica principios DRY y SOLID de forma matemática.", capabilities=["design", "architecture"]),
-                            AgentCard(id="sec1", name="Zero-Trust Security Lead", description="Auditor implacable. Aplica principios de 'Default Deny' y escanea vectores de inyección, sanitización y manejo de memoria/credenciales.", capabilities=["security", "audit"]),
-                            AgentCard(id="uiux", name="Frontend VibeCoding Engineer", description="Ingeniero de Interfaz. Dicta estructuras semánticas, Tailwind, accesibilidad y flujos cognitivos de usuario.", capabilities=["frontend", "ui"]),
-                            AgentCard(id="qa", name="Red Teamer Operations", description="Atacante asimétrico. Su única función es destruir las suposiciones de los otros 3 buscando cuellos de botella lógicos y fallos de integración.", capabilities=["testing", "attack"])
-                        ]
+                        try:
+                            # Extract JSON array
+                            start_idx = resp_text.find("[", resp_text.find("[TRIGGER_DYNAMIC_SWARM]"))
+                            end_idx = resp_text.rfind("]") + 1
+                            team_data = json.loads(resp_text[start_idx:end_idx])
+                            tactical_team = [AgentCard(**d) for d in team_data]
+                        except Exception as e:
+                            # Fallback if json parsing fails
+                            tactical_team = [
+                                AgentCard(id="arq1", name="Principal Architect", description="Define arquitectura", capabilities=["design"]),
+                                AgentCard(id="sec1", name="Security Lead", description="Audita seguridad", capabilities=["security"]),
+                                AgentCard(id="uiux", name="Frontend Engineer", description="Diseña UI", capabilities=["frontend"]),
+                                AgentCard(id="qa", name="Red Teamer", description="Ataca lógica", capabilities=["testing"])
+                            ]
+                            
                         orchestrator = SwarmOrchestrator(agents=tactical_team)
-                        
-                        # Extraer el objetivo del último mensaje del usuario
-                        last_user_prompt = "Crear sistema"
-                        for m in reversed(messages):
-                            if m.get("role") == "user":
-                                last_user_prompt = m.get("content", "")
-                                break
-                                
-                        # Ejecutar el verdadero enjambre asíncrono
                         resp_text = await orchestrator.execute_swarm_async(last_user_prompt)
+
+                    elif "[TRIGGER_HIVE]" in resp_text:
+                        import json
+                        from backend.services.coautoria_level3_hive import HiveManager
+                        
+                        try:
+                            start_idx = resp_text.find("[", resp_text.find("[TRIGGER_HIVE]"))
+                            end_idx = resp_text.rfind("]") + 1
+                            hive_data = json.loads(resp_text[start_idx:end_idx])
+                        except Exception as e:
+                            hive_data = [{"name": "Frontend Swarm", "objective": "Construir UI"}, {"name": "Backend Swarm", "objective": "Construir APIs"}]
+                            
+                        manager = HiveManager(hive_name="Hive Global")
+                        resp_text = await manager.orchestrate_hive_async(last_user_prompt, hive_data)
 
                     return {
                         "status": "success",

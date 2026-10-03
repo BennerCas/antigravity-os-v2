@@ -385,16 +385,16 @@ const FlowArchitect: React.FC = () => {
 
     
     // --- OMNICHAT ROUTING ---
-    let targetPhase = quantumPhase;
+    let targetPhase = 'omni';
     let actualPrompt = textToSend;
 
+    // Fuerza OmniChat (El Router Maestro / Swarms) para todo mensaje, a menos que el usuario esté en un tab específico de old-machine
     if (textToSend.trim().toLowerCase().startsWith('/flow')) {
          targetPhase = 'phase1_triage';
          actualPrompt = textToSend.substring(5).trim();
          setQuantumPhase('phase1_triage');
-    } else if (textToSend.trim().toLowerCase().startsWith('/free')) {
+    } else {
          targetPhase = 'omni';
-         actualPrompt = textToSend.substring(5).trim();
          setQuantumPhase('omni');
     }
 
@@ -441,7 +441,7 @@ const FlowArchitect: React.FC = () => {
             
             const data = await res.json();
             
-            let rawReply = data.reply;
+            let rawReply = data.reply || (data.response && data.response.content) || JSON.stringify(data);
             const swarmRegex = /<swarm>([\s\S]*?)<\/swarm>/g;
             let swarmMatch;
             while ((swarmMatch = swarmRegex.exec(rawReply)) !== null) {

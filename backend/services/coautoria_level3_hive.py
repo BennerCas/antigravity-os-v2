@@ -1,19 +1,9 @@
 import uuid
 import logging
 from typing import Dict, Any, Optional
+import json
 
 logger = logging.getLogger(__name__)
-
-class SwarmOrchestratorMock:
-    """Mock SwarmOrchestrator to represent Level 2 Colmenas if the actual implementation is missing."""
-    def __init__(self, swarm_id: str, name: str, objective: str):
-        self.swarm_id = swarm_id
-        self.name = name
-        self.objective = objective
-
-    def execute_swarm_tasks(self) -> Dict[str, Any]:
-        """Simulates executing tasks within the swarm."""
-        return {"status": "success", "message": f"{self.name} completed its tasks."}
 
 class HiveManager:
     """
@@ -28,68 +18,59 @@ class HiveManager:
         self.hive_state = "initialized"
 
     def assign_global_objective(self, objective: str):
-        """Assign a massive global objective to the Hive."""
         self.global_objective = objective
         self.hive_state = "objective_received"
-        logger.info(f"Hive '{self.hive_name}' received global objective: {self.global_objective}")
-
-    def spawn_swarm(self, name: str, specific_objective: str, swarm_class=SwarmOrchestratorMock) -> str:
-        """Spawn a new Swarm (Level 2) to handle a specific part of the global objective."""
-        swarm_id = str(uuid.uuid4())
-        new_swarm = swarm_class(swarm_id=swarm_id, name=name, objective=specific_objective)
-        self.swarms[swarm_id] = new_swarm
-        logger.info(f"Spawned Swarm '{name}' with objective: {specific_objective}")
-        return swarm_id
-
-    def process_inter_swarm_communication(self, from_swarm_id: str, to_swarm_id: Optional[str], message: str) -> Dict[str, Any]:
-        """
-        Handles communication between Swarm Architects and the Hive Manager.
-        If to_swarm_id is None, it's a message to the Hive Manager.
-        """
-        if from_swarm_id not in self.swarms:
-            return {"error": "Sender Swarm not found."}
         
-        sender_swarm = self.swarms[from_swarm_id]
-        
-        if to_swarm_id:
-            if to_swarm_id not in self.swarms:
-                return {"error": "Recipient Swarm not found."}
-            recipient_swarm = self.swarms[to_swarm_id]
-            logger.info(f"[Inter-Swarm] {sender_swarm.name} -> {recipient_swarm.name}: {message}")
-            return {"status": "delivered", "from": sender_swarm.name, "to": recipient_swarm.name}
-        
-        # Message to Hive Manager
-        logger.info(f"[Hive Manager Received] From {sender_swarm.name}: {message}")
-        return {"status": "received_by_hive", "from": sender_swarm.name}
-
-    def orchestrate_global_objective(self) -> Dict[str, Any]:
+    async def orchestrate_hive_async(self, global_objective: str, swarm_definitions: list) -> str:
         """
-        Executes the global objective by orchestrating all spawned swarms.
+        swarm_definitions is a list of dicts: [{"name": "Frontend Swarm", "objective": "..."}]
         """
-        if not self.global_objective:
-            raise ValueError("No global objective assigned to the Hive.")
+        from backend.services.coautoria_level2_swarm import SwarmOrchestrator
+        from backend.services.supervisor_router import AgentCard
+        from backend.services.agent_factory import AgentFactory
         
-        if not self.swarms:
-            logger.warning("No swarms spawned. The Hive has no workers.")
-            return {"status": "failed", "reason": "No swarms available."}
-
+        self.assign_global_objective(global_objective)
         self.hive_state = "orchestrating"
-        results = {}
         
-        logger.info(f"Hive '{self.hive_name}' starting orchestration of {len(self.swarms)} swarms.")
-
-        for swarm_id, swarm in self.swarms.items():
-            # Assume swarm has execute_swarm_tasks method
-            if hasattr(swarm, 'execute_swarm_tasks'):
-                result = swarm.execute_swarm_tasks()
-            else:
-                result = {"status": "unknown", "message": "execute_swarm_tasks not implemented"}
-            results[swarm.name] = result
-
+        hive_log = f"=== INICIANDO COLMENA (NIVEL 3): {self.global_objective} ===\n\n"
+        final_artifacts = []
+        
+        for sdef in swarm_definitions:
+            swarm_name = sdef.get("name")
+            swarm_obj = sdef.get("objective")
+            hive_log += f"--- LEVANTANDO {swarm_name} ---\nObjetivo: {swarm_obj}\n\n"
+            
+            # Pedimos a la IA que defina dinámicamente de 4 a 15 agentes para este enjambre
+            team_prompt = (
+                f"ROLE: AI Team Builder\n"
+                f"CONTEXT: Define un equipo táctico de 4 a 6 agentes (JSON array) para el enjambre '{swarm_name}' con el objetivo '{swarm_obj}'.\n"
+                f"CONSTRAINTS: Devuelve ÚNICAMENTE un JSON estricto con el formato:\n"
+                f"[{{\"id\": \"..\", \"name\": \"..\", \"description\": \"..\", \"capabilities\": [\"..\"]}}]"
+            )
+            
+            try:
+                team_json_str = await AgentFactory.chat_one_shot("system_builder", team_prompt, model="gemini-2.5-flash", use_tools=False)
+                # Parse the JSON
+                start_idx = team_json_str.find("[")
+                end_idx = team_json_str.rfind("]") + 1
+                team_data = json.loads(team_json_str[start_idx:end_idx])
+                
+                agents = [AgentCard(**d) for d in team_data]
+            except Exception as e:
+                # Fallback to standard 4
+                agents = [
+                    AgentCard(id="arq1", name="Architect", description="Diseña base.", capabilities=["design"]),
+                    AgentCard(id="sec1", name="Security", description="Audita.", capabilities=["security"]),
+                    AgentCard(id="uiux", name="Specialist", description="Construye.", capabilities=["code"]),
+                    AgentCard(id="qa", name="QA", description="Testea.", capabilities=["testing"])
+                ]
+            
+            orchestrator = SwarmOrchestrator(agents=agents)
+            swarm_result = await orchestrator.execute_swarm_async(swarm_obj)
+            
+            # Extract the artifact from the swarm result
+            # We assume swarm_result is "<swarm>...</swarm>\n<artifact name=...>...</artifact>"
+            hive_log += swarm_result + "\n\n"
+            
         self.hive_state = "completed"
-        return {
-            "hive_id": self.hive_id,
-            "global_objective": self.global_objective,
-            "status": "success",
-            "swarm_results": results
-        }
+        return hive_log

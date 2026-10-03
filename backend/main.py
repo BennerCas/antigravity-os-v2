@@ -74,7 +74,7 @@ class FreeChatRequest(BaseModel):
     messages: List[Dict[str, Any]]
     files: Optional[List[Dict[str, Any]]] = None
 
-@app.post("/studio/freechat")
+@app.post("/api/v1/studio/freechat")
 async def freechat_endpoint(request: FreeChatRequest):
     from services.freechat_pipeline import FreechatPipeline
     pipeline = FreechatPipeline()
