@@ -238,7 +238,12 @@ class AgentFactory:
                 {"role": "system", "content": system_instructions},
                 {"role": "user", "content": user_prompt}
             ],
-            "temperature": 0.7
+            "temperature": 0.7,
+            "max_tokens": 4096,
+            "options": {
+                "num_ctx": 8192,
+                "num_predict": 4096
+            }
         }
         
         all_tools = []
@@ -384,7 +389,12 @@ class AgentFactory:
                 {"role": "user", "content": user_prompt}
             ],
             "temperature": 0.7,
-            "stream": True
+            "stream": True,
+            "max_tokens": 4096,
+            "options": {
+                "num_ctx": 8192,
+                "num_predict": 4096
+            }
         }
         
         try:

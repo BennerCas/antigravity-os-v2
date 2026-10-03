@@ -224,41 +224,88 @@ function extractTools(desc: string): string[] {
     let cleanMd = text;
     let jsonNodes: any[] = [];
     let jsonEdges: any[] = [];
-    // 1. Try <topology> or <json> tag
-    const topRegex = /<(?:topology|json)>[\s\S]*?\{([\s\S]*?)\}[\s\S]*?<\/(?:topology|json)>/;
-    let match = text.match(topRegex);
+    // 1. Try <topology> or <json> tag (support both object {...} and array [...], even if truncated)
+    const topTagMatch = text.match(/<(?:topology|json)>([\s\S]*?)(?:<\/(?:topology|json)>|$)/i);
     let matchedTag = false;
     
-    if (match) {
+    if (topTagMatch) {
         try {
-            const fullMatch = match[0];
-            const jsonStr = fullMatch.substring(fullMatch.indexOf('{'), fullMatch.lastIndexOf('}') + 1);
-            const parsed = JSON.parse(jsonStr);
-            const root = parsed.topology || parsed;
-            jsonNodes = root.nodes || [];
-            jsonEdges = root.edges || [];
-            cleanMd = cleanMd.replace(topRegex, '').trim();
-            matchedTag = true;
+            const rawContent = topTagMatch[1].trim();
+            // Find start of JSON structure: either { or [
+            const firstBrace = rawContent.indexOf('{');
+            const firstBracket = rawContent.indexOf('[');
+            let startIdx = -1;
+            let isArray = false;
+            
+            if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
+                startIdx = firstBrace;
+                isArray = false;
+            } else if (firstBracket !== -1) {
+                startIdx = firstBracket;
+                isArray = true;
+            }
+            
+            if (startIdx !== -1) {
+                let candidate = rawContent.substring(startIdx);
+                // Try direct parse first
+                let parsed: any = null;
+                try {
+                    parsed = JSON.parse(candidate);
+                } catch {
+                    // Try auto-repair if truncated
+                    let repaired = candidate.trim();
+                    // Strip trailing commas or incomplete keys
+                    repaired = repaired.replace(/,\s*$/, '');
+                    if (isArray) {
+                        const lastCloseObj = repaired.lastIndexOf('}');
+                        if (lastCloseObj !== -1) {
+                            repaired = repaired.substring(0, lastCloseObj + 1) + ']';
+                        }
+                    } else {
+                        const lastCloseObj = repaired.lastIndexOf('}');
+                        if (lastCloseObj !== -1) {
+                            repaired = repaired.substring(0, lastCloseObj + 1) + '}';
+                        }
+                    }
+                    try { parsed = JSON.parse(repaired); } catch {}
+                }
+
+                if (parsed) {
+                    if (Array.isArray(parsed)) {
+                        jsonNodes = parsed;
+                    } else {
+                        const root = parsed.topology || parsed;
+                        jsonNodes = root.nodes || [];
+                        jsonEdges = root.edges || [];
+                    }
+                    cleanMd = cleanMd.replace(topTagMatch[0], '').trim();
+                    matchedTag = true;
+                }
+            }
         } catch(e) {
             console.error("Failed to parse <topology> tag", e);
         }
     }
 
-    // 2. If no tag matched, try markdown ```json containing "nodes" or "topology"
+    // 2. If no tag matched, try markdown ```json containing "nodes" or "topology" or array of nodes
     if (jsonNodes.length === 0) {
-        const mdJsonRegex = /```(?:json)?\s*(\{[\s\S]*?\})\s*```/;
+        const mdJsonRegex = /```(?:json)?\s*([{\[][\s\S]*?[}\]])\s*```/;
         const mdMatch = text.match(mdJsonRegex);
         if (mdMatch) {
             try {
-                const fullMatch = mdMatch[0];
-                const jsonStr = fullMatch.substring(fullMatch.indexOf('{'), fullMatch.lastIndexOf('}') + 1);
-                const parsed = JSON.parse(jsonStr);
-                const root = parsed.topology || parsed;
-                if (root.nodes && Array.isArray(root.nodes)) {
-                    jsonNodes = root.nodes || [];
-                    jsonEdges = root.edges || [];
-                    cleanMd = cleanMd.replace(mdJsonRegex, '').trim();
+                const parsed = JSON.parse(mdMatch[1]);
+                if (Array.isArray(parsed)) {
+                    jsonNodes = parsed;
+                    cleanMd = cleanMd.replace(mdMatch[0], '').trim();
                     matchedTag = true;
+                } else {
+                    const root = parsed.topology || parsed;
+                    if (root.nodes && Array.isArray(root.nodes)) {
+                        jsonNodes = root.nodes || [];
+                        jsonEdges = root.edges || [];
+                        cleanMd = cleanMd.replace(mdMatch[0], '').trim();
+                        matchedTag = true;
+                    }
                 }
             } catch(e) {
                 console.error("Failed to parse markdown ```json topology", e);
@@ -288,19 +335,21 @@ function extractTools(desc: string): string[] {
         cleanMd = "> **Topología generada:** Nodos añadidos al lienzo (InfinityBoard).";
     }
 
-    const artifactRegex = /<artifact\s+name="([^"]+)">([\s\S]*?)<\/artifact>/g;
+    const artifactRegex = /<artifact\s+name="([^"]+)">([\s\S]*?)(?:<\/artifact>|$)/g;
     let artMatch;
     while ((artMatch = artifactRegex.exec(text)) !== null) {
         const artName = artMatch[1];
         const artContent = artMatch[2].trim();
-        jsonNodes.push({
-            id: `artifact_${Date.now()}_${Math.random().toString(36).substr(2,9)}`,
-            kind: 'artifact',
-            label: artName,
-            description: artContent,
-            content: artContent
-        });
-        cleanMd = cleanMd.replace(artMatch[0], `\n> **Artefacto generado:** ${artName} (Visible en el Lienzo)\n`).trim();
+        if (artContent.length > 0) {
+            jsonNodes.push({
+                id: `artifact_${Date.now()}_${Math.random().toString(36).substr(2,9)}`,
+                kind: 'artifact',
+                label: artName,
+                description: artContent,
+                content: artContent
+            });
+            cleanMd = cleanMd.replace(artMatch[0], `\n> **Artefacto generado:** ${artName} (Visible en el Lienzo)\n`).trim();
+        }
     }
     
     const nodes: Node[] = [];
@@ -415,7 +464,11 @@ ${edges.map((e, i) => `- **Paso ${i+1}:** \`${e.source}\` ➔ \`${e.target}\`${e
     }
 
     // LEGACY FALLBACK (strip thinking blocks so internal reasoning is never parsed as nodes)
-    const textWithoutThinking = text.replace(/<thinking>[\s\S]*?<\/thinking>/g, '').trim();
+    let textWithoutThinking = text
+      .replace(/<thinking>[\s\S]*?(?:<\/thinking>|$)/gi, '')
+      .replace(/---\s*\n\s*\*\*🧠\s*Proceso Cognitivo:\*\*[\s\S]*?(?:---\n|$)/gi, '')
+      .replace(/🧠\s*Proceso Cognitivo:[\s\S]*?(?:---\n|```|<topology>|$)/gi, '')
+      .trim();
     const lines = textWithoutThinking.split('\n');
     const cards: AgentCard[] = [];
     nodes.length = 0;
@@ -435,7 +488,10 @@ ${edges.map((e, i) => `- **Paso ${i+1}:** \`${e.source}\` ➔ \`${e.target}\`${e
     else if (bm) name = bm[1].replace(/\*\*/g,'').trim();
     else if (nm) name = nm[1].replace(/\*\*/g,'').trim();
 
-    if (name.length >= 3 && name.length <= 60 && !/^(nota|note|resumen|summary|conclusi|intro)/i.test(name)) {
+    const isIgnoredThinking = /^(nota|note|resumen|summary|conclusi|intro|thinking|proceso|analyze|intent|decision|assessment|constraint|style|persona|role|context|prompt|topology|artifact|swarm)/i.test(name) ||
+                              name.includes('<thinking>') || name.includes('🧠') || name.includes('Proceso Cognitivo');
+
+    if (name.length >= 3 && name.length <= 60 && !isIgnoredThinking) {
       const ctx  = lines.slice(i+1, i+4).join(' ').replace(/[#*`]/g,'').trim();
       const desc = ctx.slice(0, 180);
       const kind  = detectKind(name, desc);

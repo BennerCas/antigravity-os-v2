@@ -303,7 +303,7 @@ class FreechatPipeline:
                 orchestrator = SwarmOrchestrator(agents=tactical_team)
                 yield "\n\n```countdown\n120\n```\n\n**Calculando debate del Enjambre en GPU...**\n\n"
                 final_swarm = await orchestrator.execute_swarm_async(last_user_prompt)
-                yield "\n<swarm>\n" + final_swarm + "\n</swarm>\n"
+                yield "\n\n" + final_swarm + "\n\n"
 
             elif has_hive_trigger:
                 hive_data = [{"name": "Frontend Swarm", "objective": "UI/UX"}, {"name": "Backend Swarm", "objective": "API"}]
@@ -321,7 +321,7 @@ class FreechatPipeline:
                 manager = HiveManager(swarms_config=hive_data)
                 yield "\n\n```countdown\n300\n```\n\n**Calculando Colmena de Enjambres en GPU...**\n\n"
                 final_hive = await manager.execute_hive_async(last_user_prompt)
-                yield "\n<swarm>\n" + final_hive + "\n</swarm>\n"
+                yield "\n\n" + final_hive + "\n\n"
         except Exception as e:
             logger.error(f"Error in process_chat_stream: {e}")
             yield f"\n[Error en streaming de chat: {str(e)}]\n"

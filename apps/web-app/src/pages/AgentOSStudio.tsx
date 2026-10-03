@@ -516,9 +516,12 @@ const FlowArchitect: React.FC = () => {
             }
 
             const { nodes, edges, cards, md } = parseAIResponseToFlow(rawReply);
-            if (md.trim()) {
-              addChatMessage({ role: 'agent', content: md, model: selectedModel });
+            
+            // Actualizar el mensaje existente en vez de duplicar
+            if (rawReply.trim()) {
+              useStudioStore.getState().updateLastChatMessage(rawReply.replace(/<thinking>[\s\S]*?(?:<\/thinking>|$)/gi, '').trim() || md || 'Procesamiento completado.');
             }
+            
             setIsTyping(false);
             isHandlingSendRef.current = false;
             
@@ -530,6 +533,17 @@ const FlowArchitect: React.FC = () => {
                if (md) {
                   useStudioStore.getState().setBlueprintMd(md);
                }
+               
+               // Si se forjó un artefacto, vincularlo de inmediato para Render Vivo
+               const artNode = nodes.find(n => (n.data as any)?.kind === 'artifact' || n.type === 'artifact');
+               if (artNode) {
+                  const artData = (artNode.data as any) || {};
+                  useStudioStore.getState().setActiveArtifact({
+                     name: artData.label || 'Artefacto Generado',
+                     content: artData.content || artData.description || ''
+                  });
+               }
+               
                useStudioStore.getState().setZone2ActiveTab('infinityboard');
             }
 
