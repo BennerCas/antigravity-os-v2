@@ -8,8 +8,10 @@ import { SwarmOrchestrationPanel } from '../components/studio/SwarmOrchestration
 import { useStudioStore, TabId, parseAIResponseToFlow, detectKind } from '../stores/useStudioStore';
 import { useHistoryStore } from '../stores/useHistoryStore';
 import { API_URL, WS_STUDIO_ACTIVITY_URL } from '../lib/api';
-import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock, Stop, Microphone, Database, Globe, TerminalWindow, FileText, CodeBlock, Scan, AppWindow, File, MaskHappy, Chats, ArrowUUpLeft, ArrowUUpRight, FloppyDisk } from '@phosphor-icons/react';
+import { Gear, Archive, Star, MagnifyingGlass, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock, Stop, Microphone, Database, Globe, TerminalWindow, FileText, CodeBlock, Scan, AppWindow, File, MaskHappy, Chats, ArrowUUpLeft, ArrowUUpRight, FloppyDisk } from '@phosphor-icons/react';
 
+
+import remarkGfm from 'remark-gfm';
 
 const AURELIOS_THEMES: Record<string, any> = {
   obsidian: {
@@ -236,8 +238,10 @@ const FreeChatCapabilitiesGrid = () => {
 };
 
 const FlowArchitect: React.FC = () => {
-    const { chatMessages, addChatMessage, addActivityLog, setFlow, setAgentCards, setBlueprintMd, setTriggerChatSend, activityLogs, quantumPhase, setQuantumPhase, } = useStudioStore();
-      const [input, setInput] = useState('');
+    const { chatMessages, chatHistories, rollupCurrentChat, toggleMessageStar, saveProject, resetProject, addChatMessage, addActivityLog, setFlow, setAgentCards, setBlueprintMd, setTriggerChatSend, activityLogs, quantumPhase, setQuantumPhase, } = useStudioStore();
+    const [input, setInput] = useState('');
+    const [chatSearch, setChatSearch] = useState('');
+    const [showStarredOnly, setShowStarredOnly] = useState(false);
     const [isListening, setIsListening] = useState(false);
     const recognitionRef = useRef<any>(null);
 
@@ -437,22 +441,24 @@ const FlowArchitect: React.FC = () => {
             
             const data = await res.json();
             
-            addChatMessage({ role: 'agent', content: data.reply, model: selectedModel });
+            let rawReply = data.reply;
+            const swarmRegex = /<swarm>([\s\S]*?)<\/swarm>/g;
+            let swarmMatch;
+            while ((swarmMatch = swarmRegex.exec(rawReply)) !== null) {
+              addChatMessage({ role: 'swarm', content: swarmMatch[1].trim(), model: selectedModel });
+              rawReply = rawReply.replace(swarmMatch[0], '');
+            }
+
+            const { nodes, edges, md } = parseAIResponseToFlow(rawReply);
+            if (md.trim()) {
+              addChatMessage({ role: 'agent', content: md, model: selectedModel });
+            }
             setIsTyping(false);
             isHandlingSendRef.current = false;
             
-            if (data.reply.includes('<topology>')) {
-               try {
-                 const topologyMatch = data.reply.match(/<topology>([\s\S]*?)<\/topology>/);
-                 if (topologyMatch) {
-                    
-                    const { nodes, edges } = parseAIResponseToFlow(topologyMatch[0]);
-                    useStudioStore.getState().setFlow(nodes, edges);
-                    useStudioStore.getState().setZone2ActiveTab('infinityboard');
-                 }
-               } catch (e) {
-                 console.error("No se pudo extraer topologia del freechat", e);
-               }
+            if (nodes.length > 0) {
+               useStudioStore.getState().setFlow(nodes, edges);
+               useStudioStore.getState().setZone2ActiveTab('infinityboard');
             }
 
           } catch (error: any) {
@@ -699,11 +705,33 @@ const FlowArchitect: React.FC = () => {
           <button onClick={() => setSelectedChatAgentId('aurelios-core')} title="Reset to Core" className={`hover:brightness-125 transition-opacity ${t.text}`}>
             <ArrowsClockwise size={18} />
           </button>
+          <button onClick={() => setShowStarredOnly(!showStarredOnly)} title="Ver solo favoritos" className={`transition-colors ${showStarredOnly ? 'text-yellow-400' : `hover:text-yellow-400 ${t.text}`}`}>
+            <Star size={18} weight={showStarredOnly ? 'fill' : 'regular'} />
+          </button>
+          
+          <div className="relative group">
+            <MagnifyingGlass size={18} className={`absolute left-2 top-1/2 -translate-y-1/2 opacity-50 ${t.text}`} />
+            <input 
+              type="text" 
+              placeholder="Buscar..." 
+              value={chatSearch}
+              onChange={(e) => setChatSearch(e.target.value)}
+              className={`w-24 focus:w-40 transition-all duration-300 pl-8 pr-2 py-1 text-xs rounded-full bg-black/20 border ${t.border} outline-none ${t.text}`}
+            />
+          </div>
+
           <button onClick={clearChat} title="Limpiar chat" className={`hover:brightness-125 transition-opacity ${t.text}`}>
             <Trash size={18} />
           </button>
 
+          <button onClick={() => rollupCurrentChat()} title="Comprimir Historial (Rollup)" className={`hover:text-purple-400 transition-colors ${t.text}`}>
+            <Archive size={18} />
+          </button>
           
+          <button onClick={() => saveProject()} title="Guardar Proyecto" className={`hover:text-green-400 transition-colors ${t.text}`}>
+            <FloppyDisk size={18} />
+          </button>
+
           <button onClick={() => setShowSetup(true)} title="Configuración de Modelo y Tema" className={`hover:brightness-125 transition-opacity ${t.text}`}>
             <Gear size={18} />
           </button>
@@ -735,26 +763,91 @@ const FlowArchitect: React.FC = () => {
 
       {/* Chat History / Invisible Scroll */}
       <div className="flex-1 overflow-y-auto px-4 py-2 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        {chatMessages.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-center  text-base px-8 font-medium leading-relaxed">
+        {chatMessages.length === 0 && (!chatHistories || chatHistories.length === 0) ? (
+          <div className="flex h-full items-center justify-center text-center text-base px-8 font-medium leading-relaxed">
             Selecciona un pilar de AureliOS o escribe tu visión arquitectónica para comenzar.
           </div>
         ) : (
-          chatMessages.map(msg => (
-            <div key={msg.id} className={`flex flex-col max-w-[90%] min-w-0 ${msg.role === 'human' ? 'ml-auto' : 'mr-auto'}`}>
-              <div className={`p-3 text-[14px] leading-relaxed break-words ${
-                msg.role === 'human' ? `${t.humanBubble} rounded-xl rounded-tr-sm font-medium` : `${t.aiBubble} border rounded-xl rounded-tl-sm shadow-sm`
-              } transition-colors duration-500`}>
-                <div className={msg.role === 'agent' ? `markdown-body max-w-none break-words ${t.text}` : 'whitespace-pre-wrap'}>
-                  {msg.role === 'agent' ? (
-                    <ReactMarkdown>
-                      {msg.content}
-                    </ReactMarkdown>
-                  ) : (
-                    msg.content
-                  )}
+          <>
+          {chatHistories && chatHistories.map(history => {
+            const filteredMsgs = history.messages.filter(msg => {
+              if (showStarredOnly && !msg.starred) return false;
+              if (chatSearch && !msg.content.toLowerCase().includes(chatSearch.toLowerCase())) return false;
+              return true;
+            });
+            if (filteredMsgs.length === 0) return null;
+            return (
+              <details key={history.id} className={`w-full border ${t.border} rounded-lg mb-2 cursor-pointer`}>
+                <summary className={`p-2 font-bold ${t.text} bg-black/10 hover:bg-black/20 transition-colors`}>
+                  <Cube className="inline mr-2" /> {history.name} ({filteredMsgs.length} msgs)
+                </summary>
+                <div className="p-4 flex flex-col gap-4 border-t" style={{ borderColor: 'inherit' }}>
+                  {filteredMsgs.map(msg => (
+                    <div key={msg.id} className={`flex flex-col max-w-[90%] min-w-0 ${msg.role === 'human' ? 'ml-auto' : 'mr-auto'}`}>
+                      {msg.role === 'swarm' ? (
+                        <details className={`w-full border ${t.border} rounded-lg mb-2 shadow-sm`}>
+                          <summary className={`p-3 font-semibold ${t.text} bg-purple-500/10 hover:bg-purple-500/20 cursor-pointer transition-colors flex items-center`}>
+                            <Cpu className="inline mr-2 text-purple-400 animate-pulse" /> Enjambre en Ejecución (Discusión)
+                          </summary>
+                          <div className="p-4 flex flex-col gap-3 border-t bg-black/40" style={{ borderColor: 'inherit' }}>
+                            <div className={`text-xs font-mono whitespace-pre-wrap ${t.text} opacity-80`}>
+                              {msg.content}
+                            </div>
+                          </div>
+                        </details>
+                      ) : (
+                        <div className={`p-3 text-[14px] leading-relaxed break-words relative ${
+                          msg.role === 'human' ? `${t.humanBubble} rounded-xl rounded-tr-sm font-medium` : `${t.aiBubble} border rounded-xl rounded-tl-sm shadow-sm`
+                        } transition-colors duration-500`}>
+                          <button onClick={() => toggleMessageStar(msg.id)} className={`absolute -left-6 top-1/2 -translate-y-1/2 transition-opacity opacity-0 group-hover:opacity-100 ${msg.starred ? 'text-yellow-400 opacity-100' : 'text-zinc-500'}`}>
+                            <Star size={16} weight={msg.starred ? 'fill' : 'regular'} />
+                          </button>
+                          <div className={msg.role === 'agent' ? `markdown-body max-w-none break-words ${t.text}` : 'whitespace-pre-wrap'}>
+                            {msg.role === 'agent' ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown> : msg.content}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              </div>
+              </details>
+            )
+          })}
+          {chatMessages.filter(msg => {
+            if (showStarredOnly && !msg.starred) return false;
+            if (chatSearch && !msg.content.toLowerCase().includes(chatSearch.toLowerCase())) return false;
+            return true;
+          }).map(msg => (
+            <div key={msg.id} className={`flex flex-col max-w-[90%] min-w-0 ${msg.role === 'human' ? 'ml-auto' : 'mr-auto'}`}>
+              {msg.role === 'swarm' ? (
+                <details className={`w-full border ${t.border} rounded-lg mb-2 shadow-sm`}>
+                  <summary className={`p-3 font-semibold ${t.text} bg-purple-500/10 hover:bg-purple-500/20 cursor-pointer transition-colors flex items-center`}>
+                    <Cpu className="inline mr-2 text-purple-400 animate-pulse" /> Enjambre en Ejecución (Discusión)
+                  </summary>
+                  <div className="p-4 flex flex-col gap-3 border-t bg-black/40" style={{ borderColor: 'inherit' }}>
+                    <div className={`text-xs font-mono whitespace-pre-wrap ${t.text} opacity-80`}>
+                      {msg.content}
+                    </div>
+                  </div>
+                </details>
+              ) : (
+                <div className={`p-3 text-[14px] leading-relaxed break-words relative group ${
+                  msg.role === 'human' ? `${t.humanBubble} rounded-xl rounded-tr-sm font-medium` : `${t.aiBubble} border rounded-xl rounded-tl-sm shadow-sm`
+                } transition-colors duration-500`}>
+                  <button onClick={() => toggleMessageStar(msg.id)} className={`absolute -left-6 top-1/2 -translate-y-1/2 transition-opacity opacity-0 group-hover:opacity-100 ${msg.starred ? 'text-yellow-400 opacity-100' : 'text-zinc-500'}`}>
+                    <Star size={16} weight={msg.starred ? 'fill' : 'regular'} />
+                  </button>
+                  <div className={msg.role === 'agent' ? `markdown-body max-w-none break-words ${t.text}` : 'whitespace-pre-wrap'}>
+                    {msg.role === 'agent' ? (
+                      <ReactMarkdown>
+                        {msg.content}
+                      </ReactMarkdown>
+                    ) : (
+                      msg.content
+                    )}
+                  </div>
+                </div>
+              )}
               {msg.role === 'human' && (
                 <div className="flex justify-end mt-1 px-1">
                   <button 
@@ -781,6 +874,8 @@ const FlowArchitect: React.FC = () => {
               )}
             </div>
           ))
+          }
+          </>
         )}
         {isTyping && (
           <div className="flex flex-col max-w-[85%] mr-auto mt-4">
@@ -1814,13 +1909,13 @@ export default function AgentOSStudio() {
         fontFamily: 'inherit',
       }}
     >
-      {/* Columna 1 — 20% — Chat */}
-      <div style={{ width: '20%', height: '100%', display: 'flex', flexDirection: 'column', borderRight: '1px solid #2A2A2A', flexShrink: 0, minWidth: 0 }}>
+      {/* Columna 1 — 30% — Chat */}
+      <div style={{ width: '30%', height: '100%', display: 'flex', flexDirection: 'column', borderRight: '1px solid #2A2A2A', flexShrink: 0, minWidth: 0 }}>
         <FlowArchitect />
       </div>
 
-      {/* Columna 2 — 80% — Swarm Orchestration */}
-      <div style={{ width: '80%', height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0, position: 'relative', padding: '0' }}>
+      {/* Columna 2 — 70% — Swarm Orchestration */}
+      <div style={{ width: '70%', height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0, position: 'relative', padding: '0' }}>
         <SwarmOrchestrationPanel />
       </div>
     </div>

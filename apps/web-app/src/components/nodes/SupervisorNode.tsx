@@ -1,12 +1,9 @@
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 
-type SupervisorNodeData = {
-  label: string;
-  description?: string;
-};
+type SupervisorNodeData = any;
 
-const SupervisorNode = ({ data, isConnectable }: NodeProps<SupervisorNodeData>) => {
+const SupervisorNode = ({ data, isConnectable }: any) => {
   return (
     <div className="bg-white border-2 border-purple-500 rounded-lg shadow-md p-4 min-w-[200px]">
       <Handle

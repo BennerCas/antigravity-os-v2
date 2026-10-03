@@ -6,9 +6,16 @@ export type TabId = 'discovery' | 'synthesis' | 'blueprint' | 'agentland';
 
 export interface ChatMessage {
   id: string;
-  role: 'human' | 'system' | 'agent';
+  role: 'human' | 'system' | 'agent' | 'swarm';
   content: string;
   model?: string;
+  starred?: boolean;
+}
+
+export interface ChatHistory {
+  id: string;
+  name: string;
+  messages: ChatMessage[];
 }
 
 export interface AgentGene {
@@ -110,9 +117,14 @@ interface StudioState {
   theme: string;
   setTheme: (theme: string) => void;
   chatMessages: ChatMessage[];
+  chatHistories: ChatHistory[];
   addChatMessage: (msg: Omit<ChatMessage, 'id'>) => void;
   setChatMessages: (messages: ChatMessage[]) => void;
   clearMessages: () => void;
+  rollupCurrentChat: () => void;
+  toggleMessageStar: (id: string) => void;
+  saveProject: () => void;
+  resetProject: () => void;
 
   // Flow Diagram (ReactFlow)
   flowNodes: Node[];
@@ -218,10 +230,25 @@ function extractTools(desc: string): string[] {
             const parsed = JSON.parse(jsonStr);
             jsonNodes = parsed.nodes || [];
             jsonEdges = parsed.edges || [];
-            cleanMd = text.replace(topRegex, '').trim();
+            cleanMd = cleanMd.replace(topRegex, '').trim();
         } catch(e) {
             console.error("Failed to parse JSON topology", e);
         }
+    }
+
+    const artifactRegex = /<artifact\s+name="([^"]+)">([\s\S]*?)<\/artifact>/g;
+    let artMatch;
+    while ((artMatch = artifactRegex.exec(text)) !== null) {
+        const artName = artMatch[1];
+        const artContent = artMatch[2].trim();
+        jsonNodes.push({
+            id: `artifact_${Date.now()}_${Math.random().toString(36).substr(2,9)}`,
+            kind: 'artifact',
+            label: artName,
+            description: artContent,
+            content: artContent
+        });
+        cleanMd = cleanMd.replace(artMatch[0], `\n> **Artefacto generado:** ${artName} (Visible en el Lienzo)\n`).trim();
     }
     
     const nodes: Node[] = [];
@@ -331,7 +358,7 @@ function extractTools(desc: string): string[] {
 
 export const useStudioStore = create<StudioState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
 
       // Axiomas Parameters
       quantumFriction: 50,
@@ -409,6 +436,42 @@ export const useStudioStore = create<StudioState>()(
       chatMessages: [
         { id: '1', role: 'system', content: 'Bienvenido a **AureliOS Studio**. Dime qué sistema quieres construir y veré el flujo aparecer en tiempo real  ' }
       ],
+      chatHistories: [],
+      rollupCurrentChat: () => set((state) => {
+        if (state.chatMessages.length <= 1) return state; // Don't rollup if empty or just welcome msg
+        const newHistory: ChatHistory = {
+          id: Date.now().toString(),
+          name: `Historial ${state.chatHistories.length + 1}`,
+          messages: [...state.chatMessages]
+        };
+        return {
+          chatHistories: [...state.chatHistories, newHistory],
+          chatMessages: [{ id: Date.now().toString(), role: 'system', content: 'Historial guardado. ¿En qué trabajamos ahora?' }]
+        };
+      }),
+      toggleMessageStar: (id) => set((state) => ({
+        chatMessages: state.chatMessages.map(msg => msg.id === id ? { ...msg, starred: !msg.starred } : msg),
+        chatHistories: state.chatHistories.map(hist => ({
+          ...hist,
+          messages: hist.messages.map(msg => msg.id === id ? { ...msg, starred: !msg.starred } : msg)
+        }))
+      })),
+      saveProject: () => {
+        const state = get();
+        // Here we could export to JSON or save to backend. 
+        // For now, we'll just console log and reset to simulate save & reset.
+        console.log("Project saved!", { nodes: state.flowNodes, edges: state.flowEdges, messages: state.chatMessages });
+        alert("Proyecto guardado localmente (Simulado). Limpiando lienzo...");
+        get().resetProject();
+      },
+      resetProject: () => set({
+        chatMessages: [{ id: Date.now().toString(), role: 'system', content: 'Nuevo Proyecto Iniciado. ¿Qué construimos hoy?' }],
+        chatHistories: [],
+        flowNodes: [],
+        flowEdges: [],
+        activityLogs: [],
+        quantumPhase: 'omni'
+      }),
       addChatMessage: (msg) =>
         set((state) => ({
           chatMessages: [...state.chatMessages, { ...msg, id: Date.now().toString() + Math.random().toString() }],
@@ -857,6 +920,7 @@ export const useStudioStore = create<StudioState>()(
       name: 'agentos-studio-storage',
       partialize: (state) => ({
         chatMessages: state.chatMessages,
+        chatHistories: state.chatHistories,
         flowNodes: state.flowNodes,
         flowEdges: state.flowEdges,
         agentCards: state.agentCards,

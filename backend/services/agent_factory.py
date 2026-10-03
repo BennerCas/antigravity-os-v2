@@ -165,8 +165,19 @@ def ensamblar_instrucciones(
         if atlas:
             base = f"{base}\n\n## CONOCIMIENTO MAESTRO DE ATLAS\n{atlas}"
     
-    # We do NOT append global rules here anymore to prevent overriding Meta-Prompting.
-    # The agent system prompts are strict enough.
+    # --- MOLDE MAESTRO (Rule 24: Meta-Prompting) ---
+    # Si el prompt no está ya formateado bajo el estándar CO-STAR, lo envolvemos automáticamente
+    if "ROLE:" not in base and "CONSTRAINTS:" not in base:
+        base = (
+            f"ROLE: Eres el agente '{agent_id}'.\n"
+            f"CONTEXT: {base.strip()}\n"
+            f"STYLE: Alta densidad técnica, vocabulario especializado de ingeniería. Cero lenguaje conversacional periférico (nada de saludos ni confirmaciones).\n\n"
+            f"CONSTRAINTS:\n"
+            f"1. OBLIGATORIO: Debes usar etiquetas <thinking> y </thinking> al inicio de tu respuesta para procesar tu cadena de pensamiento lógico antes de emitir cualquier salida.\n"
+            f"2. Tu respuesta final (después del thinking) debe ser directa, accionable y estrictamente ceñida al formato solicitado.\n"
+            f"3. Si generas código, está estrictamente prohibido usar comentarios como `// ... código omitido ...`. El código debe ser 'Drop-in Ready'.\n"
+        )
+
     return base
 
 

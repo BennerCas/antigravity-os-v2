@@ -13,16 +13,20 @@ class FreechatPipeline:
         self.client = genai.Client()
         self.model = "gemini-2.5-flash"
         self.system_instruction = (
-            "Eres AureliOS, el Arquitecto de Sistemas de Antigravity OS. Estás en modo OmniChat. "
-            "Puedes charlar libremente, analizar archivos, y si el usuario te pide modificar o crear nodos/agentes "
-            "en el InfinityBoard (lienzo), DEBES responder obligatoriamente con el diseño en formato JSON estricto "
-            "envuelto EXACTAMENTE entre etiquetas <topology> y </topology> al final de tu respuesta. "
-            "El JSON debe tener la forma: { \"nodes\": [{ \"id\": \"1\", \"type\": \"agent\", \"data\": { \"label\": \"Agente X\", \"kind\": \"agent\" } }], \"edges\": [] }. "
-            "Utiliza los kinds de nodos definidos (agent, human, tool, trigger, router, sink)."
+            "ROLE: Eres 'AureliOS Principal Cognitive Router', el enrutador maestro de Antigravity OS.\n"
+            "CONTEXT: Debes clasificar la intención del usuario y enrutar la ejecución. Estás operando bajo un entorno de VibeCoding interactivo.\n"
+            "STYLE: Técnico, denso, estrictamente funcional. Cero lenguaje conversacional periférico.\n\n"
+            "CONSTRAINTS:\n"
+            "1. Debes usar OBLIGATORIAMENTE etiquetas <thinking> y </thinking> para razonar la clasificación antes de responder.\n"
+            "2. Si el usuario pide crear O modificar nodos/agentes/flujos, genera un JSON estricto dentro de la etiqueta <topology>.\n"
+            "3. Si el usuario pide generar código, interfaces, dashboards, o sistemas complejos, tu respuesta POSTERIOR al thinking debe ser EXACTA Y ÚNICAMENTE la cadena de texto: [TRIGGER_REAL_SWARM]\n"
+            "4. Si es charla general, responde directamente después del thinking.\n\n"
+            "SCHEMA ESPERADO PARA RUTEO DE ENJAMBRE:\n"
+            "<thinking>\n1. Análisis de intención: Petición de código compleja detectada.\n2. Clasificación: Ruteo a Enjambre Táctico.\n</thinking>\n[TRIGGER_REAL_SWARM]"
         )
         self.tools = [web_search, process_document]
 
-    def process_chat(self, messages: List[Dict[str, Any]], files: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+    async def process_chat(self, messages: List[Dict[str, Any]], files: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
         """
         messages: Lista de mensajes estilo OpenAI: [{"role": "user", "content": "..."}]
         files: Lista de diccionarios {"name": "...", "mime_type": "...", "data": "base64_string"}
@@ -94,11 +98,35 @@ class FreechatPipeline:
                             function_calls.append(part.function_call)
                 
                 if not function_calls:
+                    resp_text = response.text
+                    if "[TRIGGER_REAL_SWARM]" in resp_text:
+                        from backend.services.coautoria_level2_swarm import SwarmOrchestrator
+                        from backend.services.supervisor_router import AgentCard
+                        
+                        # Definimos el equipo táctico base
+                        tactical_team = [
+                            AgentCard(id="arq1", name="Principal Solutions Architect", description="Define la arquitectura base, patrones de diseño y stack tecnológico. Aplica principios DRY y SOLID de forma matemática.", capabilities=["design", "architecture"]),
+                            AgentCard(id="sec1", name="Zero-Trust Security Lead", description="Auditor implacable. Aplica principios de 'Default Deny' y escanea vectores de inyección, sanitización y manejo de memoria/credenciales.", capabilities=["security", "audit"]),
+                            AgentCard(id="uiux", name="Frontend VibeCoding Engineer", description="Ingeniero de Interfaz. Dicta estructuras semánticas, Tailwind, accesibilidad y flujos cognitivos de usuario.", capabilities=["frontend", "ui"]),
+                            AgentCard(id="qa", name="Red Teamer Operations", description="Atacante asimétrico. Su única función es destruir las suposiciones de los otros 3 buscando cuellos de botella lógicos y fallos de integración.", capabilities=["testing", "attack"])
+                        ]
+                        orchestrator = SwarmOrchestrator(agents=tactical_team)
+                        
+                        # Extraer el objetivo del último mensaje del usuario
+                        last_user_prompt = "Crear sistema"
+                        for m in reversed(messages):
+                            if m.get("role") == "user":
+                                last_user_prompt = m.get("content", "")
+                                break
+                                
+                        # Ejecutar el verdadero enjambre asíncrono
+                        resp_text = await orchestrator.execute_swarm_async(last_user_prompt)
+
                     return {
                         "status": "success",
                         "response": {
                             "role": "assistant",
-                            "content": response.text
+                            "content": resp_text
                         }
                     }
                 
