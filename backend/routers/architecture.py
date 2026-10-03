@@ -4,12 +4,15 @@ import os
 import json
 import time
 import re
+from pathlib import Path
 from datetime import datetime
 from typing import Optional, List, Dict, Any, Literal
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+
+from backend.services.atlas_library import create_ingestion_job, detect_source_type, ensure_auto_sync_started, get_status as get_knowledge_status, list_library_items, list_jobs, register_source, run_ingestion_job, save_upload, sync_active_sources
 
 from routers.engine import get_config
 from routers.execute import COHESION_PROMPT_DOC, ORCHESTRATOR_PROMPT_DOC
@@ -146,7 +149,7 @@ def get_architecture(response: Response):
             "hybrid_enabled": cfg["hybrid_enabled"],
             "cloud_options": cfg["cloud_options"],
             "local_options": cfg["local_options"],
-            "rule": "Nube primero si está encendido; fallback automático a local.",
+            "rule": "Local primero con Hermes 3 Unlocked; la nube queda como respaldo opcional.",
         },
         "flow": [
             {
@@ -591,9 +594,9 @@ async def call_ai(system_prompt: str, user_prompt: str, model_override: Optional
     from google.antigravity import Agent, LocalOpenAIAgentConfig
     import os
     
-    # Motor Híbrido: Si el usuario fuerza un modelo (ej. claude-3.5-sonnet o hermes3:8b), lo usamos
-    model_name = model_override if model_override else "hermes3:8b"
-    LOCAL_MODELS = {"hermes3:8b", "llama3.1:8b", "mistral", "qwen2.5:7b", "phi3:3.8b"}
+    # Motor Híbrido: Si el usuario fuerza un modelo (ej. claude-3.5-sonnet o hermes3:unlocked), lo usamos
+    model_name = model_override if model_override else "hermes3:unlocked"
+    LOCAL_MODELS = {"hermes3:unlocked", "llama3.1:8b", "mistral", "qwen2.5:7b", "phi3:3.8b"}
     is_local = model_name in LOCAL_MODELS or ":" in model_name
 
     if is_local:
@@ -793,7 +796,7 @@ async def evolve_batch_prompts(req: EvolveBatchRequest, request: Request):
     # 1. Modo Streaming SSE
     if is_streaming:
         async def sse_event_generator():
-            yield f"data: {json.dumps({'type': 'init', 'total': total, 'engine': 'Motor Hibrido (Free.AI GPT-4o / Ollama Hermes 3)'})}\n\n"
+            yield f"data: {json.dumps({'type': 'init', 'total': total, 'engine': 'Motor Hibrido (Hermes 3 Unlocked local / nube opcional)'})}\n\n"
 
             successful = 0
             failed = 0
@@ -1126,7 +1129,7 @@ async def judge_prompt_evaluation(req: JudgeEvaluationRequest):
     return {
         "prompt_key": req.prompt_key,
         "category": req.category,
-        "judge_model": "Hermes-3 / GPT-4o Synthetic Judge Engine",
+        "judge_model": "Hermes-3 Unlocked / GPT-4o Synthetic Judge Engine",
         "tests_executed": 5,
         "summary": {
             "original_mean_score": avg_orig,
@@ -1139,3 +1142,70 @@ async def judge_prompt_evaluation(req: JudgeEvaluationRequest):
 
 
 
+
+
+class KnowledgeIngestRequest(BaseModel):
+    source_type: str
+    source_value: str
+    name: Optional[str] = None
+    namespace: str = "atlas-forge"
+    strategy: str = "rag"
+    auto_sync: bool = True
+    active: bool = True
+
+
+@router.on_event("startup")
+def architecture_startup() -> None:
+    ensure_auto_sync_started()
+
+
+@router.get("/knowledge/status")
+def knowledge_status():
+    return get_knowledge_status()
+
+
+@router.get("/knowledge/library")
+def knowledge_library():
+    return {"items": list_library_items()}
+
+
+@router.get("/knowledge/jobs")
+def knowledge_jobs():
+    return {"jobs": list_jobs()}
+
+
+@router.post("/knowledge/ingest")
+def knowledge_ingest(req: KnowledgeIngestRequest, background_tasks: BackgroundTasks):
+    source = register_source(req.model_dump())
+    job = create_ingestion_job(source)
+    background_tasks.add_task(run_ingestion_job, job["id"], source)
+    return {"status": "queued", "job": job, "source": source}
+
+
+@router.post("/knowledge/upload")
+async def knowledge_upload(background_tasks: BackgroundTasks, file: UploadFile = File(...), namespace: str = Form("atlas-forge"), strategy: str = Form("rag"), auto_sync: bool = Form(True), active: bool = Form(True)):
+    payload = await file.read()
+    if not payload:
+        raise HTTPException(status_code=400, detail="Archivo vacío.")
+    source_type = detect_source_type(file.filename or "upload.txt")
+    if source_type not in {"txt", "md", "json", "pdf", "epub"}:
+        raise HTTPException(status_code=400, detail="Formato no soportado. Usa TXT, MD, JSON, PDF o EPUB.")
+    saved_path = save_upload(file.filename or "upload.txt", payload)
+    source = register_source({
+        "name": Path(file.filename or saved_path.name).stem,
+        "source_type": source_type,
+        "source_value": str(saved_path),
+        "namespace": namespace,
+        "strategy": strategy,
+        "auto_sync": auto_sync,
+        "active": active,
+    })
+    job = create_ingestion_job(source)
+    background_tasks.add_task(run_ingestion_job, job["id"], source)
+    return {"status": "queued", "job": job, "source": source}
+
+
+@router.post("/knowledge/sync")
+def knowledge_sync():
+    jobs = sync_active_sources()
+    return {"status": "queued", "triggered_jobs": jobs, "count": len(jobs)}

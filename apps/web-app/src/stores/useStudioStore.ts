@@ -711,7 +711,7 @@ export const useStudioStore = create<StudioState>()(
       setTheme: (theme) => set({ theme }),
 
       chatMessages: [
-        { id: '1', role: 'system', content: 'Bienvenido a **AureliOS Studio**. Dime qué sistema quieres construir y veré el flujo aparecer en tiempo real  ' }
+        { id: '1', role: 'system', content: 'Bienvenido a **AureliOS Studio**. Describe qué quieres crear y verás agentes, flujo, board y artefactos aparecer en tiempo real.' }
       ],
       chatHistories: [],
       rollupCurrentChat: () => set((state) => {
@@ -772,7 +772,7 @@ export const useStudioStore = create<StudioState>()(
     "id": "aurelios-core",
     "name": "AureliOS",
     "role": "God-Tier Agent",
-    "description": "[IDENTITY & ROLE] Eres AureliOS, el Arquitecto Maestro y Sistema Operativo (Agent-OS v2) de Antigrav...",
+    "description": "[IDENTITY & ROLE] Eres AureliOS, el sistema operativo local-first de VibeCoding. Conversas con fluidez, haces visible el flujo y orquestas agentes, board y artefactos...",
     "genes": [],
     "noveltyScore": 99,
     "evalStatus": "PASS",
@@ -1018,7 +1018,7 @@ export const useStudioStore = create<StudioState>()(
     "id": "aurelios-core",
     "name": "AureliOS",
     "role": "God-Tier Agent",
-    "description": "[IDENTITY & ROLE] Eres AureliOS, el Arquitecto Maestro y Sistema Operativo (Agent-OS v2) de Antigrav...",
+    "description": "[IDENTITY & ROLE] Eres AureliOS, el sistema operativo local-first de VibeCoding. Conversas con fluidez, haces visible el flujo y orquestas agentes, board y artefactos...",
     "genes": [],
     "noveltyScore": 99,
     "evalStatus": "PASS",

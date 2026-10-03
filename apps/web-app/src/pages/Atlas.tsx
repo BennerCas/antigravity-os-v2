@@ -2,6 +2,7 @@ import { useTTSStore } from '../lib/ttsStore';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../lib/api';
+import { DEFAULT_LOCAL_MODEL } from '../lib/modelDefaults';
 import {
   SpeakerHigh, ArrowLeft, MagnifyingGlass, MagicWand,
   CaretRight, CheckSquare, Square, X, Sparkle, Clock
@@ -339,7 +340,7 @@ const Atlas = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'hermes3:8b',
+          model: DEFAULT_LOCAL_MODEL,
           prompt: `Traduce el siguiente texto al español de forma natural. Si ya esta en español, devuelve el texto original sin modificaciones. No agregues saludos, explicaciones, ni notas adicionales, SOLO el texto traducido. Texto:\n\n${currentText}`,
           stream: false
         })
@@ -403,7 +404,7 @@ ${inspectedPrompt.content}
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'hermes3:8b',
+          model: DEFAULT_LOCAL_MODEL,
           system: 'Eres un sistema nativo en idioma ESPAÑOL. Absolutamente TODO el contenido que generes (explicaciones, respuestas, código, notas) DEBE estar única y exclusivamente en ESPAÑOL. NUNCA respondas en inglés.',
           prompt: promptText,
           stream: true
@@ -529,7 +530,7 @@ ${inspectedPrompt.content}
       
     } catch (err) {
       console.error(err);
-      alert("Error al generar mejora. Asegúrate de tener Ollama corriendo y el modelo hermes3:8b descargado.");
+      alert(`Error al generar mejora. Asegúrate de tener Ollama corriendo y el modelo ${DEFAULT_LOCAL_MODEL} descargado.`);
     } finally {
       setIsUpgrading(false);
       setTimeout(() => {
@@ -554,7 +555,7 @@ ${inspectedPrompt.content}
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'hermes3:8b',
+          model: DEFAULT_LOCAL_MODEL,
           prompt: `Traduce el siguiente prompt al español manteniendo exactamente el mismo formato, estructura, y variables (como [texto]). No agregues comentarios ni explicaciones adicionales, solo la traducción directa del texto.\n\nPrompt:\n${inspectedPrompt.content}`,
           stream: true
         })
@@ -662,7 +663,7 @@ ${inspectedPrompt.content}
         id: n.id || `n${i + 1}`,
         type: 'mainPrompt',
         position: { x: 100 + i * 420, y: 200 },
-        data: { title: n.title, content: n.content, role: n.role, framework: n.framework || 'auto', llm_model: n.llm_model || 'hermes3:8b', temperature: n.temperature ?? 0.7, variables: n.variables || '' }
+        data: { title: n.title, content: n.content, role: n.role, framework: n.framework || 'auto', llm_model: n.llm_model || DEFAULT_LOCAL_MODEL, temperature: n.temperature ?? 0.7, variables: n.variables || '' }
       }));
       const rfEdges = flow.edges.map((e, i) => ({ id: `e-${i}`, source: e.source, target: e.target }));
       await fetch(`${API_URL}/flows`, {

@@ -7,35 +7,28 @@ import os
 from google.antigravity import Agent, CapabilitiesConfig
 from google.antigravity.connections.local.local_openai_connection_config import LocalOpenAIAgentConfig
 from backend.services.agent_factory import AgentFactory
+from backend.services.swarm_runtime import swarm_runtime_service
+from backend.services.room_runtime import list_room_presets, list_room_runs, get_room_run, simulate_room, clone_character, list_character_profiles
+from backend.model_defaults import DEFAULT_CLOUD_MODEL, DEFAULT_LOCAL_MODEL, FREE_AI_FALLBACK_MODEL, LOCAL_MODEL_OPTIONS, is_local_model, normalize_local_model, normalize_ollama_base_url, strip_model_provider
 
 router = APIRouter(prefix="/api/v1/studio", tags=["Studio"])
 
 FREE_AI_BASE = os.getenv("FREE_AI_BASE_URL", "https://api.free.ai/v1")
 FREE_AI_KEY  = os.getenv("FREE_AI_API_KEY", "")
 # Normaliza OLLAMA_BASE: el .env puede definirlo con o sin /v1 al final
-_raw_ollama  = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
-OLLAMA_BASE  = _raw_ollama.rstrip("/")
-if not OLLAMA_BASE.endswith("/v1"):
-    OLLAMA_BASE += "/v1"
+OLLAMA_BASE = normalize_ollama_base_url(os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434"))
 
 # Modelos NUBE (Free.AI)
-NUBE_MODELS = {
-    "anthropic/claude-3.5-sonnet",
-    "openai/gpt-4o",
-    "meta-llama/llama-3.1-70b-instruct",
-    "qwen/qwen-2.5-72b-instruct",
-}
+NUBE_MODELS = {DEFAULT_CLOUD_MODEL, "openai/gpt-4o", "meta-llama/llama-3.1-70b-instruct", "qwen/qwen-2.5-72b-instruct"}
 
 # Modelos LOCAL (Ollama)
-LOCAL_MODELS = {
-    "hermes3:8b", "llama3.1:8b", "mistral", "qwen2.5:7b", "phi3:3.8b"
-}
+LOCAL_MODELS = set(LOCAL_MODEL_OPTIONS)
 
 from backend.services.agent_factory import _cargar_perfil_agente
 
 class ChatRequest(BaseModel):
     message: str
-    model: Optional[str] = "anthropic/claude-3.5-sonnet"
+    model: Optional[str] = f"ollama/{DEFAULT_LOCAL_MODEL}"
     system: Optional[str] = None
     agent_id: Optional[str] = "aurelios-core"
 
@@ -46,9 +39,9 @@ class ChatResponse(BaseModel):
 
 @router.post("/chat", response_model=ChatResponse)
 async def studio_chat(req: ChatRequest):
-    model = req.model or "anthropic/claude-3.5-sonnet"
-    model = model.replace("free.ai/", "").replace("ollama/", "")
-    is_local = model in LOCAL_MODELS or ":" in model
+    raw_model = req.model or f"ollama/{DEFAULT_LOCAL_MODEL}"
+    model = strip_model_provider(raw_model)
+    is_local = is_local_model(raw_model)
 
     try:
         from backend.services.agent_factory import _cargar_perfil_agente
@@ -70,7 +63,7 @@ async def studio_chat(req: ChatRequest):
     else:
         result = await _call_free_ai(req.message, system_prompt, model)
         if result.engine == "error":
-            result = await _call_ollama(req.message, system_prompt, "hermes3:8b")
+            result = await _call_ollama(req.message, system_prompt, DEFAULT_LOCAL_MODEL)
         return result
 
 async def _call_free_ai(user: str, system: str, model: str) -> ChatResponse:
@@ -101,7 +94,7 @@ async def _call_ollama(user: str, system: str, model: str) -> ChatResponse:
     """Llama directamente a la API OpenAI-compatible de Ollama con httpx (timeout explícito).
     El SDK google.antigravity.Agent no tiene timeout y se bloquea indefinidamente.
     """
-    actual_model = model.replace("ollama/", "") if model else "hermes3:8b"
+    actual_model = normalize_local_model(model)
     payload = {
         "model": actual_model,
         "messages": [
@@ -168,10 +161,9 @@ INTERFACE:
 }}
     """
     
-    model_name = req.model or "qwen3-8b"
-    model_name = model_name.replace("free.ai/", "").replace("ollama/", "")
+    model_name = strip_model_provider(req.model or DEFAULT_LOCAL_MODEL)
     if model_name == "auto":
-        model_name = "qwen3-8b"
+        model_name = DEFAULT_LOCAL_MODEL
         
     try:
         from backend.services.match_fuse_pipeline import run_match_fuse
@@ -216,6 +208,91 @@ async def websocket_endpoint(websocket: WebSocket):
 class StateTransitionRequest(BaseModel):
     phase: str # "phase1_triage", "phase2_extraction", "phase3_blueprint"
     data: Any
+
+class SwarmExecutionRequest(BaseModel):
+    objective: str
+    nodes: List[Any]
+    edges: List[Any] = []
+    model: Optional[str] = f"ollama/{DEFAULT_LOCAL_MODEL}"
+
+
+class RoomSimulationRequest(BaseModel):
+    preset_id: str
+    objective: str
+    turns: int = 2
+    model: Optional[str] = f"ollama/{DEFAULT_LOCAL_MODEL}"
+
+
+class CharacterCloneRequest(BaseModel):
+    name: str
+    source_prompt: str
+    archetype: Optional[str] = None
+
+
+@router.get("/rooms/presets")
+async def get_room_presets():
+    return {"presets": list_room_presets(), "count": len(list_room_presets()), "status": "ok"}
+
+
+@router.get("/rooms/runs")
+async def get_room_runs():
+    return {"runs": list_room_runs(), "status": "ok"}
+
+
+@router.get("/rooms/runs/{run_id}")
+async def get_room_run_detail(run_id: str):
+    run = get_room_run(run_id)
+    if not run:
+        return {"status": "not_found", "run": None}
+    return {"status": "ok", "run": run}
+
+
+@router.post("/rooms/simulate")
+async def simulate_room_run(req: RoomSimulationRequest):
+    run = await simulate_room(
+        preset_id=req.preset_id,
+        objective=req.objective,
+        turns=max(1, min(req.turns, 4)),
+        model=req.model,
+        broadcast=manager.broadcast,
+    )
+    return {"status": "ok", "run": run}
+
+
+@router.get("/characters")
+async def get_character_profiles():
+    return {"profiles": list_character_profiles(), "status": "ok"}
+
+
+@router.post("/characters/clone")
+async def clone_character_profile(req: CharacterCloneRequest):
+    profile = await clone_character(req.name, req.source_prompt, req.archetype or "")
+    return {"status": "ok", "profile": profile}
+
+
+@router.get("/swarm/runs")
+async def list_swarm_runs():
+    return {"runs": swarm_runtime_service.list_runs()}
+
+
+@router.get("/swarm/runs/{run_id}")
+async def get_swarm_run(run_id: str):
+    run = swarm_runtime_service.get_run(run_id)
+    if not run:
+        return {"status": "not_found", "run": None}
+    return {"status": "ok", "run": run}
+
+
+@router.post("/swarm/execute")
+async def execute_swarm(req: SwarmExecutionRequest):
+    run = await swarm_runtime_service.execute_swarm(
+        objective=req.objective,
+        nodes=req.nodes,
+        edges=req.edges,
+        model=req.model,
+        broadcast=manager.broadcast,
+    )
+    return {"status": "ok", "run": run}
 
 @router.post("/state/transition")
 async def transition_state(req: StateTransitionRequest):
@@ -287,7 +364,7 @@ async def _execute_swarm_pipeline(data_str: str, model: str, pipeline_roles: Lis
         else:
             resp = await _call_free_ai(user_message, system_prompt, model)
             if resp.engine == "error":
-                resp = await _call_ollama(user_message, system_prompt, "hermes3:8b")
+                resp = await _call_ollama(user_message, system_prompt, DEFAULT_LOCAL_MODEL)
                 
         context = resp.response
         results.append({"role": role_name, "output": context})
@@ -360,7 +437,7 @@ async def run_triage_swarm(data: Any):
                 )
 
         is_final_node = (idx == len(agent_ids) - 1)
-        target_model = "hermes3:8b"
+        target_model = "hermes3:unlocked"
 
         try:
             resp_text = await AgentFactory.chat_one_shot(
@@ -461,7 +538,7 @@ async def run_extraction_swarm(data: Any):
         })
         
         is_final_node = (idx == len(pipeline_roles) - 1)
-        target_model = "hermes3:8b"
+        target_model = "hermes3:unlocked"
 
         try:
             resp_text = await AgentFactory.chat_one_shot(
@@ -584,7 +661,7 @@ REGLA 3: PROHIBIDO conversar. CERO saludos."""
         })
         
         is_final_node = (idx == len(pipeline_roles) - 1)
-        target_model = "hermes3:8b"
+        target_model = "hermes3:unlocked"
 
         try:
             resp_text = await AgentFactory.chat_one_shot(

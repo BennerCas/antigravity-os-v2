@@ -2,6 +2,8 @@ import os
 import tempfile
 from typing import List, Dict, Any, Optional
 
+from backend.services.atlas_library import extract_text_from_source
+
 try:
     from duckduckgo_search import DDGS
 except ImportError:
@@ -46,10 +48,10 @@ def web_search(query: str, max_results: int = 5) -> str:
 
 def process_document(file_path: str = None, raw_text: str = None) -> str:
     """
-    Lee y procesa el contenido de un archivo (TXT o PDF) o texto en bruto.
+    Lee y procesa el contenido de un archivo (TXT, MD, JSON, PDF, EPUB) o texto en bruto.
     
     Args:
-        file_path (str, optional): Ruta absoluta al archivo a procesar (.txt o .pdf).
+        file_path (str, optional): Ruta absoluta al archivo a procesar.
         raw_text (str, optional): Texto en bruto a retornar directamente si no se provee un archivo.
         
     Returns:
@@ -57,37 +59,18 @@ def process_document(file_path: str = None, raw_text: str = None) -> str:
     """
     if raw_text is not None and not file_path:
         return raw_text
-        
+
     if not file_path:
         return "Error: Se debe proporcionar 'file_path' o 'raw_text'."
-        
+
     if not os.path.exists(file_path):
         return f"Error: El archivo '{file_path}' no existe."
-        
-    ext = os.path.splitext(file_path)[1].lower()
-    
-    if ext == '.txt':
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                return f.read()
-        except Exception as e:
-            return f"Error al leer el archivo TXT: {str(e)}"
-            
-    elif ext == '.pdf':
-        if not PyPDF2:
-            return "Error: La librería 'PyPDF2' no está instalada. Ejecuta 'pip install PyPDF2'."
-        try:
-            text_content = []
-            with open(file_path, 'rb') as f:
-                reader = PyPDF2.PdfReader(f)
-                for page in reader.pages:
-                    text_content.append(page.extract_text())
-            return "\n".join(text_content)
-        except Exception as e:
-            return f"Error al procesar el archivo PDF: {str(e)}"
-            
-    else:
-        return f"Error: Formato de archivo '{ext}' no soportado. Por favor usa .txt o .pdf."
+
+    ext = os.path.splitext(file_path)[1].lower().lstrip('.')
+    try:
+        return extract_text_from_source(ext, file_path)
+    except Exception as e:
+        return f"Error procesando el documento: {str(e)}"
 
 # Exportamos las herramientas en un formato compatible con el ecosistema de IA
 # para que el "Backend AI Engineer" pueda usarlas en pipelines de LangChain / OpenAI / Ollama.
@@ -118,13 +101,13 @@ AVAILABLE_TOOLS = [
         "type": "function",
         "function": {
             "name": "process_document",
-            "description": "Lee el contenido de un documento (PDF o TXT) o procesa texto en bruto.",
+            "description": "Lee el contenido de un documento (TXT, MD, JSON, PDF o EPUB) o procesa texto en bruto.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "file_path": {
                         "type": "string",
-                        "description": "Ruta al archivo a leer (.txt o .pdf)."
+                        "description": "Ruta al archivo a leer (.txt, .md, .json, .pdf o .epub)."
                     },
                     "raw_text": {
                         "type": "string",

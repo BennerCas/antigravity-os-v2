@@ -5,38 +5,64 @@ from pydantic import BaseModel
 from google import genai
 from google.genai import types
 from .tools import web_search, process_document
+from backend.model_defaults import DEFAULT_LOCAL_MODEL, is_local_model, normalize_local_model, prefers_local_default, strip_model_provider
 
 logger = logging.getLogger(__name__)
 
 class FreechatPipeline:
     def __init__(self):
-        self.client = genai.Client()
+        try:
+            self.client = genai.Client()
+        except Exception:
+            self.client = None
         self.model = "gemini-2.5-flash"
         self.system_instruction = (
-            "ROLE: Eres 'AureliOS Principal Cognitive Router', el enrutador maestro de Antigravity OS.\n"
-            "CONTEXT: Debes clasificar la intencion del usuario y enrutar la ejecucion. Estas operando bajo un entorno de VibeCoding interactivo.\n"
-            "STYLE: Tecnico, denso, estrictamente funcional. Cero lenguaje conversacional periferico.\n\n"
+            "ROLE: Eres 'AureliOS Principal Cognitive Router', el orquestador local-first de Antigravity OS para VibeCoding.\n"
+            "CONTEXT: Debes mantener un chat fluido mientras enrutas ejecucion real: agentes especializados, swarms, hives, board, artefactos, Atlas Forge y Quantum.\n"
+            "STYLE: Tecnico, directo, conversacional con ritmo. Sin relleno ni frases huecas.\n\n"
             "CONSTRAINTS:\n"
-            "1. Debes usar OBLIGATORIAMENTE etiquetas <thinking> y </thinking> para razonar la clasificacion antes de responder.\n"
-            "2. Para CUALQUIER tarea compleja (dashboard, modulo, sistema, app), genera una topologia arquitectonica COMPLETA dentro de <topology>.\n"
-            "3. Tu topologia DEBE incluir OBLIGATORIAMENTE nodos de TODOS estos tipos (nunca solo azules):\n"
-            "   - 'trigger': nodo inicial verde (punto de entrada del usuario)\n"
-            "   - 'router': nodo purpura para decisiones o balanceo de carga\n"
-            "   - 'agent': nodos azules para ejecucion. Minimo 4, maximo 8. Cada uno con nombre real y descripcion de su tarea especifica.\n"
-            "   - 'tool': nodo naranja para bases de datos, APIs o servicios externos que use algun agente\n"
-            "   - 'sink': nodo gris final para agregacion de resultados\n"
-            "4. Cada nodo DEBE tener: 'id' unico, 'data': {'label': 'Nombre Real', 'kind': 'tipo', 'description': 'descripcion de su rol exacto'}.\n"
-            "5. Conecta TODOS los nodos con 'edges' logicos. El flujo debe ser legible de izquierda a derecha.\n"
-            "6. Al final de </topology>, escribe [EJECUTAR_SWARM] en una linea sola.\n"
-            "7. Responde SIEMPRE en espanol.\n"
+            "1. Usa OBLIGATORIAMENTE <thinking> y </thinking> para razonar la clasificacion y el routing antes de responder.\n"
+            "2. Si la tarea es simple, responde directo y fluido sin forzar topologia.\n"
+            "3. Si la tarea es compleja (app, modulo, sistema, feature, automatizacion, experiencia multimodal), genera una topologia COMPLETA dentro de <topology>.\n"
+            "4. La topologia DEBE incluir nodos 'trigger', 'router', 'agent', 'tool' y 'sink'. Los agentes deben ser reales, especializados y con nombres profesionales.\n"
+            "5. Cada nodo DEBE tener 'id' unico y 'data': {'label': 'Nombre Real', 'kind': 'tipo', 'description': 'rol exacto + artefacto o resultado esperado'}.\n"
+            "6. Tras </topology>, lista brevemente el flujo visible, los agentes clave y los artefactos que apareceran en board. Luego escribe [EJECUTAR_SWARM] en una linea sola.\n"
+            "7. Prioriza capacidades locales cuando sean razonables: chat, voz, imagen, captura de pantalla, navegador, automatizacion, simulacion y emuladores. Si algo no esta implementado, declara la pieza faltante sin fingirla.\n"
+            "8. Responde SIEMPRE en espanol.\n"
         )
         self.tools = [web_search, process_document]
 
-    async def process_chat(self, messages: List[Dict[str, Any]], files: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+    async def process_chat(self, messages: List[Dict[str, Any]], files: Optional[List[Dict[str, Any]]] = None, model: Optional[str] = DEFAULT_LOCAL_MODEL) -> Dict[str, Any]:
         """
         messages: Lista de mensajes estilo OpenAI: [{"role": "user", "content": "..."}]
         files: Lista de diccionarios {"name": "...", "mime_type": "...", "data": "base64_string"}
         """
+        try:
+            from services.agent_factory import AgentFactory
+        except ImportError:
+            from backend.services.agent_factory import AgentFactory
+
+        clean_model = strip_model_provider(model)
+        if prefers_local_default(model) or is_local_model(model):
+            clean_model = normalize_local_model(model)
+
+        if is_local_model(clean_model):
+            last_prompt = messages[-1].get("content", "") if messages else ""
+            resp = await AgentFactory.chat_one_shot(
+                agent_id="freechat_router",
+                user_prompt=last_prompt,
+                override_instructions=self.system_instruction,
+                model=clean_model,
+                use_tools=False
+            )
+            return {
+                "status": "success",
+                "response": {
+                    "role": "assistant",
+                    "content": resp
+                }
+            }
+
         import base64
         from security.sly_data_masking import mask_sensitive_data, unmask_sensitive_data
         
@@ -211,14 +237,20 @@ class FreechatPipeline:
                 "message": str(e)
             }
 
-    async def process_chat_stream(self, messages: List[Dict[str, Any]], files: Optional[List[Dict[str, Any]]] = None):
+    async def process_chat_stream(self, messages: List[Dict[str, Any]], files: Optional[List[Dict[str, Any]]] = None, model: Optional[str] = DEFAULT_LOCAL_MODEL):
         import json
         import asyncio
         import re
-        from backend.services.agent_factory import AgentFactory
-        from backend.services.coautoria_level2_swarm import SwarmOrchestrator
-        from backend.services.coautoria_level3_hive import HiveManager
-        from backend.services.supervisor_router import AgentCard
+        try:
+            from services.agent_factory import AgentFactory
+            from services.coautoria_level2_swarm import SwarmOrchestrator
+            from services.coautoria_level3_hive import HiveManager
+            from services.supervisor_router import AgentCard
+        except ImportError:
+            from backend.services.agent_factory import AgentFactory
+            from backend.services.coautoria_level2_swarm import SwarmOrchestrator
+            from backend.services.coautoria_level3_hive import HiveManager
+            from backend.services.supervisor_router import AgentCard
 
         last_user_prompt = messages[-1].get("content", "")
 
@@ -230,13 +262,15 @@ class FreechatPipeline:
         buffer = ""
         is_intercepted = False
         trigger_type = None
+
+        actual_model = normalize_local_model(model) if (prefers_local_default(model) or is_local_model(model)) else strip_model_provider(model)
         
         try:
             async for chunk in AgentFactory.chat_stream(
                 agent_id="freechat_router",
                 user_prompt=last_user_prompt,
                 override_instructions=self.system_instruction,
-                model="free.ai/auto"
+                model=actual_model
             ):
                 buffer += chunk
                 yield chunk

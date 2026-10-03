@@ -60,7 +60,7 @@ def execute_flow_task(flow_id: str, auto_id: str = None):
                 title=data.get("title", "Node"),
                 content=data.get("content", ""),
                 role=data.get("role", "assistant"),
-                llm_model=data.get("llm_model", "hermes3:8b"),
+                llm_model=data.get("llm_model", "hermes3:unlocked"),
                 temperature=float(data.get("temperature", 0.7))
             ))
         edges = [Edge(source=e.get("source"), target=e.get("target")) for e in flow.get("edges", [])]

@@ -7,7 +7,7 @@ interface OllamaSplashProps {
 }
 
 const TIPS = [
-  'Hermes 3 cargando en tu GPU AMD Radeon...',
+  'Hermes 3 Unlocked cargando en tu GPU AMD Radeon...',
   'El Triángulo Dorado: Ollama → Free.AI → Gemini',
   'Precalentando el Enjambre de agentes cuánticos...',
   'Antigravity OS v2 — 100% local cuando es posible',
@@ -68,7 +68,7 @@ export function OllamaSplash({ onReady }: OllamaSplashProps) {
   useEffect(() => {
     let cancelled = false;
     let retries = 0;
-    const MAX_WAIT = 180; // seconds — Hermes 3 8B puede tardar en iGPU AMD
+    const MAX_WAIT = 180; // seconds — Hermes 3 Unlocked puede tardar en iGPU AMD
 
     const poll = async () => {
       setStatus('loading');
@@ -119,7 +119,7 @@ export function OllamaSplash({ onReady }: OllamaSplashProps) {
     checking: 'Verificando motores',
     loading: `Cargando modelo local${dots}`,
     ready: '✓ Motor local listo',
-    fallback: '→ Usando Free.AI como motor',
+    fallback: '→ Usando nube como respaldo',
   }[status];
 
   return (
@@ -160,7 +160,7 @@ export function OllamaSplash({ onReady }: OllamaSplashProps) {
       {/* Engine Status Cards */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 40 }}>
         {[
-          { label: 'Ollama / Hermes 3', ready: ollamaReady, icon: '🦙', desc: 'Motor local AMD' },
+          { label: 'Ollama / Hermes 3 Unlocked', ready: ollamaReady, icon: '🦙', desc: 'Motor local AMD' },
           { label: 'Free.AI / Qwen', ready: freeAiReady, icon: '☁️', desc: 'Fallback nube' },
         ].map(({ label, ready, icon, desc }) => (
           <div key={label} style={{

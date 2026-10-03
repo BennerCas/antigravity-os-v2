@@ -17,7 +17,7 @@ COHESION_PROMPT_DOC = (
     "4. El 'content' debe terminar SIEMPRE con la linea exacta: 'RULES: ALWAYS EXECUTE, REASON, AND RESPOND STRICTLY IN ENGLISH.'\n"
     "5. 'variables': lista snake_case separada por comas con las variables que el prompt espera recibir (vacio si ninguna).\n"
     "6. 'framework': crewai (creativo/colaborativo), autogen (codigo/ingenieria), langgraph (maquinas de estado/condicionales) o 'auto'.\n"
-    "7. 'llm_model': usa siempre 'hermes3:8b'.\n\n"
+    "7. 'llm_model': usa siempre 'hermes3:unlocked'.\n\n"
     "FORMATO DE SALIDA OBLIGATORIO: devuelve UNICAMENTE un JSON valido (sin marcas markdown, sin comentarios, sin texto extra) "
     "donde cada clave sea el ID del nodo y el valor un objeto con las claves: role, content, variables, framework, llm_model. "
     "Incluye TODOS los nodos del grafo, incluso los que no modificaste (con sus valores originales)."
@@ -104,7 +104,7 @@ class NodeData(BaseModel):
     framework: str = "auto"
     type: str = "mainPrompt"
     variables: str = ""
-    llm_model: str = "hermes3:8b"
+    llm_model: str = "hermes3:unlocked"
     temperature: float = 0.7
     output_schema: str = '{"type": "object"}'
 

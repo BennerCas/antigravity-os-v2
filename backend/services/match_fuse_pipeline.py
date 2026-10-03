@@ -2,8 +2,9 @@ import os
 import json
 from google.antigravity import Agent, LocalOpenAIAgentConfig
 from backend.services.chroma_db import vector_db
+from backend.model_defaults import DEFAULT_LOCAL_MODEL, FREE_AI_FALLBACK_MODEL, is_local_model, normalize_ollama_base_url, strip_model_provider
 
-async def run_match_fuse(nodes_or_prompt, model_name="qwen3-8b", progress_callback=None) -> str:
+async def run_match_fuse(nodes_or_prompt, model_name=DEFAULT_LOCAL_MODEL, progress_callback=None) -> str:
     """
     Pipeline Match & Fuse — Triángulo Dorado (3 etapas):
     1. Decomposer  — extrae genes lógicos
@@ -86,16 +87,15 @@ After completing your <thinking> phase, output ONLY a valid JSON ARRAY containin
 ]
 """
 
-    LOCAL_MODELS = {"hermes3:8b", "llama3.1:8b", "mistral", "qwen2.5:7b", "phi3:3.8b", "qwen2.5:3b", "qwen2.5:1.5b"}
-    is_local = model_name in LOCAL_MODELS or ":" in model_name
+    clean_model_name = strip_model_provider(model_name)
+    is_local = is_local_model(clean_model_name)
 
     if is_local:
-        # Ollama OpenAI-compatible en 11434/v1 (8080 = Open WebUI, NO compatible)
-        base_url = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
-        final_model = model_name
+        base_url = normalize_ollama_base_url(os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434"))
+        final_model = clean_model_name or DEFAULT_LOCAL_MODEL
     else:
         base_url = "https://api.free.ai/v1"
-        final_model = "qwen3-8b"
+        final_model = clean_model_name or FREE_AI_FALLBACK_MODEL
 
     config = LocalOpenAIAgentConfig(
         model=final_model,

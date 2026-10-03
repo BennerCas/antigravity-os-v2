@@ -13,6 +13,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import config  # carga .env local (o fallback legacy) antes que todo
+from backend.model_defaults import DEFAULT_LOCAL_MODEL, FREE_AI_FALLBACK_MODEL
+from backend.services.atlas_library import ensure_auto_sync_started
 from routers import execute, search, prompts, compiler, runtime, flows, architecture, automations, native_engine, semantic_search, academy, engine, authoring, flowboard, inspector
 
 app = FastAPI(
@@ -60,6 +62,7 @@ async def startup_event():
     from services.academy.catalog_service import CatalogService
     CatalogService.seed_catalog()
     automations.init_scheduler()
+    ensure_auto_sync_started()
     # Inicializar ChromaDB y disparar indexación semántica en background
     await semantic_search.startup_semantic()
 
@@ -73,6 +76,7 @@ from typing import List, Dict, Any, Optional
 class FreeChatRequest(BaseModel):
     messages: List[Dict[str, Any]]
     files: Optional[List[Dict[str, Any]]] = None
+    model: Optional[str] = DEFAULT_LOCAL_MODEL
 
 
 @app.post("/api/v1/studio/freechat_stream")
@@ -80,14 +84,13 @@ async def freechat_stream_endpoint(request: FreeChatRequest):
     from fastapi.responses import StreamingResponse
     from services.freechat_pipeline import FreechatPipeline
     pipeline = FreechatPipeline()
-    return StreamingResponse(pipeline.process_chat_stream(request.messages, files=request.files), media_type="text/plain")
+    return StreamingResponse(pipeline.process_chat_stream(request.messages, files=request.files, model=request.model), media_type="text/plain")
 
 @app.post("/api/v1/studio/freechat")
-
 async def freechat_endpoint(request: FreeChatRequest):
     from services.freechat_pipeline import FreechatPipeline
     pipeline = FreechatPipeline()
-    result = await pipeline.process_chat(request.messages, files=request.files)
+    result = await pipeline.process_chat(request.messages, files=request.files, model=request.model)
     return result
 
 
@@ -152,7 +155,7 @@ async def health_engines():
             async with httpx.AsyncClient(timeout=5.0) as c:
                 r = await c.post(
                     "https://api.free.ai/v1/chat/completions",
-                    json={"model": "qwen7b", "messages": [{"role": "user", "content": "ping"}]},
+                    json={"model": FREE_AI_FALLBACK_MODEL, "messages": [{"role": "user", "content": "ping"}]},
                     headers={"Authorization": f"Bearer {free_ai_key}", "Content-Type": "application/json"}
                 )
                 results["free_ai"] = r.status_code == 200

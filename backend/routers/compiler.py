@@ -30,17 +30,17 @@ class CompileRequest(BaseModel):
 def _parse_llm(llm_model: str) -> tuple[str, str, str]:
     '''Returns (provider, model_name, litellm_format)'''
     if not llm_model:
-        return "free.ai", "qwen7b", "openai/qwen7b"
+        return "ollama", "hermes3:unlocked", "ollama/hermes3:unlocked"
         
     llm_model = llm_model.lower()
     if "free.ai" in llm_model:
         model = llm_model.split("/")[-1] if "/" in llm_model else "qwen7b"
         return "free.ai", model, f"openai/{model}"
     elif "ollama" in llm_model or "hermes" in llm_model:
-        model = llm_model.split("/")[-1] if "/" in llm_model else "hermes3:8b"
+        model = llm_model.split("/")[-1] if "/" in llm_model else "hermes3:unlocked"
         return "ollama", model, f"ollama/{model}"
     else:
-        return "free.ai", "qwen7b", "openai/qwen7b"
+        return "ollama", "hermes3:unlocked", "ollama/hermes3:unlocked"
 
 def generate_crewai_code(nodes: List[Node], edges: List[Edge], execution_plan: Optional[str]) -> str:
     code = ["# -*- coding: utf-8 -*-"]
@@ -119,8 +119,8 @@ def generate_autogen_code(nodes: List[Node], edges: List[Edge], execution_plan: 
     code.append("from dotenv import load_dotenv")
     code.append("load_dotenv(r'C:\\antigravityAS\\Antigravity_OS_v2\\backend\\.env')")
     
-    code.append("api_key = os.environ.get('FREE_AI_API_KEY', 'dummy')")
-    code.append("config_list = [{ 'model': 'qwen7b', 'api_key': api_key, 'base_url': 'https://api.free.ai/v1' }]")
+    code.append("api_key = 'ollama'")
+    code.append("config_list = [{ 'model': 'hermes3:unlocked', 'api_key': api_key, 'base_url': 'http://127.0.0.1:11434/v1' }]")
     code.append("llm_config = {'config_list': config_list}\n")
     
     user_proxy = None
@@ -166,7 +166,7 @@ def generate_autogen_code(nodes: List[Node], edges: List[Edge], execution_plan: 
     return "\n".join(code)
 
 def generate_langgraph_code(nodes: List[Node], edges: List[Edge], execution_plan: Optional[str]) -> str:
-    """Genera un runner LangGraph alineado al Motor Hibrido (gpt-4o nube / hermes3:8b local)."""
+    """Genera un runner LangGraph alineado al motor local por defecto (Hermes 3 Unlocked en Ollama)."""
     code = ["# -*- coding: utf-8 -*-"]
     code.append("import os, sys")
     code.append("from dotenv import load_dotenv")
@@ -191,7 +191,7 @@ def generate_langgraph_code(nodes: List[Node], edges: List[Edge], execution_plan
     for i, node in enumerate(nodes):
         node_name = f"node_{i}"
         id_to_name[node.id or node_name] = node_name
-        provider, model, _ = _parse_llm(getattr(node, 'llm_model', '') or 'hermes3:8b')
+        provider, model, _ = _parse_llm(getattr(node, 'llm_model', '') or 'hermes3:unlocked')
         temperature = getattr(node, 'temperature', 0.7) or 0.7
         content = json.dumps((node.content or '').strip().replace('\n', ' '), ensure_ascii=False)
         node_id_val = str(node.id or node_name)

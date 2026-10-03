@@ -8,6 +8,7 @@ Así la app funciona independiente y deja de depender de rutas ajenas.
 """
 import os
 from dotenv import load_dotenv
+from backend.model_defaults import normalize_ollama_base_url
 
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 LOCAL_ENV = os.path.join(BACKEND_DIR, ".env")
@@ -18,7 +19,7 @@ load_dotenv(ENV_PATH)
 
 FREE_AI_API_KEY = os.getenv("FREE_AI_API_KEY", "")
 FREE_AI_BASE_URL = os.getenv("FREE_AI_BASE_URL", "https://api.free.ai/v1")
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:8080/v1")
+OLLAMA_BASE_URL = normalize_ollama_base_url(os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434"))
 
 # Orígenes permitidos para CORS (frontend local v1 y v2)
 CORS_ORIGINS = ["*"]

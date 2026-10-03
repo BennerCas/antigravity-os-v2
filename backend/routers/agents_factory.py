@@ -16,6 +16,11 @@ Jamás uses lenguaje cliché de IA. Exige excelencia técnica."""
 
 from typing import Optional, List
 
+try:
+    from services.specialists_registry import list_specialist_packs, build_template_for_pack, recommend_specialist_packs
+except ImportError:
+    from backend.services.specialists_registry import list_specialist_packs, build_template_for_pack, recommend_specialist_packs
+
 router = APIRouter(prefix="/agents", tags=["Agent Factory"])
 
 class AgentChatRequest(BaseModel):
@@ -107,6 +112,41 @@ class SearchAssistRequest(BaseModel):
     context: Optional[str] = None  # 'agents' | 'kb' | 'teams' | None
 
 
+class SpecialistRecommendRequest(BaseModel):
+    objective: str
+    limit: Optional[int] = 3
+
+
+@router.get("/specialists")
+def list_specialists():
+    packs = list_specialist_packs()
+    return {"packs": packs, "count": len(packs), "status": "ok"}
+
+
+@router.get("/specialists/{pack_id}")
+def get_specialist_pack(pack_id: str):
+    try:
+        template = build_template_for_pack(pack_id)
+        return {**template, "status": "ok"}
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"Specialist pack not found: {pack_id}")
+
+
+@router.post("/specialists/recommend")
+def recommend_specialists(req: SpecialistRecommendRequest):
+    packs = recommend_specialist_packs(req.objective, limit=max(1, min(req.limit or 3, 6)))
+    enriched = []
+    for pack in packs:
+        template = build_template_for_pack(pack["id"])
+        enriched.append({
+            "pack": pack,
+            "nodes": template["nodes"],
+            "edges": template["edges"],
+            "agentCards": template["agentCards"],
+        })
+    return {"objective": req.objective, "recommendations": enriched, "count": len(enriched), "status": "ok"}
+
+
 @router.post("/optimize")
 async def optimize_agent(req: OptimizeAgentRequest):
     """
@@ -163,7 +203,7 @@ TAREA:
 """
 
         config = LocalOpenAIAgentConfig(
-            model="qwen3-8b", 
+            model="hermes3:unlocked", 
             base_url=OLLAMA_BASE_URL,
             system_instructions=system_prompt,
             env={"OPENAI_API_KEY": os.getenv("FREE_AI_API_KEY", "localai")}
@@ -213,7 +253,7 @@ Usa formato Markdown profesional. Elimina lenguaje redundante.
 """
 
         config = LocalOpenAIAgentConfig(
-            model="qwen3-8b",
+            model="hermes3:unlocked",
             base_url=OLLAMA_BASE_URL,
             system_instructions=system_prompt,
             env={"OPENAI_API_KEY": os.getenv("FREE_AI_API_KEY", "localai")}

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../lib/api';
+import { DEFAULT_LOCAL_MODEL } from '../lib/modelDefaults';
 import { logicTaskManager, LogicTaskState } from '../lib/logicTaskManager';
 import {
   SpeakerHigh, ArrowLeft, MagnifyingGlass, MagicWand,
@@ -576,7 +577,7 @@ ${inspectedAgent.instructions || inspectedAgent.content}
         id: n.id || `n${i + 1}`,
         type: 'mainAgent',
         position: { x: 100 + i * 420, y: 200 },
-        data: { title: n.title, content: n.content, role: n.role, framework: n.framework || 'auto', llm_model: n.llm_model || 'hermes3:8b', temperature: n.temperature ?? 0.7, variables: n.variables || '' }
+        data: { title: n.title, content: n.content, role: n.role, framework: n.framework || 'auto', llm_model: n.llm_model || DEFAULT_LOCAL_MODEL, temperature: n.temperature ?? 0.7, variables: n.variables || '' }
       }));
       const rfEdges = flow.edges.map((e, i) => ({ id: `e-${i}`, source: e.source, target: e.target }));
       await fetch(`${API_URL}/flows`, {

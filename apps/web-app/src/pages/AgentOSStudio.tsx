@@ -8,6 +8,7 @@ import { SwarmOrchestrationPanel } from '../components/studio/SwarmOrchestration
 import { useStudioStore, TabId, parseAIResponseToFlow, detectKind } from '../stores/useStudioStore';
 import { useHistoryStore } from '../stores/useHistoryStore';
 import { API_URL, WS_STUDIO_ACTIVITY_URL } from '../lib/api';
+import { CLOUD_MODEL_OPTIONS, DEFAULT_AURELIOS_MODEL, LOCAL_MODEL_OPTIONS, normalizeAureliosModel } from '../lib/modelDefaults';
 import { Gear, Archive, Star, MagnifyingGlass, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock, Stop, Microphone, Database, Globe, TerminalWindow, FileText, CodeBlock, Scan, AppWindow, File, MaskHappy, Chats, ArrowUUpLeft, ArrowUUpRight, FloppyDisk, DownloadSimple, Eye } from '@phosphor-icons/react';
 
 
@@ -104,6 +105,10 @@ const FreeChatCapabilitiesGrid = () => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const { freeChatFiles, addFreeChatFiles, screenStream, setScreenStream } = useStudioStore();
+  const [localCapabilities, setLocalCapabilities] = useState<any>(null);
+
+  const speechRecognitionSupported = typeof window !== 'undefined' && Boolean((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
+  const displayCaptureSupported = typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getDisplayMedia);
 
   React.useEffect(() => {
     if (videoRef.current && screenStream) {
@@ -111,11 +116,29 @@ const FreeChatCapabilitiesGrid = () => {
     }
   }, [screenStream]);
 
+  React.useEffect(() => {
+    const loadCapabilities = async () => {
+      try {
+        const res = await fetch(`${API_URL}/engine/local-capabilities`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setLocalCapabilities(data);
+      } catch (error) {
+        console.error('Error loading local capabilities', error);
+      }
+    };
+    loadCapabilities();
+  }, []);
+
   const toggleScreenShare = async () => {
     if (screenStream) {
       screenStream.getTracks().forEach(track => track.stop());
       setScreenStream(null);
     } else {
+      if (!displayCaptureSupported) {
+        alert('Tu navegador no soporta captura de pantalla/ventana/pestaña en esta superficie.');
+        return;
+      }
       try {
         const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
         setScreenStream(stream);
@@ -132,120 +155,153 @@ const FreeChatCapabilitiesGrid = () => {
   };
 
   return (
-    <div className="grid grid-cols-4 gap-1.5 mt-4 px-2 pb-2 w-full animate-in fade-in slide-in-from-top-2 duration-300">
-      <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} accept=".txt,.pdf,.md,.csv,.json" />
-      
-      <div onClick={() => fileInputRef.current?.click()} className="bg-black/40 border border-white/5 rounded-none pl-[0.5cm] py-3 pr-2 hover:border-green-500/50 transition-colors cursor-pointer group flex items-center gap-3">
-        <Database size={32} className="text-gray-400 group-hover:text-green-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-300 group-hover:text-green-400 leading-tight">Ingesta</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Docs locales</p>
-          {freeChatFiles.length > 0 && <p className="text-[11px] text-green-400 mt-0.5 leading-tight">{freeChatFiles.length} listos</p>}
+    <div className="mt-4 px-2 pb-2 w-full animate-in fade-in slide-in-from-top-2 duration-300">
+      <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} accept=".txt,.pdf,.md,.csv,.json,.epub,.html,.htm" />
+
+      <div className="grid grid-cols-4 gap-1.5">
+        <div onClick={() => fileInputRef.current?.click()} className="bg-black/40 border border-white/5 rounded-none pl-[0.5cm] py-3 pr-2 hover:border-green-500/50 transition-colors cursor-pointer group flex items-center gap-3">
+          <Database size={32} className="text-gray-400 group-hover:text-green-400 shrink-0"/>
+          <div className="flex flex-col justify-center">
+            <h4 className="font-bold text-[13px] text-gray-300 group-hover:text-green-400 leading-tight">Ingesta</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">Docs locales</p>
+            {freeChatFiles.length > 0 && <p className="text-[11px] text-green-400 mt-0.5 leading-tight">{freeChatFiles.length} listos</p>}
+          </div>
         </div>
-      </div>
-      
-      <div className="bg-black/40 border border-white/5 rounded-none pl-[0.5cm] py-3 pr-2 hover:border-green-500/50 transition-colors cursor-pointer group flex items-center gap-3">
-        <Globe size={32} className="text-gray-400 group-hover:text-green-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-300 group-hover:text-green-400 leading-tight">Web</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Internet real</p>
+
+        <div className="bg-black/40 border border-white/5 rounded-none pl-[0.5cm] py-3 pr-2 hover:border-green-500/50 transition-colors cursor-pointer group flex items-center gap-3">
+          <Globe size={32} className="text-gray-400 group-hover:text-green-400 shrink-0"/>
+          <div className="flex flex-col justify-center">
+            <h4 className="font-bold text-[13px] text-gray-300 group-hover:text-green-400 leading-tight">Web</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">Internet real</p>
+          </div>
         </div>
-      </div>
-      
-      <div onClick={toggleScreenShare} className={`bg-black/40 border ${screenStream ? 'border-cyan-500' : 'border-white/5'} rounded-none pl-[0.5cm] py-3 pr-2 hover:border-cyan-500/50 transition-colors cursor-pointer group flex items-center gap-3`}>
-        <TerminalWindow size={32} className={`${screenStream ? 'text-cyan-400' : 'text-gray-400 group-hover:text-cyan-400'} shrink-0`}/>
-        <div className="flex flex-col justify-center">
-          <h4 className={`font-bold text-[13px] leading-tight ${screenStream ? 'text-cyan-400' : 'text-gray-300 group-hover:text-cyan-400'}`}>
-            {screenStream ? 'Activa' : 'Pantalla'}
-          </h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Transmite PC</p>
+
+        <div onClick={displayCaptureSupported ? toggleScreenShare : undefined} className={`bg-black/40 border ${screenStream ? 'border-cyan-500' : displayCaptureSupported ? 'border-white/5 hover:border-cyan-500/50' : 'border-white/5 opacity-40'} rounded-none pl-[0.5cm] py-3 pr-2 transition-colors ${displayCaptureSupported ? 'cursor-pointer group flex items-center gap-3' : 'cursor-not-allowed flex items-center gap-3'}`}>
+          <TerminalWindow size={32} className={`${screenStream ? 'text-cyan-400' : displayCaptureSupported ? 'text-gray-400 group-hover:text-cyan-400' : 'text-gray-400'} shrink-0`}/>
+          <div className="flex flex-col justify-center">
+            <h4 className={`font-bold text-[13px] leading-tight ${screenStream ? 'text-cyan-400' : displayCaptureSupported ? 'text-gray-300 group-hover:text-cyan-400' : 'text-gray-400'}`}>
+              {screenStream ? 'Activa' : 'Pantalla'}
+            </h4>
+            <p className="text-[11px] text-gray-500 leading-tight">{displayCaptureSupported ? 'Pantalla / ventana / pestaña' : 'No soportado aquí'}</p>
+          </div>
+        </div>
+
+        <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
+          <MaskHappy size={32} className="text-gray-400 shrink-0"/>
+          <div className="flex flex-col justify-center">
+            <h4 className="font-bold text-[13px] text-gray-400 leading-tight">RolPlay</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">Personajes</p>
+          </div>
+        </div>
+
+        <div className={`bg-black/40 border ${speechRecognitionSupported ? 'border-emerald-500/25 hover:border-emerald-500/50' : 'border-white/5 opacity-40'} rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 ${speechRecognitionSupported ? '' : 'cursor-not-allowed'}`}>
+          <Chats size={32} className={`${speechRecognitionSupported ? 'text-emerald-400' : 'text-gray-400'} shrink-0`}/>
+          <div className="flex flex-col justify-center">
+            <h4 className={`font-bold text-[13px] leading-tight ${speechRecognitionSupported ? 'text-emerald-300' : 'text-gray-400'}`}>Talk</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">{speechRecognitionSupported ? 'Dictado local listo' : 'Voz no disponible'}</p>
+          </div>
+        </div>
+
+        <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
+          <TerminalWindow size={32} className="text-gray-400 shrink-0"/>
+          <div className="flex flex-col justify-center">
+            <h4 className="font-bold text-[13px] text-gray-400 leading-tight">CLI</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">Terminal</p>
+          </div>
+        </div>
+
+        <div 
+          onClick={() => {
+            const { flowNodes, setActiveArtifact, activeArtifact } = useStudioStore.getState();
+            if (activeArtifact) return;
+            const artNode = flowNodes.find(n => n.type === 'artifact' || (n.data as any)?.kind === 'artifact');
+            if (artNode) {
+              setActiveArtifact({
+                name: String((artNode.data as any)?.label || (artNode.data as any)?.name || 'Dashboard'),
+                content: String((artNode.data as any)?.content || (artNode.data as any)?.description || '')
+              });
+            } else {
+              alert('Aún no se ha generado ningún artefacto en el lienzo. Pídele al Enjambre que cree un Dashboard o componente.');
+            }
+          }} 
+          className="bg-black/40 border border-white/5 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-pointer hover:border-amber-500/50 transition-colors group"
+        >
+          <PaintBrush size={32} className="text-gray-400 group-hover:text-amber-400 shrink-0"/>
+          <div className="flex flex-col justify-center">
+            <h4 className="font-bold text-[13px] text-gray-300 group-hover:text-amber-400 leading-tight">UI</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">Render vivo</p>
+          </div>
+        </div>
+
+        <div className={`bg-black/40 border ${(localCapabilities?.ollama?.ready || localCapabilities?.ffmpeg?.ready) ? 'border-emerald-500/25' : 'border-white/5 opacity-40'} rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 ${localCapabilities?.ollama?.ready || localCapabilities?.ffmpeg?.ready ? '' : 'cursor-not-allowed'}`}>
+          <HardDrives size={32} className={`${(localCapabilities?.ollama?.ready || localCapabilities?.ffmpeg?.ready) ? 'text-emerald-400' : 'text-gray-400'} shrink-0`}/>
+          <div className="flex flex-col justify-center">
+            <h4 className={`font-bold text-[13px] leading-tight ${(localCapabilities?.ollama?.ready || localCapabilities?.ffmpeg?.ready) ? 'text-emerald-300' : 'text-gray-400'}`}>RAG</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">{localCapabilities?.ollama?.ready ? 'Atlas local listo' : 'Memoria parcial'}</p>
+          </div>
+        </div>
+
+        <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
+          <Scan size={32} className="text-gray-400 shrink-0"/>
+          <div className="flex flex-col justify-center">
+            <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Crawler</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">Scraping</p>
+          </div>
+        </div>
+
+        <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
+          <CodeBlock size={32} className="text-gray-400 shrink-0"/>
+          <div className="flex flex-col justify-center">
+            <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Sandbox</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">Aislado</p>
+          </div>
+        </div>
+
+        <div className={`bg-black/40 border ${localCapabilities?.android?.ready ? 'border-emerald-500/25' : 'border-white/5 opacity-40'} rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 ${localCapabilities?.android?.ready ? '' : 'cursor-not-allowed'}`}>
+          <AppWindow size={32} className={`${localCapabilities?.android?.ready ? 'text-emerald-400' : 'text-gray-400'} shrink-0`}/>
+          <div className="flex flex-col justify-center">
+            <h4 className={`font-bold text-[13px] leading-tight ${localCapabilities?.android?.ready ? 'text-emerald-300' : 'text-gray-400'}`}>Control</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">{localCapabilities?.android?.ready ? 'ADB / Emulator listo' : 'Computer control pendiente'}</p>
+          </div>
+        </div>
+
+        <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
+          <Network size={32} className="text-gray-400 shrink-0"/>
+          <div className="flex flex-col justify-center">
+            <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Enjambre</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">Paralelo</p>
+          </div>
         </div>
       </div>
 
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
-        <MaskHappy size={32} className="text-gray-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">RolPlay</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Personajes</p>
+      {screenStream && (
+        <div className="mt-2 border border-cyan-500/30 bg-cyan-500/5 rounded-xl p-2">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] uppercase tracking-[0.18em] text-cyan-300 font-bold">Preview de captura viva</span>
+            <button onClick={toggleScreenShare} className="text-[11px] text-cyan-300 hover:text-white">Detener</button>
+          </div>
+          <video ref={videoRef} autoPlay muted playsInline className="w-full max-h-56 rounded-lg border border-cyan-500/20 bg-black object-contain" />
+          <div className="mt-2 text-[11px] text-cyan-100/70">La captura puede venir de pantalla completa, una ventana o una pestaña del navegador según la selección del sistema.</div>
         </div>
-      </div>
+      )}
 
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
-        <Chats size={32} className="text-gray-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Talk</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Voz fluida</p>
+      <div className="mt-2 rounded-xl border border-white/10 bg-black/30 p-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[11px] uppercase tracking-[0.18em] text-white/45 font-bold">Centro local</span>
+          <span className="text-[10px] text-white/35">Estado real del entorno</span>
         </div>
-      </div>
-
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
-        <TerminalWindow size={32} className="text-gray-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">CLI</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Terminal</p>
-        </div>
-      </div>
-
-      <div 
-        onClick={() => {
-          const { flowNodes, setActiveArtifact, activeArtifact } = useStudioStore.getState();
-          if (activeArtifact) return; // already active
-          const artNode = flowNodes.find(n => n.type === 'artifact' || (n.data as any)?.kind === 'artifact');
-          if (artNode) {
-            setActiveArtifact({
-              name: String((artNode.data as any)?.label || (artNode.data as any)?.name || 'Dashboard'),
-              content: String((artNode.data as any)?.content || (artNode.data as any)?.description || '')
-            });
-          } else {
-            alert('Aún no se ha generado ningún artefacto en el lienzo. Pídele al Enjambre que cree un Dashboard o componente.');
-          }
-        }} 
-        className="bg-black/40 border border-white/5 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-pointer hover:border-amber-500/50 transition-colors group"
-      >
-        <PaintBrush size={32} className="text-gray-400 group-hover:text-amber-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-300 group-hover:text-amber-400 leading-tight">UI</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Render vivo</p>
-        </div>
-      </div>
-
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
-        <HardDrives size={32} className="text-gray-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">RAG</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Memoria</p>
-        </div>
-      </div>
-
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
-        <Scan size={32} className="text-gray-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Crawler</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Scraping</p>
-        </div>
-      </div>
-
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
-        <CodeBlock size={32} className="text-gray-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Sandbox</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Aislado</p>
-        </div>
-      </div>
-
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
-        <AppWindow size={32} className="text-gray-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Control</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Computer</p>
-        </div>
-      </div>
-      
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
-        <Network size={32} className="text-gray-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Enjambre</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Paralelo</p>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { label: 'Ollama', detail: localCapabilities?.ollama?.ready ? 'Hermes listo' : 'No accesible', ready: Boolean(localCapabilities?.ollama?.ready) },
+            { label: 'FFmpeg', detail: localCapabilities?.ffmpeg?.ready ? 'Media local listo' : 'No detectado', ready: Boolean(localCapabilities?.ffmpeg?.ready) },
+            { label: 'Android', detail: localCapabilities?.android?.ready ? 'ADB/Emulator detectado' : 'No detectado', ready: Boolean(localCapabilities?.android?.ready) },
+            { label: 'Voz', detail: speechRecognitionSupported ? 'Dictado local listo' : 'Sin soporte nativo', ready: speechRecognitionSupported },
+          ].map((capability) => (
+            <div key={capability.label} className={`rounded-lg border px-3 py-2 ${capability.ready ? 'border-emerald-500/25 bg-emerald-500/5' : 'border-white/10 bg-white/5'}`}>
+              <div className={`text-[11px] font-bold uppercase tracking-[0.14em] ${capability.ready ? 'text-emerald-300' : 'text-white/55'}`}>{capability.label}</div>
+              <div className="text-[11px] text-white/55 mt-1">{capability.detail}</div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -304,8 +360,7 @@ const FlowArchitect: React.FC = () => {
     const [isTyping, setIsTyping] = useState(false);
   const [thinkingPhrase, setThinkingPhrase] = useState('');
   const [showSetup, setShowSetup] = useState(false);
-  const [selectedAgentId, setSelectedAgentId] = useState('aurelios-core');
-  const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem('aurelios_model') || 'free.ai/auto');
+  const [selectedModel, setSelectedModel] = useState(() => normalizeAureliosModel(localStorage.getItem('aurelios_model') || DEFAULT_AURELIOS_MODEL));
   const [currentThemeKey, setCurrentThemeKey] = useState(() => localStorage.getItem('aurelios_theme') || 'obsidian');
   const [selectedChatAgentId, setSelectedChatAgentId] = useState('aurelios-core');
   const [carouselSlide, setCarouselSlide] = useState(0);
@@ -443,7 +498,8 @@ const FlowArchitect: React.FC = () => {
   
             const payload = {
               messages: chatMessages.concat({ role: 'human', content: actualPrompt, id: crypto.randomUUID() }),
-              files: uploadedFiles.length > 0 ? uploadedFiles : undefined
+              files: uploadedFiles.length > 0 ? uploadedFiles : undefined,
+              model: selectedModel
             };
   
             const res = await fetch(`${API_URL}/studio/freechat_stream`, {
@@ -1101,7 +1157,7 @@ const FlowArchitect: React.FC = () => {
                 <h4 className="font-bold flex items-center gap-2 text-[14px] uppercase tracking-wider mb-2"><Cpu size={16} /> Modelos IA</h4>
                 
                 <div className="text-[11px] font-bold uppercase tracking-wider text-white/50 mt-1 mb-1">NUBE</div>
-                {['anthropic/claude-3.5-sonnet', 'openai/gpt-4o', 'meta-llama/llama-3.1-70b-instruct', 'qwen/qwen-2.5-72b-instruct'].map(m => (
+                {CLOUD_MODEL_OPTIONS.map((m: string) => (
                   <button 
                     key={m}
                     onClick={() => setSelectedModel(m)}
@@ -1113,7 +1169,7 @@ const FlowArchitect: React.FC = () => {
                 ))}
 
                 <div className="text-[11px] font-bold uppercase tracking-wider text-white/50 mt-3 mb-1">LOCAL</div>
-                {['hermes3:8b', 'llama3.1:8b', 'mistral', 'qwen2.5:7b', 'phi3:3.8b'].map(m => (
+                {LOCAL_MODEL_OPTIONS.map((m: string) => (
                     <button 
                       key={m}
                       onClick={() => setSelectedModel(`ollama/${m}`)}
@@ -1776,7 +1832,7 @@ const ArchitectureBlueprint: React.FC = () => {
     const timeoutId = setTimeout(() => controller.abort(), 20 * 60 * 1000);
 
     try {
-      const selectedModel = localStorage.getItem('aurelios_model') || 'ollama/hermes3:8b';
+      const selectedModel = normalizeAureliosModel(localStorage.getItem('aurelios_model') || DEFAULT_AURELIOS_MODEL);
       
       const res = await fetch(`${API_URL}/studio/match_fuse`, {
         method: 'POST',
@@ -2031,12 +2087,18 @@ const CountdownTimer = ({ initialSeconds }: { initialSeconds: number }) => {
 
 const LiveArtifactModal: React.FC = () => {
   const { activeArtifact, setActiveArtifact } = useStudioStore();
-  const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
+  const [viewMode, setViewMode] = useState<'preview' | 'code' | 'edit'>('preview');
   const [copied, setCopied] = useState(false);
+  const [editableContent, setEditableContent] = useState('');
+
+  useEffect(() => {
+    setEditableContent(activeArtifact?.content || '');
+    setViewMode('preview');
+  }, [activeArtifact?.name, activeArtifact?.content]);
 
   if (!activeArtifact) return null;
 
-  let rawContent = activeArtifact.content.trim();
+  let rawContent = editableContent.trim();
   const htmlMatch = rawContent.match(/```(?:html|jsx|tsx)?\s*([\s\S]*?)```/);
   if (htmlMatch) {
     rawContent = htmlMatch[1];
@@ -2078,6 +2140,27 @@ const LiveArtifactModal: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const handleSaveArtifact = () => {
+    const store = useStudioStore.getState();
+    const updatedNodes = store.flowNodes.map((node) => {
+      const data: any = node.data || {};
+      const nodeName = String(data.label || data.name || '');
+      const isArtifact = node.type === 'artifact' || data.kind === 'artifact';
+      if (!isArtifact || nodeName !== activeArtifact.name) return node;
+      return {
+        ...node,
+        data: {
+          ...data,
+          content: editableContent,
+          description: editableContent,
+        },
+      };
+    });
+    store.setFlow(updatedNodes, store.flowEdges);
+    setActiveArtifact({ ...activeArtifact, content: editableContent });
+    setViewMode('preview');
+  };
+
   return (
     <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex flex-col p-4 md:p-6 animate-in fade-in duration-200">
       <div className="flex items-center justify-between bg-[#111827] border border-white/10 rounded-t-xl px-5 py-3 shadow-2xl">
@@ -2104,6 +2187,12 @@ const LiveArtifactModal: React.FC = () => {
           >
             <CodeBlock size={15} weight="bold" /> Código
           </button>
+          <button 
+            onClick={() => setViewMode('edit')} 
+            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${viewMode === 'edit' ? 'bg-cyan-500/20 text-cyan-300' : 'text-gray-400 hover:text-white'}`}
+          >
+            <PaintBrush size={15} weight="bold" /> Editar
+          </button>
         </div>
 
         <div className="flex items-center gap-2">
@@ -2112,6 +2201,9 @@ const LiveArtifactModal: React.FC = () => {
           </button>
           <button onClick={handleDownload} title="Descargar HTML" className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-semibold border border-white/5 flex items-center gap-1.5 transition-colors cursor-pointer">
             <DownloadSimple size={14} /> Descargar
+          </button>
+          <button onClick={handleSaveArtifact} title="Guardar cambios en el lienzo" className="px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-xs font-semibold border border-cyan-500/20 flex items-center gap-1.5 transition-colors cursor-pointer">
+            <FloppyDisk size={14} /> Guardar
           </button>
           <button onClick={() => setActiveArtifact(null)} title="Cerrar vista previa" className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-colors ml-2 cursor-pointer">
             <X size={18} weight="bold" />
@@ -2127,10 +2219,17 @@ const LiveArtifactModal: React.FC = () => {
             sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
             className="w-full h-full border-0 bg-[#0b0f19]"
           />
-        ) : (
+        ) : viewMode === 'code' ? (
           <pre className="w-full h-full p-6 overflow-auto text-xs font-mono text-gray-300 bg-[#070a12] select-all leading-relaxed">
             {rawContent}
           </pre>
+        ) : (
+          <textarea
+            value={editableContent}
+            onChange={(e) => setEditableContent(e.target.value)}
+            className="w-full h-full p-6 text-xs font-mono text-gray-200 bg-[#070a12] outline-none resize-none leading-relaxed"
+            spellCheck={false}
+          />
         )}
       </div>
     </div>

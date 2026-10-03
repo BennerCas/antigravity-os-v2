@@ -1,3 +1,4 @@
+import { DEFAULT_LOCAL_MODEL } from './modelDefaults';
 /**
  * Gestor global y reactivo de tareas de análisis de Lógica IA.
  * Permite ejecutar llamadas streaming a Ollama en segundo plano
@@ -109,7 +110,7 @@ class LogicTaskManager {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'hermes3:8b',
+          model: DEFAULT_LOCAL_MODEL,
           prompt,
           stream: true
         })
