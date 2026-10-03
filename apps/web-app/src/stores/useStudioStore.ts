@@ -554,8 +554,8 @@ ${edges.map((e, i) => `- **Paso ${i+1}:** \`${e.source}\` ➔ \`${e.target}\`${e
     // LEGACY FALLBACK (strip thinking blocks so internal reasoning is never parsed as nodes)
     let textWithoutThinking = text
       .replace(/<thinking>[\s\S]*?(?:<\/thinking>|$)/gi, '')
-      .replace(/---\s*\n\s*\*\*🧠\s*Proceso Cognitivo:\*\*[\s\S]*?(?:---\n|$)/gi, '')
-      .replace(/🧠\s*Proceso Cognitivo:[\s\S]*?(?:---\n|```|<topology>|$)/gi, '')
+      .replace(/---\s*\n\s*\*\*🧠[\s\S]*?(?:---\n|$)/gi, '')
+      .replace(/(?:🧠|\*\*🧠)?\s*Proceso Cognitivo:[\s\S]*?(?=\n#{1,4}\s|\n<topology>|\n<artifact|\n```|$)/gi, '')
       .trim();
     const lines = textWithoutThinking.split('\n');
     const cards: AgentCard[] = [];
@@ -576,8 +576,9 @@ ${edges.map((e, i) => `- **Paso ${i+1}:** \`${e.source}\` ➔ \`${e.target}\`${e
     else if (bm) name = bm[1].replace(/\*\*/g,'').trim();
     else if (nm) name = nm[1].replace(/\*\*/g,'').trim();
 
-    const isIgnoredThinking = /^(nota|note|resumen|summary|conclusi|intro|thinking|proceso|analyze|intent|decision|assessment|constraint|style|persona|role|context|prompt|topology|artifact|swarm)/i.test(name) ||
-                              name.includes('<thinking>') || name.includes('🧠') || name.includes('Proceso Cognitivo');
+    const isIgnoredThinking = /^(nota|note|resumen|summary|conclusi|intro|thinking|proceso|analyze|intent|decision|assessment|constraint|style|persona|role|context|prompt|topology|artifact|swarm|_)/i.test(name) ||
+                              name.includes('<thinking>') || name.includes('🧠') || name.includes('Proceso Cognitivo') ||
+                              /user intent|cognitive process/i.test(name);
 
     if (name.length >= 3 && name.length <= 60 && !isIgnoredThinking) {
       const ctx  = lines.slice(i+1, i+4).join(' ').replace(/[#*`]/g,'').trim();
@@ -611,13 +612,22 @@ ${edges.map((e, i) => `- **Paso ${i+1}:** \`${e.source}\` ➔ \`${e.target}\`${e
     }
   }
 
-  if (nodes.length === 0 && text.length > 30) {
-    const summary = text.replace(/[#*`]/g,'').trim().slice(0,70);
-    nodes.push({
-      id: 'summary_0', type: 'agent',
-      position: { x: 180, y: 140 },
-      data: { label: summary+'…', kind:'agent', description:'', tools:[], inputPort:'', outputPort:'output', cost:'', status:'', fullDescription: text.slice(0,400), allTools:[] },
+  if (nodes.length === 0 && textWithoutThinking.length > 30) {
+    const candidateLines = textWithoutThinking.split('\n').map(l => l.trim()).filter(l => l.length >= 3);
+    const validLine = candidateLines.find(l => {
+      const isIgnored = /^(nota|note|resumen|summary|conclusi|intro|thinking|proceso|analyze|intent|decision|assessment|constraint|style|persona|role|context|prompt|topology|artifact|swarm|<|_)/i.test(l) ||
+                        l.includes('🧠') || l.includes('Proceso Cognitivo') || /user intent/i.test(l);
+      return !isIgnored;
     });
+
+    if (validLine) {
+      const summary = validLine.replace(/[#*`]/g,'').trim().slice(0,60);
+      nodes.push({
+        id: 'summary_0', type: 'agent',
+        position: { x: 180, y: 140 },
+        data: { label: summary, kind:'agent', description:'', tools:[], inputPort:'', outputPort:'output', cost:'', status:'', fullDescription: textWithoutThinking.slice(0,400), allTools:[] },
+      });
+    }
   }
 
   return { nodes, edges, cards, md: text };
