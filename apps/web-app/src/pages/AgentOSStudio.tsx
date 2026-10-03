@@ -517,10 +517,28 @@ const FlowArchitect: React.FC = () => {
 
             const { nodes, edges, cards, md } = parseAIResponseToFlow(rawReply);
             
-            // Actualizar el mensaje existente en vez de duplicar
-            if (rawReply.trim()) {
-              useStudioStore.getState().updateLastChatMessage(rawReply.replace(/<thinking>[\s\S]*?(?:<\/thinking>|$)/gi, '').trim() || md || 'Procesamiento completado.');
+            // Limpieza conversacional para el chat:
+            // Los bloques de arquitectura masivos se canalizan al Blueprint y al Canvas.
+            let conversationalChat = rawReply
+              .replace(/<thinking>[\s\S]*?(?:<\/thinking>|$)/gi, '')
+              .replace(/<(?:topology|json)>[\s\S]*?(?:<\/(?:topology|json)>|$)/gi, '')
+              .replace(/<artifact\s+name="[^"]+">[\s\S]*?(?:<\/artifact>|$)/gi, '')
+              .replace(/```(?:json)?\s*([{\[][\s\S]*?[}\]])\s*```/gi, '')
+              .replace(/\[(?:EJECUTAR_SWARM|TRIGGER_DYNAMIC_SWARM|TRIGGER_HIVE|EJECUTAR_HIVE)\]/g, '')
+              .trim();
+
+            if (nodes.length > 0) {
+              const artNode = nodes.find(n => (n.data as any)?.kind === 'artifact' || n.type === 'artifact');
+              const summaryBadge = `\n\n---\n🎯 **Topología:** ${nodes.length} módulos y ${edges.length} conexiones sincronizados en el **InfinityBoard**.\n🏛️ **Blueprint Técnico:** Especificación completa y contratos archivados en la pestaña **Blueprint**.\n${artNode ? `⚡ **Artefacto Activo:** \`${(artNode.data as any)?.label || 'Componente'}\` listo en el lienzo (haz clic en él para ver el Render Vivo o editarlo).\n` : ''}`;
+              
+              if (!conversationalChat || conversationalChat.length < 20) {
+                conversationalChat = `He diseñado y validado la arquitectura solicitada.${summaryBadge}`;
+              } else {
+                conversationalChat += summaryBadge;
+              }
             }
+            
+            useStudioStore.getState().updateLastChatMessage(conversationalChat || 'Procesamiento completado.');
             
             setIsTyping(false);
             isHandlingSendRef.current = false;

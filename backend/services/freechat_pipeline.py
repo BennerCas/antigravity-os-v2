@@ -302,8 +302,8 @@ class FreechatPipeline:
 
                 orchestrator = SwarmOrchestrator(agents=tactical_team)
                 yield "\n\n```countdown\n120\n```\n\n**Calculando debate del Enjambre en GPU...**\n\n"
-                final_swarm = await orchestrator.execute_swarm_async(last_user_prompt)
-                yield "\n\n" + final_swarm + "\n\n"
+                async for swarm_event in orchestrator.execute_swarm_stream(last_user_prompt):
+                    yield swarm_event
 
             elif has_hive_trigger:
                 hive_data = [{"name": "Frontend Swarm", "objective": "UI/UX"}, {"name": "Backend Swarm", "objective": "API"}]

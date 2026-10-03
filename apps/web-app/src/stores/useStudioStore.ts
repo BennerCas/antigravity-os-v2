@@ -356,24 +356,42 @@ function extractTools(desc: string): string[] {
     const edges: Edge[] = [];
     
     if (jsonNodes.length > 0) {
+        // Asignación de columnas por rol funcional para un flujo de izquierda a derecha impecable
+        const kindCols: Record<string, number> = {
+            trigger: 0,
+            router: 1,
+            agent: 2,
+            tool: 3,
+            sink: 4,
+            artifact: 5
+        };
+        const colCounters: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        
         jsonNodes.forEach((n, idx) => {
-            const col = idx % 3, row = Math.floor(idx / 3);
-            const kind = (n.data && n.data.kind) || n.kind || n.type || 'agent';
+            const kind = String((n.data && n.data.kind) || n.kind || n.type || 'agent').toLowerCase();
             const label = (n.data && n.data.label) || n.label || n.name || `Nodo ${idx}`;
             const description = (n.data && n.data.description) || n.description || '';
+            const col = kindCols[kind] !== undefined ? kindCols[kind] : (idx % 4);
+            const row = colCounters[col] || 0;
+            colCounters[col] = (colCounters[col] || 0) + 1;
+
+            const posX = 60 + col * 320;
+            const posY = 80 + row * 160;
+
             nodes.push({
                 id: n.id || `node_${idx}`,
                 type: kind,
-                position: n.position || { x: 60 + col * 270, y: 60 + row * 190 },
+                position: n.position || { x: posX, y: posY },
                 data: {
                     label,
                     kind,
                     description,
+                    content: n.content || (n.data && n.data.content) || description,
                     tools: n.tools || (n.data && n.data.tools) || [],
                     systemPrompt: n.system_prompt || '',
                     testQueries: n.test_queries || [],
-                    inputPort: n.inputPort || (idx > 0 ? 'input' : ''),
-                    outputPort: n.outputPort || 'output',
+                    inputPort: n.inputPort || (col > 0 ? 'input' : ''),
+                    outputPort: n.outputPort || (col < 5 ? 'output' : ''),
                     cost: n.cost || '',
                     status: n.status || '',
                     fullDescription: description,
@@ -382,20 +400,90 @@ function extractTools(desc: string): string[] {
             });
         });
         
+        const nodeIds = new Set(nodes.map(n => n.id));
+
         jsonEdges.forEach(e => {
             const src = e.source || e.from || '';
             const tgt = e.target || e.to || '';
-            if (src && tgt) {
+            if (src && tgt && nodeIds.has(src) && nodeIds.has(tgt)) {
                 edges.push({
                     id: e.id || `e_${src}-${tgt}`,
                     source: src,
                     target: tgt,
                     label: e.label || '',
                     animated: true,
-                    style: { stroke: '#94a3b8', strokeWidth: 2 }
+                    style: { stroke: '#38bdf8', strokeWidth: 2 }
                 });
             }
         });
+
+        // Si no se proveyeron edges o están incompletos, forjar puentes funcionales entre etapas
+        if (edges.length === 0 && nodes.length > 1) {
+            const triggers = nodes.filter(n => (n.data as any).kind === 'trigger');
+            const routers = nodes.filter(n => (n.data as any).kind === 'router');
+            const agents = nodes.filter(n => (n.data as any).kind === 'agent');
+            const tools = nodes.filter(n => (n.data as any).kind === 'tool');
+            const sinks = nodes.filter(n => (n.data as any).kind === 'sink');
+            const artifacts = nodes.filter(n => (n.data as any).kind === 'artifact');
+
+            // 1. Triggers -> Routers
+            triggers.forEach(tr => {
+                routers.forEach(rt => {
+                    edges.push({ id: `e_${tr.id}-${rt.id}`, source: tr.id, target: rt.id, label: 'Enrutar Requerimiento', animated: true, style: { stroke: '#10b981', strokeWidth: 2 } });
+                });
+            });
+
+            // 2. Routers -> Agents
+            routers.forEach(rt => {
+                agents.forEach(ag => {
+                    edges.push({ id: `e_${rt.id}-${ag.id}`, source: rt.id, target: ag.id, label: 'Delegar Tarea', animated: true, style: { stroke: '#a855f7', strokeWidth: 2 } });
+                });
+            });
+
+            // Si no hay routers, Triggers -> Agents
+            if (routers.length === 0 && triggers.length > 0) {
+                triggers.forEach(tr => {
+                    agents.forEach(ag => {
+                        edges.push({ id: `e_${tr.id}-${ag.id}`, source: tr.id, target: ag.id, label: 'Iniciar Tarea', animated: true, style: { stroke: '#3b82f6', strokeWidth: 2 } });
+                    });
+                });
+            }
+
+            // 3. Agents -> Tools o Sinks
+            agents.forEach(ag => {
+                if (tools.length > 0) {
+                    tools.forEach(tl => {
+                        edges.push({ id: `e_${ag.id}-${tl.id}`, source: ag.id, target: tl.id, label: 'Consultar Recurso', animated: true, style: { stroke: '#f59e0b', strokeWidth: 2 } });
+                    });
+                }
+                if (sinks.length > 0) {
+                    sinks.forEach(sk => {
+                        edges.push({ id: `e_${ag.id}-${sk.id}`, source: ag.id, target: sk.id, label: 'Entregar Resultado', animated: true, style: { stroke: '#38bdf8', strokeWidth: 2 } });
+                    });
+                }
+            });
+
+            // 4. Sinks -> Artifacts
+            sinks.forEach(sk => {
+                artifacts.forEach(art => {
+                    edges.push({ id: `e_${sk.id}-${art.id}`, source: sk.id, target: art.id, label: 'Renderizar Artefacto', animated: true, style: { stroke: '#eab308', strokeWidth: 2 } });
+                });
+            });
+
+            // Si aún no hay edges (ej. lista lineal), conectar secuencialmente
+            if (edges.length === 0) {
+                for (let i = 0; i < nodes.length - 1; i++) {
+                    edges.push({
+                        id: `auto_e_${nodes[i].id}-${nodes[i+1].id}`,
+                        source: nodes[i].id,
+                        target: nodes[i+1].id,
+                        label: 'Flujo de Ejecución',
+                        animated: true,
+                        style: { stroke: '#38bdf8', strokeWidth: 2 }
+                    });
+                }
+            }
+        }
         
         const cards: AgentCard[] = [];
         nodes.forEach(n => {
