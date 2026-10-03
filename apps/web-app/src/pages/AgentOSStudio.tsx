@@ -8,7 +8,7 @@ import { SwarmOrchestrationPanel } from '../components/studio/SwarmOrchestration
 import { useStudioStore, TabId, parseAIResponseToFlow, detectKind } from '../stores/useStudioStore';
 import { useHistoryStore } from '../stores/useHistoryStore';
 import { API_URL, WS_STUDIO_ACTIVITY_URL } from '../lib/api';
-import { Gear, Archive, Star, MagnifyingGlass, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock, Stop, Microphone, Database, Globe, TerminalWindow, FileText, CodeBlock, Scan, AppWindow, File, MaskHappy, Chats, ArrowUUpLeft, ArrowUUpRight, FloppyDisk } from '@phosphor-icons/react';
+import { Gear, Archive, Star, MagnifyingGlass, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock, Stop, Microphone, Database, Globe, TerminalWindow, FileText, CodeBlock, Scan, AppWindow, File, MaskHappy, Chats, ArrowUUpLeft, ArrowUUpRight, FloppyDisk, DownloadSimple, Eye } from '@phosphor-icons/react';
 
 
 import remarkGfm from 'remark-gfm';
@@ -186,10 +186,25 @@ const FreeChatCapabilitiesGrid = () => {
         </div>
       </div>
 
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
-        <PaintBrush size={32} className="text-gray-400 shrink-0"/>
+      <div 
+        onClick={() => {
+          const { flowNodes, setActiveArtifact, activeArtifact } = useStudioStore.getState();
+          if (activeArtifact) return; // already active
+          const artNode = flowNodes.find(n => n.type === 'artifact' || (n.data as any)?.kind === 'artifact');
+          if (artNode) {
+            setActiveArtifact({
+              name: String((artNode.data as any)?.label || (artNode.data as any)?.name || 'Dashboard'),
+              content: String((artNode.data as any)?.content || (artNode.data as any)?.description || '')
+            });
+          } else {
+            alert('Aún no se ha generado ningún artefacto en el lienzo. Pídele al Enjambre que cree un Dashboard o componente.');
+          }
+        }} 
+        className="bg-black/40 border border-white/5 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-pointer hover:border-amber-500/50 transition-colors group"
+      >
+        <PaintBrush size={32} className="text-gray-400 group-hover:text-amber-400 shrink-0"/>
         <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">UI</h4>
+          <h4 className="font-bold text-[13px] text-gray-300 group-hover:text-amber-400 leading-tight">UI</h4>
           <p className="text-[11px] text-gray-500 leading-tight">Render vivo</p>
         </div>
       </div>
@@ -1982,6 +1997,114 @@ const CountdownTimer = ({ initialSeconds }: { initialSeconds: number }) => {
 };
 
 
+const LiveArtifactModal: React.FC = () => {
+  const { activeArtifact, setActiveArtifact } = useStudioStore();
+  const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
+  const [copied, setCopied] = useState(false);
+
+  if (!activeArtifact) return null;
+
+  let rawContent = activeArtifact.content.trim();
+  const htmlMatch = rawContent.match(/```(?:html|jsx|tsx)?\s*([\s\S]*?)```/);
+  if (htmlMatch) {
+    rawContent = htmlMatch[1];
+  }
+
+  let finalHtml = rawContent;
+  if (!rawContent.includes('<html') && !rawContent.includes('<!DOCTYPE')) {
+    finalHtml = `<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${activeArtifact.name}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { background-color: #0b0f19; color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body class="p-6">
+  ${rawContent}
+</body>
+</html>`;
+  }
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(rawContent);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownload = () => {
+    const blob = new Blob([finalHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${activeArtifact.name.replace(/\s+/g, '_')}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex flex-col p-4 md:p-6 animate-in fade-in duration-200">
+      <div className="flex items-center justify-between bg-[#111827] border border-white/10 rounded-t-xl px-5 py-3 shadow-2xl">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-amber-500/10 rounded-lg text-amber-400">
+            <AppWindow size={22} weight="duotone" />
+          </div>
+          <div>
+            <h3 className="font-bold text-white text-base tracking-tight">{activeArtifact.name}</h3>
+            <span className="text-[10px] text-amber-400/90 font-mono tracking-wider uppercase">Artefacto Vivo / Dashboard Interactivo</span>
+          </div>
+        </div>
+
+        <div className="flex bg-black/50 border border-white/10 rounded-lg p-1">
+          <button 
+            onClick={() => setViewMode('preview')} 
+            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${viewMode === 'preview' ? 'bg-amber-500 text-black shadow-lg font-black' : 'text-gray-400 hover:text-white'}`}
+          >
+            <Eye size={15} weight="bold" /> Render Vivo
+          </button>
+          <button 
+            onClick={() => setViewMode('code')} 
+            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${viewMode === 'code' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}
+          >
+            <CodeBlock size={15} weight="bold" /> Código
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button onClick={handleCopy} title="Copiar código" className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-semibold border border-white/5 flex items-center gap-1.5 transition-colors cursor-pointer">
+            {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />} {copied ? 'Copiado' : 'Copiar'}
+          </button>
+          <button onClick={handleDownload} title="Descargar HTML" className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-semibold border border-white/5 flex items-center gap-1.5 transition-colors cursor-pointer">
+            <DownloadSimple size={14} /> Descargar
+          </button>
+          <button onClick={() => setActiveArtifact(null)} title="Cerrar vista previa" className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-colors ml-2 cursor-pointer">
+            <X size={18} weight="bold" />
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 bg-[#0b0f19] border-x border-b border-white/10 rounded-b-xl overflow-hidden relative shadow-2xl">
+        {viewMode === 'preview' ? (
+          <iframe 
+            srcDoc={finalHtml} 
+            title={activeArtifact.name}
+            sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
+            className="w-full h-full border-0 bg-[#0b0f19]"
+          />
+        ) : (
+          <pre className="w-full h-full p-6 overflow-auto text-xs font-mono text-gray-300 bg-[#070a12] select-all leading-relaxed">
+            {rawContent}
+          </pre>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function AgentOSStudio() {
   const { isSynthesizing, setPipelineProgress } = useStudioStore();
 
@@ -2046,6 +2169,9 @@ export default function AgentOSStudio() {
       <div style={{ width: '70%', height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0, position: 'relative', padding: '0' }}>
         <SwarmOrchestrationPanel />
       </div>
+
+      {/* Modal / Ventana de Render Vivo para Artefactos y Dashboards */}
+      <LiveArtifactModal />
     </div>
   );
 }

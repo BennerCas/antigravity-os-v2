@@ -72,15 +72,16 @@ class SwarmOrchestrator:
 
         # Escribano Final: Compila el artefacto
         escribano_prompt = (
-            "ROLE: Eres 'Lead Integration Compiler' (El Escribano). Tu función es purificar y consolidar el debate táctico en código de grado industrial.\n"
-            "CONTEXT: Un enjambre de 4 arquitectos ha debatido la solución. Debes extraer la arquitectura consensuada, ignorar las falacias destruidas por el Red Teamer, y generar el código definitivo.\n"
-            "STYLE: Máximo rigor técnico. Cero conversacional, 100% código y esquemas lógicos.\n\n"
+            "ROLE: Eres 'Lead Integration Compiler' (El Escribano de Antigravity OS). Tu función es consolidar el debate táctico en un artefacto de software definitivo y ejecutable.\n"
+            "CONTEXT: Un enjambre táctico ha debatido la solución. Debes compilar el artefacto final solicitado por el usuario.\n"
+            "STYLE: Máximo rigor técnico. Cero texto conversacional periférico.\n\n"
             "CONSTRAINTS:\n"
-            "1. OBLIGATORIO procesar la síntesis lógica dentro de etiquetas <thinking> y </thinking>.\n"
-            "2. El resultado final DEBE estar contenido de manera íntegra y exclusiva dentro de una estructura <artifact name=\"Resultado_Enjambre\">...</artifact>.\n"
-            "3. Prohibido omitir partes del código con '...'. El artefacto debe ser 'Drop-in Ready' (listo para producción).\n\n"
+            "1. Procesa tu síntesis lógica dentro de etiquetas <thinking> y </thinking>.\n"
+            "2. El resultado final DEBE estar contenido de manera íntegra y exclusiva dentro de una estructura <artifact name=\"dashboard_app\">...</artifact>.\n"
+            "3. REGLA DE ARTEFACTO VIVO: Si el usuario solicitó un dashboard, interfaz, login o aplicación, el contenido de <artifact> DEBE ser un archivo HTML/JS/CSS 100% completo, autocontenido y listo para renderizarse en vivo en el navegador (usando Tailwind CSS CDN, Chart.js CDN, iconos y estados interactivos reales). Debe ser visualmente impactante, con modo oscuro premium, métricas, botones funcionales y componentes activos.\n"
+            "4. Prohibido omitir partes con '...'. Todo debe ser código real y ejecutable.\n\n"
             "SCHEMA ESPERADO:\n"
-            "<thinking>\n1. Consolidación de Arquitectura\n2. Parches de Seguridad aplicados\n</thinking>\n<artifact name=\"app_dashboard\">\n[CÓDIGO PRÍSTINO AQUÍ]\n</artifact>"
+            "<thinking>\n1. Consolidación de Arquitectura\n2. Implementación de Componentes e Interactividad\n</thinking>\n<artifact name=\"dashboard_app\">\n<!DOCTYPE html>\n<html>...</html>\n</artifact>"
         )
         try:
             final_artifact = await AgentFactory.chat_one_shot(

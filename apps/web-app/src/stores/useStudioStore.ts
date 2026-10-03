@@ -178,6 +178,10 @@ interface StudioState {
   focusedAgent: AgentCard | null;
   setFocusedAgent: (agent: AgentCard | null) => void;
 
+  // Active Live Artifact (Render Vivo Modal / Drawer)
+  activeArtifact: { name: string; content: string } | null;
+  setActiveArtifact: (art: { name: string; content: string } | null) => void;
+
   // Global TTS Player
   audioText: string;
   setAudioText: (text: string) => void;
@@ -1035,6 +1039,9 @@ export const useStudioStore = create<StudioState>()(
 
       focusedAgent: null,
       setFocusedAgent: (focusedAgent) => set({ focusedAgent }),
+
+      activeArtifact: null,
+      setActiveArtifact: (activeArtifact) => set({ activeArtifact }),
 
       audioText: '',
       setAudioText: (audioText) => set({ audioText }),
