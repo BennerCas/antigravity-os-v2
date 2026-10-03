@@ -455,10 +455,16 @@ const FlowArchitect: React.FC = () => {
                     rawReply += chunk;
                     
                     if (!hasParsedTopology && (rawReply.includes('</topology>') || (rawReply.includes('```') && (rawReply.includes('"nodes"') || rawReply.includes('"topology"'))))) {
-                        const { nodes, edges } = parseAIResponseToFlow(rawReply);
+                        const { nodes, edges, cards, md } = parseAIResponseToFlow(rawReply);
                         if (nodes.length > 0) {
                             hasParsedTopology = true;
                             useStudioStore.getState().setFlow(nodes, edges);
+                            if (cards && cards.length > 0) {
+                                useStudioStore.getState().setAgentCards(cards);
+                            }
+                            if (md) {
+                                useStudioStore.getState().setBlueprintMd(md);
+                            }
                             useStudioStore.getState().setZone2ActiveTab('infinityboard');
                         }
                     }
@@ -494,7 +500,7 @@ const FlowArchitect: React.FC = () => {
               rawReply = rawReply.replace(swarmMatch[0], '');
             }
 
-            const { nodes, edges, md } = parseAIResponseToFlow(rawReply);
+            const { nodes, edges, cards, md } = parseAIResponseToFlow(rawReply);
             if (md.trim()) {
               addChatMessage({ role: 'agent', content: md, model: selectedModel });
             }
@@ -503,6 +509,12 @@ const FlowArchitect: React.FC = () => {
             
             if (nodes.length > 0) {
                useStudioStore.getState().setFlow(nodes, edges);
+               if (cards && cards.length > 0) {
+                  useStudioStore.getState().setAgentCards(cards);
+               }
+               if (md) {
+                  useStudioStore.getState().setBlueprintMd(md);
+               }
                useStudioStore.getState().setZone2ActiveTab('infinityboard');
             }
 
@@ -1914,6 +1926,22 @@ const ArchitectureBlueprint: React.FC = () => {
               className="flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs font-bold bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10"
             >
               <ArrowsClockwise size={14} /> Restaurar Flujo
+            </button>
+          </div>
+        )}
+        {(activeTab === 'synthesis' || activeTab === 'blueprint') && (
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => { 
+                useStudioStore.getState().saveFlowState(); 
+                useStudioStore.getState().setFlow([], []); 
+                useStudioStore.getState().setAgentCards([]);
+                useStudioStore.getState().setBlueprintMd('');
+              }} 
+              title="Limpiar Board, Agentes y Blueprint" 
+              className="flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs font-bold bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 border border-red-500/20 cursor-pointer shadow-lg"
+            >
+              <Trash size={15} weight="duotone" /> Limpiar Board
             </button>
           </div>
         )}
