@@ -1,3 +1,7 @@
+import sys
+from unittest.mock import MagicMock
+sys.modules['google.antigravity'] = MagicMock()
+
 from fastapi.testclient import TestClient
 from backend.main import app
 
