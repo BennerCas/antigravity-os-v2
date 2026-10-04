@@ -1,7 +1,8 @@
 from __future__ import annotations
-from typing import Dict, Any, List, Optional, Literal, Union
-from pydantic import BaseModel, Field
 
+from typing import Any, Literal
+
+from pydantic import BaseModel, Field
 
 # ─── Mastery & Skill Types ───────────────────────────────────────────────────
 
@@ -50,8 +51,8 @@ class Skill(BaseModel):
     category: str
     description: str
     track: str
-    prerequisites: List[str] = Field(default_factory=list)
-    unlocked_by: List[str] = Field(default_factory=list)
+    prerequisites: list[str] = Field(default_factory=list)
+    unlocked_by: list[str] = Field(default_factory=list)
 
 
 class SkillMasteryRecord(BaseModel):
@@ -70,7 +71,7 @@ CertificationLevel = Literal["foundation", "builder", "operator", "architect", "
 
 class LearningPreferences(BaseModel):
     mode: Literal["adaptive", "guided", "exploratory", "rigorous"] = "adaptive"
-    target_role: Optional[str] = "ai_systems_architect"
+    target_role: str | None = "ai_systems_architect"
     preferred_language: str = "es"
     accessibility_mode: bool = False
     reduced_motion: bool = False
@@ -104,8 +105,10 @@ class HintItem(BaseModel):
     level: int  # 1 to 5
     title: str
     text: str
-    clue_type: Literal["question", "concept", "specific", "partial_solution", "explanation_patch"]
-    patch_preview: Optional[Dict[str, Any]] = None
+    clue_type: Literal[
+        "question", "concept", "specific", "partial_solution", "explanation_patch"
+    ]
+    patch_preview: dict[str, Any] | None = None
 
 
 class RubricCriterion(BaseModel):
@@ -123,15 +126,15 @@ class ValidationFinding(BaseModel):
     category: str
     entity_ref: str
     message: str
-    suggested_action: Optional[str] = None
+    suggested_action: str | None = None
 
 
 class MissionStep(BaseModel):
     step_number: int
     title: str
     instructions: str
-    validation_code: Optional[str] = None
-    expected_artifact: Optional[str] = None
+    validation_code: str | None = None
+    expected_artifact: str | None = None
 
 
 class TransferChallenge(BaseModel):
@@ -139,8 +142,8 @@ class TransferChallenge(BaseModel):
     title: str
     scenario_description: str
     variation_focus: str
-    starter_delta: Dict[str, Any] = Field(default_factory=dict)
-    success_criteria: List[str] = Field(default_factory=list)
+    starter_delta: dict[str, Any] = Field(default_factory=dict)
+    success_criteria: list[str] = Field(default_factory=list)
 
 
 class MissionDefinition(BaseModel):
@@ -151,18 +154,18 @@ class MissionDefinition(BaseModel):
     title: str
     brief: str
     mode: MissionMode
-    learning_objectives: List[str] = Field(default_factory=list)
-    prerequisites: List[str] = Field(default_factory=list)
-    skills: List[str] = Field(default_factory=list)
+    learning_objectives: list[str] = Field(default_factory=list)
+    prerequisites: list[str] = Field(default_factory=list)
+    skills: list[str] = Field(default_factory=list)
     difficulty: Literal["beginner", "intermediate", "advanced", "expert"] = "beginner"
-    instructions: List[MissionStep] = Field(default_factory=list)
-    starter_flow: Dict[str, Any] = Field(default_factory=dict)
-    starter_architecture_spec: Optional[Dict[str, Any]] = None
-    required_evidence: List[EvidenceType] = Field(default_factory=list)
-    rubric: List[RubricCriterion] = Field(default_factory=list)
-    hints: List[HintItem] = Field(default_factory=list)
-    transfer_challenge: Optional[TransferChallenge] = None
-    unlock_rewards: List[str] = Field(default_factory=list)
+    instructions: list[MissionStep] = Field(default_factory=list)
+    starter_flow: dict[str, Any] = Field(default_factory=dict)
+    starter_architecture_spec: dict[str, Any] | None = None
+    required_evidence: list[EvidenceType] = Field(default_factory=list)
+    rubric: list[RubricCriterion] = Field(default_factory=list)
+    hints: list[HintItem] = Field(default_factory=list)
+    transfer_challenge: TransferChallenge | None = None
+    unlock_rewards: list[str] = Field(default_factory=list)
 
 
 # ─── Mission Session & Runtime Interaction ───────────────────────────────────
@@ -183,8 +186,8 @@ class ReflectionSubmission(BaseModel):
     prompt: str
     response: str
     submitted_at: str
-    ai_score: Optional[float] = None
-    ai_feedback: Optional[str] = None
+    ai_score: float | None = None
+    ai_feedback: str | None = None
 
 
 class MissionSession(BaseModel):
@@ -193,16 +196,17 @@ class MissionSession(BaseModel):
     mission_id: str
     status: SessionStatus = "started"
     current_step: int = 1
-    sandbox_flow: Dict[str, Any] = Field(default_factory=dict)
-    hints_revealed: List[int] = Field(default_factory=list)
-    reflections: List[ReflectionSubmission] = Field(default_factory=list)
-    rubric_results: Dict[str, Any] = Field(default_factory=dict)
-    findings: List[ValidationFinding] = Field(default_factory=list)
+    sandbox_flow: dict[str, Any] = Field(default_factory=dict)
+    hints_revealed: list[int] = Field(default_factory=list)
+    reflections: list[ReflectionSubmission] = Field(default_factory=list)
+    rubric_results: dict[str, Any] = Field(default_factory=dict)
+    findings: list[ValidationFinding] = Field(default_factory=list)
     started_at: str
-    completed_at: Optional[str] = None
+    completed_at: str | None = None
 
 
 # ─── Evidence & Audit Ledger ─────────────────────────────────────────────────
+
 
 class EvidenceRecord(BaseModel):
     id: str
@@ -214,12 +218,13 @@ class EvidenceRecord(BaseModel):
     source: str
     validation_hash: str
     prev_hash: str = "GENESIS_ROOT"
-    payload: Dict[str, Any] = Field(default_factory=dict)
+    payload: dict[str, Any] = Field(default_factory=dict)
     confidence: float = 1.0
     created_at: str
 
 
 # ─── Failure Lab Scenarios ───────────────────────────────────────────────────
+
 
 class FailureScenario(BaseModel):
     id: str
@@ -227,7 +232,7 @@ class FailureScenario(BaseModel):
     category: str
     description: str
     symptom: str
-    flow_patch: Dict[str, Any]
+    flow_patch: dict[str, Any]
     error_log_sample: str
     root_cause_explanation: str
     expected_repair_description: str
@@ -236,17 +241,26 @@ class FailureScenario(BaseModel):
 
 # ─── Architecture Drift ──────────────────────────────────────────────────────
 
+
 class ArchitectureDriftFinding(BaseModel):
     id: str
     severity: Literal["info", "warning", "blocker"]
-    category: Literal["missing_step", "unhandled_route", "contract_mismatch", "security_gap", "missing_hitl", "policy_drift"]
+    category: Literal[
+        "missing_step",
+        "unhandled_route",
+        "contract_mismatch",
+        "security_gap",
+        "missing_hitl",
+        "policy_drift",
+    ]
     architecture_ref: str
-    builder_ref: Optional[str] = None
+    builder_ref: str | None = None
     description: str
     remediation_hint: str
 
 
 # ─── Certification & Portfolio ───────────────────────────────────────────────
+
 
 class CertificationRequirement(BaseModel):
     skill_id: str
@@ -262,16 +276,18 @@ class CertificationRecord(BaseModel):
     verification_token: str
     evidence_chain_hash: str
     issued_at: str
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class PortfolioItem(BaseModel):
     id: str
     user_id: str
-    item_type: Literal["workflow", "blueprint", "runtime_trace", "certification", "capstone"]
+    item_type: Literal[
+        "workflow", "blueprint", "runtime_trace", "certification", "capstone"
+    ]
     title: str
     description: str
     artifact_ref: str
-    evidence_refs: List[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(default_factory=list)
     published_at: str
-    preview_data: Dict[str, Any] = Field(default_factory=dict)
+    preview_data: dict[str, Any] = Field(default_factory=dict)

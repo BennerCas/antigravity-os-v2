@@ -1,5 +1,6 @@
-import sys
 import os
+import sys
+
 import pytest
 
 # Ensure backend is in sys.path
@@ -54,7 +55,9 @@ def test_skill_graph_integrity():
         assert skill.category
         # Check prerequisites reference valid skills
         for prereq in skill.prerequisites:
-            assert prereq in skills, f"Prerequisite '{prereq}' of skill '{skill_id}' does not exist"
+            assert (
+                prereq in skills
+            ), f"Prerequisite '{prereq}' of skill '{skill_id}' does not exist"
 
 
 def test_mission_01_spec():

@@ -1,4 +1,5 @@
-from typing import Dict, Any, List, Set, Optional
+from typing import Any
+
 from backend.schemas.academy import ValidationFinding
 
 
@@ -10,13 +11,18 @@ class ValidatorService:
     """
 
     @classmethod
-    def validate_flow(cls, flow: Dict[str, Any], mission_id: Optional[str] = None) -> List[ValidationFinding]:
-        findings: List[ValidationFinding] = []
+    def validate_flow(
+        cls, flow: dict[str, Any], mission_id: str | None = None
+    ) -> list[ValidationFinding]:
+        findings: list[ValidationFinding] = []
         nodes = flow.get("nodes", [])
         edges = flow.get("edges", [])
 
         # Exemption for mission_00 or flows with only presentation nodes
-        if mission_id == "mission_00" or not any(n.get("type") not in ["postIt", "note", "drawingNode", "rulerNode"] for n in nodes):
+        if mission_id == "mission_00" or not any(
+            n.get("type") not in ["postIt", "note", "drawingNode", "rulerNode"]
+            for n in nodes
+        ):
             return findings
 
         # 1. Topology checks
@@ -44,14 +50,22 @@ class ValidatorService:
         return findings
 
     @classmethod
-    def validate_topology(cls, nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> List[ValidationFinding]:
-        findings: List[ValidationFinding] = []
+    def validate_topology(
+        cls, nodes: list[dict[str, Any]], edges: list[dict[str, Any]]
+    ) -> list[ValidationFinding]:
+        findings: list[ValidationFinding] = []
         node_map = {n.get("id"): n for n in nodes if n.get("id")}
 
         # Check start node
         start_nodes = [
-            n for n in nodes 
-            if (n.get("type") in ["start", "action"] and n.get("data", {}).get("role") == "start") or n.get("id", "").startswith("start") or n.get("id", "").startswith("node_start")
+            n
+            for n in nodes
+            if (
+                n.get("type") in ["start", "action"]
+                and n.get("data", {}).get("role") == "start"
+            )
+            or n.get("id", "").startswith("start")
+            or n.get("id", "").startswith("node_start")
         ]
         if not start_nodes:
             findings.append(
@@ -61,14 +75,20 @@ class ValidatorService:
                     category="topology",
                     entity_ref="flow",
                     message="El flujo no tiene nodo de inicio (Start).",
-                    suggested_action="Añade un nodo Start con el esquema de entrada inicial."
+                    suggested_action="Añade un nodo Start con el esquema de entrada inicial.",
                 )
             )
 
         # Check end node
         end_nodes = [
-            n for n in nodes 
-            if (n.get("type") in ["end", "action"] and n.get("data", {}).get("role") in ["end", "error_sink"]) or n.get("id", "").startswith("end") or n.get("id", "").startswith("node_end")
+            n
+            for n in nodes
+            if (
+                n.get("type") in ["end", "action"]
+                and n.get("data", {}).get("role") in ["end", "error_sink"]
+            )
+            or n.get("id", "").startswith("end")
+            or n.get("id", "").startswith("node_end")
         ]
         if not end_nodes and len(nodes) > 1:
             findings.append(
@@ -78,7 +98,7 @@ class ValidatorService:
                     category="topology",
                     entity_ref="flow",
                     message="El flujo no tiene nodo terminal (End o ErrorSink).",
-                    suggested_action="Añade un nodo End para cerrar las rutas de ejecución."
+                    suggested_action="Añade un nodo End para cerrar las rutas de ejecución.",
                 )
             )
 
@@ -93,7 +113,7 @@ class ValidatorService:
                         severity="blocking",
                         category="topology",
                         entity_ref=f"edge.{edge.get('id')}",
-                        message=f"El edge apunta desde un nodo inexistente: {src}"
+                        message=f"El edge apunta desde un nodo inexistente: {src}",
                     )
                 )
             if tgt not in node_map:
@@ -103,13 +123,13 @@ class ValidatorService:
                         severity="blocking",
                         category="topology",
                         entity_ref=f"edge.{edge.get('id')}",
-                        message=f"El edge apunta hacia un nodo inexistente: {tgt}"
+                        message=f"El edge apunta hacia un nodo inexistente: {tgt}",
                     )
                 )
 
         # Reachability from start
         if start_nodes:
-            adjacency: Dict[str, List[str]] = {nid: [] for nid in node_map}
+            adjacency: dict[str, list[str]] = {nid: [] for nid in node_map}
             for e in edges:
                 s = e.get("source") or e.get("from")
                 t = e.get("target") or e.get("to")
@@ -117,6 +137,7 @@ class ValidatorService:
                     adjacency[s].append(t)
 
             visited = set()
+
             def dfs(nid: str):
                 if nid not in visited and nid in node_map:
                     visited.add(nid)
@@ -129,7 +150,12 @@ class ValidatorService:
             for n in nodes:
                 nid = n.get("id")
                 ntype = n.get("type")
-                if nid not in visited and ntype not in ["postIt", "note", "drawingNode", "rulerNode"]:
+                if nid not in visited and ntype not in [
+                    "postIt",
+                    "note",
+                    "drawingNode",
+                    "rulerNode",
+                ]:
                     findings.append(
                         ValidationFinding(
                             code="VAL-TOP-005",
@@ -137,15 +163,17 @@ class ValidatorService:
                             category="topology",
                             entity_ref=f"node.{nid}",
                             message=f"El nodo '{n.get('data', {}).get('title', nid)}' es inalcanzable desde el inicio.",
-                            suggested_action="Conéctalo al flujo principal o elimínalo si no es necesario."
+                            suggested_action="Conéctalo al flujo principal o elimínalo si no es necesario.",
                         )
                     )
 
         return findings
 
     @classmethod
-    def validate_contracts(cls, nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> List[ValidationFinding]:
-        findings: List[ValidationFinding] = []
+    def validate_contracts(
+        cls, nodes: list[dict[str, Any]], edges: list[dict[str, Any]]
+    ) -> list[ValidationFinding]:
+        findings: list[ValidationFinding] = []
         node_map = {n.get("id"): n for n in nodes if n.get("id")}
 
         for edge in edges:
@@ -172,14 +200,19 @@ class ValidatorService:
                         category="contracts",
                         entity_ref=f"edge.{edge.get('id')}",
                         message=f"Incompatibilidad de tipos: {src_data.get('title')} entrega 'string' pero {tgt_data.get('title')} requiere 'number'.",
-                        suggested_action="Inserta un nodo Transform (parse_number) entre ambos nodos."
+                        suggested_action="Inserta un nodo Transform (parse_number) entre ambos nodos.",
                     )
                 )
 
             # Check schema mismatch
             out_schema = src_data.get("output_schema")
             in_schema = tgt_data.get("input_schema")
-            if out_schema and in_schema and "string" in str(out_schema) and "number" in str(in_schema):
+            if (
+                out_schema
+                and in_schema
+                and "string" in str(out_schema)
+                and "number" in str(in_schema)
+            ):
                 findings.append(
                     ValidationFinding(
                         code="VAL-CON-002",
@@ -187,16 +220,18 @@ class ValidatorService:
                         category="contracts",
                         entity_ref=f"edge.{edge.get('id')}",
                         message=f"Contrato violado entre {src_data.get('title')} y {tgt_data.get('title')}: tipos de campos incompatibles.",
-                        suggested_action="Alinea los schemas o inserta un transform."
+                        suggested_action="Alinea los schemas o inserta un transform.",
                     )
                 )
 
         return findings
 
     @classmethod
-    def validate_control_flow(cls, nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> List[ValidationFinding]:
-        findings: List[ValidationFinding] = []
-        
+    def validate_control_flow(
+        cls, nodes: list[dict[str, Any]], edges: list[dict[str, Any]]
+    ) -> list[ValidationFinding]:
+        findings: list[ValidationFinding] = []
+
         for node in nodes:
             ntype = node.get("type")
             data = node.get("data", {})
@@ -205,9 +240,20 @@ class ValidatorService:
 
             # Check Decision / Condition nodes
             if ntype == "condition" or role == "decision":
-                out_edges = [e for e in edges if (e.get("source") or e.get("from")) == nid]
-                labels = [str(e.get("label") or e.get("sourceHandle") or e.get("data", {}).get("branch") or e.get("data", {}).get("case") or "").lower() for e in out_edges]
-                
+                out_edges = [
+                    e for e in edges if (e.get("source") or e.get("from")) == nid
+                ]
+                labels = [
+                    str(
+                        e.get("label")
+                        or e.get("sourceHandle")
+                        or e.get("data", {}).get("branch")
+                        or e.get("data", {}).get("case")
+                        or ""
+                    ).lower()
+                    for e in out_edges
+                ]
+
                 has_true = any("true" in l or "si" in l or "yes" in l for l in labels)
                 has_false = any("false" in l or "no" in l for l in labels)
 
@@ -219,17 +265,25 @@ class ValidatorService:
                             category="control_flow",
                             entity_ref=f"node.{nid}",
                             message=f"La decisión '{data.get('title', nid)}' no tiene ambas ramas explícitas (True y False).",
-                            suggested_action="Conecta y etiqueta las dos rutas de salida: True y False."
+                            suggested_action="Conecta y etiqueta las dos rutas de salida: True y False.",
                         )
                     )
 
             # Check Classifier nodes
             if role == "classifier":
-                out_edges = [e for e in edges if (e.get("source") or e.get("from")) == nid]
-                labels = [str(e.get("label") or e.get("sourceHandle") or "").lower() for e in out_edges]
+                out_edges = [
+                    e for e in edges if (e.get("source") or e.get("from")) == nid
+                ]
+                labels = [
+                    str(e.get("label") or e.get("sourceHandle") or "").lower()
+                    for e in out_edges
+                ]
                 threshold = data.get("threshold", 0.0)
-                
-                if threshold > 0 and not any("uncertain" in l or "low_confidence" in l or "fallback" in l for l in labels):
+
+                if threshold > 0 and not any(
+                    "uncertain" in l or "low_confidence" in l or "fallback" in l
+                    for l in labels
+                ):
                     findings.append(
                         ValidationFinding(
                             code="VAL-CTL-002",
@@ -237,15 +291,17 @@ class ValidatorService:
                             category="control_flow",
                             entity_ref=f"node.{nid}",
                             message=f"El clasificador '{data.get('title', nid)}' tiene umbral {threshold} pero carece de ruta 'uncertain' para baja confianza.",
-                            suggested_action="Añade una salida para desviar incertidumbre a revisión humana o fallback."
+                            suggested_action="Añade una salida para desviar incertidumbre a revisión humana o fallback.",
                         )
                     )
 
         return findings
 
     @classmethod
-    def validate_reliability(cls, nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> List[ValidationFinding]:
-        findings: List[ValidationFinding] = []
+    def validate_reliability(
+        cls, nodes: list[dict[str, Any]], edges: list[dict[str, Any]]
+    ) -> list[ValidationFinding]:
+        findings: list[ValidationFinding] = []
 
         for node in nodes:
             data = node.get("data", {})
@@ -254,7 +310,9 @@ class ValidatorService:
             side_effect = data.get("side_effect", False)
 
             if side_effect or role in ["payment", "tool_write", "sms", "email_send"]:
-                idempotency = data.get("idempotency_scope") or data.get("idempotency_key")
+                idempotency = data.get("idempotency_scope") or data.get(
+                    "idempotency_key"
+                )
                 if not idempotency:
                     findings.append(
                         ValidationFinding(
@@ -263,15 +321,17 @@ class ValidatorService:
                             category="reliability",
                             entity_ref=f"node.{nid}",
                             message=f"El nodo con efecto secundario '{data.get('title', nid)}' no tiene definida idempotency_key o idempotency_scope.",
-                            suggested_action="Declara la llave de idempotencia de negocio (ej. order_id) para evitar cobros o envíos duplicados."
+                            suggested_action="Declara la llave de idempotencia de negocio (ej. order_id) para evitar cobros o envíos duplicados.",
                         )
                     )
 
         return findings
 
     @classmethod
-    def validate_human_gates(cls, nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> List[ValidationFinding]:
-        findings: List[ValidationFinding] = []
+    def validate_human_gates(
+        cls, nodes: list[dict[str, Any]], edges: list[dict[str, Any]]
+    ) -> list[ValidationFinding]:
+        findings: list[ValidationFinding] = []
 
         for node in nodes:
             ntype = node.get("type")
@@ -280,11 +340,18 @@ class ValidatorService:
             nid = node.get("id")
 
             if ntype == "human" or role == "human_gate":
-                out_edges = [e for e in edges if (e.get("source") or e.get("from")) == nid]
-                labels = [str(e.get("label") or e.get("sourceHandle") or "").lower() for e in out_edges]
+                out_edges = [
+                    e for e in edges if (e.get("source") or e.get("from")) == nid
+                ]
+                labels = [
+                    str(e.get("label") or e.get("sourceHandle") or "").lower()
+                    for e in out_edges
+                ]
                 timeout_action = data.get("timeout_action")
 
-                if not timeout_action and not any("timeout" in l or "expired" in l for l in labels):
+                if not timeout_action and not any(
+                    "timeout" in l or "expired" in l for l in labels
+                ):
                     findings.append(
                         ValidationFinding(
                             code="VAL-HITL-001",
@@ -292,19 +359,29 @@ class ValidatorService:
                             category="human_in_loop",
                             entity_ref=f"node.{nid}",
                             message=f"El Human Gate '{data.get('title', nid)}' no define política de expiración o ruta timeout.",
-                            suggested_action="Configura expiry_ms y una ruta de contingencia ante supervisor ausente."
+                            suggested_action="Configura expiry_ms y una ruta de contingencia ante supervisor ausente.",
                         )
                     )
 
         return findings
 
     @classmethod
-    def validate_parallelism(cls, nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> List[ValidationFinding]:
-        findings: List[ValidationFinding] = []
+    def validate_parallelism(
+        cls, nodes: list[dict[str, Any]], edges: list[dict[str, Any]]
+    ) -> list[ValidationFinding]:
+        findings: list[ValidationFinding] = []
         node_map = {n.get("id"): n for n in nodes if n.get("id")}
 
-        fork_nodes = [n for n in nodes if n.get("data", {}).get("role") == "fork" or n.get("type") == "fork"]
-        join_nodes = [n for n in nodes if n.get("data", {}).get("role") == "join" or n.get("type") == "join"]
+        fork_nodes = [
+            n
+            for n in nodes
+            if n.get("data", {}).get("role") == "fork" or n.get("type") == "fork"
+        ]
+        join_nodes = [
+            n
+            for n in nodes
+            if n.get("data", {}).get("role") == "join" or n.get("type") == "join"
+        ]
 
         if fork_nodes and not join_nodes:
             findings.append(
@@ -314,19 +391,26 @@ class ValidatorService:
                     category="parallelism",
                     entity_ref="flow",
                     message="Se detectó bifurcación Fork pero no existe ningún nodo Join para consolidar ramas.",
-                    suggested_action="Inserta un nodo Join con Reducer para sincronizar las ramas paralelas."
+                    suggested_action="Inserta un nodo Join con Reducer para sincronizar las ramas paralelas.",
                 )
             )
 
         return findings
 
     @classmethod
-    def validate_expert_capstone(cls, nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> List[ValidationFinding]:
-        findings: List[ValidationFinding] = []
+    def validate_expert_capstone(
+        cls, nodes: list[dict[str, Any]], edges: list[dict[str, Any]]
+    ) -> list[ValidationFinding]:
+        findings: list[ValidationFinding] = []
 
         # Quantitative checks for Mission 18
         # 1. At least 8 agents
-        agents = [n for n in nodes if n.get("data", {}).get("role") == "agent" or n.get("type") in ["action", "agent"]]
+        agents = [
+            n
+            for n in nodes
+            if n.get("data", {}).get("role") == "agent"
+            or n.get("type") in ["action", "agent"]
+        ]
         if len(agents) < 8:
             findings.append(
                 ValidationFinding(
@@ -335,12 +419,16 @@ class ValidatorService:
                     category="capstone_scope",
                     entity_ref="flow.nodes",
                     message=f"El Capstone Expert requiere al menos 8 agentes especializados. Encontrados: {len(agents)}.",
-                    suggested_action="Descompone el problema en más agentes con roles específicos."
+                    suggested_action="Descompone el problema en más agentes con roles específicos.",
                 )
             )
 
         # 2. At least 15 prompts / prompt configurations
-        prompts_count = sum(1 for n in nodes if n.get("data", {}).get("prompt") or n.get("data", {}).get("content"))
+        prompts_count = sum(
+            1
+            for n in nodes
+            if n.get("data", {}).get("prompt") or n.get("data", {}).get("content")
+        )
         if prompts_count < 15:
             findings.append(
                 ValidationFinding(
@@ -349,12 +437,16 @@ class ValidatorService:
                     category="capstone_scope",
                     entity_ref="flow.prompts",
                     message=f"El Capstone Expert requiere al menos 15 prompts versionados. Encontrados: {prompts_count}.",
-                    suggested_action="Configura prompts específicos para extracción, clasificación, síntesis y auditoría."
+                    suggested_action="Configura prompts específicos para extracción, clasificación, síntesis y auditoría.",
                 )
             )
 
         # 3. At least 2 subflows
-        subflows = [n for n in nodes if n.get("type") == "subflow" or n.get("data", {}).get("role") == "subflow"]
+        subflows = [
+            n
+            for n in nodes
+            if n.get("type") == "subflow" or n.get("data", {}).get("role") == "subflow"
+        ]
         if len(subflows) < 2:
             findings.append(
                 ValidationFinding(
@@ -363,13 +455,19 @@ class ValidatorService:
                     category="capstone_scope",
                     entity_ref="flow.subflows",
                     message=f"El Capstone Expert requiere al menos 2 subflows reutilizables. Encontrados: {len(subflows)}.",
-                    suggested_action="Encapsula capacidades repetitivas en subflows modulares."
+                    suggested_action="Encapsula capacidades repetitivas en subflows modulares.",
                 )
             )
 
         # 4. At least 1 Fork / Join
-        has_fork = any(n.get("type") == "fork" or n.get("data", {}).get("role") == "fork" for n in nodes)
-        has_join = any(n.get("type") == "join" or n.get("data", {}).get("role") == "join" for n in nodes)
+        has_fork = any(
+            n.get("type") == "fork" or n.get("data", {}).get("role") == "fork"
+            for n in nodes
+        )
+        has_join = any(
+            n.get("type") == "join" or n.get("data", {}).get("role") == "join"
+            for n in nodes
+        )
         if not (has_fork and has_join):
             findings.append(
                 ValidationFinding(
@@ -378,12 +476,15 @@ class ValidatorService:
                     category="capstone_scope",
                     entity_ref="flow.parallelism",
                     message="El Capstone Expert requiere al menos una estructura de ejecución concurrente (Fork + Join).",
-                    suggested_action="Ejecuta investigaciones de fuentes múltiples en paralelo."
+                    suggested_action="Ejecuta investigaciones de fuentes múltiples en paralelo.",
                 )
             )
 
         # 5. At least 1 Human Gate
-        has_human = any(n.get("type") == "human" or n.get("data", {}).get("role") == "human_gate" for n in nodes)
+        has_human = any(
+            n.get("type") == "human" or n.get("data", {}).get("role") == "human_gate"
+            for n in nodes
+        )
         if not has_human:
             findings.append(
                 ValidationFinding(
@@ -392,7 +493,7 @@ class ValidatorService:
                     category="capstone_scope",
                     entity_ref="flow.hitl",
                     message="El Capstone Expert requiere al menos una compuerta Human-in-the-Loop con política de expiración.",
-                    suggested_action="Añade un HumanGateNode para autorizar acciones sensibles."
+                    suggested_action="Añade un HumanGateNode para autorizar acciones sensibles.",
                 )
             )
 

@@ -1,18 +1,18 @@
 """Router de Flows (Nexus) — persistencia SQLite con migración desde flows.json legacy."""
+
 import json
 import os
-from typing import List, Dict, Any
+from typing import Any
+
+import db
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-import db
+router = APIRouter(prefix="/api/v1/flows", tags=["flows"])
 
-router = APIRouter(
-    prefix="/api/v1/flows",
-    tags=["flows"]
+DATA_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data"
 )
-
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 LEGACY_JSON = os.path.join(DATA_DIR, "flows.json")
 
 
@@ -20,8 +20,8 @@ class Flow(BaseModel):
     id: str
     name: str
     description: str
-    nodes: List[Dict[str, Any]]
-    edges: List[Dict[str, Any]]
+    nodes: list[dict[str, Any]]
+    edges: list[dict[str, Any]]
 
 
 def _migrate_legacy_json() -> None:

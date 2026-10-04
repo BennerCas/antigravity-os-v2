@@ -1,5 +1,6 @@
-import sys
 import os
+import sys
+
 import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -27,7 +28,7 @@ def test_cryptographic_evidence_chain_continuity():
         session_id="sess_0",
         evidence_type="graph",
         source="canvas",
-        payload={"step": "genesis"}
+        payload={"step": "genesis"},
     )
     assert ev0.prev_hash == "GENESIS_ROOT"
 
@@ -39,7 +40,7 @@ def test_cryptographic_evidence_chain_continuity():
         session_id="sess_1",
         evidence_type="contract",
         source="validator",
-        payload={"branches": 2}
+        payload={"branches": 2},
     )
     assert ev1.prev_hash == ev0.validation_hash
 
@@ -51,7 +52,7 @@ def test_cryptographic_evidence_chain_continuity():
         session_id="sess_2",
         evidence_type="runtime",
         source="simulator",
-        payload={"side_effects": 1}
+        payload={"side_effects": 1},
     )
     assert ev2.prev_hash == ev1.validation_hash
 
@@ -73,7 +74,7 @@ def test_cryptographic_evidence_tamper_detection():
         session_id="sess_0",
         evidence_type="graph",
         source="canvas",
-        payload={"authentic": True}
+        payload={"authentic": True},
     )
 
     ev1 = EvidenceService.record_evidence(
@@ -83,7 +84,7 @@ def test_cryptographic_evidence_tamper_detection():
         session_id="sess_1",
         evidence_type="runtime",
         source="simulator",
-        payload={"score": 100}
+        payload={"score": 100},
     )
 
     # Legitimate chain passes
@@ -94,7 +95,7 @@ def test_cryptographic_evidence_tamper_detection():
     with db._lock, db._conn() as conn:
         conn.execute(
             "UPDATE evidence_ledger SET payload = ? WHERE id = ?",
-            ('{"authentic": false, "tampered": true}', ev0.id)
+            ('{"authentic": false, "tampered": true}', ev0.id),
         )
 
     # Auditing the chain now must immediately detect tampering!

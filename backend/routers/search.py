@@ -1,16 +1,19 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 import json
 import os
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 import threading
 
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
 router = APIRouter(tags=["Search"])
+
 
 class SearchRequest(BaseModel):
     query: str
     category: str = "all"
+
 
 class SearchResponseItem(BaseModel):
     title: str
@@ -20,81 +23,92 @@ class SearchResponseItem(BaseModel):
     spanish_translation: str
     score: float
 
+
 class EnhanceQueryRequest(BaseModel):
     query: str
+
 
 class EnhanceQueryResponse(BaseModel):
     enhanced_query: str
 
+
 class AnalyzePromptRequest(BaseModel):
     text: str
+
 
 class AnalyzePromptResponse(BaseModel):
     objective: str
     spanish_translation: str
 
+
 PROMPTS_PATH = r"C:\antigravityAS\Antigravity_OS\data\prompts_db.json"
 prompts_data = []
 texts = []
-vectorizer = TfidfVectorizer(stop_words='english')
+vectorizer = TfidfVectorizer(stop_words="english")
 tfidf_matrix = None
 _load_lock = threading.Lock()
 _loaded = False
+
 
 def load_prompts():
     global prompts_data, texts, tfidf_matrix, _loaded
     with _load_lock:
         if _loaded:
             return
-        
+
         if not os.path.exists(PROMPTS_PATH):
             print(f"Warning: Prompts file not found at {PROMPTS_PATH}")
             return
-        
-        with open(PROMPTS_PATH, 'r', encoding='utf-8') as f:
+
+        with open(PROMPTS_PATH, "r", encoding="utf-8") as f:
             try:
                 prompts_data = json.load(f)
             except json.JSONDecodeError:
                 print("Error decoding prompts JSON")
                 return
-                
+
         for item in prompts_data:
             # Combining title and content for better TF-IDF representation
             texts.append(f"{item.get('title', '')} {item.get('content', '')}")
-            
+
         if texts:
             tfidf_matrix = vectorizer.fit_transform(texts)
             _loaded = True
+
 
 # We can trigger load on import so it's ready, or do it on first request
 # We do it on import for faster first query, though it might slow down startup
 load_prompts()
 
+
 @router.post("/search")
 def search_prompts(req: SearchRequest):
     if not _loaded or tfidf_matrix is None:
         raise HTTPException(status_code=500, detail="Prompts database not loaded")
-        
+
     query_vec = vectorizer.transform([req.query])
     similarities = cosine_similarity(query_vec, tfidf_matrix).flatten()
-    
+
     # Get top 10 indices
     top_indices = similarities.argsort()[-10:][::-1]
-    
+
     results = []
     for idx in top_indices:
         if similarities[idx] > 0:
             title = prompts_data[idx].get("title", "")
-            results.append({
-                "title": title,
-                "category": prompts_data[idx].get("category", ""),
-                "content": prompts_data[idx].get("content", ""),
-                "objective": f"Objetivo analizado para: {title}",
-                "spanish_translation": "Traducción simulada al español...",
-                "score": float(similarities[idx])
-            })
-            
+            results.append(
+                {
+                    "title": title,
+                    "category": prompts_data[idx].get("category", ""),
+                    "content": prompts_data[idx].get("content", ""),
+                    "objective": f"Objetivo analizado para: {title}",
+                    "spanish_translation": "Traducción simulada al español...",
+                    "score": float(similarities[idx]),
+                }
+            )
+
     return results
+
 
 ENHANCE_SYSTEM = (
     "Eres APEX-INTENT, un Ingeniero de Intenciones. El usuario escribe en lenguaje casual que es lo que desea "
@@ -110,6 +124,7 @@ ENHANCE_SYSTEM = (
 async def enhance_query(req: EnhanceQueryRequest):
     """Mejora real del texto del usuario via Motor Hibrido (fallback al texto crudo si la IA falla)."""
     from routers.builder_actions import call_ai
+
     try:
         enhanced, _ = await call_ai(ENHANCE_SYSTEM, f"Texto del usuario: {req.query}")
         enhanced = enhanced.strip().strip('"')
@@ -119,12 +134,13 @@ async def enhance_query(req: EnhanceQueryRequest):
         print("[ENHANCE] fallback al texto original:", e)
     return {"enhanced_query": req.query}
 
+
 @router.post("/analyze_prompt", response_model=AnalyzePromptResponse)
 def analyze_prompt(req: AnalyzePromptRequest):
     # Mock analysis and translation
     return {
         "objective": "Understand and process the provided English text into actionable steps.",
-        "spanish_translation": "Traducción y análisis simulado del texto proporcionado en inglés."
+        "spanish_translation": "Traducción y análisis simulado del texto proporcionado en inglés.",
     }
 
 
@@ -135,19 +151,19 @@ SUGGEST_SYSTEM = (
     "usuario y debes diseñar el flujo de agentes IA OPTIMO para lograrlo.\n\n"
     "FORMATO DE SALIDA OBLIGATORIO: un JSON valido (sin markdown, sin comentarios) con EXACTAMENTE estas claves:\n"
     "{\n"
-    "  \"name\": \"Nombre corto del flujo en Espanol (3-5 palabras)\",\n"
-    "  \"description\": \"Una frase describiendo que logra el flujo\",\n"
-    "  \"framework\": \"crewai | autogen | langgraph\",\n"
-    "  \"nodes\": [\n"
+    '  "name": "Nombre corto del flujo en Espanol (3-5 palabras)",\n'
+    '  "description": "Una frase describiendo que logra el flujo",\n'
+    '  "framework": "crewai | autogen | langgraph",\n'
+    '  "nodes": [\n'
     "    {\n"
-    "      \"id\": \"n1\", \"title\": \"2-4 palabras\", \"role\": \"Rol profesional senior especifico\",\n"
-    "      \"content\": \"Master prompt MUY detallado en Espanol: objetivo, input que recibe del nodo anterior, "
+    '      "id": "n1", "title": "2-4 palabras", "role": "Rol profesional senior especifico",\n'
+    '      "content": "Master prompt MUY detallado en Espanol: objetivo, input que recibe del nodo anterior, '
     "proceso paso a paso, formato de salida estricto, regla anti-alucinacion. Debe terminar con la linea exacta: "
-    "RULES: ALWAYS EXECUTE, REASON, AND RESPOND STRICTLY IN ENGLISH.\",\n"
-    "      \"framework\": \"auto\", \"llm_model\": \"hermes3:unlocked\", \"temperature\": 0.7, \"variables\": \"\"\n"
+    'RULES: ALWAYS EXECUTE, REASON, AND RESPOND STRICTLY IN ENGLISH.",\n'
+    '      "framework": "auto", "llm_model": "hermes3:unlocked", "temperature": 0.7, "variables": ""\n'
     "    }\n"
     "  ],\n"
-    "  \"edges\": [{\"source\": \"n1\", \"target\": \"n2\"}]\n"
+    '  "edges": [{"source": "n1", "target": "n2"}]\n'
     "}\n\n"
     "REGLAS DE DISEÑO:\n"
     "1. Entre 2 y 5 nodos. Cada nodo = un agente con UNA responsabilidad clara.\n"
@@ -618,14 +634,12 @@ SEMANTIC_ROUTER_SYSTEM = (
 COPILOT_SYSTEM = (
     "Eres APEX-COPILOT, el Programador de Par de Antigravity OS. "
     "Eres una extensión del cerebro del desarrollador — no un chatbot genérico.\n\n"
-
     "## CAPACIDADES (detecta el modo según el input del usuario):\n"
     "- COMPLETAR: Si el usuario envía código incompleto (funciones sin cuerpo, '...', 'TODO', 'pass'), complétalo íntegramente.\n"
     "- EXPLICAR: Si el usuario pregunta '¿qué hace esto?', '¿por qué?', 'explica', desglosa la lógica con Control Flow.\n"
     "- CORREGIR: Si el usuario pega un error, traceback o stack trace, diagnostica la causa raíz y entrega el parche exacto.\n"
     "- REVISAR: Si el usuario pide 'revisa', 'mejora', 'refactoriza', aplica principios SOLID/DRY/KISS sin romper la interfaz pública.\n"
     "- PREGUNTAR: Si el usuario hace una pregunta técnica directa, responde con precisión quirúrgica.\n\n"
-
     "## REGLAS ESTRICTAS:\n"
     "1. Detecta automáticamente el lenguaje del fragmento (Python, TypeScript, Rust, Go, SQL, etc.).\n"
     "2. Respeta el estilo de codificación existente: si usa comillas dobles, úsalas; si usa snake_case, úsalo.\n"
@@ -633,7 +647,6 @@ COPILOT_SYSTEM = (
     "4. NO des explicaciones innecesarias cuando el usuario solo quiere código — entrega el bloque directo.\n"
     "5. Si recibes contexto de archivos del proyecto, úsalo para generar código coherente con la arquitectura existente.\n"
     "6. Ante ambigüedad, pregunta UNA sola cosa concreta en lugar de asumir.\n\n"
-
     "## FORMATO DE RESPUESTA:\n"
     "- Para código: bloque ``` con el lenguaje especificado, listo para copiar/pegar.\n"
     "- Para explicaciones: máximo 5 puntos concisos con viñetas.\n"
@@ -1200,6 +1213,7 @@ UI_UX_SYSTEM = (
     "4. FORMATO: Genera un manifiesto de diseño en JSON. Este será el manual maestro para el Frontend."
 )
 
+
 class SuggestFlowsRequest(BaseModel):
     query: str
 
@@ -1207,7 +1221,10 @@ class SuggestFlowsRequest(BaseModel):
 def _load_flow_templates():
     tpl_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-        "apps", "web-app", "public", "flows_templates.json",
+        "apps",
+        "web-app",
+        "public",
+        "flows_templates.json",
     )
     if not os.path.exists(tpl_path):
         return []
@@ -1230,6 +1247,7 @@ async def suggest_flows(req: SuggestFlowsRequest):
         raw, _ = await call_ai(SUGGEST_SYSTEM, f"OBJETIVO DEL USUARIO: {req.query}")
         raw = raw.replace("```json", "").replace("```", "").strip()
         import re as _re
+
         m = _re.search(r"\{.*\}", raw, _re.DOTALL)
         if m:
             parsed = json.loads(m.group(0), strict=False)
@@ -1245,7 +1263,10 @@ async def suggest_flows(req: SuggestFlowsRequest):
     templates = _load_flow_templates()
     alternatives = []
     if templates:
-        texts = [f"{t.get('name','')} {t.get('category','')} {t.get('description','')}" for t in templates]
+        texts = [
+            f"{t.get('name','')} {t.get('category','')} {t.get('description','')}"
+            for t in templates
+        ]
         try:
             vec = TfidfVectorizer()
             mat = vec.fit_transform(texts + [req.query])
@@ -1253,14 +1274,16 @@ async def suggest_flows(req: SuggestFlowsRequest):
             ranked = sims.argsort()[::-1][:5]
             for i in ranked:
                 t = templates[i]
-                alternatives.append({
-                    "id": t.get("id"),
-                    "name": t.get("name"),
-                    "engine": t.get("engine"),
-                    "category": t.get("category"),
-                    "description": t.get("description"),
-                    "score": float(sims[i]),
-                })
+                alternatives.append(
+                    {
+                        "id": t.get("id"),
+                        "name": t.get("name"),
+                        "engine": t.get("engine"),
+                        "category": t.get("category"),
+                        "description": t.get("description"),
+                        "score": float(sims[i]),
+                    }
+                )
         except Exception as e:
             print("[SUGGEST] template ranking failed:", e)
             alternatives = templates[:5]
@@ -1277,11 +1300,11 @@ FLOW_GENERATOR_SYSTEM = (
     "El usuario te proporcionará un requerimiento o idea de automatización. Tu objetivo es diseñar una red de agentes de IA (nodes) y sus conexiones (edges).\n"
     "REGLAS IMPORTANTES:\n"
     "1. Retorna EXCLUSIVAMENTE un objeto JSON válido. NO uses bloques markdown (```json ... ```), NO devuelvas texto adicional.\n"
-    "2. La estructura del JSON DEBE ser: {\"nodes\": [...], \"edges\": [...]}\n"
+    '2. La estructura del JSON DEBE ser: {"nodes": [...], "edges": [...]}\n'
     "3. Cada elemento de 'nodes' debe ser un diccionario con:\n"
     "   - 'id': un string único (ej. 'node_1').\n"
-    "   - 'position': {\"x\": int, \"y\": int} (Distribúyelos de izquierda a derecha, separados por unos 300px en el eje X, e.g. x: 100, x: 450, x: 800. Deja Y en 100).\n"
-    "   - 'data': {\"title\": \"Rol del Agente (ej. Investigador SEO)\", \"content\": \"El System Prompt específico para este agente que le indica cómo hacer su trabajo.\", \"framework\": \"langgraph\", \"llm_model\": \"hermes3:unlocked\"}\n"
+    '   - \'position\': {"x": int, "y": int} (Distribúyelos de izquierda a derecha, separados por unos 300px en el eje X, e.g. x: 100, x: 450, x: 800. Deja Y en 100).\n'
+    '   - \'data\': {"title": "Rol del Agente (ej. Investigador SEO)", "content": "El System Prompt específico para este agente que le indica cómo hacer su trabajo.", "framework": "langgraph", "llm_model": "hermes3:unlocked"}\n'
     "4. Cada elemento de 'edges' debe ser un diccionario con:\n"
     "   - 'id': un string único (ej. 'reactflow__edge-node_1-node_2').\n"
     "   - 'source': el ID del nodo origen.\n"

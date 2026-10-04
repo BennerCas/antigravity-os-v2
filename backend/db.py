@@ -8,12 +8,12 @@ Tablas:
 
 Todo vive en backend/data/antigravity.db
 """
+
 import json
 import os
 import sqlite3
 import threading
 from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any
 
 _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 DB_PATH = os.path.join(_DATA_DIR, "antigravity.db")
@@ -30,8 +30,7 @@ def _conn() -> sqlite3.Connection:
 
 def init_db() -> None:
     with _lock, _conn() as conn:
-        conn.executescript(
-            """
+        conn.executescript("""
             CREATE TABLE IF NOT EXISTS flows (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -267,9 +266,8 @@ def init_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_mastery_user ON skill_mastery (user_id);
             CREATE INDEX IF NOT EXISTS idx_cert_token ON certifications (verification_token);
             CREATE INDEX IF NOT EXISTS idx_events_user ON learning_events (user_id);
-            """
-        )
-        
+            """)
+
         # Migration: Add missing columns if they don't exist
         try:
             conn.execute("ALTER TABLE automations ADD COLUMN name TEXT")
@@ -284,19 +282,25 @@ def init_db() -> None:
         except sqlite3.OperationalError:
             pass
         try:
-            conn.execute("ALTER TABLE automations ADD COLUMN timeout INTEGER DEFAULT 30")
+            conn.execute(
+                "ALTER TABLE automations ADD COLUMN timeout INTEGER DEFAULT 30"
+            )
         except sqlite3.OperationalError:
             pass
         try:
-            conn.execute("ALTER TABLE evidence_ledger ADD COLUMN prev_hash TEXT DEFAULT 'GENESIS_ROOT'")
+            conn.execute(
+                "ALTER TABLE evidence_ledger ADD COLUMN prev_hash TEXT DEFAULT 'GENESIS_ROOT'"
+            )
         except sqlite3.OperationalError:
             pass
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
 # ─── Flows ────────────────────────────────────────────────────────────────────
+
 
 def flows_all() -> list[dict]:
     with _lock, _conn() as conn:
@@ -344,6 +348,7 @@ def flow_delete(flow_id: str) -> bool:
 
 # ─── Executions ───────────────────────────────────────────────────────────────
 
+
 def execution_log(framework: str, model_used: str, exit_code: int, log: str) -> None:
     with _lock, _conn() as conn:
         conn.execute(
@@ -362,6 +367,7 @@ def executions_recent(limit: int = 50) -> list[dict]:
 
 
 # ─── Variants (prompts generados por IA) ─────────────────────────────────────
+
 
 def variant_save(v: dict) -> None:
     with _lock, _conn() as conn:
@@ -384,15 +390,22 @@ def variant_save(v: dict) -> None:
 
 def variants_all() -> list[dict]:
     with _lock, _conn() as conn:
-        rows = conn.execute("SELECT * FROM variants ORDER BY created_at DESC").fetchall()
+        rows = conn.execute(
+            "SELECT * FROM variants ORDER BY created_at DESC"
+        ).fetchall()
     return [dict(r) for r in rows]
+
 
 # --- Automations ---
 
+
 def automations_all() -> list[dict]:
     with _lock, _conn() as conn:
-        rows = conn.execute("SELECT * FROM automations ORDER BY created_at DESC").fetchall()
+        rows = conn.execute(
+            "SELECT * FROM automations ORDER BY created_at DESC"
+        ).fetchall()
     return [dict(r) for r in rows]
+
 
 def automation_save(auto: dict) -> None:
     with _lock, _conn() as conn:
@@ -410,26 +423,35 @@ def automation_save(auto: dict) -> None:
                 auto.get("timeout", 30),
                 auto.get("status", "ACTIVE"),
                 auto.get("created_at", _now()),
-            )
+            ),
         )
+
 
 def automation_delete(auto_id: str) -> bool:
     with _lock, _conn() as conn:
         cur = conn.execute("DELETE FROM automations WHERE id = ?", (auto_id,))
         return cur.rowcount > 0
 
+
 def automation_update_status(auto_id: str, status: str) -> bool:
     with _lock, _conn() as conn:
-        cur = conn.execute("UPDATE automations SET status = ? WHERE id = ?", (status, auto_id))
+        cur = conn.execute(
+            "UPDATE automations SET status = ? WHERE id = ?", (status, auto_id)
+        )
         return cur.rowcount > 0
 
 
 # ─── Academy: Learning Profiles ──────────────────────────────────────────────
 
-def learning_profile_get_or_create(user_id: str, default_level: str = "foundation", default_track: str = "builder") -> dict:
+
+def learning_profile_get_or_create(
+    user_id: str, default_level: str = "foundation", default_track: str = "builder"
+) -> dict:
     now = _now()
     with _lock, _conn() as conn:
-        row = conn.execute("SELECT * FROM learning_profiles WHERE user_id = ?", (user_id,)).fetchone()
+        row = conn.execute(
+            "SELECT * FROM learning_profiles WHERE user_id = ?", (user_id,)
+        ).fetchone()
         if not row:
             initial_stats = {
                 "missions_completed": 0,
@@ -449,9 +471,19 @@ def learning_profile_get_or_create(user_id: str, default_level: str = "foundatio
             conn.execute(
                 """INSERT INTO learning_profiles (user_id, level, current_track, preferences, stats, created_at, updated_at)
                    VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                (user_id, default_level, default_track, json.dumps(initial_prefs), json.dumps(initial_stats), now, now),
+                (
+                    user_id,
+                    default_level,
+                    default_track,
+                    json.dumps(initial_prefs),
+                    json.dumps(initial_stats),
+                    now,
+                    now,
+                ),
             )
-            row = conn.execute("SELECT * FROM learning_profiles WHERE user_id = ?", (user_id,)).fetchone()
+            row = conn.execute(
+                "SELECT * FROM learning_profiles WHERE user_id = ?", (user_id,)
+            ).fetchone()
 
     return {
         "user_id": row["user_id"],
@@ -469,11 +501,11 @@ def learning_profile_update(user_id: str, updates: dict) -> dict:
     current = learning_profile_get_or_create(user_id)
     level = updates.get("level", current["level"])
     current_track = updates.get("current_track", current["current_track"])
-    
+
     preferences = current["preferences"]
     if "preferences" in updates:
         preferences.update(updates["preferences"])
-        
+
     stats = current["stats"]
     if "stats" in updates:
         stats.update(updates["stats"])
@@ -483,12 +515,20 @@ def learning_profile_update(user_id: str, updates: dict) -> dict:
             """UPDATE learning_profiles
                SET level = ?, current_track = ?, preferences = ?, stats = ?, updated_at = ?
                WHERE user_id = ?""",
-            (level, current_track, json.dumps(preferences), json.dumps(stats), now, user_id),
+            (
+                level,
+                current_track,
+                json.dumps(preferences),
+                json.dumps(stats),
+                now,
+                user_id,
+            ),
         )
     return learning_profile_get_or_create(user_id)
 
 
 # ─── Academy: Mission Definitions ────────────────────────────────────────────
+
 
 def mission_def_upsert(mission: dict) -> None:
     now = _now()
@@ -510,9 +550,11 @@ def mission_def_upsert(mission: dict) -> None:
         )
 
 
-def mission_def_get(mission_id: str) -> Optional[dict]:
+def mission_def_get(mission_id: str) -> dict | None:
     with _lock, _conn() as conn:
-        row = conn.execute("SELECT data_json FROM mission_definitions WHERE id = ?", (mission_id,)).fetchone()
+        row = conn.execute(
+            "SELECT data_json FROM mission_definitions WHERE id = ?", (mission_id,)
+        ).fetchone()
     if row:
         return json.loads(row["data_json"])
     return None
@@ -520,15 +562,21 @@ def mission_def_get(mission_id: str) -> Optional[dict]:
 
 def mission_defs_all() -> list[dict]:
     with _lock, _conn() as conn:
-        rows = conn.execute("SELECT data_json FROM mission_definitions ORDER BY stage ASC, id ASC").fetchall()
+        rows = conn.execute(
+            "SELECT data_json FROM mission_definitions ORDER BY stage ASC, id ASC"
+        ).fetchall()
     return [json.loads(r["data_json"]) for r in rows]
 
 
 # ─── Academy: Mission Sessions ───────────────────────────────────────────────
 
+
 def mission_session_create(session: dict) -> dict:
     now = _now()
-    session_id = session.get("id") or f"sess_{int(datetime.now().timestamp())}_{session['mission_id']}"
+    session_id = (
+        session.get("id")
+        or f"sess_{int(datetime.now().timestamp())}_{session['mission_id']}"
+    )
     with _lock, _conn() as conn:
         conn.execute(
             """INSERT OR REPLACE INTO mission_sessions (id, user_id, mission_id, status, current_step, sandbox_flow, hints_revealed, reflections, rubric_results, findings, started_at, completed_at)
@@ -551,9 +599,11 @@ def mission_session_create(session: dict) -> dict:
     return mission_session_get(session_id)
 
 
-def mission_session_get(session_id: str) -> Optional[dict]:
+def mission_session_get(session_id: str) -> dict | None:
     with _lock, _conn() as conn:
-        row = conn.execute("SELECT * FROM mission_sessions WHERE id = ?", (session_id,)).fetchone()
+        row = conn.execute(
+            "SELECT * FROM mission_sessions WHERE id = ?", (session_id,)
+        ).fetchone()
     if not row:
         return None
     return {
@@ -572,7 +622,7 @@ def mission_session_get(session_id: str) -> Optional[dict]:
     }
 
 
-def mission_session_update(session_id: str, updates: dict) -> Optional[dict]:
+def mission_session_update(session_id: str, updates: dict) -> dict | None:
     current = mission_session_get(session_id)
     if not current:
         return None
@@ -599,7 +649,10 @@ def mission_session_update(session_id: str, updates: dict) -> Optional[dict]:
 
 def mission_sessions_user(user_id: str) -> list[dict]:
     with _lock, _conn() as conn:
-        rows = conn.execute("SELECT * FROM mission_sessions WHERE user_id = ? ORDER BY started_at DESC", (user_id,)).fetchall()
+        rows = conn.execute(
+            "SELECT * FROM mission_sessions WHERE user_id = ? ORDER BY started_at DESC",
+            (user_id,),
+        ).fetchall()
     return [
         {
             "id": r["id"],
@@ -621,9 +674,13 @@ def mission_sessions_user(user_id: str) -> list[dict]:
 
 # ─── Academy: Skill Mastery ──────────────────────────────────────────────────
 
+
 def skill_mastery_get(user_id: str, skill_id: str) -> dict:
     with _lock, _conn() as conn:
-        row = conn.execute("SELECT * FROM skill_mastery WHERE user_id = ? AND skill_id = ?", (user_id, skill_id)).fetchone()
+        row = conn.execute(
+            "SELECT * FROM skill_mastery WHERE user_id = ? AND skill_id = ?",
+            (user_id, skill_id),
+        ).fetchone()
     if not row:
         return {
             "user_id": user_id,
@@ -645,7 +702,10 @@ def skill_mastery_get(user_id: str, skill_id: str) -> dict:
 
 def skill_mastery_all(user_id: str) -> list[dict]:
     with _lock, _conn() as conn:
-        rows = conn.execute("SELECT * FROM skill_mastery WHERE user_id = ? ORDER BY mastery_score DESC", (user_id,)).fetchall()
+        rows = conn.execute(
+            "SELECT * FROM skill_mastery WHERE user_id = ? ORDER BY mastery_score DESC",
+            (user_id,),
+        ).fetchall()
     return [
         {
             "user_id": r["user_id"],
@@ -659,7 +719,9 @@ def skill_mastery_all(user_id: str) -> list[dict]:
     ]
 
 
-def skill_mastery_upsert(user_id: str, skill_id: str, score: float, state: str, dimensions: dict) -> dict:
+def skill_mastery_upsert(
+    user_id: str, skill_id: str, score: float, state: str, dimensions: dict
+) -> dict:
     now = _now()
     with _lock, _conn() as conn:
         conn.execute(
@@ -671,6 +733,7 @@ def skill_mastery_upsert(user_id: str, skill_id: str, score: float, state: str, 
 
 
 # ─── Academy: Evidence Ledger ────────────────────────────────────────────────
+
 
 def evidence_insert(evidence: dict) -> None:
     now = _now()
@@ -696,7 +759,7 @@ def evidence_insert(evidence: dict) -> None:
         )
 
 
-def evidence_user(user_id: str, skill_id: Optional[str] = None) -> list[dict]:
+def evidence_user(user_id: str, skill_id: str | None = None) -> list[dict]:
     with _lock, _conn() as conn:
         if skill_id:
             rows = conn.execute(
@@ -718,7 +781,11 @@ def evidence_user(user_id: str, skill_id: Optional[str] = None) -> list[dict]:
             "evidence_type": r["evidence_type"],
             "source": r["source"],
             "validation_hash": r["validation_hash"],
-            "prev_hash": r["prev_hash"] if "prev_hash" in r.keys() and r["prev_hash"] else "GENESIS_ROOT",
+            "prev_hash": (
+                r["prev_hash"]
+                if "prev_hash" in r.keys() and r["prev_hash"]
+                else "GENESIS_ROOT"
+            ),
             "payload": json.loads(r["payload"]),
             "confidence": r["confidence"],
             "created_at": r["created_at"],
@@ -727,7 +794,7 @@ def evidence_user(user_id: str, skill_id: Optional[str] = None) -> list[dict]:
     ]
 
 
-def evidence_latest(user_id: str) -> Optional[dict]:
+def evidence_latest(user_id: str) -> dict | None:
     with _lock, _conn() as conn:
         row = conn.execute(
             "SELECT * FROM evidence_ledger WHERE user_id = ? ORDER BY rowid DESC LIMIT 1",
@@ -744,14 +811,18 @@ def evidence_latest(user_id: str) -> Optional[dict]:
         "evidence_type": row["evidence_type"],
         "source": row["source"],
         "validation_hash": row["validation_hash"],
-        "prev_hash": row["prev_hash"] if "prev_hash" in row.keys() and row["prev_hash"] else "GENESIS_ROOT",
+        "prev_hash": (
+            row["prev_hash"]
+            if "prev_hash" in row.keys() and row["prev_hash"]
+            else "GENESIS_ROOT"
+        ),
         "payload": json.loads(row["payload"]),
         "confidence": row["confidence"],
         "created_at": row["created_at"],
     }
 
 
-def evidence_by_id(evidence_id: str) -> Optional[dict]:
+def evidence_by_id(evidence_id: str) -> dict | None:
     with _lock, _conn() as conn:
         row = conn.execute(
             "SELECT * FROM evidence_ledger WHERE id = ?",
@@ -768,7 +839,11 @@ def evidence_by_id(evidence_id: str) -> Optional[dict]:
         "evidence_type": row["evidence_type"],
         "source": row["source"],
         "validation_hash": row["validation_hash"],
-        "prev_hash": row["prev_hash"] if "prev_hash" in row.keys() and row["prev_hash"] else "GENESIS_ROOT",
+        "prev_hash": (
+            row["prev_hash"]
+            if "prev_hash" in row.keys() and row["prev_hash"]
+            else "GENESIS_ROOT"
+        ),
         "payload": json.loads(row["payload"]),
         "confidence": row["confidence"],
         "created_at": row["created_at"],
@@ -777,9 +852,13 @@ def evidence_by_id(evidence_id: str) -> Optional[dict]:
 
 # ─── Academy: Projects & Capstone ────────────────────────────────────────────
 
+
 def projects_user(user_id: str) -> list[dict]:
     with _lock, _conn() as conn:
-        rows = conn.execute("SELECT * FROM learning_projects WHERE user_id = ? ORDER BY updated_at DESC", (user_id,)).fetchall()
+        rows = conn.execute(
+            "SELECT * FROM learning_projects WHERE user_id = ? ORDER BY updated_at DESC",
+            (user_id,),
+        ).fetchall()
     return [
         {
             "id": r["id"],
@@ -796,9 +875,11 @@ def projects_user(user_id: str) -> list[dict]:
     ]
 
 
-def project_get(project_id: str) -> Optional[dict]:
+def project_get(project_id: str) -> dict | None:
     with _lock, _conn() as conn:
-        r = conn.execute("SELECT * FROM learning_projects WHERE id = ?", (project_id,)).fetchone()
+        r = conn.execute(
+            "SELECT * FROM learning_projects WHERE id = ?", (project_id,)
+        ).fetchone()
     if not r:
         return None
     return {
@@ -857,7 +938,10 @@ def capstone_submit(capstone: dict) -> None:
 
 def capstones_user(user_id: str) -> list[dict]:
     with _lock, _conn() as conn:
-        rows = conn.execute("SELECT * FROM capstone_submissions WHERE user_id = ? ORDER BY submitted_at DESC", (user_id,)).fetchall()
+        rows = conn.execute(
+            "SELECT * FROM capstone_submissions WHERE user_id = ? ORDER BY submitted_at DESC",
+            (user_id,),
+        ).fetchall()
     return [
         {
             "id": r["id"],
@@ -875,9 +959,11 @@ def capstones_user(user_id: str) -> list[dict]:
     ]
 
 
-def capstone_get(submission_id: str) -> Optional[dict]:
+def capstone_get(submission_id: str) -> dict | None:
     with _lock, _conn() as conn:
-        r = conn.execute("SELECT * FROM capstone_submissions WHERE id = ?", (submission_id,)).fetchone()
+        r = conn.execute(
+            "SELECT * FROM capstone_submissions WHERE id = ?", (submission_id,)
+        ).fetchone()
     if not r:
         return None
     return {
@@ -895,6 +981,7 @@ def capstone_get(submission_id: str) -> Optional[dict]:
 
 
 # ─── Academy: Certifications & Portfolio ─────────────────────────────────────
+
 
 def certification_issue(cert: dict) -> None:
     now = _now()
@@ -916,7 +1003,10 @@ def certification_issue(cert: dict) -> None:
 
 def certifications_user(user_id: str) -> list[dict]:
     with _lock, _conn() as conn:
-        rows = conn.execute("SELECT * FROM certifications WHERE user_id = ? ORDER BY issued_at DESC", (user_id,)).fetchall()
+        rows = conn.execute(
+            "SELECT * FROM certifications WHERE user_id = ? ORDER BY issued_at DESC",
+            (user_id,),
+        ).fetchall()
     return [
         {
             "id": r["id"],
@@ -931,9 +1021,11 @@ def certifications_user(user_id: str) -> list[dict]:
     ]
 
 
-def certification_verify(token: str) -> Optional[dict]:
+def certification_verify(token: str) -> dict | None:
     with _lock, _conn() as conn:
-        row = conn.execute("SELECT * FROM certifications WHERE verification_token = ?", (token,)).fetchone()
+        row = conn.execute(
+            "SELECT * FROM certifications WHERE verification_token = ?", (token,)
+        ).fetchone()
     if not row:
         return None
     return {
@@ -949,7 +1041,10 @@ def certification_verify(token: str) -> Optional[dict]:
 
 def portfolio_items_user(user_id: str) -> list[dict]:
     with _lock, _conn() as conn:
-        rows = conn.execute("SELECT * FROM portfolio_items WHERE user_id = ? ORDER BY published_at DESC", (user_id,)).fetchall()
+        rows = conn.execute(
+            "SELECT * FROM portfolio_items WHERE user_id = ? ORDER BY published_at DESC",
+            (user_id,),
+        ).fetchall()
     return [
         {
             "id": r["id"],
@@ -988,6 +1083,7 @@ def portfolio_item_upsert(item: dict) -> None:
 
 # ─── Academy: Event-Driven Learning ──────────────────────────────────────────
 
+
 def learning_event_log(user_id: str, event_type: str, payload: dict) -> None:
     now = _now()
     with _lock, _conn() as conn:
@@ -1013,4 +1109,3 @@ def learning_events_recent(user_id: str, limit: int = 50) -> list[dict]:
         }
         for r in rows
     ]
-

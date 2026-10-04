@@ -1,36 +1,42 @@
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Literal
+
 from pydantic import BaseModel, Field
+
 
 class JsonPatchOp(BaseModel):
     op: Literal["add", "remove", "replace", "move", "copy", "test"]
     path: str
-    value: Optional[Any] = None
-    from_: Optional[str] = Field(None, alias="from")
+    value: Any | None = None
+    from_: str | None = Field(None, alias="from")
+
 
 class ChatSection(BaseModel):
     markdown: str
-    citations: List[Dict[str, Any]] = Field(default_factory=list)
+    citations: list[dict[str, Any]] = Field(default_factory=list)
+
 
 class RiskAssessment(BaseModel):
     cost_delta_usd_per_1k_runs: float
     latency_delta_ms_p50: float
-    new_capabilities_required: List[str]
-    security_flags: List[str]
+    new_capabilities_required: list[str]
+    security_flags: list[str]
     confidence: float
+
 
 class AuthoringIntent(BaseModel):
     protocol: Literal["authoring.v1"] = "authoring.v1"
     turn_id: str
     rev_base: int
     chat: ChatSection
-    patch: List[JsonPatchOp]
+    patch: list[JsonPatchOp]
     risk: RiskAssessment
-    questions: List[str] = Field(default_factory=list)
-    assumptions: List[str] = Field(default_factory=list)
+    questions: list[str] = Field(default_factory=list)
+    assumptions: list[str] = Field(default_factory=list)
+
 
 class CommandEnvelope(BaseModel):
     cmd_id: str
-    actor: Dict[str, str]
+    actor: dict[str, str]
     expected_rev: int
-    reason: Optional[str] = None
-    cmd: Dict[str, Any]
+    reason: str | None = None
+    cmd: dict[str, Any]

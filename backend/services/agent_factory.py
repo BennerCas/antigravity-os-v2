@@ -6,12 +6,13 @@ Fusiona tres fuentes:
   2. Atlas Module  (prompts_db.json) - Master Prompts y conocimiento tecnico
   3. Antigravity SDK                 - Herramientas, multi-agent, policies
 """
-import os
-import json
-import psutil
-from typing import List, Callable, Optional, Dict, Any
 
+import json
 import os
+from collections.abc import Callable
+from typing import Any
+
+import psutil
 from dotenv import load_dotenv
 
 ENV_PATH = os.path.join(os.path.dirname(__file__), "..", ".env")
@@ -25,13 +26,19 @@ if "GEMINI_API_BASE_URL" in os.environ:
     del os.environ["GEMINI_API_BASE_URL"]
 
 
-from google.antigravity import Agent, LocalAgentConfig, CapabilitiesConfig
-from backend.services.chroma_db import vector_db
-from backend.model_defaults import DEFAULT_LOCAL_MODEL, FREE_AI_FALLBACK_MODEL, is_local_model, normalize_local_model, normalize_ollama_base_url, prefers_local_default, strip_model_provider
+from google.antigravity import Agent, CapabilitiesConfig, LocalAgentConfig
+
+from backend.model_defaults import (DEFAULT_LOCAL_MODEL,
+                                    FREE_AI_FALLBACK_MODEL, is_local_model,
+                                    normalize_local_model,
+                                    normalize_ollama_base_url,
+                                    prefers_local_default,
+                                    strip_model_provider)
 from backend.services.atlas_library import list_library_items
+from backend.services.chroma_db import vector_db
 
 _BASE = r"C:\antigravityAS\Antigravity_OS_v2\apps\web-app\public"
-SKILLS_PATH  = os.path.join(_BASE, "skills_v2.json")
+SKILLS_PATH = os.path.join(_BASE, "skills_v2.json")
 PROMPTS_PATH = os.path.join(_BASE, "prompts_db.json")
 
 
@@ -49,17 +56,19 @@ def obtener_estado_memoria() -> str:
 
 def leer_documentacion_nodos(nodo_tipo: str) -> str:
     """[Tool] Retorna documentacion sobre un tipo de nodo en FlowBoard."""
-    docs: Dict[str, str] = {
-        "AI":        "Nodo AI: ejecuta un modelo de inteligencia artificial con un prompt configurable.",
+    docs: dict[str, str] = {
+        "AI": "Nodo AI: ejecuta un modelo de inteligencia artificial con un prompt configurable.",
         "CONDITION": "Nodo CONDITION: bifurca el flujo segun una expresion booleana (True/False).",
-        "ACTION":    "Nodo ACTION: ejecuta codigo Python o una peticion HTTP.",
-        "INPUT":     "Nodo INPUT: punto de entrada del flujo, recibe datos iniciales.",
-        "OUTPUT":    "Nodo OUTPUT: punto final del flujo, emite el resultado procesado.",
-        "LOOP":      "Nodo LOOP: itera sobre una lista de items aplicando sub-flujo.",
+        "ACTION": "Nodo ACTION: ejecuta codigo Python o una peticion HTTP.",
+        "INPUT": "Nodo INPUT: punto de entrada del flujo, recibe datos iniciales.",
+        "OUTPUT": "Nodo OUTPUT: punto final del flujo, emite el resultado procesado.",
+        "LOOP": "Nodo LOOP: itera sobre una lista de items aplicando sub-flujo.",
         "TRANSFORM": "Nodo TRANSFORM: aplica una transformacion de datos (map/filter/reduce).",
     }
     key = nodo_tipo.strip().upper()
-    return docs.get(key, f"Nodo '{nodo_tipo}' no documentado. Considera crear un nodo custom.")
+    return docs.get(
+        key, f"Nodo '{nodo_tipo}' no documentado. Considera crear un nodo custom."
+    )
 
 
 def listar_agentes_disponibles() -> str:
@@ -84,7 +93,8 @@ def buscar_en_atlas(query: str) -> str:
             prompts = json.load(f)
         q = query.lower()
         matches = [
-            p for p in prompts
+            p
+            for p in prompts
             if q in p.get("title", "").lower() or q in p.get("content", "").lower()
         ]
         if not matches:
@@ -97,27 +107,33 @@ def buscar_en_atlas(query: str) -> str:
         return f"Error buscando en Atlas: {e}"
 
 
-
 import asyncio
+
 
 def actualizar_checklist(tarea_id: str, estado: str) -> str:
     """[Tool] Actualiza dinamicamente el 'Radar de Arquitectura' (Checklist) en el frontend.
-    IDs validos: 'triage', 'blueprint', 'deploy', o nuevos IDs que tu crees. estado puede ser 'completed', 'in_progress', 'failed', 'pending'."""
+    IDs validos: 'triage', 'blueprint', 'deploy', o nuevos IDs que tu crees. estado puede ser 'completed', 'in_progress', 'failed', 'pending'.
+    """
     try:
         from routers.studio import manager
+
         loop = asyncio.get_event_loop()
         if loop.is_running():
-            loop.create_task(manager.broadcast({
-                "type": "UPDATE_CHECKLIST",
-                "payload": {"taskId": tarea_id, "status": estado}
-            }))
+            loop.create_task(
+                manager.broadcast(
+                    {
+                        "type": "UPDATE_CHECKLIST",
+                        "payload": {"taskId": tarea_id, "status": estado},
+                    }
+                )
+            )
         return f"Checklist actualizado: {tarea_id} -> {estado}"
     except Exception as e:
         return f"Error al actualizar checklist: {e}"
 
-TOOL_REGISTRY: List[Callable] = [
-    actualizar_checklist,
 
+TOOL_REGISTRY: list[Callable] = [
+    actualizar_checklist,
     obtener_estado_memoria,
     leer_documentacion_nodos,
     listar_agentes_disponibles,
@@ -150,25 +166,30 @@ def _cargar_conocimiento_atlas(atlas_knowledge_id: str) -> str:
         with open(PROMPTS_PATH, encoding="utf-8") as f:
             prompts = json.load(f)
         for p in prompts:
-            if p.get("id") == atlas_knowledge_id or p.get("title") == atlas_knowledge_id:
+            if (
+                p.get("id") == atlas_knowledge_id
+                or p.get("title") == atlas_knowledge_id
+            ):
                 return p.get("content", "")
     except Exception:
         pass
     return ""
 
 
-def _retrieve_runtime_memory(query: Optional[str], limit: int = 3) -> List[str]:
+def _retrieve_runtime_memory(query: str | None, limit: int = 3) -> list[str]:
     cleaned = (query or "").strip()
     if len(cleaned) < 12:
         return []
 
-    snippets: List[str] = []
+    snippets: list[str] = []
     lowered = cleaned.lower()
 
     for item in list_library_items():
         haystack = f"{item.get('title','')}\n{item.get('content','')}".lower()
-        if lowered in haystack or any(token in haystack for token in lowered.split() if len(token) > 4):
-            content = str(item.get('content') or '').strip()
+        if lowered in haystack or any(
+            token in haystack for token in lowered.split() if len(token) > 4
+        ):
+            content = str(item.get("content") or "").strip()
             if content and content[:900] not in snippets:
                 snippets.append(content[:900])
             if len(snippets) >= limit:
@@ -187,7 +208,7 @@ def _retrieve_runtime_memory(query: Optional[str], limit: int = 3) -> List[str]:
     return snippets[:limit]
 
 
-def _append_runtime_memory(base: str, query: Optional[str]) -> str:
+def _append_runtime_memory(base: str, query: str | None) -> str:
     snippets = _retrieve_runtime_memory(query)
     if not snippets:
         return base
@@ -209,23 +230,23 @@ RULE24_HEADERS = (
 )
 
 
-def _rule24_target_model(model: Optional[str]) -> str:
+def _rule24_target_model(model: str | None) -> str:
     if prefers_local_default(model) or is_local_model(model):
         return normalize_local_model(model)
     clean = strip_model_provider(model)
     return clean or DEFAULT_LOCAL_MODEL
 
 
-def _should_apply_rule24(model: Optional[str]) -> bool:
+def _should_apply_rule24(model: str | None) -> bool:
     clean = _rule24_target_model(model)
     return bool(clean) and (prefers_local_default(model) or is_local_model(model))
 
 
-def _is_hermes_model(model: Optional[str]) -> bool:
+def _is_hermes_model(model: str | None) -> bool:
     return "hermes" in _rule24_target_model(model).lower()
 
 
-def _rule24_role_title(model: Optional[str]) -> str:
+def _rule24_role_title(model: str | None) -> str:
     if _is_hermes_model(model):
         return "Principal Cognitive Systems Architect para Hermes 3 Unlocked"
     return "Senior Local Systems Architect para modelos 8B"
@@ -241,11 +262,15 @@ def _append_rule24_section(prompt: str, header: str, body: str) -> str:
     return f"{prompt.rstrip()}\n\n{header}\n{body.strip()}"
 
 
-def _execution_profile_header(model: Optional[str]) -> str:
-    return "HERMES_UNLOCKED_EXECUTION_PROFILE" if _is_hermes_model(model) else "LOCAL_8B_EXECUTION_PROFILE"
+def _execution_profile_header(model: str | None) -> str:
+    return (
+        "HERMES_UNLOCKED_EXECUTION_PROFILE"
+        if _is_hermes_model(model)
+        else "LOCAL_8B_EXECUTION_PROFILE"
+    )
 
 
-def _rule24_section_defaults(agent_id: str, model: Optional[str]) -> Dict[str, str]:
+def _rule24_section_defaults(agent_id: str, model: str | None) -> dict[str, str]:
     model_hint = _rule24_target_model(model)
     return {
         "ROLE:": f"Eres el agente '{agent_id}' operando como {_rule24_role_title(model)}.",
@@ -274,7 +299,7 @@ def _rule24_section_defaults(agent_id: str, model: Optional[str]) -> Dict[str, s
     }
 
 
-def _append_local_execution_profile(prompt: str, model: Optional[str]) -> str:
+def _append_local_execution_profile(prompt: str, model: str | None) -> str:
     header = _execution_profile_header(model)
     if f"{header}:" in prompt:
         return prompt.rstrip()
@@ -288,7 +313,7 @@ def _append_local_execution_profile(prompt: str, model: Optional[str]) -> str:
     return f"{prompt.rstrip()}\n\n{header}:\n{profile}"
 
 
-def _build_rule24_wrapper(agent_id: str, base: str, model: Optional[str]) -> str:
+def _build_rule24_wrapper(agent_id: str, base: str, model: str | None) -> str:
     sections = _rule24_section_defaults(agent_id, model)
     wrapped = (
         f"ROLE: {sections['ROLE:']}\n"
@@ -305,10 +330,10 @@ def _build_rule24_wrapper(agent_id: str, base: str, model: Optional[str]) -> str
 
 def ensamblar_instrucciones(
     agent_id: str,
-    atlas_knowledge_id: Optional[str] = None,
-    override_instructions: Optional[str] = None,
-    model: Optional[str] = None,
-    runtime_query: Optional[str] = None,
+    atlas_knowledge_id: str | None = None,
+    override_instructions: str | None = None,
+    model: str | None = None,
+    runtime_query: str | None = None,
 ) -> str:
     base = override_instructions or _cargar_perfil_agente(agent_id)
     if atlas_knowledge_id:
@@ -344,14 +369,19 @@ class AgentFactory:
     def build_config(
         cls,
         agent_id: str,
-        atlas_knowledge_id: Optional[str] = None,
-        override_instructions: Optional[str] = None,
-        extra_tools: Optional[List[Callable]] = None,
-        model: Optional[str] = None, use_tools: bool = True,
-        runtime_query: Optional[str] = None,
+        atlas_knowledge_id: str | None = None,
+        override_instructions: str | None = None,
+        extra_tools: list[Callable] | None = None,
+        model: str | None = None,
+        use_tools: bool = True,
+        runtime_query: str | None = None,
     ) -> LocalAgentConfig:
         system_instructions = ensamblar_instrucciones(
-            agent_id, atlas_knowledge_id, override_instructions, model=model, runtime_query=runtime_query
+            agent_id,
+            atlas_knowledge_id,
+            override_instructions,
+            model=model,
+            runtime_query=runtime_query,
         )
         all_tools = TOOL_REGISTRY.copy() if use_tools else []
         if extra_tools:
@@ -369,35 +399,40 @@ class AgentFactory:
         cls,
         agent_id: str,
         user_prompt: str,
-        atlas_knowledge_id: Optional[str] = None,
-        override_instructions: Optional[str] = None,
-        extra_tools: Optional[List[Callable]] = None,
-        model: Optional[str] = None, use_tools: bool = True,
+        atlas_knowledge_id: str | None = None,
+        override_instructions: str | None = None,
+        extra_tools: list[Callable] | None = None,
+        model: str | None = None,
+        use_tools: bool = True,
     ) -> str:
-        import httpx
-        import json
         import inspect
+        import json
+
+        import httpx
 
         system_instructions = ensamblar_instrucciones(
-            agent_id, atlas_knowledge_id, override_instructions, model=model, runtime_query=user_prompt
+            agent_id,
+            atlas_knowledge_id,
+            override_instructions,
+            model=model,
+            runtime_query=user_prompt,
         )
         requested_model = strip_model_provider(model)
         prefer_local = prefers_local_default(model) or is_local_model(model)
         ollama_model = normalize_local_model(model)
-        ollama_url = normalize_ollama_base_url(os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434"))
+        ollama_url = normalize_ollama_base_url(
+            os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
+        )
 
         payload = {
             "model": ollama_model,
             "messages": [
                 {"role": "system", "content": system_instructions},
-                {"role": "user", "content": user_prompt}
+                {"role": "user", "content": user_prompt},
             ],
             "temperature": 0.7,
             "max_tokens": 4096,
-            "options": {
-                "num_ctx": 8192,
-                "num_predict": 4096
-            }
+            "options": {"num_ctx": 8192, "num_predict": 4096},
         }
 
         all_tools = []
@@ -409,33 +444,46 @@ class AgentFactory:
             for tool_fn in all_tools:
                 sig = inspect.signature(tool_fn)
                 props = {name: {"type": "string"} for name in sig.parameters.keys()}
-                tools_payload.append({
-                    "type": "function",
-                    "function": {
-                        "name": tool_fn.__name__,
-                        "description": tool_fn.__doc__ or "",
-                        "parameters": {
-                            "type": "object",
-                            "properties": props,
-                            "required": list(sig.parameters.keys())
-                        }
+                tools_payload.append(
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": tool_fn.__name__,
+                            "description": tool_fn.__doc__ or "",
+                            "parameters": {
+                                "type": "object",
+                                "properties": props,
+                                "required": list(sig.parameters.keys()),
+                            },
+                        },
                     }
-                })
+                )
             if tools_payload:
                 payload["tools"] = tools_payload
 
         if prefer_local:
             try:
                 async with httpx.AsyncClient(timeout=300.0) as client:
-                    resp = await client.post(f"{ollama_url}/chat/completions", json=payload)
-                    if resp.status_code == 404 or "model not found" in resp.text.lower():
-                        tags_resp = await client.get(f"{ollama_url.replace('/v1', '/api/tags')}")
+                    resp = await client.post(
+                        f"{ollama_url}/chat/completions", json=payload
+                    )
+                    if (
+                        resp.status_code == 404
+                        or "model not found" in resp.text.lower()
+                    ):
+                        tags_resp = await client.get(
+                            f"{ollama_url.replace('/v1', '/api/tags')}"
+                        )
                         if tags_resp.status_code == 200:
                             models = tags_resp.json().get("models", [])
                             if models:
                                 payload["model"] = models[-1]["name"]
-                                print(f"[Quantum Routing] Modelo original no encontrado. Usando fallback local: {payload['model']}")
-                                resp = await client.post(f"{ollama_url}/chat/completions", json=payload)
+                                print(
+                                    f"[Quantum Routing] Modelo original no encontrado. Usando fallback local: {payload['model']}"
+                                )
+                                resp = await client.post(
+                                    f"{ollama_url}/chat/completions", json=payload
+                                )
                     if resp.status_code == 200:
                         data = resp.json()
                         message = data["choices"][0]["message"]
@@ -452,23 +500,39 @@ class AgentFactory:
                                         else:
                                             tool_result = tool_fn(**args)
                                         break
-                                payload["messages"].append({"role": "tool", "name": func_name, "content": str(tool_result)})
-                            resp2 = await client.post(f"{ollama_url}/chat/completions", json=payload)
+                                payload["messages"].append(
+                                    {
+                                        "role": "tool",
+                                        "name": func_name,
+                                        "content": str(tool_result),
+                                    }
+                                )
+                            resp2 = await client.post(
+                                f"{ollama_url}/chat/completions", json=payload
+                            )
                             if resp2.status_code == 200:
                                 return resp2.json()["choices"][0]["message"]["content"]
                         else:
                             return message["content"]
             except Exception as e:
-                print(f"[AgentFactory] Fallo local (Ollama). Procediendo a fallback de nube. Detalle: {repr(e)}")
+                print(
+                    f"[AgentFactory] Fallo local (Ollama). Procediendo a fallback de nube. Detalle: {e!r}"
+                )
 
         free_ai_key = os.getenv("FREE_AI_API_KEY", "")
-        free_ai_base = os.getenv("FREE_AI_BASE_URL", "https://api.free.ai/v1").rstrip("/")
+        free_ai_base = os.getenv("FREE_AI_BASE_URL", "https://api.free.ai/v1").rstrip(
+            "/"
+        )
         if free_ai_key:
             payload = {
-                "model": requested_model if requested_model and not prefer_local else FREE_AI_FALLBACK_MODEL,
+                "model": (
+                    requested_model
+                    if requested_model and not prefer_local
+                    else FREE_AI_FALLBACK_MODEL
+                ),
                 "messages": [
                     {"role": "system", "content": system_instructions},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": user_prompt},
                 ],
                 "temperature": 0.7,
                 "max_tokens": 4096,
@@ -478,20 +542,27 @@ class AgentFactory:
                     resp = await client.post(
                         f"{free_ai_base}/chat/completions",
                         json=payload,
-                        headers={"Authorization": f"Bearer {free_ai_key}", "Content-Type": "application/json"}
+                        headers={
+                            "Authorization": f"Bearer {free_ai_key}",
+                            "Content-Type": "application/json",
+                        },
                     )
                     if resp.status_code == 200:
                         return resp.json()["choices"][0]["message"]["content"]
-                    print(f"[AgentFactory] Free.AI fallo (HTTP {resp.status_code}). Fallback a Gemini.")
+                    print(
+                        f"[AgentFactory] Free.AI fallo (HTTP {resp.status_code}). Fallback a Gemini."
+                    )
             except Exception as e:
-                print(f"[AgentFactory] Error en Free.AI: {repr(e)}. Fallback a Gemini.")
+                print(f"[AgentFactory] Error en Free.AI: {e!r}. Fallback a Gemini.")
 
         config = cls.build_config(
             agent_id=agent_id,
             atlas_knowledge_id=atlas_knowledge_id,
             override_instructions=override_instructions,
             extra_tools=extra_tools,
-            model="gemini-2.5-flash", use_tools=use_tools, runtime_query=user_prompt,
+            model="gemini-2.5-flash",
+            use_tools=use_tools,
+            runtime_query=user_prompt,
         )
         try:
             async with Agent(config) as agent:
@@ -502,75 +573,95 @@ class AgentFactory:
 
     @staticmethod
     async def chat_stream(
-
         agent_id: str,
         user_prompt: str,
-        atlas_knowledge_id: Optional[str] = None,
-        override_instructions: Optional[str] = None,
-        model: Optional[str] = None,
+        atlas_knowledge_id: str | None = None,
+        override_instructions: str | None = None,
+        model: str | None = None,
     ):
-        import httpx
         import json
 
+        import httpx
+
         system_instructions = ensamblar_instrucciones(
-            agent_id, atlas_knowledge_id, override_instructions, model=model, runtime_query=user_prompt
+            agent_id,
+            atlas_knowledge_id,
+            override_instructions,
+            model=model,
+            runtime_query=user_prompt,
         )
         requested_model = strip_model_provider(model)
         prefer_local = prefers_local_default(model) or is_local_model(model)
         ollama_model = normalize_local_model(model)
-        ollama_url = normalize_ollama_base_url(os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434"))
+        ollama_url = normalize_ollama_base_url(
+            os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
+        )
 
         payload = {
             "model": ollama_model,
             "messages": [
                 {"role": "system", "content": system_instructions},
-                {"role": "user", "content": user_prompt}
+                {"role": "user", "content": user_prompt},
             ],
             "temperature": 0.7,
             "stream": True,
             "max_tokens": 4096,
-            "options": {
-                "num_ctx": 8192,
-                "num_predict": 4096
-            }
+            "options": {"num_ctx": 8192, "num_predict": 4096},
         }
 
         if prefer_local:
             try:
                 async with httpx.AsyncClient(timeout=180.0) as client:
-                    async with client.stream("POST", f"{ollama_url}/chat/completions", json=payload) as response:
-                        if response.status_code == 200:
-                            async for line in response.aiter_lines():
-                                if line.startswith("data: ") and line != "data: [DONE]":
-                                    try:
-                                        data = json.loads(line[6:])
-                                        chunk = data["choices"][0]["delta"].get("content", "")
-                                        if chunk:
-                                            yield chunk
-                                    except Exception:
-                                        pass
-                            return
-            except Exception as e:
-                print(f"[AgentFactory Stream] Fallo local (Ollama). Procediendo a fallback. Detalle: {repr(e)}")
-
-        free_ai_key = os.getenv("FREE_AI_API_KEY", "")
-        free_ai_base = os.getenv("FREE_AI_BASE_URL", "https://api.free.ai/v1").rstrip("/")
-        if free_ai_key:
-            payload["model"] = requested_model if requested_model and not prefer_local else FREE_AI_FALLBACK_MODEL
-            try:
-                async with httpx.AsyncClient(timeout=60.0) as client:
                     async with client.stream(
-                        "POST",
-                        f"{free_ai_base}/chat/completions",
-                        json=payload,
-                        headers={"Authorization": f"Bearer {free_ai_key}", "Content-Type": "application/json"}
+                        "POST", f"{ollama_url}/chat/completions", json=payload
                     ) as response:
                         if response.status_code == 200:
                             async for line in response.aiter_lines():
                                 if line.startswith("data: ") and line != "data: [DONE]":
                                     try:
                                         data = json.loads(line[6:])
-                                        chunk = data["choices"][0]["delta"].get("content", "")
+                                        chunk = data["choices"][0]["delta"].get(
+                                            "content", ""
+                                        )
+                                        if chunk:
+                                            yield chunk
+                                    except Exception:
+                                        pass
+                            return
+            except Exception as e:
+                print(
+                    f"[AgentFactory Stream] Fallo local (Ollama). Procediendo a fallback. Detalle: {e!r}"
+                )
+
+        free_ai_key = os.getenv("FREE_AI_API_KEY", "")
+        free_ai_base = os.getenv("FREE_AI_BASE_URL", "https://api.free.ai/v1").rstrip(
+            "/"
+        )
+        if free_ai_key:
+            payload["model"] = (
+                requested_model
+                if requested_model and not prefer_local
+                else FREE_AI_FALLBACK_MODEL
+            )
+            try:
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    async with client.stream(
+                        "POST",
+                        f"{free_ai_base}/chat/completions",
+                        json=payload,
+                        headers={
+                            "Authorization": f"Bearer {free_ai_key}",
+                            "Content-Type": "application/json",
+                        },
+                    ) as response:
+                        if response.status_code == 200:
+                            async for line in response.aiter_lines():
+                                if line.startswith("data: ") and line != "data: [DONE]":
+                                    try:
+                                        data = json.loads(line[6:])
+                                        chunk = data["choices"][0]["delta"].get(
+                                            "content", ""
+                                        )
                                         if chunk:
                                             yield chunk
                                     except Exception:
@@ -581,15 +672,13 @@ class AgentFactory:
 
         yield "[AgentFactory Error] Todos los motores fallaron en streaming."
 
-
     @classmethod
     async def swarm_chat(
-
         cls,
-        agent_ids: List[str],
+        agent_ids: list[str],
         user_prompt: str,
-        atlas_knowledge_id: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        atlas_knowledge_id: str | None = None,
+    ) -> list[dict[str, Any]]:
         results = []
         accumulated_context = user_prompt
         for agent_id in agent_ids:
@@ -599,7 +688,7 @@ class AgentFactory:
                 atlas_knowledge_id=atlas_knowledge_id,
             )
             results.append({"agent": agent_id, "response": response})
-            accumulated_context = f"{accumulated_context}\n\n[Respuesta de {agent_id}]: {response}"
+            accumulated_context = (
+                f"{accumulated_context}\n\n[Respuesta de {agent_id}]: {response}"
+            )
         return results
-
-

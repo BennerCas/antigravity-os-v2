@@ -1,12 +1,14 @@
 import threading
-from typing import Any, Dict, Optional
+from typing import Any
+
 
 class BlackboardManager:
     """
     Thread-safe, in-memory key-value store for agents to share state.
     """
+
     def __init__(self):
-        self._store: Dict[str, Any] = {}
+        self._store: dict[str, Any] = {}
         self._lock = threading.Lock()
 
     def set(self, key: str, value: Any) -> None:
@@ -27,7 +29,7 @@ class BlackboardManager:
                 return True
             return False
 
-    def get_all(self) -> Dict[str, Any]:
+    def get_all(self) -> dict[str, Any]:
         """Get a copy of the entire blackboard state."""
         with self._lock:
             return self._store.copy()
@@ -36,6 +38,7 @@ class BlackboardManager:
         """Clear all entries in the blackboard."""
         with self._lock:
             self._store.clear()
+
 
 # Singleton instance
 blackboard = BlackboardManager()

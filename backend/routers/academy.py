@@ -1,22 +1,21 @@
-from typing import Dict, Any, List, Optional
-from fastapi import APIRouter, HTTPException, Query, Body
-from pydantic import BaseModel
+from typing import Any
 
 import db
-from backend.services.academy.catalog_service import CatalogService
-from backend.services.academy.sandbox_service import SandboxService
-from backend.services.academy.validator_service import ValidatorService
-from backend.services.academy.drift_engine import DriftEngine
-from backend.services.academy.failure_lab_service import FailureLabService
-from backend.services.academy.mastery_engine import MasteryEngine
-from backend.services.academy.evidence_service import EvidenceService
-from backend.services.academy.copilot_service import CopilotService
+from fastapi import APIRouter, Body, HTTPException, Query
+from pydantic import BaseModel
+
 from backend.services.academy.assessment_service import AssessmentService
-from backend.services.academy.certification_service import CertificationService
-from backend.services.academy.portfolio_service import PortfolioService
-from backend.services.academy.event_bridge import LearningEventBridge
-from backend.services.academy.project_service import ProjectService
 from backend.services.academy.capstone_service import CapstoneService
+from backend.services.academy.catalog_service import CatalogService
+from backend.services.academy.certification_service import CertificationService
+from backend.services.academy.copilot_service import CopilotService
+from backend.services.academy.drift_engine import DriftEngine
+from backend.services.academy.event_bridge import LearningEventBridge
+from backend.services.academy.evidence_service import EvidenceService
+from backend.services.academy.failure_lab_service import FailureLabService
+from backend.services.academy.portfolio_service import PortfolioService
+from backend.services.academy.project_service import ProjectService
+from backend.services.academy.sandbox_service import SandboxService
 from backend.services.academy.transfer_service import TransferService
 
 router = APIRouter(tags=["Academy LOS"])
@@ -24,24 +23,25 @@ router = APIRouter(tags=["Academy LOS"])
 
 # ─── Request Models ──────────────────────────────────────────────────────────
 
+
 class ProfileUpdateRequest(BaseModel):
-    level: Optional[str] = None
-    current_track: Optional[str] = None
-    preferences: Optional[Dict[str, Any]] = None
-    stats: Optional[Dict[str, Any]] = None
+    level: str | None = None
+    current_track: str | None = None
+    preferences: dict[str, Any] | None = None
+    stats: dict[str, Any] | None = None
 
 
 class FlowUpdateRequest(BaseModel):
-    flow: Dict[str, Any]
+    flow: dict[str, Any]
 
 
 class ReflectionRequest(BaseModel):
-    prompt: Optional[str] = "¿Por qué diseñaste esta arquitectura?"
+    prompt: str | None = "¿Por qué diseñaste esta arquitectura?"
     reflection_text: str
 
 
 class SimulationRequest(BaseModel):
-    input_payload: Optional[Dict[str, Any]] = None
+    input_payload: dict[str, Any] | None = None
 
 
 class FailureInjectRequest(BaseModel):
@@ -50,8 +50,8 @@ class FailureInjectRequest(BaseModel):
 
 
 class DriftAnalysisRequest(BaseModel):
-    architecture_spec: Dict[str, Any]
-    builder_flow: Dict[str, Any]
+    architecture_spec: dict[str, Any]
+    builder_flow: dict[str, Any]
 
 
 class CertificationIssueRequest(BaseModel):
@@ -63,22 +63,23 @@ class PortfolioPublishRequest(BaseModel):
     title: str
     description: str
     artifact_ref: str
-    evidence_refs: List[str] = []
-    preview_data: Dict[str, Any] = {}
+    evidence_refs: list[str] = []
+    preview_data: dict[str, Any] = {}
 
 
 class LearningEventRequest(BaseModel):
     event_type: str
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
 
 
 class CopilotChatRequest(BaseModel):
     session_id: str
     message: str
-    role: Optional[str] = "mission_coach"
+    role: str | None = "mission_coach"
 
 
 # ─── Profile & Diagnostic ───────────────────────────────────────────────────
+
 
 @router.get("/profile")
 def get_profile(user_id: str = Query(default="default_learner")):
@@ -90,7 +91,7 @@ def get_profile(user_id: str = Query(default="default_learner")):
 @router.post("/profile")
 def update_profile(
     user_id: str = Query(default="default_learner"),
-    req: ProfileUpdateRequest = Body(...)
+    req: ProfileUpdateRequest = Body(...),
 ):
     """Update learner profile, preferences, or diagnostic."""
     updates = req.model_dump(exclude_unset=True)
@@ -100,18 +101,27 @@ def update_profile(
 
 # ─── Catalog & Skills Graph ──────────────────────────────────────────────────
 
+
 @router.get("/catalog")
 def get_catalog(user_id: str = Query(default="default_learner")):
     """Get tracks, missions, and completion indicators for the learner."""
     # Ensure seed is loaded
     CatalogService.seed_catalog()
-    
+
     tracks = CatalogService.get_tracks()
     missions = CatalogService.get_all_missions()
     sessions = db.mission_sessions_user(user_id)
 
-    completed_ids = {s["mission_id"]: s["status"] for s in sessions if s.get("status") in ["passed", "mastered"]}
-    active_sessions = {s["mission_id"]: s["id"] for s in sessions if s.get("status") in ["started", "in_progress", "evaluating", "blocked"]}
+    completed_ids = {
+        s["mission_id"]: s["status"]
+        for s in sessions
+        if s.get("status") in ["passed", "mastered"]
+    }
+    active_sessions = {
+        s["mission_id"]: s["id"]
+        for s in sessions
+        if s.get("status") in ["started", "in_progress", "evaluating", "blocked"]
+    }
 
     missions_with_status = []
     for m in missions:
@@ -120,11 +130,7 @@ def get_catalog(user_id: str = Query(default="default_learner")):
         m_dict["active_session_id"] = active_sessions.get(m.id)
         missions_with_status.append(m_dict)
 
-    return {
-        "status": "success",
-        "tracks": tracks,
-        "missions": missions_with_status
-    }
+    return {"status": "success", "tracks": tracks, "missions": missions_with_status}
 
 
 @router.get("/skills")
@@ -137,25 +143,20 @@ def get_skills_graph(user_id: str = Query(default="default_learner")):
     skill_tree = []
     for sid, s in skills_map.items():
         s_dict = s.model_dump()
-        s_dict["mastery"] = mastery_by_id.get(sid, {
-            "mastery_score": 0.0,
-            "state": "UNKNOWN",
-            "dimensions": {}
-        })
+        s_dict["mastery"] = mastery_by_id.get(
+            sid, {"mastery_score": 0.0, "state": "UNKNOWN", "dimensions": {}}
+        )
         skill_tree.append(s_dict)
 
-    return {
-        "status": "success",
-        "skills": skill_tree
-    }
+    return {"status": "success", "skills": skill_tree}
 
 
 # ─── Mission Sessions & Sandbox ──────────────────────────────────────────────
 
+
 @router.post("/missions/{mission_id}/start")
 def start_mission_session(
-    mission_id: str,
-    user_id: str = Query(default="default_learner")
+    mission_id: str, user_id: str = Query(default="default_learner")
 ):
     """Start or resume a mission session with an isolated sandbox."""
     CatalogService.seed_catalog()
@@ -172,12 +173,12 @@ def get_session_details(session_id: str):
     session = SandboxService.get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found.")
-    
+
     mission = CatalogService.get_mission(session.mission_id)
     return {
         "status": "success",
         "session": session.model_dump(),
-        "mission": mission.model_dump() if mission else None
+        "mission": mission.model_dump() if mission else None,
     }
 
 
@@ -218,7 +219,7 @@ def submit_reflection(session_id: str, req: ReflectionRequest):
         res = AssessmentService.submit_reflection(
             session_id=session_id,
             reflection_text=req.reflection_text,
-            prompt=req.prompt or "¿Por qué diseñaste esta arquitectura?"
+            prompt=req.prompt or "¿Por qué diseñaste esta arquitectura?",
         )
         return res
     except Exception as e:
@@ -267,6 +268,7 @@ def clone_to_workspace(session_id: str):
 
 # ─── Failure Lab ─────────────────────────────────────────────────────────────
 
+
 @router.get("/failure-lab/scenarios")
 def list_failure_scenarios():
     """List all available chaos and error injection scenarios."""
@@ -286,6 +288,7 @@ def inject_failure(req: FailureInjectRequest):
 
 # ─── Architecture Drift ──────────────────────────────────────────────────────
 
+
 @router.post("/drift/analyze")
 def analyze_architecture_drift(req: DriftAnalysisRequest):
     """Diff FlowArchitect ArchitectureSpec vs BuilderFlow canvas."""
@@ -293,11 +296,12 @@ def analyze_architecture_drift(req: DriftAnalysisRequest):
     return {
         "status": "success",
         "findings": [f.model_dump() for f in findings],
-        "has_blockers": any(f.severity == "blocker" for f in findings)
+        "has_blockers": any(f.severity == "blocker" for f in findings),
     }
 
 
 # ─── Certifications & Portfolio ──────────────────────────────────────────────
+
 
 @router.get("/certifications")
 def get_certifications(user_id: str = Query(default="default_learner")):
@@ -309,14 +313,13 @@ def get_certifications(user_id: str = Query(default="default_learner")):
     return {
         "status": "success",
         "issued_certifications": [c.model_dump() for c in issued],
-        "eligibility_audits": audits
+        "eligibility_audits": audits,
     }
 
 
 @router.post("/certifications/issue")
 def issue_certification(
-    req: CertificationIssueRequest,
-    user_id: str = Query(default="default_learner")
+    req: CertificationIssueRequest, user_id: str = Query(default="default_learner")
 ):
     """Issue verifiable, evidence-backed certification."""
     try:
@@ -344,8 +347,7 @@ def get_portfolio(user_id: str = Query(default="default_learner")):
 
 @router.post("/portfolio/publish")
 def publish_portfolio_item(
-    req: PortfolioPublishRequest,
-    user_id: str = Query(default="default_learner")
+    req: PortfolioPublishRequest, user_id: str = Query(default="default_learner")
 ):
     """Publish an item to the learner's public portfolio."""
     item = PortfolioService.publish_item(user_id, req.model_dump())
@@ -354,17 +356,16 @@ def publish_portfolio_item(
 
 # ─── Event-Driven Learning & Copilot ─────────────────────────────────────────
 
+
 @router.post("/events")
 def record_learning_event(
-    req: LearningEventRequest,
-    user_id: str = Query(default="default_learner")
+    req: LearningEventRequest, user_id: str = Query(default="default_learner")
 ):
     """Ingest Builder/FlowArchitect/Runtime events and return recommendations."""
-    recommendation = LearningEventBridge.emit_event(user_id, req.event_type, req.payload)
-    return {
-        "status": "success",
-        "recommendation": recommendation
-    }
+    recommendation = LearningEventBridge.emit_event(
+        user_id, req.event_type, req.payload
+    )
+    return {"status": "success", "recommendation": recommendation}
 
 
 @router.post("/copilot/chat")
@@ -373,12 +374,13 @@ async def copilot_chat(req: CopilotChatRequest):
     res = await CopilotService.mentor_chat(
         session_id=req.session_id,
         user_message=req.message,
-        preferred_role=req.role or "mission_coach"
+        preferred_role=req.role or "mission_coach",
     )
     return {"status": "success", **res}
 
 
 # ─── High-Level REST API Aliases for Frontend Client (academyApi.ts) ──────────
+
 
 @router.get("/tracks")
 def get_tracks_list():
@@ -386,32 +388,42 @@ def get_tracks_list():
     raw_tracks = CatalogService.get_tracks()
     formatted = []
     for i, t in enumerate(raw_tracks):
-        formatted.append({
-            "id": t["id"],
-            "title": t.get("name", t.get("title", t["id"])),
-            "name": t.get("name", t.get("title", t["id"])),
-            "description": t.get("description", ""),
-            "category": t.get("target_level", "general"),
-            "order": i + 1,
-            "color": "#22C55E",
-            "mission_count": len(t.get("mission_ids", [])),
-            "mission_ids": t.get("mission_ids", [])
-        })
+        formatted.append(
+            {
+                "id": t["id"],
+                "title": t.get("name", t.get("title", t["id"])),
+                "name": t.get("name", t.get("title", t["id"])),
+                "description": t.get("description", ""),
+                "category": t.get("target_level", "general"),
+                "order": i + 1,
+                "color": "#22C55E",
+                "mission_count": len(t.get("mission_ids", [])),
+                "mission_ids": t.get("mission_ids", []),
+            }
+        )
     return formatted
 
 
 @router.get("/missions")
-def get_missions_list(track_id: Optional[str] = None):
+def get_missions_list(track_id: str | None = None):
     CatalogService.seed_catalog()
     all_m = CatalogService.get_all_missions()
     res = []
     for m in all_m:
         m_dict = m.model_dump()
         m_dict["track_id"] = m_dict.get("track", m_dict.get("track_id", ""))
-        m_dict["problem_statement"] = m_dict.get("brief") or m_dict.get("problem_statement", "")
-        m_dict["skills_trained"] = m_dict.get("skills") or m_dict.get("skills_developed") or []
+        m_dict["problem_statement"] = m_dict.get("brief") or m_dict.get(
+            "problem_statement", ""
+        )
+        m_dict["skills_trained"] = (
+            m_dict.get("skills") or m_dict.get("skills_developed") or []
+        )
         m_dict["estimated_minutes"] = 10 + (m_dict.get("stage", 1) * 5)
-        m_dict["success_criteria"] = [r.get("description") for r in m_dict.get("rubric", [])] if m_dict.get("rubric") else ["Completar topología requerida"]
+        m_dict["success_criteria"] = (
+            [r.get("description") for r in m_dict.get("rubric", [])]
+            if m_dict.get("rubric")
+            else ["Completar topología requerida"]
+        )
         if track_id:
             if m_dict.get("track_id") == track_id or m_dict.get("track") == track_id:
                 res.append(m_dict)
@@ -428,8 +440,12 @@ def get_mission_detail(mission_id: str):
         raise HTTPException(status_code=404, detail="Mission not found")
     m_dict = m.model_dump()
     m_dict["track_id"] = m_dict.get("track", m_dict.get("track_id", ""))
-    m_dict["problem_statement"] = m_dict.get("brief") or m_dict.get("problem_statement", "")
-    m_dict["skills_trained"] = m_dict.get("skills") or m_dict.get("skills_developed") or []
+    m_dict["problem_statement"] = m_dict.get("brief") or m_dict.get(
+        "problem_statement", ""
+    )
+    m_dict["skills_trained"] = (
+        m_dict.get("skills") or m_dict.get("skills_developed") or []
+    )
     m_dict["estimated_minutes"] = 10 + (m_dict.get("stage", 1) * 5)
     return m_dict
 
@@ -441,13 +457,15 @@ def get_skills_graph_api():
     nodes = []
     links = []
     for sid, s in skills.items():
-        nodes.append({
-            "id": s.id,
-            "name": s.name,
-            "category": s.category,
-            "prerequisites": s.prerequisites,
-            "depth": getattr(s, "depth", 0)
-        })
+        nodes.append(
+            {
+                "id": s.id,
+                "name": s.name,
+                "category": s.category,
+                "prerequisites": s.prerequisites,
+                "depth": getattr(s, "depth", 0),
+            }
+        )
         for pre in s.prerequisites:
             links.append({"source": pre, "target": s.id})
     return {"nodes": nodes, "links": links}
@@ -459,7 +477,7 @@ def get_profile_by_user_id(user_id: str):
 
 
 @router.put("/profile/{user_id}")
-def update_profile_by_user_id(user_id: str, data: Dict[str, Any] = Body(...)):
+def update_profile_by_user_id(user_id: str, data: dict[str, Any] = Body(...)):
     return db.learning_profile_update(user_id, data)
 
 
@@ -484,7 +502,7 @@ def get_sandbox_session_alias(session_id: str):
 
 
 @router.put("/sandbox/{session_id}/flow")
-def put_sandbox_flow_alias(session_id: str, flow: Dict[str, Any] = Body(...)):
+def put_sandbox_flow_alias(session_id: str, flow: dict[str, Any] = Body(...)):
     s = SandboxService.update_flow(session_id, flow)
     return s.model_dump()
 
@@ -495,24 +513,24 @@ def post_sandbox_validate_alias(session_id: str):
 
 
 @router.post("/sandbox/{session_id}/simulate")
-def post_sandbox_simulate_alias(session_id: str, body: Dict[str, Any] = Body(...)):
+def post_sandbox_simulate_alias(session_id: str, body: dict[str, Any] = Body(...)):
     payload = body.get("input_payload", {})
     return SandboxService.run_simulation(session_id, payload)
 
 
 @router.post("/sandbox/{session_id}/hint")
-def post_sandbox_hint_alias(session_id: str, body: Dict[str, Any] = Body(...)):
+def post_sandbox_hint_alias(session_id: str, body: dict[str, Any] = Body(...)):
     lvl = body.get("level", 1)
     hint = CopilotService.get_next_hint(session_id)
     return {
         "level": lvl,
         "hint_text": hint.get("text", "Revisa tus conexiones hacia el nodo End."),
-        "penalty_warning": "Pistas de nivel 3 o superior reducen la puntuación de independencia."
+        "penalty_warning": "Pistas de nivel 3 o superior reducen la puntuación de independencia.",
     }
 
 
 @router.post("/sandbox/{session_id}/copilot")
-async def post_sandbox_copilot_alias(session_id: str, body: Dict[str, Any] = Body(...)):
+async def post_sandbox_copilot_alias(session_id: str, body: dict[str, Any] = Body(...)):
     query = body.get("user_query", "")
     role = body.get("pedagogical_role", "mission_coach")
     res = await CopilotService.mentor_chat(session_id, query, role)
@@ -521,18 +539,18 @@ async def post_sandbox_copilot_alias(session_id: str, body: Dict[str, Any] = Bod
         "message": res.get("reply", ""),
         "hint_level": 1,
         "pedagogical_mode": "socratic",
-        "actionable_step": "Inspecciona los hallazgos en el panel de validación."
+        "actionable_step": "Inspecciona los hallazgos en el panel de validación.",
     }
 
 
 @router.post("/sandbox/{session_id}/chaos/inject")
-def post_sandbox_chaos_alias(session_id: str, body: Dict[str, Any] = Body(...)):
+def post_sandbox_chaos_alias(session_id: str, body: dict[str, Any] = Body(...)):
     sc_id = body.get("scenario_id", "fail_schema_mismatch")
     return FailureLabService.inject_scenario(session_id, sc_id)
 
 
 @router.post("/sandbox/{session_id}/reflection")
-def post_sandbox_reflection_alias(session_id: str, body: Dict[str, Any] = Body(...)):
+def post_sandbox_reflection_alias(session_id: str, body: dict[str, Any] = Body(...)):
     text = body.get("reflection_text", "")
     prompt = body.get("prompt", "¿Por qué diseñaste esta arquitectura?")
     return AssessmentService.submit_reflection(session_id, text, prompt)
@@ -549,7 +567,7 @@ def post_sandbox_clone_alias(session_id: str):
 
 
 @router.post("/drift/compare")
-def post_drift_compare_alias(body: Dict[str, Any] = Body(...)):
+def post_drift_compare_alias(body: dict[str, Any] = Body(...)):
     spec = body.get("spec", {})
     builder = body.get("builder_flow", {})
     findings = DriftEngine.analyze_drift(spec, builder)
@@ -557,7 +575,7 @@ def post_drift_compare_alias(body: Dict[str, Any] = Body(...)):
     return {
         "is_compliant": len(blockers) == 0,
         "total_drifts": len(findings),
-        "drifts": [f.model_dump() for f in findings]
+        "drifts": [f.model_dump() for f in findings],
     }
 
 
@@ -588,6 +606,7 @@ def post_portfolio_compile_alias(user_id: str):
 
 # ─── Projects Subsystem ──────────────────────────────────────────────────────
 
+
 @router.get("/projects")
 def list_projects(user_id: str = Query(default="default_learner")):
     projects = ProjectService.list_user_projects(user_id)
@@ -596,8 +615,7 @@ def list_projects(user_id: str = Query(default="default_learner")):
 
 @router.post("/projects")
 def create_project(
-    user_id: str = Query(default="default_learner"),
-    body: Dict[str, Any] = Body(...)
+    user_id: str = Query(default="default_learner"), body: dict[str, Any] = Body(...)
 ):
     title = body.get("title", "Nuevo Proyecto de Aprendizaje")
     spec = body.get("spec", {})
@@ -624,6 +642,7 @@ def complete_project_milestone(project_id: str, milestone_id: str):
 
 # ─── Capstone Subsystem ──────────────────────────────────────────────────────
 
+
 @router.get("/capstone/gap")
 def get_capstone_gap_report():
     """Formally documents CURRICULUM_SOURCE_GAP-CAPSTONE-02 per industrial contract."""
@@ -632,14 +651,15 @@ def get_capstone_gap_report():
 
 @router.post("/capstone/submit")
 def submit_capstone(
-    user_id: str = Query(default="default_learner"),
-    body: Dict[str, Any] = Body(...)
+    user_id: str = Query(default="default_learner"), body: dict[str, Any] = Body(...)
 ):
     capstone_id = body.get("capstone_id", "mission_18")
     flow = body.get("flow", {})
     spec = body.get("spec", {})
     defense_answers = body.get("defense_answers")
-    res = CapstoneService.submit_and_evaluate(user_id, capstone_id, flow, spec, defense_answers)
+    res = CapstoneService.submit_and_evaluate(
+        user_id, capstone_id, flow, spec, defense_answers
+    )
     return {"status": "success", "evaluation": res}
 
 
@@ -653,10 +673,7 @@ def get_capstone_defense(submission_id: str):
 
 
 @router.post("/capstone/{submission_id}/defense")
-def submit_capstone_defense(
-    submission_id: str,
-    body: Dict[str, Any] = Body(...)
-):
+def submit_capstone_defense(submission_id: str, body: dict[str, Any] = Body(...)):
     data = db.capstone_get(submission_id)
     if not data:
         raise HTTPException(status_code=404, detail="Submission not found")
@@ -666,12 +683,13 @@ def submit_capstone_defense(
         capstone_id=data["capstone_id"],
         flow=data["flow"],
         spec=data["spec"],
-        defense_answers=answers
+        defense_answers=answers,
     )
     return {"status": "success", "evaluation": res}
 
 
 # ─── Transfer Challenges Subsystem ───────────────────────────────────────────
+
 
 @router.get("/transfer/challenges")
 def list_transfer_challenges():
@@ -682,7 +700,7 @@ def list_transfer_challenges():
 def evaluate_transfer_challenge(
     challenge_id: str,
     user_id: str = Query(default="default_learner"),
-    body: Dict[str, Any] = Body(...)
+    body: dict[str, Any] = Body(...),
 ):
     flow = body.get("flow", {})
     try:
@@ -694,6 +712,7 @@ def evaluate_transfer_challenge(
 
 # ─── Cryptographic Evidence Chain Audit ──────────────────────────────────────
 
+
 @router.get("/evidence/chain/verify")
 def verify_learner_evidence_chain(user_id: str = Query(default="default_learner")):
     audit = EvidenceService.verify_learner_chain(user_id)
@@ -702,18 +721,24 @@ def verify_learner_evidence_chain(user_id: str = Query(default="default_learner"
 
 # ─── TTS & Voice Models Integration ──────────────────────────────────────────
 
+
 @router.get("/tts/status")
 def get_tts_status():
     """Reporta disponibilidad del motor de voz local Kokoro-TTS / Piper ES."""
     import os
+
     kokoro_dir = r"C:\antigravityAS\Modelos -ai-brains\kokoro-multi-lang-v1_1"
     has_kokoro = os.path.exists(kokoro_dir)
     piper_dir = r"C:\antigravityAS\Modelos -ai-brains\vits-piper-es_ES-davefx-medium"
     has_piper = os.path.exists(piper_dir)
-    
+
     return {
         "status": "ready",
-        "provider": "kokoro-onnx" if has_kokoro else ("piper-onnx" if has_piper else "web-speech-api"),
+        "provider": (
+            "kokoro-onnx"
+            if has_kokoro
+            else ("piper-onnx" if has_piper else "web-speech-api")
+        ),
         "languages": ["es-ES", "es-MX", "es-AR"],
         "default_language": "es-ES",
         "kokoro_available": has_kokoro,
@@ -721,24 +746,30 @@ def get_tts_status():
         "model_path": kokoro_dir if has_kokoro else (piper_dir if has_piper else None),
         "voices": [
             {"id": "es_ES_neural", "name": "Español España (Neural)", "lang": "es-ES"},
-            {"id": "es_MX_natural", "name": "Español México (Natural)", "lang": "es-MX"},
-            {"id": "es_AR_clear", "name": "Español Argentina (Clara)", "lang": "es-AR"}
-        ]
+            {
+                "id": "es_MX_natural",
+                "name": "Español México (Natural)",
+                "lang": "es-MX",
+            },
+            {"id": "es_AR_clear", "name": "Español Argentina (Clara)", "lang": "es-AR"},
+        ],
     }
 
 
 @router.post("/tts/script")
-def generate_tts_skill_script(body: Dict[str, Any] = Body(...)):
+def generate_tts_skill_script(body: dict[str, Any] = Body(...)):
     """Genera guion pedagógico en español estructurado para locución de habilidades."""
     skill_id = body.get("skill_id", "")
     skills = CatalogService.get_skills()
     skill = skills.get(skill_id)
     if not skill:
-        raise HTTPException(status_code=404, detail=f"Skill '{skill_id}' no encontrada.")
-    
+        raise HTTPException(
+            status_code=404, detail=f"Skill '{skill_id}' no encontrada."
+        )
+
     score = body.get("score", 0)
     state = body.get("state", "UNKNOWN")
-    
+
     track_names = {
         "foundation": "Fundamentos del Grafo",
         "builder": "Constructor de Agentes y Lógica",
@@ -747,21 +778,22 @@ def generate_tts_skill_script(body: Dict[str, Any] = Body(...)):
         "expert": "Orquestación Experta Multiagente",
     }
     track_label = track_names.get(skill.category.lower(), skill.category)
-    
+
     script = (
         f"Habilidad: {skill.name}. Ruta formativa: {track_label}. {skill.description} "
-        + (f"Prerrequisitos requeridos: {', '.join(skill.prerequisites)}. " if skill.prerequisites else "Habilidad fundacional sin prerrequisitos previos. ")
+        + (
+            f"Prerrequisitos requeridos: {', '.join(skill.prerequisites)}. "
+            if skill.prerequisites
+            else "Habilidad fundacional sin prerrequisitos previos. "
+        )
         + f"Tu estado de maestría actual es {state}, con un {score} por ciento evaluado en 8 dimensiones."
     )
-    
+
     return {
         "status": "success",
         "skill_id": skill_id,
         "skill_name": skill.name,
         "track": track_label,
         "script": script,
-        "prerequisites": skill.prerequisites
+        "prerequisites": skill.prerequisites,
     }
-
-
-

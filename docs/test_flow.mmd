@@ -1,0 +1,12 @@
+flowchart TD
+    subgraph Subagents
+        SA["Tester Sub‑agent"]
+        SB["CI Sub‑agent"]
+        SC["Git Sub‑agent"]
+        SD["Deploy Sub‑agent"]
+    end
+    A["Create Test"] --> B["Run pytest"] --> C["Commit changes"] --> D["Push to remote"]
+    SA --> A
+    SB --> B
+    SC --> C
+    SD --> D

@@ -5,11 +5,10 @@ import threading
 import time
 import uuid
 import zipfile
-from dataclasses import dataclass
 from html import unescape
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import httpx
 
@@ -44,7 +43,7 @@ _SYNC_THREAD_STARTED = False
 class _HTMLTextExtractor(HTMLParser):
     def __init__(self):
         super().__init__()
-        self.parts: List[str] = []
+        self.parts: list[str] = []
 
     def handle_data(self, data: str) -> None:
         text = data.strip()
@@ -65,7 +64,9 @@ def _read_json(path: Path, default: Any) -> Any:
 
 
 def _write_json(path: Path, data: Any) -> None:
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
 
 
 def _slugify(value: str) -> str:
@@ -81,11 +82,11 @@ def _clean_text(text: str) -> str:
     return text.strip()
 
 
-def _chunk_text(text: str, chunk_size: int = 1600, overlap: int = 220) -> List[str]:
+def _chunk_text(text: str, chunk_size: int = 1600, overlap: int = 220) -> list[str]:
     cleaned = _clean_text(text)
     if not cleaned:
         return []
-    chunks: List[str] = []
+    chunks: list[str] = []
     start = 0
     while start < len(cleaned):
         end = min(len(cleaned), start + chunk_size)
@@ -101,7 +102,7 @@ def _chunk_text(text: str, chunk_size: int = 1600, overlap: int = 220) -> List[s
 def _extract_pdf_text(file_path: Path) -> str:
     if not PyPDF2:
         raise RuntimeError("PyPDF2 no está instalado para procesar PDF.")
-    parts: List[str] = []
+    parts: list[str] = []
     with file_path.open("rb") as fh:
         reader = PyPDF2.PdfReader(fh)
         for page in reader.pages:
@@ -110,7 +111,7 @@ def _extract_pdf_text(file_path: Path) -> str:
 
 
 def _extract_epub_text(file_path: Path) -> str:
-    parts: List[str] = []
+    parts: list[str] = []
     with zipfile.ZipFile(file_path, "r") as zf:
         for name in zf.namelist():
             if name.lower().endswith((".xhtml", ".html", ".htm", ".xml")):
@@ -126,7 +127,7 @@ def _extract_web_text(url_or_query: str) -> str:
     candidate = (url_or_query or "").strip()
     if not candidate:
         raise RuntimeError("No se recibió URL o query web.")
-    if re.match(r"^https?://", candidate, flags=re.I):
+    if re.match(r"^https?://", candidate, flags=re.IGNORECASE):
         resp = httpx.get(candidate, timeout=30.0, follow_redirects=True)
         resp.raise_for_status()
         parser = _HTMLTextExtractor()
@@ -139,7 +140,9 @@ def _extract_web_text(url_or_query: str) -> str:
         results = list(ddgs.text(candidate, max_results=5))
     lines = []
     for idx, item in enumerate(results, start=1):
-        lines.append(f"{idx}. {item.get('title','Sin título')}\nURL: {item.get('href','')}\nResumen: {item.get('body','')}")
+        lines.append(
+            f"{idx}. {item.get('title','Sin título')}\nURL: {item.get('href','')}\nResumen: {item.get('body','')}"
+        )
     return _clean_text("\n\n".join(lines))
 
 
@@ -162,9 +165,18 @@ def extract_text_from_source(source_type: str, source_value: str) -> str:
     raise RuntimeError(f"Formato no soportado: {source_type or ext}")
 
 
-def _build_knowledge_card(name: str, source_type: str, source_value: str, namespace: str, strategy: str, text: str) -> Dict[str, Any]:
+def _build_knowledge_card(
+    name: str,
+    source_type: str,
+    source_value: str,
+    namespace: str,
+    strategy: str,
+    text: str,
+) -> dict[str, Any]:
     chunks = _chunk_text(text)
-    preview = "\n".join([line for line in text.splitlines() if line.strip()][:10])[:1400]
+    preview = "\n".join([line for line in text.splitlines() if line.strip()][:10])[
+        :1400
+    ]
     summary = chunks[0][:900] if chunks else text[:900]
     item_id = _slugify(f"{namespace}-{name}-{source_value}")
     content = (
@@ -192,27 +204,27 @@ def _build_knowledge_card(name: str, source_type: str, source_value: str, namesp
     }
 
 
-def _load_library_items() -> List[Dict[str, Any]]:
+def _load_library_items() -> list[dict[str, Any]]:
     return _read_json(LIBRARY_FILE, [])
 
 
-def _save_library_items(items: List[Dict[str, Any]]) -> None:
+def _save_library_items(items: list[dict[str, Any]]) -> None:
     _write_json(LIBRARY_FILE, items)
 
 
-def list_library_items() -> List[Dict[str, Any]]:
+def list_library_items() -> list[dict[str, Any]]:
     return _load_library_items()
 
 
-def list_sources() -> List[Dict[str, Any]]:
+def list_sources() -> list[dict[str, Any]]:
     return _read_json(SOURCES_FILE, [])
 
 
-def list_jobs() -> List[Dict[str, Any]]:
+def list_jobs() -> list[dict[str, Any]]:
     return _read_json(JOBS_FILE, [])
 
 
-def _save_jobs(jobs: List[Dict[str, Any]]) -> None:
+def _save_jobs(jobs: list[dict[str, Any]]) -> None:
     _write_json(JOBS_FILE, jobs[:MAX_JOB_HISTORY])
 
 
@@ -226,7 +238,7 @@ def _update_job(job_id: str, **fields: Any) -> None:
         _save_jobs(jobs)
 
 
-def _upsert_library_item(item: Dict[str, Any]) -> None:
+def _upsert_library_item(item: dict[str, Any]) -> None:
     existing = None
     with _LOCK:
         items = _load_library_items()
@@ -238,27 +250,47 @@ def _upsert_library_item(item: Dict[str, Any]) -> None:
         _save_library_items(items)
     chunk_docs = item.get("chunks", [])
     ids = [f"atlas_auto_{item['id']}_{i}" for i in range(len(chunk_docs))]
-    metas = [{"source": "atlas_auto", "title": item["title"], "category": item["category"], "namespace": item["namespace"], "source_type": item["source_type"]} for _ in chunk_docs]
+    metas = [
+        {
+            "source": "atlas_auto",
+            "title": item["title"],
+            "category": item["category"],
+            "namespace": item["namespace"],
+            "source_type": item["source_type"],
+        }
+        for _ in chunk_docs
+    ]
     if ids:
-        vector_db.atlas_collection.upsert(ids=ids, documents=chunk_docs, metadatas=metas)
+        vector_db.atlas_collection.upsert(
+            ids=ids, documents=chunk_docs, metadatas=metas
+        )
     previous_count = int((existing or {}).get("chunk_count") or 0)
     if previous_count > len(chunk_docs):
-        stale_ids = [f"atlas_auto_{item['id']}_{i}" for i in range(len(chunk_docs), previous_count)]
+        stale_ids = [
+            f"atlas_auto_{item['id']}_{i}"
+            for i in range(len(chunk_docs), previous_count)
+        ]
         if stale_ids:
             vector_db.atlas_collection.delete(ids=stale_ids)
 
 
-def register_source(payload: Dict[str, Any]) -> Dict[str, Any]:
+def register_source(payload: dict[str, Any]) -> dict[str, Any]:
     source = {
-        "id": payload.get("id") or _slugify(f"{payload.get('namespace','atlas')}:{payload.get('name') or payload.get('source_value') or uuid.uuid4().hex[:8]}"),
-        "name": payload.get("name") or Path(payload.get("source_value", "source")).stem or "Atlas Source",
+        "id": payload.get("id")
+        or _slugify(
+            f"{payload.get('namespace','atlas')}:{payload.get('name') or payload.get('source_value') or uuid.uuid4().hex[:8]}"
+        ),
+        "name": payload.get("name")
+        or Path(payload.get("source_value", "source")).stem
+        or "Atlas Source",
         "source_type": payload["source_type"],
         "source_value": payload["source_value"],
         "namespace": payload.get("namespace") or "atlas-forge",
         "strategy": payload.get("strategy") or "rag",
         "active": payload.get("active", True),
         "auto_sync": payload.get("auto_sync", True),
-        "created_at": payload.get("created_at") or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "created_at": payload.get("created_at")
+        or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "last_synced_at": payload.get("last_synced_at"),
         "last_error": payload.get("last_error"),
     }
@@ -266,7 +298,10 @@ def register_source(payload: Dict[str, Any]) -> Dict[str, Any]:
         sources = list_sources()
         updated = False
         for idx, existing in enumerate(sources):
-            if existing.get("id") == source["id"] or (existing.get("source_value") == source["source_value"] and existing.get("namespace") == source["namespace"]):
+            if existing.get("id") == source["id"] or (
+                existing.get("source_value") == source["source_value"]
+                and existing.get("namespace") == source["namespace"]
+            ):
                 source["id"] = existing["id"]
                 source["created_at"] = existing.get("created_at", source["created_at"])
                 sources[idx] = {**existing, **source}
@@ -278,7 +313,7 @@ def register_source(payload: Dict[str, Any]) -> Dict[str, Any]:
     return source
 
 
-def create_ingestion_job(source: Dict[str, Any]) -> Dict[str, Any]:
+def create_ingestion_job(source: dict[str, Any]) -> dict[str, Any]:
     job = {
         "id": uuid.uuid4().hex,
         "name": source.get("name") or "Atlas Job",
@@ -296,12 +331,18 @@ def create_ingestion_job(source: Dict[str, Any]) -> Dict[str, Any]:
     return job
 
 
-def run_ingestion_job(job_id: str, source: Dict[str, Any]) -> None:
-    _update_job(job_id, status="running", updated_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+def run_ingestion_job(job_id: str, source: dict[str, Any]) -> None:
+    _update_job(
+        job_id,
+        status="running",
+        updated_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    )
     try:
         text = extract_text_from_source(source["source_type"], source["source_value"])
         if len(text.strip()) < 40:
-            raise RuntimeError("El contenido extraído es demasiado corto para crear conocimiento útil.")
+            raise RuntimeError(
+                "El contenido extraído es demasiado corto para crear conocimiento útil."
+            )
         item = _build_knowledge_card(
             source.get("name") or "Atlas Source",
             source["source_type"],
@@ -311,31 +352,52 @@ def run_ingestion_job(job_id: str, source: Dict[str, Any]) -> None:
             text,
         )
         _upsert_library_item(item)
-        source = register_source({**source, "last_synced_at": item["updated_at"], "last_error": None})
-        _update_job(job_id, status="done", updated_at=item["updated_at"], item_id=item["id"], title=item["title"], raw_length=item["raw_length"], chunk_count=item["chunk_count"])
+        source = register_source(
+            {**source, "last_synced_at": item["updated_at"], "last_error": None}
+        )
+        _update_job(
+            job_id,
+            status="done",
+            updated_at=item["updated_at"],
+            item_id=item["id"],
+            title=item["title"],
+            raw_length=item["raw_length"],
+            chunk_count=item["chunk_count"],
+        )
     except Exception as exc:
         register_source({**source, "last_error": str(exc)})
-        _update_job(job_id, status="error", updated_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), error=str(exc))
+        _update_job(
+            job_id,
+            status="error",
+            updated_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            error=str(exc),
+        )
 
 
-def sync_active_sources() -> List[Dict[str, Any]]:
+def sync_active_sources() -> list[dict[str, Any]]:
     triggered = []
     active_jobs = list_jobs()
     for source in list_sources():
         if not source.get("active") or not source.get("auto_sync"):
             continue
         source_id = source.get("id")
-        if any(job.get("source_id") == source_id and job.get("status") in {"queued", "running"} for job in active_jobs):
+        if any(
+            job.get("source_id") == source_id
+            and job.get("status") in {"queued", "running"}
+            for job in active_jobs
+        ):
             continue
         job = create_ingestion_job(source)
         triggered.append(job)
         active_jobs.insert(0, job)
-        thread = threading.Thread(target=run_ingestion_job, args=(job["id"], source), daemon=True)
+        thread = threading.Thread(
+            target=run_ingestion_job, args=(job["id"], source), daemon=True
+        )
         thread.start()
     return triggered
 
 
-def get_status() -> Dict[str, Any]:
+def get_status() -> dict[str, Any]:
     items = _load_library_items()
     jobs = list_jobs()
     sources = list_sources()
@@ -355,7 +417,13 @@ def get_status() -> Dict[str, Any]:
 
 def detect_source_type(filename: str) -> str:
     ext = Path(filename).suffix.lower()
-    return {".pdf": "pdf", ".epub": "epub", ".txt": "txt", ".md": "md", ".json": "json"}.get(ext, "txt")
+    return {
+        ".pdf": "pdf",
+        ".epub": "epub",
+        ".txt": "txt",
+        ".md": "md",
+        ".json": "json",
+    }.get(ext, "txt")
 
 
 def save_upload(filename: str, content: bytes) -> Path:

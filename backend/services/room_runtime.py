@@ -2,17 +2,19 @@ import json
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from backend.model_defaults import DEFAULT_LOCAL_MODEL
 from backend.services.agent_factory import AgentFactory
 
 ROOM_RUNS_DIR = Path(__file__).resolve().parent.parent / "registries" / "room_runs"
-CHARACTER_DIR = Path(__file__).resolve().parent.parent / "registries" / "character_profiles"
+CHARACTER_DIR = (
+    Path(__file__).resolve().parent.parent / "registries" / "character_profiles"
+)
 ROOM_RUNS_DIR.mkdir(parents=True, exist_ok=True)
 CHARACTER_DIR.mkdir(parents=True, exist_ok=True)
 
-ROOM_PRESETS: List[Dict[str, Any]] = [
+ROOM_PRESETS: list[dict[str, Any]] = [
     {
         "id": "podcast-product-war-room",
         "name": "Podcast Product War Room",
@@ -23,21 +25,21 @@ ROOM_PRESETS: List[Dict[str, Any]] = [
                 "name": "Astra",
                 "role": "Host estratega",
                 "voice": "precisa",
-                "instructions": "Eres Astra, host estratega de producto. Moderas una sala tipo podcast, sintetizas tensión útil y exiges claridad de producto y diferenciación real. Habla en español técnico, conciso y con cadencia humana."
+                "instructions": "Eres Astra, host estratega de producto. Moderas una sala tipo podcast, sintetizas tensión útil y exiges claridad de producto y diferenciación real. Habla en español técnico, conciso y con cadencia humana.",
             },
             {
                 "id": "builder-operator",
                 "name": "Forge",
                 "role": "Builder-operador",
                 "voice": "operativa",
-                "instructions": "Eres Forge, operador constructor. Bajas ideas a runtime, entregables, paneles, flujos y criterios verificables. Habla como alguien que realmente va a implementarlo."
+                "instructions": "Eres Forge, operador constructor. Bajas ideas a runtime, entregables, paneles, flujos y criterios verificables. Habla como alguien que realmente va a implementarlo.",
             },
             {
                 "id": "creator-storyteller",
                 "name": "Pulse",
                 "role": "Creador-narrador",
                 "voice": "energética",
-                "instructions": "Eres Pulse, creador y storyteller. Transformas decisiones en narrativa, hooks, experiencia viva y contenido usable sin perder precisión."
+                "instructions": "Eres Pulse, creador y storyteller. Transformas decisiones en narrativa, hooks, experiencia viva y contenido usable sin perder precisión.",
             },
         ],
     },
@@ -51,21 +53,21 @@ ROOM_PRESETS: List[Dict[str, Any]] = [
                 "name": "Myra",
                 "role": "Persona architect",
                 "voice": "curada",
-                "instructions": "Eres Myra, arquitecta de personajes. Diseñas identidad, límites, tono, motivaciones y consistencia conductual. Cero personaje hueco."
+                "instructions": "Eres Myra, arquitecta de personajes. Diseñas identidad, límites, tono, motivaciones y consistencia conductual. Cero personaje hueco.",
             },
             {
                 "id": "dialogue-director",
                 "name": "Vox",
                 "role": "Dialogue director",
                 "voice": "expresiva",
-                "instructions": "Eres Vox, director de diálogo. Vuelves a cada personaje expresivo, útil, reconocible y capaz de sostener una conversación real."
+                "instructions": "Eres Vox, director de diálogo. Vuelves a cada personaje expresivo, útil, reconocible y capaz de sostener una conversación real.",
             },
             {
                 "id": "governance-editor",
                 "name": "Sigma",
                 "role": "Governance editor",
                 "voice": "fría",
-                "instructions": "Eres Sigma, editor de gobernanza. Eliminas incoherencia, exceso y ambigüedad. Dejas perfiles robustos y operables."
+                "instructions": "Eres Sigma, editor de gobernanza. Eliminas incoherencia, exceso y ambigüedad. Dejas perfiles robustos y operables.",
             },
         ],
     },
@@ -81,7 +83,7 @@ def _slugify(value: str) -> str:
     return re.sub(r"-+", "-", value).strip("-") or "item"
 
 
-def list_room_presets() -> List[Dict[str, Any]]:
+def list_room_presets() -> list[dict[str, Any]]:
     return ROOM_PRESETS
 
 
@@ -93,35 +95,40 @@ def _character_path(character_id: str) -> Path:
     return CHARACTER_DIR / f"{character_id}.json"
 
 
-def list_room_runs() -> List[Dict[str, Any]]:
-    runs: List[Dict[str, Any]] = []
+def list_room_runs() -> list[dict[str, Any]]:
+    runs: list[dict[str, Any]] = []
     for path in sorted(ROOM_RUNS_DIR.glob("*.json"), reverse=True):
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
-            runs.append({
-                "id": payload.get("id"),
-                "preset_id": payload.get("preset_id"),
-                "preset_name": payload.get("preset_name"),
-                "objective": payload.get("objective"),
-                "status": payload.get("status"),
-                "updated_at": payload.get("updated_at"),
-                "turns": payload.get("turns"),
-                "participants": [participant.get("name") for participant in payload.get("participants", [])],
-            })
+            runs.append(
+                {
+                    "id": payload.get("id"),
+                    "preset_id": payload.get("preset_id"),
+                    "preset_name": payload.get("preset_name"),
+                    "objective": payload.get("objective"),
+                    "status": payload.get("status"),
+                    "updated_at": payload.get("updated_at"),
+                    "turns": payload.get("turns"),
+                    "participants": [
+                        participant.get("name")
+                        for participant in payload.get("participants", [])
+                    ],
+                }
+            )
         except Exception:
             continue
     return runs[:20]
 
 
-def get_room_run(run_id: str) -> Optional[Dict[str, Any]]:
+def get_room_run(run_id: str) -> dict[str, Any] | None:
     path = _room_run_path(run_id)
     if not path.exists():
         return None
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def list_character_profiles() -> List[Dict[str, Any]]:
-    profiles: List[Dict[str, Any]] = []
+def list_character_profiles() -> list[dict[str, Any]]:
+    profiles: list[dict[str, Any]] = []
     for path in sorted(CHARACTER_DIR.glob("*.json"), reverse=True):
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
@@ -131,7 +138,9 @@ def list_character_profiles() -> List[Dict[str, Any]]:
     return profiles[:20]
 
 
-async def clone_character(name: str, source_prompt: str, archetype: str = "") -> Dict[str, Any]:
+async def clone_character(
+    name: str, source_prompt: str, archetype: str = ""
+) -> dict[str, Any]:
     objective = source_prompt.strip()
     instructions = (
         "Eres un diseñador senior de personajes conversacionales para sistemas locales. "
@@ -163,7 +172,10 @@ async def clone_character(name: str, source_prompt: str, archetype: str = "") ->
             "essence": archetype or "character",
             "tone": "conversacional",
             "motivations": [objective[:160]],
-            "guardrails": ["No contradecir su identidad base", "No rellenar con frases vacías"],
+            "guardrails": [
+                "No contradecir su identidad base",
+                "No rellenar con frases vacías",
+            ],
             "speaking_style": "directo y humano",
             "system_prompt": cleaned,
         }
@@ -175,7 +187,9 @@ async def clone_character(name: str, source_prompt: str, archetype: str = "") ->
         "archetype": archetype,
         **profile,
     }
-    _character_path(character_id).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    _character_path(character_id).write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     return payload
 
 
@@ -183,15 +197,15 @@ async def simulate_room(
     preset_id: str,
     objective: str,
     turns: int = 2,
-    model: Optional[str] = None,
+    model: str | None = None,
     broadcast=None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     preset = next((item for item in ROOM_PRESETS if item["id"] == preset_id), None)
     if not preset:
         raise KeyError(preset_id)
 
     run_id = f"room-{preset_id}-{int(datetime.utcnow().timestamp())}"
-    transcript: List[Dict[str, Any]] = []
+    transcript: list[dict[str, Any]] = []
     participants = preset.get("participants", [])
     resolved_model = model or f"ollama/{DEFAULT_LOCAL_MODEL}"
 
@@ -209,22 +223,28 @@ async def simulate_room(
         "updated_at": _utc_now(),
         "model": resolved_model,
     }
-    _room_run_path(run_id).write_text(json.dumps(run, ensure_ascii=False, indent=2), encoding="utf-8")
+    _room_run_path(run_id).write_text(
+        json.dumps(run, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
     room_brief = preset.get("description", "")
     for turn_index in range(1, turns + 1):
         for participant in participants:
             if broadcast:
-                await broadcast({
-                    "type": "ROOM_RUN_EVENT",
-                    "payload": {
-                        "run_id": run_id,
-                        "status": "running",
-                        "speaker": participant.get("name"),
-                        "turn": turn_index,
-                    },
-                })
-            history = "\n".join([f"{entry['speaker']}: {entry['message']}" for entry in transcript[-8:]])
+                await broadcast(
+                    {
+                        "type": "ROOM_RUN_EVENT",
+                        "payload": {
+                            "run_id": run_id,
+                            "status": "running",
+                            "speaker": participant.get("name"),
+                            "turn": turn_index,
+                        },
+                    }
+                )
+            history = "\n".join(
+                [f"{entry['speaker']}: {entry['message']}" for entry in transcript[-8:]]
+            )
             prompt = (
                 f"OBJETIVO DE LA SALA: {objective}\n"
                 f"PRESET: {preset.get('name')}\n"
@@ -240,17 +260,23 @@ async def simulate_room(
                 model=resolved_model,
                 use_tools=False,
             )
-            transcript.append({
-                "turn": turn_index,
-                "speaker": participant.get("name"),
-                "role": participant.get("role"),
-                "message": message.strip(),
-            })
+            transcript.append(
+                {
+                    "turn": turn_index,
+                    "speaker": participant.get("name"),
+                    "role": participant.get("role"),
+                    "message": message.strip(),
+                }
+            )
             run["updated_at"] = _utc_now()
             run["transcript"] = transcript
-            _room_run_path(run_id).write_text(json.dumps(run, ensure_ascii=False, indent=2), encoding="utf-8")
+            _room_run_path(run_id).write_text(
+                json.dumps(run, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
 
-    transcript_md = "\n\n".join([f"### {entry['speaker']}\n{entry['message']}" for entry in transcript])
+    transcript_md = "\n\n".join(
+        [f"### {entry['speaker']}\n{entry['message']}" for entry in transcript]
+    )
     run["status"] = "completed"
     run["updated_at"] = _utc_now()
     run["artifacts"] = [
@@ -259,13 +285,17 @@ async def simulate_room(
             "content": f"# {preset.get('name')}\n\n**Objetivo:** {objective}\n\n{transcript_md}",
         }
     ]
-    _room_run_path(run_id).write_text(json.dumps(run, ensure_ascii=False, indent=2), encoding="utf-8")
+    _room_run_path(run_id).write_text(
+        json.dumps(run, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     if broadcast:
-        await broadcast({
-            "type": "ROOM_RUN_EVENT",
-            "payload": {
-                "run_id": run_id,
-                "status": "completed",
-            },
-        })
+        await broadcast(
+            {
+                "type": "ROOM_RUN_EVENT",
+                "payload": {
+                    "run_id": run_id,
+                    "status": "completed",
+                },
+            }
+        )
     return run

@@ -1,19 +1,21 @@
 import time
-from typing import Dict, Any, List, Optional
+from typing import Any
+
 from pydantic import BaseModel
 
-import db
-from backend.services.academy.runtime_engine import RuntimeLearningEngine
 from backend.services.academy.evidence_service import EvidenceService
 from backend.services.academy.mastery_engine import MasteryEngine
+from backend.services.academy.runtime_engine import RuntimeLearningEngine
 
 
 class TransferTestCase(BaseModel):
     id: str
     name: str
     description: str
-    input_payload: Dict[str, Any]
-    assertions: Dict[str, Any]  # e.g., {"classification": "auto_collision", "min_amount": 1000.0}
+    input_payload: dict[str, Any]
+    assertions: dict[
+        str, Any
+    ]  # e.g., {"classification": "auto_collision", "min_amount": 1000.0}
 
 
 class TransferChallenge(BaseModel):
@@ -24,7 +26,7 @@ class TransferChallenge(BaseModel):
     domain_from: str
     domain_to: str
     description: str
-    test_cases: List[TransferTestCase]
+    test_cases: list[TransferTestCase]
 
 
 class TransferService:
@@ -33,7 +35,7 @@ class TransferService:
     by executing workflows against unfamiliar secondary business domain fixtures.
     """
 
-    CHALLENGES: Dict[str, TransferChallenge] = {
+    CHALLENGES: dict[str, TransferChallenge] = {
         "transfer_triage_insurance": TransferChallenge(
             id="transfer_triage_insurance",
             title="Transferencia de Dominio: De Soporte Técnico a Reclamo de Seguros",
@@ -51,13 +53,13 @@ class TransferService:
                         "message": "Solicitud de cobro por choque lateral contra columna. Monto estimado USD 4,500.00.",
                         "amount": "USD 4,500.00",
                         "urgency_score": 9,
-                        "is_valid": True
+                        "is_valid": True,
                     },
                     assertions={
                         "must_reach_end": True,
                         "numeric_parsed": 4500.0,
-                        "decision_branch": "true"
-                    }
+                        "decision_branch": "true",
+                    },
                 ),
                 TransferTestCase(
                     id="case_low_damage",
@@ -67,15 +69,15 @@ class TransferService:
                         "message": "Rotura de cristal delantero en autopista. Presupuesto taller: USD 250.00.",
                         "amount": "USD 250.00",
                         "urgency_score": 3,
-                        "is_valid": True
+                        "is_valid": True,
                     },
                     assertions={
                         "must_reach_end": True,
                         "numeric_parsed": 250.0,
-                        "decision_branch": "false"
-                    }
-                )
-            ]
+                        "decision_branch": "false",
+                    },
+                ),
+            ],
         ),
         "transfer_idempotency_hospital": TransferChallenge(
             id="transfer_idempotency_hospital",
@@ -94,12 +96,9 @@ class TransferService:
                         "message": "Admisión de paciente para tomografía urgente.",
                         "idempotency_key": "PAT-2026-9081",
                         "amount": "USD 1,200.00",
-                        "urgency_score": 8
+                        "urgency_score": 8,
                     },
-                    assertions={
-                        "must_reach_end": True,
-                        "max_side_effects": 1
-                    }
+                    assertions={"must_reach_end": True, "max_side_effects": 1},
                 ),
                 TransferTestCase(
                     id="case_hl7_duplicate",
@@ -109,14 +108,14 @@ class TransferService:
                         "message": "Reenvío HL7 de paciente para tomografía.",
                         "idempotency_key": "PAT-2026-9081",
                         "amount": "USD 1,200.00",
-                        "urgency_score": 8
+                        "urgency_score": 8,
                     },
                     assertions={
                         "must_reach_end": True,
-                        "max_side_effects": 0  # Deduplicated!
-                    }
-                )
-            ]
+                        "max_side_effects": 0,  # Deduplicated!
+                    },
+                ),
+            ],
         ),
         "transfer_hitl_procurement": TransferChallenge(
             id="transfer_hitl_procurement",
@@ -135,19 +134,16 @@ class TransferService:
                         "message": "Compra de 10 servidores GPU por USD 50,000.00.",
                         "amount": "USD 50,000.00",
                         "urgency_score": 9,
-                        "is_valid": True
+                        "is_valid": True,
                     },
-                    assertions={
-                        "must_reach_end": True,
-                        "human_approval": "approved"
-                    }
+                    assertions={"must_reach_end": True, "human_approval": "approved"},
                 )
-            ]
-        )
+            ],
+        ),
     }
 
     @classmethod
-    def list_challenges(cls) -> List[Dict[str, Any]]:
+    def list_challenges(cls) -> list[dict[str, Any]]:
         return [
             {
                 "id": c.id,
@@ -157,22 +153,19 @@ class TransferService:
                 "domain_from": c.domain_from,
                 "domain_to": c.domain_to,
                 "description": c.description,
-                "test_case_count": len(c.test_cases)
+                "test_case_count": len(c.test_cases),
             }
             for c in cls.CHALLENGES.values()
         ]
 
     @classmethod
-    def get_challenge(cls, challenge_id: str) -> Optional[TransferChallenge]:
+    def get_challenge(cls, challenge_id: str) -> TransferChallenge | None:
         return cls.CHALLENGES.get(challenge_id)
 
     @classmethod
     def evaluate_transfer(
-        cls,
-        user_id: str,
-        challenge_id: str,
-        flow: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        cls, user_id: str, challenge_id: str, flow: dict[str, Any]
+    ) -> dict[str, Any]:
         challenge = cls.get_challenge(challenge_id)
         if not challenge:
             raise ValueError(f"Transfer challenge '{challenge_id}' not found.")
@@ -187,7 +180,7 @@ class TransferService:
             run_res = RuntimeLearningEngine.execute_flow(
                 flow=flow,
                 input_payload=dict(tc.input_payload),
-                session_id=transfer_session_id
+                session_id=transfer_session_id,
             )
 
             tc_passed = True
@@ -197,7 +190,9 @@ class TransferService:
             if tc.assertions.get("must_reach_end"):
                 if run_res.get("status") not in ["success", "completed"]:
                     tc_passed = False
-                    failure_reasons.append(f"El flujo no alcanzó el nodo de fin (status: {run_res.get('status')})")
+                    failure_reasons.append(
+                        f"El flujo no alcanzó el nodo de fin (status: {run_res.get('status')})"
+                    )
 
             # 2. Assertion: numeric parsed
             if "numeric_parsed" in tc.assertions:
@@ -205,7 +200,9 @@ class TransferService:
                 parsed_num = run_res.get("state", {}).get("parsed_number")
                 if parsed_num != expected_num:
                     tc_passed = False
-                    failure_reasons.append(f"Número parseado {parsed_num} no coincide con {expected_num}")
+                    failure_reasons.append(
+                        f"Número parseado {parsed_num} no coincide con {expected_num}"
+                    )
 
             # 3. Assertion: decision branch
             if "decision_branch" in tc.assertions:
@@ -213,7 +210,9 @@ class TransferService:
                 actual_branch = run_res.get("state", {}).get("decision_result")
                 if actual_branch != expected_branch:
                     tc_passed = False
-                    failure_reasons.append(f"Rama de decisión '{actual_branch}' no coincide con '{expected_branch}'")
+                    failure_reasons.append(
+                        f"Rama de decisión '{actual_branch}' no coincide con '{expected_branch}'"
+                    )
 
             # 4. Assertion: side effects
             if "max_side_effects" in tc.assertions:
@@ -221,7 +220,9 @@ class TransferService:
                 actual_se = run_res.get("side_effects_count", 0)
                 if actual_se > max_se:
                     tc_passed = False
-                    failure_reasons.append(f"Efectos secundarios ({actual_se}) exceden el máximo esperado ({max_se})")
+                    failure_reasons.append(
+                        f"Efectos secundarios ({actual_se}) exceden el máximo esperado ({max_se})"
+                    )
 
             # 5. Assertion: human approval
             if "human_approval" in tc.assertions:
@@ -229,22 +230,28 @@ class TransferService:
                 actual_appr = run_res.get("state", {}).get("human_approval")
                 if actual_appr != expected_appr:
                     tc_passed = False
-                    failure_reasons.append(f"Estado de aprobación '{actual_appr}' no coincide con '{expected_appr}'")
+                    failure_reasons.append(
+                        f"Estado de aprobación '{actual_appr}' no coincide con '{expected_appr}'"
+                    )
 
             if tc_passed:
                 passed_count += 1
 
-            test_results.append({
-                "test_case_id": tc.id,
-                "name": tc.name,
-                "passed": tc_passed,
-                "failure_reasons": failure_reasons,
-                "duration_ms": run_res.get("duration_ms", 0),
-                "side_effects_count": run_res.get("side_effects_count", 0)
-            })
+            test_results.append(
+                {
+                    "test_case_id": tc.id,
+                    "name": tc.name,
+                    "passed": tc_passed,
+                    "failure_reasons": failure_reasons,
+                    "duration_ms": run_res.get("duration_ms", 0),
+                    "side_effects_count": run_res.get("side_effects_count", 0),
+                }
+            )
 
         total_cases = len(challenge.test_cases)
-        transfer_score = round(passed_count / total_cases, 2) if total_cases > 0 else 1.0
+        transfer_score = (
+            round(passed_count / total_cases, 2) if total_cases > 0 else 1.0
+        )
         challenge_passed = transfer_score >= 0.80
 
         evidence_record = None
@@ -265,9 +272,9 @@ class TransferService:
                     "domain_to": challenge.domain_to,
                     "score": transfer_score,
                     "passed_cases": passed_count,
-                    "total_cases": total_cases
+                    "total_cases": total_cases,
                 },
-                confidence=1.0
+                confidence=1.0,
             )
 
             # Update Skill Mastery with verified transfer competence
@@ -277,7 +284,7 @@ class TransferService:
                 passed_cleanly=True,
                 hints_used=[],
                 has_transfer=True,
-                has_reflection=True
+                has_reflection=True,
             )
 
         return {
@@ -290,5 +297,5 @@ class TransferService:
             "challenge_passed": challenge_passed,
             "test_results": test_results,
             "evidence_id": evidence_record.id if evidence_record else None,
-            "mastery_state": mastery_record.state if mastery_record else None
+            "mastery_state": mastery_record.state if mastery_record else None,
         }

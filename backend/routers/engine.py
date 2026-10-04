@@ -1,11 +1,14 @@
-import os
 import json
+import os
 import shutil
 from urllib import request as urllib_request
+
 from fastapi import APIRouter
 from pydantic import BaseModel
-from backend.model_defaults import DEFAULT_CLOUD_MODEL, DEFAULT_LOCAL_MODEL, LOCAL_MODEL_OPTIONS
+
 from backend.config import OLLAMA_BASE_URL
+from backend.model_defaults import (DEFAULT_CLOUD_MODEL, DEFAULT_LOCAL_MODEL,
+                                    LOCAL_MODEL_OPTIONS)
 
 router = APIRouter(prefix="/engine", tags=["Engine"])
 
@@ -16,9 +19,15 @@ DEFAULT_CONFIG = {
     "hybrid_enabled": False,
     "cloud_model": DEFAULT_CLOUD_MODEL,
     "local_model": DEFAULT_LOCAL_MODEL,
-    "cloud_options": [DEFAULT_CLOUD_MODEL, "openai/gpt-4o", "meta-llama/llama-3.1-70b-instruct", "qwen/qwen-2.5-72b-instruct"],
-    "local_options": LOCAL_MODEL_OPTIONS
+    "cloud_options": [
+        DEFAULT_CLOUD_MODEL,
+        "openai/gpt-4o",
+        "meta-llama/llama-3.1-70b-instruct",
+        "qwen/qwen-2.5-72b-instruct",
+    ],
+    "local_options": LOCAL_MODEL_OPTIONS,
 }
+
 
 def get_config():
     if os.path.exists(CONFIG_FILE):
@@ -27,23 +36,35 @@ def get_config():
             cfg = {**DEFAULT_CONFIG, **data}
             if cfg.get("local_model") in {"hermes3:8b", "hermes3:latest"}:
                 cfg["local_model"] = DEFAULT_LOCAL_MODEL
-            cfg["local_options"] = list(dict.fromkeys([cfg["local_model"], *LOCAL_MODEL_OPTIONS, *(cfg.get("local_options") or [])]))
+            cfg["local_options"] = list(
+                dict.fromkeys(
+                    [
+                        cfg["local_model"],
+                        *LOCAL_MODEL_OPTIONS,
+                        *(cfg.get("local_options") or []),
+                    ]
+                )
+            )
             return cfg
     return DEFAULT_CONFIG
+
 
 def save_config(data):
     os.makedirs(DATA_DIR, exist_ok=True)
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f)
 
+
 class EngineConfigUpdate(BaseModel):
     hybrid_enabled: bool = None
     cloud_model: str = None
     local_model: str = None
 
+
 @router.get("/config")
 def read_config():
     return get_config()
+
 
 @router.post("/config")
 def update_config(update: EngineConfigUpdate):
@@ -77,11 +98,16 @@ def read_local_capabilities():
             ],
             "ffmpeg": [],
         }
-        return any(candidate and os.path.exists(candidate) for candidate in candidates.get(name, []))
+        return any(
+            candidate and os.path.exists(candidate)
+            for candidate in candidates.get(name, [])
+        )
 
     ollama_reachable = False
     try:
-        with urllib_request.urlopen(f"{OLLAMA_BASE_URL.rstrip('/')}/api/tags", timeout=2) as response:
+        with urllib_request.urlopen(
+            f"{OLLAMA_BASE_URL.rstrip('/')}/api/tags", timeout=2
+        ) as response:
             ollama_reachable = response.status == 200
     except Exception:
         ollama_reachable = False

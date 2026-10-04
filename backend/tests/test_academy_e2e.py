@@ -1,20 +1,21 @@
-import sys
 import os
+import sys
+
 import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+import uuid
+
 import db
+from services.academy.assessment_service import AssessmentService
 from services.academy.catalog_service import CatalogService
+from services.academy.certification_service import CertificationService
+from services.academy.failure_lab_service import FailureLabService
+from services.academy.portfolio_service import PortfolioService
 from services.academy.sandbox_service import SandboxService
 from services.academy.validator_service import ValidatorService
-from services.academy.failure_lab_service import FailureLabService
-from services.academy.assessment_service import AssessmentService
-from services.academy.certification_service import CertificationService
-from services.academy.portfolio_service import PortfolioService
 
-
-import uuid
 
 @pytest.fixture(autouse=True)
 def setup_environment():
@@ -33,7 +34,7 @@ def test_full_learner_e2e_journey():
     # Update diagnostic preferences
     updated_profile = db.learning_profile_update(
         user_id,
-        {"preferences": {"mode": "rigorous", "target_role": "enterprise_architect"}}
+        {"preferences": {"mode": "rigorous", "target_role": "enterprise_architect"}},
     )
     assert updated_profile["preferences"]["mode"] == "rigorous"
 
@@ -52,22 +53,42 @@ def test_full_learner_e2e_journey():
     # 4. Student connects Agent to End
     repaired_flow = {
         "nodes": [
-            {"id": "node_start", "type": "action", "data": {"title": "Start", "role": "start"}},
-            {"id": "node_agent", "type": "action", "data": {"title": "Clasificador", "role": "agent", "output_type": "string"}},
-            {"id": "node_end", "type": "action", "data": {"title": "End", "role": "end"}}
+            {
+                "id": "node_start",
+                "type": "action",
+                "data": {"title": "Start", "role": "start"},
+            },
+            {
+                "id": "node_agent",
+                "type": "action",
+                "data": {
+                    "title": "Clasificador",
+                    "role": "agent",
+                    "output_type": "string",
+                },
+            },
+            {
+                "id": "node_end",
+                "type": "action",
+                "data": {"title": "End", "role": "end"},
+            },
         ],
         "edges": [
             {"id": "edge_1", "source": "node_start", "target": "node_agent"},
-            {"id": "edge_2", "source": "node_agent", "target": "node_end"}
-        ]
+            {"id": "edge_2", "source": "node_agent", "target": "node_end"},
+        ],
     }
     updated_session = SandboxService.update_flow(session_id, repaired_flow)
     findings_repaired = ValidatorService.validate_flow(repaired_flow, "mission_01")
     blockers = [f for f in findings_repaired if f.severity == "blocking"]
-    assert len(blockers) == 0, f"Expected 0 blockers, found: {[b.message for b in blockers]}"
+    assert (
+        len(blockers) == 0
+    ), f"Expected 0 blockers, found: {[b.message for b in blockers]}"
 
     # 5. Run simulation in sandbox
-    sim_result = SandboxService.run_simulation(session_id, {"message": "Problema con mi factura"})
+    sim_result = SandboxService.run_simulation(
+        session_id, {"message": "Problema con mi factura"}
+    )
     assert sim_result["status"] == "success"
     assert len(sim_result["execution_trace"]) >= 4  # start, agent, end, completed
 
@@ -84,7 +105,7 @@ def test_full_learner_e2e_journey():
     ref_res = AssessmentService.submit_reflection(
         session_id=session_id,
         reflection_text="Conecté el nodo Start con el Agente Clasificador y la salida de este al nodo End para garantizar que la solicitud siempre alcance una ruta terminal.",
-        prompt="¿Por qué diseñaste esta arquitectura?"
+        prompt="¿Por qué diseñaste esta arquitectura?",
     )
     assert ref_res["status"] == "success"
     assert ref_res["submission"]["ai_score"] >= 0.8
@@ -97,7 +118,7 @@ def test_full_learner_e2e_journey():
     # 9. Verify Evidence Ledger and Mastery persistence
     evidence_records = db.evidence_user(user_id)
     assert len(evidence_records) >= 3  # graph, runtime, reasoning evidence
-    
+
     mastery = db.skill_mastery_get(user_id, "graph_connections")
     assert mastery["mastery_score"] > 0.0
     assert mastery["state"] != "UNKNOWN"
@@ -116,38 +137,116 @@ def test_full_learner_e2e_journey():
     AssessmentService.complete_mission(m00_sess.id)
 
     m02_sess = SandboxService.start_session(user_id, "mission_02")
-    SandboxService.update_flow(m02_sess.id, {
-        "nodes": [
-            {"id": "node_start", "type": "action", "data": {"title": "Start", "role": "start"}},
-            {"id": "node_fetch", "type": "action", "data": {"title": "Fetch User", "role": "agent", "output_type": "json", "output_schema": "user"}},
-            {"id": "node_parse", "type": "action", "data": {"title": "Parse User", "role": "agent", "input_type": "json", "input_schema": "user", "output_type": "string"}},
-            {"id": "node_end", "type": "action", "data": {"title": "End", "role": "end"}}
-        ],
-        "edges": [
-            {"id": "e1", "source": "node_start", "target": "node_fetch"},
-            {"id": "e2", "source": "node_fetch", "target": "node_parse"},
-            {"id": "e3", "source": "node_parse", "target": "node_end"}
-        ]
-    })
+    SandboxService.update_flow(
+        m02_sess.id,
+        {
+            "nodes": [
+                {
+                    "id": "node_start",
+                    "type": "action",
+                    "data": {"title": "Start", "role": "start"},
+                },
+                {
+                    "id": "node_fetch",
+                    "type": "action",
+                    "data": {
+                        "title": "Fetch User",
+                        "role": "agent",
+                        "output_type": "json",
+                        "output_schema": "user",
+                    },
+                },
+                {
+                    "id": "node_parse",
+                    "type": "action",
+                    "data": {
+                        "title": "Parse User",
+                        "role": "agent",
+                        "input_type": "json",
+                        "input_schema": "user",
+                        "output_type": "string",
+                    },
+                },
+                {
+                    "id": "node_end",
+                    "type": "action",
+                    "data": {"title": "End", "role": "end"},
+                },
+            ],
+            "edges": [
+                {"id": "e1", "source": "node_start", "target": "node_fetch"},
+                {"id": "e2", "source": "node_fetch", "target": "node_parse"},
+                {"id": "e3", "source": "node_parse", "target": "node_end"},
+            ],
+        },
+    )
     AssessmentService.complete_mission(m02_sess.id)
 
     m03_sess = SandboxService.start_session(user_id, "mission_03")
-    SandboxService.update_flow(m03_sess.id, {
-        "nodes": [
-            {"id": "node_start", "type": "action", "data": {"title": "Start", "role": "start"}},
-            {"id": "node_decision", "type": "decision", "data": {"title": "Score Check", "role": "decision", "condition": "score > 80", "cases": ["true", "false"]}},
-            {"id": "node_vip", "type": "action", "data": {"title": "VIP Handler", "role": "agent", "output_type": "string"}},
-            {"id": "node_std", "type": "action", "data": {"title": "Standard Handler", "role": "agent", "output_type": "string"}},
-            {"id": "node_end", "type": "action", "data": {"title": "End", "role": "end"}}
-        ],
-        "edges": [
-            {"id": "e1", "source": "node_start", "target": "node_decision"},
-            {"id": "e2", "source": "node_decision", "target": "node_vip", "label": "true", "data": {"case": "true"}},
-            {"id": "e3", "source": "node_decision", "target": "node_std", "label": "false", "data": {"case": "false"}},
-            {"id": "e4", "source": "node_vip", "target": "node_end"},
-            {"id": "e5", "source": "node_std", "target": "node_end"}
-        ]
-    })
+    SandboxService.update_flow(
+        m03_sess.id,
+        {
+            "nodes": [
+                {
+                    "id": "node_start",
+                    "type": "action",
+                    "data": {"title": "Start", "role": "start"},
+                },
+                {
+                    "id": "node_decision",
+                    "type": "decision",
+                    "data": {
+                        "title": "Score Check",
+                        "role": "decision",
+                        "condition": "score > 80",
+                        "cases": ["true", "false"],
+                    },
+                },
+                {
+                    "id": "node_vip",
+                    "type": "action",
+                    "data": {
+                        "title": "VIP Handler",
+                        "role": "agent",
+                        "output_type": "string",
+                    },
+                },
+                {
+                    "id": "node_std",
+                    "type": "action",
+                    "data": {
+                        "title": "Standard Handler",
+                        "role": "agent",
+                        "output_type": "string",
+                    },
+                },
+                {
+                    "id": "node_end",
+                    "type": "action",
+                    "data": {"title": "End", "role": "end"},
+                },
+            ],
+            "edges": [
+                {"id": "e1", "source": "node_start", "target": "node_decision"},
+                {
+                    "id": "e2",
+                    "source": "node_decision",
+                    "target": "node_vip",
+                    "label": "true",
+                    "data": {"case": "true"},
+                },
+                {
+                    "id": "e3",
+                    "source": "node_decision",
+                    "target": "node_std",
+                    "label": "false",
+                    "data": {"case": "false"},
+                },
+                {"id": "e4", "source": "node_vip", "target": "node_end"},
+                {"id": "e5", "source": "node_std", "target": "node_end"},
+            ],
+        },
+    )
     AssessmentService.complete_mission(m03_sess.id)
 
     # Audit Certification eligibility for Foundation

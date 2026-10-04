@@ -1,7 +1,8 @@
-import subprocess
 import os
+import subprocess
 
 PROMTER_DIR = r"C:\antigravityAS\HUMAN AI\External\promter"
+
 
 def generate_prompt_from_preset(preset_name: str) -> str:
     """
@@ -10,12 +11,12 @@ def generate_prompt_from_preset(preset_name: str) -> str:
     """
     if not preset_name:
         preset_name = "saas-landing"
-        
+
     cli_path = os.path.join(PROMTER_DIR, "cli", "generate-site.js")
-    
+
     if not os.path.exists(cli_path):
         return f"[MOCK] Modular concepts from Promter for preset '{preset_name}'. (Promter CLI not found at {cli_path})"
-    
+
     try:
         # Run node cli/generate-site.js <preset> --stdout
         result = subprocess.run(
@@ -23,7 +24,7 @@ def generate_prompt_from_preset(preset_name: str) -> str:
             cwd=PROMTER_DIR,
             capture_output=True,
             text=True,
-            check=True
+            check=True,
         )
         return result.stdout
     except subprocess.CalledProcessError as e:

@@ -59,7 +59,10 @@ def test_rule24_wraps_plain_hermes_prompt():
     ):
         assert header in prompt
 
-    assert "exactamente un bloque <thinking>...</thinking> con 3 lineas numeradas" in prompt.lower()
+    assert (
+        "exactamente un bloque <thinking>...</thinking> con 3 lineas numeradas"
+        in prompt.lower()
+    )
     assert "Modelo objetivo: hermes3:unlocked" in prompt
 
 
@@ -79,7 +82,13 @@ def test_rule24_augments_partial_costar_prompt_for_hermes():
     )
 
     assert prompt.count("ROLE:") == 1
-    for header in ("OBJECTIVE:", "TONE:", "AUDIENCE:", "RESPONSE:", "HERMES_UNLOCKED_EXECUTION_PROFILE:"):
+    for header in (
+        "OBJECTIVE:",
+        "TONE:",
+        "AUDIENCE:",
+        "RESPONSE:",
+        "HERMES_UNLOCKED_EXECUTION_PROFILE:",
+    ):
         assert header in prompt
 
 

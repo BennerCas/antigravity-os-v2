@@ -1,4 +1,5 @@
-from typing import Dict, Any, List, Optional
+from typing import Any
+
 from backend.schemas.academy import FailureScenario
 
 
@@ -8,7 +9,7 @@ class FailureLabService:
     for deliberate error-based learning in Antigravity Academy V3.
     """
 
-    SCENARIOS: List[FailureScenario] = [
+    SCENARIOS: list[FailureScenario] = [
         FailureScenario(
             id="fail_schema_mismatch",
             title="Incompatibilidad de Schema (String a Float)",
@@ -17,15 +18,35 @@ class FailureLabService:
             symptom="TypeError: '<' not supported between instances of 'str' and 'int'",
             flow_patch={
                 "nodes": [
-                    {"id": "ag_bad", "type": "action", "position": {"x": 100, "y": 150}, "data": {"title": "Extractor", "role": "agent", "output_type": "string"}},
-                    {"id": "erp_target", "type": "action", "position": {"x": 450, "y": 150}, "data": {"title": "ERP Tool", "role": "tool", "input_type": "number"}}
+                    {
+                        "id": "ag_bad",
+                        "type": "action",
+                        "position": {"x": 100, "y": 150},
+                        "data": {
+                            "title": "Extractor",
+                            "role": "agent",
+                            "output_type": "string",
+                        },
+                    },
+                    {
+                        "id": "erp_target",
+                        "type": "action",
+                        "position": {"x": 450, "y": 150},
+                        "data": {
+                            "title": "ERP Tool",
+                            "role": "tool",
+                            "input_type": "number",
+                        },
+                    },
                 ],
-                "edges": [{"id": "e_fail_schema", "source": "ag_bad", "target": "erp_target"}]
+                "edges": [
+                    {"id": "e_fail_schema", "source": "ag_bad", "target": "erp_target"}
+                ],
             },
             error_log_sample="[CRITICAL] Payload validation failed for node erp_target: field 'amount' expected float, received string 'USD 1,250.00'",
             root_cause_explanation="El LLM generó un string formateado con moneda y comas. La herramienta transaccional no realiza casting implícito.",
             expected_repair_description="Inserta un nodo Transform (parse_number) o ajusta el schema de salida del agente.",
-            validation_rule_id="VAL-CON-001"
+            validation_rule_id="VAL-CON-001",
         ),
         FailureScenario(
             id="fail_rate_limit",
@@ -35,14 +56,23 @@ class FailureLabService:
             symptom="HTTP 429 Too Many Requests - Provider quota exhausted",
             flow_patch={
                 "nodes": [
-                    {"id": "ag_rate", "type": "action", "position": {"x": 200, "y": 150}, "data": {"title": "Inferencia Pesada", "role": "agent", "retries": 0}}
+                    {
+                        "id": "ag_rate",
+                        "type": "action",
+                        "position": {"x": 200, "y": 150},
+                        "data": {
+                            "title": "Inferencia Pesada",
+                            "role": "agent",
+                            "retries": 0,
+                        },
+                    }
                 ],
-                "edges": []
+                "edges": [],
             },
             error_log_sample="[ERROR] Request failed with status 429. Max retries (0) exceeded. Flow aborted.",
             root_cause_explanation="El nodo no tiene configurada una política de reintento con backoff exponencial y jitter.",
             expected_repair_description="Configura retries >= 3 y backoff_multiplier = 2.0 en la política de ejecución.",
-            validation_rule_id="VAL-REL-002"
+            validation_rule_id="VAL-REL-002",
         ),
         FailureScenario(
             id="fail_duplicate_side_effect",
@@ -52,15 +82,29 @@ class FailureLabService:
             symptom="Duplicate Charge Detected: Order #9822 charged twice",
             flow_patch={
                 "nodes": [
-                    {"id": "hook_in", "type": "action", "position": {"x": 100, "y": 150}, "data": {"title": "Webhook Ingest", "role": "start"}},
-                    {"id": "pay_tool", "type": "action", "position": {"x": 400, "y": 150}, "data": {"title": "Cobrar Tarjeta", "role": "tool", "side_effect": True}}
+                    {
+                        "id": "hook_in",
+                        "type": "action",
+                        "position": {"x": 100, "y": 150},
+                        "data": {"title": "Webhook Ingest", "role": "start"},
+                    },
+                    {
+                        "id": "pay_tool",
+                        "type": "action",
+                        "position": {"x": 400, "y": 150},
+                        "data": {
+                            "title": "Cobrar Tarjeta",
+                            "role": "tool",
+                            "side_effect": True,
+                        },
+                    },
                 ],
-                "edges": [{"id": "e_dup", "source": "hook_in", "target": "pay_tool"}]
+                "edges": [{"id": "e_dup", "source": "hook_in", "target": "pay_tool"}],
             },
             error_log_sample="[ALERT] Transaction completed for order #9822. [ALERT] Transaction completed AGAIN for order #9822.",
             root_cause_explanation="El nodo de cobro carece de llave de idempotencia ('idempotency_scope' = 'order_id').",
             expected_repair_description="Establece 'idempotency_scope' = 'order_id' en el nodo de cobro.",
-            validation_rule_id="VAL-REL-001"
+            validation_rule_id="VAL-REL-001",
         ),
         FailureScenario(
             id="fail_unhandled_branch",
@@ -70,15 +114,32 @@ class FailureLabService:
             symptom="RuntimeWarning: Execution stalled at node 'Score >= 80': No matching outgoing edge for outcome False",
             flow_patch={
                 "nodes": [
-                    {"id": "cond_orph", "type": "condition", "position": {"x": 250, "y": 150}, "data": {"title": "Score >= 80", "expression": "score >= 80"}},
-                    {"id": "pass_node", "type": "action", "position": {"x": 550, "y": 80}, "data": {"title": "Aprobar", "role": "agent"}}
+                    {
+                        "id": "cond_orph",
+                        "type": "condition",
+                        "position": {"x": 250, "y": 150},
+                        "data": {"title": "Score >= 80", "expression": "score >= 80"},
+                    },
+                    {
+                        "id": "pass_node",
+                        "type": "action",
+                        "position": {"x": 550, "y": 80},
+                        "data": {"title": "Aprobar", "role": "agent"},
+                    },
                 ],
-                "edges": [{"id": "e_only_true", "source": "cond_orph", "target": "pass_node", "label": "true"}]
+                "edges": [
+                    {
+                        "id": "e_only_true",
+                        "source": "cond_orph",
+                        "target": "pass_node",
+                        "label": "true",
+                    }
+                ],
             },
             error_log_sample="[FATAL] Unhandled condition branch. Condition evaluated to False but no edge exists for handle 'false'.",
             root_cause_explanation="En un grafo de automatización, las ramas falsas no cubiertas causan pérdida silenciosa de eventos o bloqueos del motor.",
             expected_repair_description="Añade un nodo para la ruta False y conéctalo con el label 'false'.",
-            validation_rule_id="VAL-CTL-001"
+            validation_rule_id="VAL-CTL-001",
         ),
         FailureScenario(
             id="fail_expired_gate",
@@ -88,31 +149,37 @@ class FailureLabService:
             symptom="TimeoutException: HumanGate 'Aprobación Gerencia' expired after 24 hours with no action taken",
             flow_patch={
                 "nodes": [
-                    {"id": "hitl_stuck", "type": "human", "position": {"x": 250, "y": 150}, "data": {"title": "Aprobación Gerencia", "role": "human_gate"}}
+                    {
+                        "id": "hitl_stuck",
+                        "type": "human",
+                        "position": {"x": 250, "y": 150},
+                        "data": {"title": "Aprobación Gerencia", "role": "human_gate"},
+                    }
                 ],
-                "edges": []
+                "edges": [],
             },
             error_log_sample="[ERROR] Task timer expired. No timeout action or fallback route configured. Pipeline frozen.",
             root_cause_explanation="Los procesos que interactúan con humanos deben contemplar invariablemente la ausencia del operador mediante expiración y ruta alternativa.",
             expected_repair_description="Define 'timeout_action' = 'escalate' y conecta la ruta 'timeout'.",
-            validation_rule_id="VAL-HITL-001"
-        )
+            validation_rule_id="VAL-HITL-001",
+        ),
     ]
 
     @classmethod
-    def list_scenarios(cls) -> List[FailureScenario]:
+    def list_scenarios(cls) -> list[FailureScenario]:
         return cls.SCENARIOS
 
     @classmethod
-    def get_scenario(cls, scenario_id: str) -> Optional[FailureScenario]:
+    def get_scenario(cls, scenario_id: str) -> FailureScenario | None:
         for sc in cls.SCENARIOS:
             if sc.id == scenario_id:
                 return sc
         return None
 
     @classmethod
-    def inject_scenario(cls, session_id: str, scenario_id: str) -> Dict[str, Any]:
+    def inject_scenario(cls, session_id: str, scenario_id: str) -> dict[str, Any]:
         import copy
+
         import db
 
         scenario = cls.get_scenario(scenario_id)
@@ -155,7 +222,11 @@ class FailureLabService:
             elif scenario_id == "fail_duplicate_side_effect":
                 for n in nodes:
                     ndata = n.setdefault("data", {})
-                    if "slack" in ndata.get("title", "").lower() or "erp" in ndata.get("title", "").lower() or ndata.get("role") in ["tool", "action"]:
+                    if (
+                        "slack" in ndata.get("title", "").lower()
+                        or "erp" in ndata.get("title", "").lower()
+                        or ndata.get("role") in ["tool", "action"]
+                    ):
                         ndata.pop("idempotency_key", None)
                         ndata.pop("idempotency_scope", None)
                         ndata.pop("business_key", None)
@@ -166,12 +237,21 @@ class FailureLabService:
 
             elif scenario_id == "fail_unhandled_branch":
                 # Find condition/decision node and strip false edge
-                decision_nids = {n.get("id") for n in nodes if n.get("type") in ["condition", "decision"] or n.get("data", {}).get("role") == "decision"}
+                decision_nids = {
+                    n.get("id")
+                    for n in nodes
+                    if n.get("type") in ["condition", "decision"]
+                    or n.get("data", {}).get("role") == "decision"
+                }
                 if decision_nids:
                     # Filter out edges where source is in decision_nids and label/branch is 'false'
                     edges = [
-                        e for e in edges
-                        if not (e.get("source") in decision_nids and str(e.get("label", "")).lower() == "false")
+                        e
+                        for e in edges
+                        if not (
+                            e.get("source") in decision_nids
+                            and str(e.get("label", "")).lower() == "false"
+                        )
                     ]
                     current_flow["edges"] = edges
                     mutation_applied = True
@@ -194,11 +274,7 @@ class FailureLabService:
 
         # Update session with mutated flow and blocked status
         db.mission_session_update(
-            session_id,
-            {
-                "sandbox_flow": injected_flow,
-                "status": "blocked"
-            }
+            session_id, {"sandbox_flow": injected_flow, "status": "blocked"}
         )
 
         return {
@@ -208,5 +284,5 @@ class FailureLabService:
             "symptom": scenario.symptom,
             "in_place_mutation": mutation_applied,
             "error_log_sample": scenario.error_log_sample,
-            "message": "Escenario de fallo inyectado in-situ en tu flujo. Inspecciona el canvas y la traza de ejecución para formular tu hipótesis de reparación."
+            "message": "Escenario de fallo inyectado in-situ en tu flujo. Inspecciona el canvas y la traza de ejecución para formular tu hipótesis de reparación.",
         }

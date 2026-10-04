@@ -1,5 +1,7 @@
 """Servicio de Auto-Curación: repara scripts Python que fallaron en el sandbox."""
+
 import re
+
 from routers.builder_actions import call_ai
 
 HEALER_SYSTEM = (
