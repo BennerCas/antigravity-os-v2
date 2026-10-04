@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity OS - Miro Style Mockup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #f4f4f5; /* Zinc 100 */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+        }
+
+        /* Dot Grid Background */
+        .canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            cursor: grab;
+        }
+        
+        .canvas-container:active {
+            cursor: grabbing;
+        }
+
+        .canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5000px; /* Very large virtual canvas */
+            height: 5000px;
+            background-image: radial-gradient(#d4d4d8 1.5px, transparent 1.5px); /* Zinc 300 dots */
+            background-size: 24px 24px;
+            transform-origin: 0 0;
+        }
+
+        /* Nodes */
+        .node {
+            position: absolute;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e4e4e7;
+            width: 280px;
+            cursor: default;
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+
+        .node:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: #6366f1; /* Indigo 500 Accent */
+        }
+
+        .node-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e4e4e7;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #fafafa;
+            border-radius: 12px 12px 0 0;
+        }
+
+        /* SVG Connectors */
+        .svg-layer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+        }
+
+        /* HUD Overlays (Floating UI) */
+        .hud-top {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .hud-panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid #e4e4e7;
+            pointer-events: auto;
+        }
+
+        .hud-left {
+            position: fixed;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 8px;
+            z-index: 50;
+        }
+
+        .tool-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            color: #52525b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tool-btn:hover {
+            background-color: #f4f4f5;
+            color: #18181b;
+        }
+
+        .tool-btn.active {
+            background-color: #e0e7ff; /* Indigo 100 */
+            color: #4f46e5; /* Indigo 600 */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Infinite Canvas Workspace -->
+    <div class="canvas-container" id="container">
+        <div class="canvas" id="canvas">
+            
+            <!-- SVG Connectors -->
+            <svg class="svg-layer">
+                <!-- Curved line connecting Node 1 to Node 2 -->
+                <path d="M 580 400 C 650 400, 650 250, 750 250" fill="none" stroke="#a1a1aa" stroke-width="2" stroke-dasharray="4"/>
+            </svg>
+
+            <!-- Agent Node 1 -->
+            <div class="node" style="top: 320px; left: 300px;">
+                <div class="node-header">
+                    <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">N</div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-800">Agent: Nova</h3>
+                        <p class="text-xs text-gray-500">LLM Orchestrator</p>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                        <span class="text-xs font-medium text-gray-600">Status: Running</span>
+                    </div>
+                    <div class="text-xs text-gray-500 bg-gray-50 p-2 rounded border border-gray-100">
+                        Task: Analyzing codebase dependencies...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agent Node 2 -->
+            <div class="node" style="top: 180px; left: 750px;">
+                <div class="node-header">
+                    <div class="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 font-bold">O</div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-800">Agent: Orion</h3>
+                        <p class="text-xs text-gray-500">Code Auditor</p>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                        <span class="text-xs font-medium text-gray-600">Status: Waiting for input</span>
+                    </div>
+                    <button class="w-full mt-2 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded transition-colors">
+                        Review Output
+                    </button>
+                </div>
+            </div>
+
+            <!-- Context Menu Mockup (Appears next to active node) -->
+            <div class="absolute bg-gray-800 text-white text-xs px-3 py-2 rounded-md shadow-lg flex gap-3" style="top: 130px; left: 800px;">
+                <i class="fas fa-play cursor-pointer hover:text-indigo-400"></i>
+                <i class="fas fa-clone cursor-pointer hover:text-indigo-400"></i>
+                <i class="fas fa-trash cursor-pointer hover:text-red-400"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- HUD Top Bar -->
+    <div class="hud-top">
+        <div class="hud-panel flex items-center px-4 py-2 gap-4">
+            <div class="font-bold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-layer-group text-indigo-600"></i>
+                Antigravity OS
+            </div>
+            <div class="w-px h-4 bg-gray-200"></div>
+            <div class="text-sm text-gray-600 font-medium">Flowboard: System Audit</div>
+        </div>
+        
+        <div class="hud-panel flex items-center px-3 py-2 gap-3">
+            <button class="text-sm text-gray-600 hover:text-indigo-600 font-medium px-2">Share</button>
+            <div class="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold border-2 border-white shadow-sm">
+                B
+            </div>
+        </div>
+    </div>
+
+    <!-- HUD Left Toolbar -->
+    <div class="hud-panel hud-left">
+        <div class="tool-btn active" title="Select (V)"><i class="fas fa-mouse-pointer"></i></div>
+        <div class="tool-btn" title="Pan (H)"><i class="far fa-hand-paper"></i></div>
+        <div class="w-full h-px bg-gray-200 my-1"></div>
+        <div class="tool-btn" title="Add Agent"><i class="fas fa-robot"></i></div>
+        <div class="tool-btn" title="Add Sticky Note"><i class="fas fa-sticky-note"></i></div>
+        <div class="tool-btn" title="Connection Line"><i class="fas fa-project-diagram"></i></div>
+    </div>
+
+    <!-- HUD Bottom Right Zoom Controls -->
+    <div class="fixed bottom-4 right-4 hud-panel flex items-center px-2 py-1 z-50">
+        <button class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-800" onclick="zoom(-0.1)"><i class="fas fa-minus text-xs"></i></button>
+        <span class="text-xs font-medium text-gray-600 w-12 text-center" id="zoom-level">100%</span>
+        <button class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-800" onclick="zoom(0.1)"><i class="fas fa-plus text-xs"></i></button>
+    </div>
+
+    <script>
+        // Basic Pan & Zoom Logic to simulate Miro
+        const container = document.getElementById('container');
+        const canvas = document.getElementById('canvas');
+        const zoomText = document.getElementById('zoom-level');
+
+        let scale = 1;
+        // Start roughly centered instead of top-left
+        let translateX = -100;
+        let translateY = -100;
+        let isDragging = false;
+        let startX, startY;
+
+        // Apply initial transform
+        updateTransform();
+
+        container.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.node') || e.target.closest('.hud-panel') || e.target.closest('.absolute.bg-gray-800')) {
+                return; // Don't pan if clicking UI elements
+            }
+            isDragging = true;
+            startX = e.clientX - translateX;
+            startY = e.clientY - translateY;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            translateX = e.clientX - startX;
+            translateY = e.clientY - startY;
+            updateTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // Zoom with mousewheel
+        container.addEventListener('wheel', (e) => {
+            if (e.target.closest('.hud-panel')) return;
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.05 : 0.05;
+            zoom(delta);
+        }, { passive: false });
+
+        function zoom(delta) {
+            scale = Math.min(Math.max(0.3, scale + delta), 3);
+            updateTransform();
+        }
+
+        function updateTransform() {
+            canvas.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${translateX}, ${translateY})`;
+            zoomText.innerText = Math.round(scale * 100) + '%';
+        }
+    </script>
+</body>
+</html>

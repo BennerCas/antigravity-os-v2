@@ -9,6 +9,10 @@ if root_dir not in sys.path:
 if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
+# Fix for missing 'google.antigravity' module in local dev environment
+from unittest.mock import MagicMock
+sys.modules['google.antigravity'] = MagicMock()
+
 import config  # carga .env local (o fallback legacy) antes que todo
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
