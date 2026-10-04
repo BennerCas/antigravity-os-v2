@@ -1,7 +1,9 @@
 import uuid
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from typing import Any
+
 import db
+
 from backend.schemas.academy import PortfolioItem
 
 
@@ -12,7 +14,7 @@ class PortfolioService:
     """
 
     @classmethod
-    def get_learner_portfolio(cls, user_id: str) -> Dict[str, Any]:
+    def get_learner_portfolio(cls, user_id: str) -> dict[str, Any]:
         profile = db.learning_profile_get_or_create(user_id)
         certifications = db.certifications_user(user_id)
         published_items = db.portfolio_items_user(user_id)
@@ -29,11 +31,15 @@ class PortfolioService:
                     nodes = flow.get("nodes", [])
                     # Find real evidence records for this session or mission
                     matching_evidence_ids = [
-                        e["id"] for e in evidence_records
-                        if e.get("session_id") == s["id"] or e.get("mission_id") == s["mission_id"]
+                        e["id"]
+                        for e in evidence_records
+                        if e.get("session_id") == s["id"]
+                        or e.get("mission_id") == s["mission_id"]
                     ]
                     if not matching_evidence_ids:
-                        from backend.services.academy.evidence_service import EvidenceService
+                        from backend.services.academy.evidence_service import \
+                            EvidenceService
+
                         ev = EvidenceService.record_evidence(
                             user_id=user_id,
                             skill_id="workflow_completion",
@@ -41,7 +47,7 @@ class PortfolioService:
                             session_id=s["id"],
                             evidence_type="graph",
                             source="portfolio_compiler",
-                            payload={"nodes_count": len(nodes), "status": "VERIFIED"}
+                            payload={"nodes_count": len(nodes), "status": "VERIFIED"},
                         )
                         matching_evidence_ids = [ev.id]
 
@@ -54,8 +60,13 @@ class PortfolioService:
                         "description": f"Flujo construido y verificado con {len(nodes)} nodos y cero bloqueantes.",
                         "artifact_ref": f"sandbox://session/{s['id']}",
                         "evidence_refs": matching_evidence_ids,
-                        "published_at": s.get("completed_at") or datetime.now(timezone.utc).isoformat(),
-                        "preview_data": {"nodes_count": len(nodes), "status": "VERIFIED", "evidence_count": len(matching_evidence_ids)}
+                        "published_at": s.get("completed_at")
+                        or datetime.now(timezone.utc).isoformat(),
+                        "preview_data": {
+                            "nodes_count": len(nodes),
+                            "status": "VERIFIED",
+                            "evidence_count": len(matching_evidence_ids),
+                        },
                     }
                     db.portfolio_item_upsert(auto_item)
             published_items = db.portfolio_items_user(user_id)
@@ -68,11 +79,11 @@ class PortfolioService:
             "portfolio_items": published_items,
             "mastery_summary": mastery,
             "evidence_count": len(evidence_records),
-            "signature": "HUMAN AI SYNERGY BY BENNER CASTILLO - 2026®"
+            "signature": "HUMAN AI SYNERGY BY BENNER CASTILLO - 2026®",
         }
 
     @classmethod
-    def publish_item(cls, user_id: str, item_data: Dict[str, Any]) -> PortfolioItem:
+    def publish_item(cls, user_id: str, item_data: dict[str, Any]) -> PortfolioItem:
         item_id = item_data.get("id") or f"port_{uuid.uuid4().hex[:10]}"
         now_str = datetime.now(timezone.utc).isoformat()
 
@@ -85,7 +96,7 @@ class PortfolioService:
             "artifact_ref": item_data.get("artifact_ref", ""),
             "evidence_refs": item_data.get("evidence_refs", []),
             "published_at": now_str,
-            "preview_data": item_data.get("preview_data", {})
+            "preview_data": item_data.get("preview_data", {}),
         }
 
         db.portfolio_item_upsert(record)

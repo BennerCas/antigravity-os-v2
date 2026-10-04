@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Brain, Target, HardDrives, ChatCircle, Graph, MagnifyingGlass, Kanban } from '@phosphor-icons/react';
+import { Brain, Target, HardDrives, Graph, MagnifyingGlass, ClockCounterClockwise } from '@phosphor-icons/react';
 import AgentOSStudio from './AgentOSStudio';
-import AgentOSInfinityBoard from './AgentOSInfinityBoard';
+import AgentOSAxiomas from './AgentOSAxiomas';
+import AgentOSHistory from './AgentOSHistory';
 import AgentOSAgentland from './AgentOSAgentland';
 
-import AgentOSInteract from './AgentOSInteract';
 import AgentOSFlowboard from './AgentOSFlowboard';
 import AgentOSInspector from './AgentOSInspector';
 import type { AgentItem, AtlasItem } from './AgentOSSelect';
 import type { Team } from './AgentOSTeams';
 
-type View = 'studio' | 'infinityboard' | 'agentland' | 'interact' | 'flowboard' | 'inspector';
+type View = 'axiomas' | 'studio' | 'agentland' | 'flowboard' | 'inspector' | 'history';
 
 export default function AgentOS() {
   const [view, setView] = useState<View>(() => (localStorage.getItem('agentos_view') as View) || 'studio');
@@ -18,6 +18,7 @@ export default function AgentOS() {
   const [selectedAgents] = useState<AgentItem[]>([]);
   const [assignedKB] = useState<AtlasItem | null>(null);
   const [teams] = useState<Team[]>([]);
+  
   useEffect(() => {
     fetch((import.meta.env.BASE_URL || '/') + 'skills_v2.json?t=' + Date.now())
       .then(r => r.json()).then(setAgents).catch(() => {});
@@ -30,12 +31,10 @@ export default function AgentOS() {
   useEffect(() => { try { localStorage.setItem('agentos_assigned_kb', assignedKB ? JSON.stringify(assignedKB) : 'null'); } catch {} }, [assignedKB]);
   useEffect(() => { try { localStorage.setItem('agentos_teams', JSON.stringify(teams)); } catch {} }, [teams]);
 
-  // Escuchar eventos de navegación cross-component (ej: tarjeta Ensamblaje → InfinityBoard)
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       if (detail?.view) setView(detail.view as View);
-      // fitView se maneja en InfinityBoard al montar/mostrar
       if (detail?.fitView) {
         window.dispatchEvent(new CustomEvent('infinityboard:fitView'));
       }
@@ -47,20 +46,18 @@ export default function AgentOS() {
   return (
     <div className="flex flex-col h-full w-full bg-[var(--surface-canvas)] text-[var(--text-primary)] overflow-hidden font-sans">
       
-      {/* HEADER GLOBAL */}
       <div className="flex items-center px-6 h-16 border-b border-[var(--stroke-subtle)] bg-[var(--surface-canvas)] shrink-0 gap-2">
         <Brain size={20} weight="duotone" className="text-[var(--theme-border)]" />
         <span className="text-[15px] font-bold text-[var(--text-primary)] tracking-tight">AgentOS</span>
         <div className="flex-1" />
         
-        {/* TAB NAVIGATION */}
         {[
-          { id:'studio', label:'The AureliOS', icon:<Target size={15}/> },
-          { id:'infinityboard', label:'InfinityBoard', icon:<Kanban size={15}/> },
-          { id:'agentland', label:'Agentland', icon:<HardDrives size={15}/> },
-          { id:'interact', label:'Interactuar', icon:<ChatCircle size={15}/> },
+          { id:'axiomas', label:'Axiomas', icon:<Target size={15}/> },
+          { id:'studio', label:'The AureliOS', icon:<Brain size={15}/> },
           { id:'flowboard', label:'Flowboard', icon:<Graph size={15}/> },
           { id:'inspector', label:'Inspector', icon:<MagnifyingGlass size={15}/> },
+          { id:'agentland', label:'Alien Land', icon:<HardDrives size={15}/> },
+          { id:'history', label:'Historial', icon:<ClockCounterClockwise size={15}/> },
         ].map(tab => (
           <button key={tab.id} onClick={() => setView(tab.id as View)}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs transition-all ${
@@ -70,40 +67,19 @@ export default function AgentOS() {
             }`}>
             {tab.icon}
             {tab.label}
-            {tab.id === 'studio' && selectedAgents.length > 0 && (
-              <span className="text-[10px] bg-[var(--theme-border)] text-[#000] rounded-full px-1.5 font-extrabold ml-1">
-                {selectedAgents.length}
-              </span>
-            )}
-            {tab.id === 'agentland' && teams.length > 0 && (
-              <span className="text-[10px] bg-[#b060ff] text-[var(--text-primary)] rounded-full px-1.5 font-extrabold ml-1">
-                {teams.length}
-              </span>
-            )}
           </button>
         ))}
       </div>
       
-      {/* SCREENS */}
       <div className="flex-1 overflow-hidden relative">
+        <div className="absolute inset-0" style={{ display: view === 'axiomas' ? 'block' : 'none' }}>
+          <AgentOSAxiomas />
+        </div>
         <div className="absolute inset-0" style={{ display: view === 'studio' ? 'block' : 'none' }}>
           <AgentOSStudio />
         </div>
-        <div className="absolute inset-0" style={{ display: view === 'infinityboard' ? 'block' : 'none' }}>
-          <AgentOSInfinityBoard />
-        </div>
         <div className="absolute inset-0" style={{ display: view === 'agentland' ? 'block' : 'none' }}>
           <AgentOSAgentland />
-        </div>
-        <div className="absolute inset-0" style={{ display: view === 'interact' ? 'block' : 'none' }}>
-          <AgentOSInteract
-            selectedAgents={[]}
-            assignedKB={null}
-            teams={[]}
-            agents={agents}
-            onGoToSelect={() => setView('studio')}
-            onGoToTeams={() => setView('agentland')}
-          />
         </div>
         <div className="absolute inset-0" style={{ display: view === 'flowboard' ? 'block' : 'none' }}>
           <AgentOSFlowboard />
@@ -111,8 +87,10 @@ export default function AgentOS() {
         <div className="absolute inset-0" style={{ display: view === 'inspector' ? 'block' : 'none' }}>
           <AgentOSInspector />
         </div>
+        <div className="absolute inset-0" style={{ display: view === 'history' ? 'block' : 'none' }}>
+          <AgentOSHistory />
+        </div>
       </div>
     </div>
   );
 }
-

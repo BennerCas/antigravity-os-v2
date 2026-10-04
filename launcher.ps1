@@ -98,34 +98,48 @@ function OllamaUp {
     try { $null = Invoke-RestMethod "$ollamaUrl/api/tags" -TimeoutSec 2; $true } catch { $false }
 }
 
+# BUG FIX 3: Declarar $ollamaProc FUERA del bloque if para que el shutdown lo vea
+$ollamaProc = $null
+
 if (-not $NoOllamaReset) {
-    # Matar cualquier instancia previa limpiamente (incluso las sin escudo)
+    # Matar cualquier instancia previa limpiamente
     taskkill /F /IM "ollama app.exe"         2>$null | Out-Null
     taskkill /F /IM ollama_llama_server.exe 2>$null | Out-Null
     taskkill /F /IM ollama.exe               2>$null | Out-Null
     Start-Sleep -Seconds 2
 
     Log "Iniciando Ollama con escudo AMD RDNA3 (ROCm + iGPU)..."
-    # Variables OBLIGATORIAS para AMD Radeon 860M - sin estas la GPU colapsa (TDR)
+    # Variables OBLIGATORIAS para AMD Radeon 860M
     $env:OLLAMA_IGPU_ENABLE       = "1"
-    # $env:HSA_OVERRIDE_GFX_VERSION = "11.0.0" # <- REMOVIDO: Causa crash de ROCm (device kernel image invalid) en 860M
     $env:OLLAMA_NUM_PARALLEL      = "1"
+    $env:OLLAMA_KEEP_ALIVE        = "10m"
 
     # Arrancar SIN ventana de consola visible
-    Start-Process "ollama" -ArgumentList "serve" -WindowStyle Hidden
+    $ollamaProc = Start-Process "ollama" -ArgumentList "serve" -WindowStyle Hidden -PassThru
 
-    # Esperar hasta que Ollama responda (max 15s)
-    $w = 0; while (-not (OllamaUp) -and $w -lt 15) { Start-Sleep -Seconds 1; $w++ }
+    # Esperar hasta que Ollama responda - hasta 45s (primera carga en AMD puede tardar)
+    Log "Esperando que Ollama levante (hasta 45s)..."
+    $w = 0; while (-not (OllamaUp) -and $w -lt 45) { Start-Sleep -Seconds 1; $w++ }
 
     if (OllamaUp) {
-        Log "Ollama activo. Pre-calentando modelos del Enjambre Cuantico (silencioso)..."
-        # Pre-cargar modelo PRINCIPAL (nodo final del enjambre - hermes3:8b)
-        Start-Process "powershell" -WindowStyle Hidden -ArgumentList "-NoProfile", "-NonInteractive", "-Command", "try { Invoke-RestMethod -Uri '$ollamaUrl/api/generate' -Method Post -Body '{\"model\":\"hermes3:8b\",\"prompt\":\"\",\"keep_alive\":\"10m\"}' -ContentType 'application/json' -TimeoutSec 90 } catch {}"
-        # Pre-cargar modelo SECUNDARIO (agentes analistas del enjambre - qwen2.5:3b)
-        Start-Process "powershell" -WindowStyle Hidden -ArgumentList "-NoProfile", "-NonInteractive", "-Command", "try { Invoke-RestMethod -Uri '$ollamaUrl/api/generate' -Method Post -Body '{\"model\":\"qwen2.5:3b\",\"prompt\":\"\",\"keep_alive\":\"10m\"}' -ContentType 'application/json' -TimeoutSec 60 } catch {}"
-        Log "Enjambre listo: hermes3:8b (principal) + qwen2.5:3b (analistas secundarios)"
+        Log "Ollama activo en $ollamaUrl. Pre-calentando hermes3:8b..."
+
+        # BUG FIX 1: Usar archivo temporal en lugar de string con \" (escape invalido en PS)
+        # \"..\" dentro de una double-quoted string en PS no es escape valido - termina el string
+        $preloadScript = Join-Path $env:TEMP "ag_preload_hermes.ps1"
+        $preloadBody   = '{"model":"hermes3:8b","prompt":" ","keep_alive":"30m"}'
+        Set-Content -Path $preloadScript -Value @"
+try {
+    Invoke-RestMethod -Uri 'http://127.0.0.1:11434/api/generate' -Method Post ``
+        -Body '$preloadBody' -ContentType 'application/json' -TimeoutSec 300
+} catch {
+    Write-Host "Precarga hermes3 fallo: `$(`$_.Exception.Message)"
+}
+"@
+        Start-Process "powershell" -WindowStyle Hidden -ArgumentList "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$preloadScript`""
+        Log "Precarga iniciada (hermes3:8b). La primera consulta puede tardar 30-60s."
     } else {
-        Log "AVISO: Ollama no respondio en 15s. Revisa que este instalado."
+        Log "AVISO: Ollama no respondio en 45s. Continuando sin motor local (usara Free.AI)."
     }
 }
 
@@ -134,9 +148,9 @@ if (-not $NoOllamaReset) {
 # ============================================================
 $backend = $null
 if ($py -and (Test-Path "$backendDir\main.py")) {
-    $cmdline = "/c chcp 65001>nul & `"$py`" -m uvicorn main:app --host 127.0.0.1 --port $backendPort --reload --reload-exclude `"sandbox/*`" --reload-exclude `"sandbox\*`" >> `"$backendLog`" 2>&1"
+    $cmdline = "/c chcp 65001>nul & `"$py`" -m uvicorn main:app --host 127.0.0.1 --port $backendPort --reload --reload-exclude `"sandbox/*`" --reload-exclude `"sandbox\*`" --reload-exclude `"..\apps\*`" --reload-exclude `"apps/*`" --reload-exclude `"dist/*`" >> `"$backendLog`" 2>&1"
     $backend = Start-Process "cmd.exe" -ArgumentList $cmdline -WorkingDirectory $backendDir -WindowStyle Hidden -PassThru
-    Log "Backend lanzado (log: logs\backend.log)"
+    Log "Backend lanzado en puerto $backendPort (log: logs\backend.log)"
 } else {
     Log "AVISO: no lance el backend (python o main.py no encontrados)"
 }
@@ -195,7 +209,8 @@ if ($chromePath) {
 # ============================================================
 # 6. El usuario cerro la ventana -> apagar SOLO lo de Antigravity
 # ============================================================
-foreach ($proc in @($frontend, $backend)) {
+# BUG FIX 2: Incluir $ollamaProc en el shutdown para que cierre limpio con la app
+foreach ($proc in @($frontend, $backend, $ollamaProc)) {
     if ($proc -and -not $proc.HasExited) { taskkill /T /F /PID $proc.Id 2>$null | Out-Null }
 }
 foreach ($pt in @($port, $backendPort)) {

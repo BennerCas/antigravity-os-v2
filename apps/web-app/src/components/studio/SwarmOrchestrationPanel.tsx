@@ -3,16 +3,131 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useStudioStore } from '../../stores/useStudioStore';
 import { useHistoryStore } from '../../stores/useHistoryStore';
-import { CheckCircle, XCircle, Clock, Info, ListChecks, Target, Brain, Robot, SpeakerHigh, Trash, CheckSquare, Square, Lightning, Crosshair, RocketLaunch, Checks, TrendUp, PaintBrush, Database, Globe, TerminalWindow, File, UploadSimple, CodeBlock, HardDrives, Scan, Network, AppWindow, Layout, ClockCounterClockwise, Microphone } from '@phosphor-icons/react';
-import { WS_STUDIO_ACTIVITY_URL } from '../../lib/api';
+import { CheckCircle, XCircle, Clock, Info, ListChecks, Target, Brain, Robot, SpeakerHigh, Trash, CheckSquare, Square, Lightning, Crosshair, RocketLaunch, Checks, TrendUp, PaintBrush, Database, Globe, TerminalWindow, File, UploadSimple, CodeBlock, HardDrives, Scan, Network, AppWindow, Layout, ClockCounterClockwise, Microphone, Graph } from '@phosphor-icons/react';
+import { WS_STUDIO_ACTIVITY_URL, API_URL } from '../../lib/api';
+import { DEFAULT_AURELIOS_MODEL, normalizeAureliosModel, resolvePreferredLocalModel } from '../../lib/modelDefaults';
+import { CanvasTabs } from '../../pages/AgentOSStudio';
+
+interface SwarmRunArtifact {
+  name: string;
+  content: string;
+}
+
+interface SwarmRunStep {
+  index: number;
+  node_name: string;
+  contract_status: 'PASS' | 'FAIL';
+}
+
+interface SwarmRun {
+  id: string;
+  objective: string;
+  status: string;
+  score?: number;
+  updated_at?: string;
+  artifacts?: SwarmRunArtifact[];
+  steps?: SwarmRunStep[];
+}
+
+interface SpecialistPack {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+}
+
+interface SpecialistPackTemplate {
+  pack: SpecialistPack;
+  nodes: any[];
+  edges: any[];
+  agentCards: any[];
+}
+
+interface RoomPreset {
+  id: string;
+  name: string;
+  description: string;
+  participants: Array<{ id: string; name: string; role: string }>;
+}
+
+interface RoomRunTurn {
+  turn: number;
+  speaker: string;
+  role: string;
+  message: string;
+}
+
+interface RoomRun {
+  id: string;
+  preset_id: string;
+  preset_name?: string;
+  objective: string;
+  status: string;
+  updated_at?: string;
+  turns?: number;
+  transcript?: RoomRunTurn[];
+  artifacts?: SwarmRunArtifact[];
+}
+
+interface CharacterProfile {
+  id: string;
+  name: string;
+  essence?: string;
+  speaking_style?: string;
+}
+
+const RoomRunPreview: React.FC<{ runId: string }> = ({ runId }) => {
+  const [roomRun, setRoomRun] = React.useState<RoomRun | null>(null);
+
+  React.useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch(`${API_URL}/studio/rooms/runs/${runId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setRoomRun(data.run || null);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    load();
+  }, [runId]);
+
+  if (!roomRun) return null;
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/5 p-3 space-y-2">
+      <div className="text-xs uppercase tracking-[0.18em] text-white/40 font-bold">Transcripto activo</div>
+      <div className="text-sm text-white/85 font-semibold">{roomRun.preset_name || roomRun.preset_id}</div>
+      <div className="max-h-[144px] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+        {(roomRun.transcript || []).slice(-6).map((entry, index) => (
+          <div key={`${runId}_${index}`} className="rounded-lg border border-white/10 bg-black/20 px-2 py-2">
+            <div className="text-[10px] uppercase tracking-[0.14em] text-violet-300 font-bold">{entry.speaker}</div>
+            <div className="text-[11px] text-white/70 mt-1 leading-relaxed">{entry.message}</div>
+          </div>
+        ))}
+      </div>
+      {(roomRun.artifacts || []).length > 0 && (
+        <div className="pt-2 border-t border-white/10">
+          <button
+            onClick={() => useStudioStore.getState().setActiveArtifact({ name: roomRun.artifacts![0].name, content: roomRun.artifacts![0].content })}
+            className="px-2 py-1 rounded-lg border border-amber-400/20 bg-amber-500/10 text-amber-300 text-xs hover:bg-amber-500/20"
+          >
+            Abrir transcripto
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const SwarmOrchestrationPanel: React.FC = () => {
   const {
     activityLogs, addActivityLog,
     zone2ActiveTab, setZone2ActiveTab,
-    phase1Interview,
+    phase1Interview, dynamicChecklist,
     phase1Complete, phase2Complete, phase3Complete,
-    phase2Content, phase3Content, triageSummary, isFreeChat
+    phase2Content, phase3Content, triageSummary, quantumPhase
   } = useStudioStore();
 
   const { historyItems, loadHistoryItem, deleteHistoryItem, currentHistoryId } = useHistoryStore();
@@ -20,17 +135,42 @@ const SwarmOrchestrationPanel: React.FC = () => {
   const [isSpeaking, setIsSpeaking] = React.useState(false);
   const [isEditingObjective, setIsEditingObjective] = React.useState(false);
   const [editedObjective, setEditedObjective] = React.useState(triageSummary || '');
-  const [activeModel, setActiveModel] = React.useState(() => localStorage.getItem('aurelios_model') || 'free.ai/auto');
+  const [activeModel, setActiveModel] = React.useState(() => normalizeAureliosModel(localStorage.getItem('aurelios_model') || DEFAULT_AURELIOS_MODEL));
   const [explainProgress, setExplainProgress] = React.useState<number | null>(null);
   const [explainText, setExplainText] = React.useState<string | null>(null);
   const [isRegeneratingObjective, setIsRegeneratingObjective] = React.useState(false);
   const [isModifyingPhase2, setIsModifyingPhase2] = React.useState(false);
   const [isPromptChecked, setIsPromptChecked] = React.useState(false);
+  const [swarmRuns, setSwarmRuns] = React.useState<SwarmRun[]>([]);
+  const [isRunningSwarm, setIsRunningSwarm] = React.useState(false);
+  const [runtimeObjective, setRuntimeObjective] = React.useState(triageSummary || '');
+  const [selectedRunId, setSelectedRunId] = React.useState<string | null>(null);
+  const [specialistPacks, setSpecialistPacks] = React.useState<SpecialistPack[]>([]);
+  const [isLoadingSpecialists, setIsLoadingSpecialists] = React.useState(false);
+  const [roomPresets, setRoomPresets] = React.useState<RoomPreset[]>([]);
+  const [roomRuns, setRoomRuns] = React.useState<RoomRun[]>([]);
+  const [selectedRoomRunId, setSelectedRoomRunId] = React.useState<string | null>(null);
+  const [selectedRoomPresetId, setSelectedRoomPresetId] = React.useState<string>('podcast-product-war-room');
+  const [isRunningRoom, setIsRunningRoom] = React.useState(false);
+  const [characterProfiles, setCharacterProfiles] = React.useState<CharacterProfile[]>([]);
+  const [isCloningCharacter, setIsCloningCharacter] = React.useState(false);
 
   React.useEffect(() => {
-    const handleModelChange = () => setActiveModel(localStorage.getItem('aurelios_model') || 'free.ai/auto');
+    const handleModelChange = () => setActiveModel(normalizeAureliosModel(localStorage.getItem('aurelios_model') || DEFAULT_AURELIOS_MODEL));
     window.addEventListener('aurelios_model_changed', handleModelChange);
     return () => window.removeEventListener('aurelios_model_changed', handleModelChange);
+  }, []);
+
+  React.useEffect(() => {
+    setRuntimeObjective(triageSummary || '');
+  }, [triageSummary]);
+
+  React.useEffect(() => {
+    refreshSwarmRuns();
+    loadSpecialistPacks();
+    loadRoomPresets();
+    loadRoomRuns();
+    loadCharacterProfiles();
   }, []);
 
   React.useEffect(() => {
@@ -49,7 +189,7 @@ const SwarmOrchestrationPanel: React.FC = () => {
     setExplainProgress(0);
     setExplainText(null);
     try {
-      const modelName = activeModel.includes('hermes') ? 'hermes3:8b' : 'qwen2.5:3b';
+      const modelName = resolvePreferredLocalModel(activeModel);
       const cleanBlueprint = phase3Content.replace(/```/g, '').substring(0, 2000);
       const prompt = `Actúa como AureliOS, el Arquitecto del Sistema. 
 OBJETIVO DEL USUARIO: "${triageSummary}"
@@ -122,7 +262,7 @@ Analizando el Blueprint anterior, redacta un discurso robusto, cohesivo, profund
     if (!triageSummary || isRegeneratingObjective) return;
     setIsRegeneratingObjective(true);
     try {
-      const modelName = activeModel.includes('hermes') ? 'hermes3:8b' : 'qwen2.5:3b';
+      const modelName = resolvePreferredLocalModel(activeModel);
       const prompt = `Actúa como AureliOS, Arquitecto de Sistemas. 
 Tienes el siguiente objetivo de usuario: "${triageSummary}"
 Reescribe y mejora este objetivo de manera profesional, clara y directa en una sola oración concisa. Debe ser accionable y técnico, ideal para dárselo a un enjambre de agentes de IA. Solo responde con el objetivo mejorado, sin preámbulos, sin comillas y sin explicaciones adicionales.`;
@@ -153,6 +293,230 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
     setIsEditingObjective(false);
   };
 
+  const refreshSwarmRuns = async () => {
+    try {
+      const res = await fetch(`${API_URL}/studio/swarm/runs`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setSwarmRuns(data.runs || []);
+      if ((data.runs || []).length > 0) {
+        setSelectedRunId((prev) => prev || data.runs[0].id);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+
+  const loadSpecialistPacks = async () => {
+    setIsLoadingSpecialists(true);
+    try {
+      const res = await fetch(`${API_URL}/agents/specialists`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setSpecialistPacks(data.packs || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoadingSpecialists(false);
+    }
+  };
+
+
+  const loadRoomPresets = async () => {
+    try {
+      const res = await fetch(`${API_URL}/studio/rooms/presets`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setRoomPresets(data.presets || []);
+      if (data.presets?.[0]?.id) {
+        setSelectedRoomPresetId((prev) => prev || data.presets[0].id);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const loadRoomRuns = async () => {
+    try {
+      const res = await fetch(`${API_URL}/studio/rooms/runs`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setRoomRuns(data.runs || []);
+      if ((data.runs || []).length > 0) {
+        setSelectedRoomRunId((prev) => prev || data.runs[0].id);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const loadCharacterProfiles = async () => {
+    try {
+      const res = await fetch(`${API_URL}/studio/characters`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setCharacterProfiles(data.profiles || []);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleLoadSpecialistPack = async (packId: string) => {
+    try {
+      const res = await fetch(`${API_URL}/agents/specialists/${packId}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data: SpecialistPackTemplate & { status: string } = await res.json();
+      const store = useStudioStore.getState();
+      store.setFlow(data.nodes || [], data.edges || []);
+      const existing = store.agentCards || [];
+      const merged = [...(data.agentCards || [])];
+      for (const card of existing) {
+        if (!merged.some((candidate) => candidate.id === card.id)) {
+          merged.push(card);
+        }
+      }
+      store.setAgentCards(merged);
+      if (!runtimeObjective.trim()) {
+        setRuntimeObjective(`Ejecutar ${data.pack.name} sobre el objetivo actual con trazabilidad contractual.`);
+      }
+      addActivityLog({ source: 'Specialist Pack', message: `Pack cargado: ${data.pack.name}`, status: 'INFO' });
+    } catch (e) {
+      console.error(e);
+      alert('No se pudo cargar el pack especialista.');
+    }
+  };
+
+  const handleRecommendSpecialists = async () => {
+    if (!runtimeObjective.trim()) {
+      alert('Define un objetivo para recomendar especialistas.');
+      return;
+    }
+    setIsLoadingSpecialists(true);
+    try {
+      const res = await fetch(`${API_URL}/agents/specialists/recommend`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ objective: runtimeObjective.trim(), limit: 4 }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setSpecialistPacks((data.recommendations || []).map((item: any) => item.pack));
+      if (data.recommendations?.[0]?.pack?.id) {
+        addActivityLog({ source: 'Specialist Recommender', message: `Pack sugerido: ${data.recommendations[0].pack.name}`, status: 'INFO' });
+      }
+    } catch (e) {
+      console.error(e);
+      alert('No se pudieron recomendar especialistas.');
+    } finally {
+      setIsLoadingSpecialists(false);
+    }
+  };
+
+  const handleRunRoom = async () => {
+    if (!runtimeObjective.trim()) {
+      alert('Define un objetivo antes de simular la room.');
+      return;
+    }
+    setIsRunningRoom(true);
+    try {
+      const modelName = resolvePreferredLocalModel(activeModel);
+      const res = await fetch(`${API_URL}/studio/rooms/simulate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          preset_id: selectedRoomPresetId,
+          objective: runtimeObjective.trim(),
+          turns: 2,
+          model: `ollama/${modelName}`,
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      await loadRoomRuns();
+      if (data?.run?.id) setSelectedRoomRunId(data.run.id);
+      if (data?.run?.artifacts?.length) {
+        useStudioStore.getState().setActiveArtifact(data.run.artifacts[0]);
+      }
+      addActivityLog({ source: 'Room Runtime', message: `Room completada: ${data?.run?.preset_name || selectedRoomPresetId}`, status: 'INFO' });
+    } catch (e) {
+      console.error(e);
+      alert('No se pudo simular la room local.');
+    } finally {
+      setIsRunningRoom(false);
+    }
+  };
+
+  const handleCloneCharacter = async () => {
+    if (!runtimeObjective.trim()) {
+      alert('Define un brief para clonar el personaje.');
+      return;
+    }
+    const name = window.prompt('Nombre del personaje a clonar:', 'Nova');
+    if (!name) return;
+    const archetype = window.prompt('Arquetipo base del personaje:', 'Host futurista');
+    setIsCloningCharacter(true);
+    try {
+      const res = await fetch(`${API_URL}/studio/characters/clone`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, archetype, source_prompt: runtimeObjective.trim() }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      await loadCharacterProfiles();
+      addActivityLog({ source: 'Character Lab', message: `Perfil clonado: ${data?.profile?.name || name}`, status: 'INFO' });
+    } catch (e) {
+      console.error(e);
+      alert('No se pudo clonar el personaje.');
+    } finally {
+      setIsCloningCharacter(false);
+    }
+  };
+
+  const handleExecuteSwarm = async () => {
+    const { flowNodes, flowEdges, setActiveArtifact } = useStudioStore.getState();
+    if (!runtimeObjective.trim()) {
+      alert('Define un objetivo antes de ejecutar el swarm.');
+      return;
+    }
+    if (!flowNodes.length) {
+      alert('No hay nodos en el InfinityBoard para ejecutar.');
+      return;
+    }
+    setIsRunningSwarm(true);
+    try {
+      const modelName = resolvePreferredLocalModel(activeModel);
+      const res = await fetch(`${API_URL}/studio/swarm/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          objective: runtimeObjective.trim(),
+          nodes: flowNodes,
+          edges: flowEdges,
+          model: `ollama/${modelName}`,
+        }),
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      if (data?.run?.artifacts?.length) {
+        setActiveArtifact(data.run.artifacts[0]);
+      }
+      addActivityLog({ source: 'Swarm Runtime', message: `Run completado: ${data?.run?.score ?? 0}%`, status: 'INFO' });
+      await refreshSwarmRuns();
+      if (data?.run?.id) setSelectedRunId(data.run.id);
+    } catch (e) {
+      console.error(e);
+      alert('Error ejecutando el swarm runtime.');
+    } finally {
+      setIsRunningSwarm(false);
+    }
+  };
+
+  const selectedRun = swarmRuns.find(run => run.id === selectedRunId) || null;
+
   const activeAgentLog = activityLogs.filter(log => log.status === 'PENDING').pop();
   const activeAgentName = activeAgentLog ? activeAgentLog.source : null;
 
@@ -168,6 +532,12 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
           const data = JSON.parse(event.data);
           if (data.type === 'ACTIVITY_LOG' && data.log) {
             addActivityLog(data.log);
+          } else if (data.type === 'SWARM_RUN_EVENT' && data.payload) {
+            refreshSwarmRuns();
+          } else if (data.type === 'ROOM_RUN_EVENT' && data.payload) {
+            loadRoomRuns();
+          } else if (data.type === 'UPDATE_CHECKLIST' && data.payload) {
+            useStudioStore.getState().updateChecklistTask(data.payload.taskId, data.payload.status);
           } else if (data.type === 'STATE_UPDATE' && data.tab) {
             setZone2ActiveTab(data.tab);
           }
@@ -199,642 +569,243 @@ Reescribe y mejora este objetivo de manera profesional, clara y directa en una s
     }
   };
 
+  const handleGuardarSwarm = async () => {
+    const name = window.prompt("Ingrese el nombre del Swarm:");
+    if (!name) return;
 
+    try {
+      const state = useStudioStore.getState();
+      const payload = {
+        id: name.toLowerCase().replace(/\s+/g, '-'),
+        name: name,
+        description: "Generado en Phase 3",
+        nodes: state.flowNodes || [],
+        edges: state.flowEdges || []
+      };
+
+      const res = await fetch(`${API_URL}/studio/registries/swarms`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        alert("Swarm guardado correctamente.");
+      } else {
+        alert("Error al guardar el Swarm.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error al guardar el Swarm.");
+    }
+  };
+
+  const handleCargarSwarm = async () => {
+    try {
+      const res = await fetch(`${API_URL}/studio/registries/swarms`);
+      if (!res.ok) {
+        alert("Error al obtener los Swarms.");
+        return;
+      }
+      const data = await res.json();
+      
+      const swarms = Array.isArray(data) ? data : data.data || [];
+      if (swarms.length === 0) {
+        alert("No hay Swarms guardados.");
+        return;
+      }
+      
+      const swarmNames = swarms.map((s: any, i: number) => `${i + 1}. ${s.name}`).join('\\n');
+      const selection = window.prompt(`Seleccione el número del Swarm a cargar:\\n${swarmNames}`);
+      if (!selection) return;
+
+      const idx = parseInt(selection) - 1;
+      const selectedSwarm = swarms[idx];
+      if (selectedSwarm) {
+        useStudioStore.getState().setFlow(selectedSwarm.nodes || [], selectedSwarm.edges || []);
+        alert("Swarm cargado correctamente.");
+      } else {
+        alert("Selección inválida.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error al cargar el Swarm.");
+    }
+  };
 
   return (
     <div className="w-full h-full flex bg-[var(--surface-canvas)] text-[var(--text-primary)]">
       
-      {/* ZONE 2: Results Panel */}
-      <div className="flex-1 min-w-0 h-full flex flex-col bg-[var(--surface-canvas)]">
-        {isFreeChat ? null : (
-          <>
-            {/* Sandwich Menu */}
-            <div className="flex items-center h-16 px-4 gap-2 border-b border-[var(--stroke-subtle)] shrink-0 bg-[var(--surface-canvas)]">
-          <button 
-            onClick={() => setZone2ActiveTab('okr')}
-            className={`px-4 py-2 rounded text-xs font-bold flex items-center gap-2 transition-all ${zone2ActiveTab === 'okr' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30' : 'text-zinc-500 hover:text-[var(--text-primary)]'}`}
-          >
-            <Target size={16} /> OKR's &amp; Checklist
-          </button>
-          <button 
-            onClick={() => setZone2ActiveTab('phases')}
-            className={`px-4 py-2 rounded text-xs font-bold flex items-center gap-2 transition-all ${zone2ActiveTab === 'phases' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30' : 'text-zinc-500 hover:text-[var(--text-primary)]'}`}
-          >
-            <Layout size={16} /> Fases
-          </button>
-          <button 
-            onClick={() => setZone2ActiveTab('history')}
-            className={`px-4 py-2 rounded text-xs font-bold flex items-center gap-2 transition-all ${zone2ActiveTab === 'history' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' : 'text-zinc-500 hover:text-[var(--text-primary)]'}`}
-          >
-            <ClockCounterClockwise size={16} /> Historial
-          </button>
+      {/* InfinityBoard Tab (Logos) */}
+      <div className="flex-1 flex flex-col h-full bg-[#030712] relative overflow-hidden">
+         <CanvasTabs />
 
-          {/* Actions — pushed to the right */}
-          <div className="ml-auto flex items-center gap-3 shrink-0">
+         <div className="absolute top-4 right-4 z-20 w-[360px] max-w-[calc(100%-2rem)] bg-black/70 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+           <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+             <div>
+               <div className="text-xs uppercase tracking-[0.2em] text-cyan-400 font-bold">Swarm Runtime</div>
+               <div className="text-sm text-white/90 font-semibold">Ejecución visible del board</div>
+             </div>
+             <div className="text-[10px] px-2 py-1 rounded-full border border-white/10 text-white/60">{activeModel}</div>
+           </div>
 
-            
-            {/* TTS: leer el contenido visible */}
-            <button
-              title="Leer contenido en voz alta"
-              onClick={() => {
-                const contentEl = document.getElementById('zone2-content');
-                const text = contentEl?.innerText || '';
-                if (!text.trim()) return;
-                useTTSStore.getState().play(text, 'Resultados de Fase');
-              }}
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all"
-            >
-              <SpeakerHigh size={16} />
-            </button>
-            {/* Limpiar Zone 2 */}
-            <button
-              title="Limpiar Espacio 2"
-              onClick={() => {
-                useStudioStore.getState().setPhase1Interview(null);
-                useStudioStore.getState().setZone2ActiveTab('okr');
-              }}
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
-            >
-              <Trash size={16} />
-            </button>
-          </div>
-        </div>
+           <div className="p-4 space-y-3">
+             <textarea
+               value={runtimeObjective}
+               onChange={(e) => setRuntimeObjective(e.target.value)}
+               placeholder="Objetivo operativo del swarm"
+               className="w-full min-h-[84px] rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400 resize-y"
+             />
 
-        {/* Content Area */}
-        <div id="zone2-content" className="flex-1 flex flex-col overflow-hidden relative">
-          
-          {/* ── OKR & Checklist ── */}
-          {/* ── OKR & Checklist ── */}
-          <div className={zone2ActiveTab === 'okr' ? 'flex-1 flex flex-col p-8 md:p-10 relative overflow-hidden' : 'hidden'}>
-            
-            {/* Background elements */}
-            <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
-              <Crosshair size={300} weight="thin" />
-            </div>
+             <div className="grid grid-cols-5 gap-2">
+               <button onClick={handleExecuteSwarm} disabled={isRunningSwarm} className="col-span-2 px-3 py-2 rounded-xl bg-cyan-500/20 border border-cyan-400/30 text-cyan-300 text-xs font-bold hover:bg-cyan-500/30 disabled:opacity-40">
+                 {isRunningSwarm ? 'Ejecutando...' : 'Ejecutar'}
+               </button>
+               <button onClick={handleRecommendSpecialists} disabled={isLoadingSpecialists} className="px-3 py-2 rounded-xl bg-fuchsia-500/15 border border-fuchsia-400/30 text-fuchsia-200 text-xs font-bold hover:bg-fuchsia-500/25 disabled:opacity-40">Sugerir</button>
+               <button onClick={handleGuardarSwarm} className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white/80 text-xs font-bold hover:bg-white/10">Guardar</button>
+               <button onClick={handleCargarSwarm} className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white/80 text-xs font-bold hover:bg-white/10">Cargar</button>
+             </div>
 
-            <div className="max-w-4xl mx-auto w-full h-full flex flex-col animate-fade-in relative z-10 gap-8">
-              
-              {/* Header Progress (Fixed at top) */}
-              <div className="shrink-0 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-semibold text-white tracking-wide flex items-center gap-3">
-                    <Target size={28} style={{ color: 'var(--theme-border)' }} weight="duotone" />
-                    Radar de Arquitectura
-                  </h2>
-                  <div className="text-right">
-                    <div className="text-xs font-mono tracking-widest uppercase mb-1" style={{ color: 'var(--theme-border)', opacity: 0.7 }}>Progreso Global</div>
-                    <div className="text-xl font-bold" style={{ color: 'var(--theme-border)' }}>
-                      {phase3Complete ? '100%' : phase2Complete ? '75%' : phase1Complete ? '50%' : phase1Interview ? '25%' : '0%'}
-                    </div>
-                  </div>
-                </div>
-                {/* Progress Bar */}
-                <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--stroke-subtle)' }}>
-                  <div 
-                    className="h-full transition-all duration-1000 ease-out"
-                    style={{ 
-                      width: phase3Complete ? '100%' : phase2Complete ? '75%' : phase1Complete ? '50%' : phase1Interview ? '25%' : '0%',
-                      background: 'var(--theme-border)',
-                      boxShadow: '0 0 8px var(--theme-border)'
-                    }}
-                  />
-                </div>
-              </div>
+             <div className="space-y-2">
+               <div className="flex items-center justify-between">
+                 <div className="text-[11px] uppercase tracking-[0.2em] text-white/40 font-bold">Equipos Pro</div>
+                 <button onClick={loadSpecialistPacks} className="text-[11px] text-white/60 hover:text-white">Ver catálogo</button>
+               </div>
+               <div className="max-h-[188px] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                 {specialistPacks.length === 0 ? (
+                   <div className="text-xs text-white/40 border border-dashed border-white/10 rounded-xl px-3 py-4">{isLoadingSpecialists ? 'Cargando catálogo especialista...' : 'Aún no hay packs cargados.'}</div>
+                 ) : specialistPacks.slice(0, 4).map((pack) => (
+                   <div key={pack.id} className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
+                     <div className="flex items-start justify-between gap-3">
+                       <div className="min-w-0">
+                         <div className="text-sm font-semibold text-white/90 truncate">{pack.name}</div>
+                         <div className="text-[10px] uppercase tracking-[0.16em] text-fuchsia-300/80 mt-1">{pack.category}</div>
+                       </div>
+                       <button onClick={() => handleLoadSpecialistPack(pack.id)} className="shrink-0 px-2 py-1 rounded-lg bg-fuchsia-500/15 border border-fuchsia-400/30 text-fuchsia-200 text-[10px] font-bold hover:bg-fuchsia-500/25">Cargar</button>
+                     </div>
+                     <div className="mt-2 text-[11px] text-white/55 leading-relaxed">{pack.description}</div>
+                   </div>
+                 ))}
+               </div>
+             </div>
 
-              {/* Objetivo Principal (Takes remaining vertical space and scrolls internally) */}
-              <div className="flex-1 min-h-0 flex flex-col relative">
-                <div className="absolute -left-5 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500/0 via-emerald-500 to-emerald-500/0 opacity-50 rounded-full" />
-                <h3 className="shrink-0 text-sm font-mono text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <TrendUp size={16} /> Vector de Intención
-                </h3>
-                
-                {phase1Complete && triageSummary ? (
-                  <div className="flex-1 min-h-0 flex flex-col p-6 rounded-3xl border border-emerald-500/20 bg-emerald-500/5 shadow-[0_0_30px_rgba(16,185,129,0.05)] relative group">
-                    <div className="flex-1 min-h-0 flex items-start gap-5 overflow-hidden">
-                      <div className="shrink-0 p-4 bg-emerald-500/10 rounded-2xl">
-                        <Checks size={28} className="text-emerald-400" weight="duotone" />
-                      </div>
-                      <div className="flex-1 min-w-0 h-full flex flex-col">
-                        {isEditingObjective ? (
-                          <div className="flex-1 flex flex-col gap-3">
-                            <textarea
-                              value={editedObjective}
-                              onChange={(e) => setEditedObjective(e.target.value)}
-                              className="flex-1 w-full bg-zinc-900/50 border border-zinc-700 rounded-xl p-4 text-sm text-zinc-200 focus:outline-none focus:border-emerald-500 resize-none custom-scrollbar"
-                            />
-                            <div className="shrink-0 flex justify-end gap-2">
-                              <button onClick={() => { setIsEditingObjective(false); setEditedObjective(triageSummary); }} className="px-4 py-2 text-xs rounded-lg bg-zinc-800 text-zinc-400 hover:text-zinc-200">Cancelar</button>
-                              <button onClick={handleSaveObjective} className="px-4 py-2 text-xs rounded-lg bg-emerald-500 text-zinc-950 font-medium hover:bg-emerald-400">Guardar</button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex-1 min-h-0 flex flex-col">
-                            <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar">
-                              <div className="markdown-body text-[15px] leading-relaxed text-emerald-100 user-answer-block">
-                                <ReactMarkdown>{triageSummary}</ReactMarkdown>
-                              </div>
-                            </div>
-                            <div className="shrink-0 flex items-center justify-between mt-4 border-t border-emerald-500/10 pt-4">
-                              <button 
-                                onClick={() => setIsEditingObjective(!isEditingObjective)}
-                                className="p-2 rounded-xl bg-zinc-800/50 hover:bg-zinc-700 text-zinc-400 hover:text-emerald-400 transition-colors flex items-center justify-center"
-                                title="Editar Objetivo"
-                              >
-                                <PaintBrush size={16} />
-                              </button>
-                              <div className="flex items-center gap-2">
-                                {phase3Complete && (
-                                  <>
-                                    <button 
-                                      onClick={handleExplainFlow}
-                                      disabled={explainProgress !== null && explainProgress < 100}
-                                      className={`px-3 py-2 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all ${
-                                        (explainProgress !== null && explainProgress < 100)
-                                          ? 'bg-zinc-800 text-zinc-400 border border-zinc-700 cursor-wait'
-                                          : isSpeaking 
-                                            ? 'bg-emerald-500 text-zinc-950 shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse' 
-                                            : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
-                                      }`}
-                                      title="Explicar cómo lograr el objetivo usando el Blueprint"
-                                    >
-                                      {isSpeaking ? <Square size={16} weight="fill" /> : <SpeakerHigh size={16} />}
-                                      {(explainProgress !== null && explainProgress < 100) 
-                                        ? `Creando ${explainProgress}%` 
-                                        : isSpeaking ? "Detener" : "Explicar"}
-                                    </button>
-                                    
-                                    <button
-                                      onClick={handleRegenerateObjective}
-                                      disabled={isRegeneratingObjective}
-                                      className={`px-3 py-2 rounded-xl flex items-center justify-center gap-2 text-xs font-medium transition-all ${
-                                        isRegeneratingObjective
-                                          ? 'bg-zinc-800 text-zinc-400 border border-zinc-700 animate-pulse'
-                                          : 'bg-zinc-800/50 text-zinc-400 hover:text-emerald-400 hover:bg-zinc-700 border border-transparent'
-                                      }`}
-                                      title="Regenerar y mejorar el objetivo"
-                                    >
-                                      <Lightning size={14} />
-                                      {isRegeneratingObjective ? "Regenerando..." : "Regenerar"}
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+             <div className="space-y-2">
+               <div className="flex items-center justify-between">
+                 <div className="text-[11px] uppercase tracking-[0.2em] text-white/40 font-bold">Rooms & Personajes</div>
+                 <div className="flex gap-2">
+                   <button onClick={handleCloneCharacter} disabled={isCloningCharacter} className="text-[11px] px-2 py-1 rounded-lg border border-violet-400/20 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20 disabled:opacity-40">{isCloningCharacter ? 'Clonando...' : 'Clonar personaje'}</button>
+                   <button onClick={handleRunRoom} disabled={isRunningRoom || !selectedRoomPresetId} className="text-[11px] px-2 py-1 rounded-lg border border-cyan-400/20 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20 disabled:opacity-40">{isRunningRoom ? 'Simulando...' : 'Simular room'}</button>
+                 </div>
+               </div>
 
-                ) : (
-                  <div className="flex-1 p-10 rounded-3xl border border-dashed border-zinc-700/50 bg-zinc-900/20 flex flex-col items-center justify-center text-center gap-5">
-                    <div className="w-20 h-20 rounded-full border border-zinc-800 bg-zinc-900/50 flex items-center justify-center relative">
-                      {phase1Interview ? (
-                        <>
-                          <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping" />
-                          <TrendUp size={32} className="text-blue-400 animate-pulse" weight="duotone" />
-                        </>
-                      ) : (
-                        <Brain size={32} className="text-zinc-600" weight="duotone" />
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="text-zinc-300 font-medium text-lg mb-2">
-                        {phase1Interview ? "El Enjambre 1 está perfilando tu idea..." : "A la espera de un objetivo"}
-                      </h4>
-                      <p className="text-zinc-500 text-sm max-w-sm mx-auto leading-relaxed">
-                        {phase1Interview 
-                          ? "Responde las preguntas en la pestaña Fases para que AureliOS extraiga el Requerimiento Principal."
-                          : "Escribe en el chat qué quieres construir. AureliOS despertará al Enjambre 1 para entrevistarte."}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              {/* Timeline Stepper (Fixed at bottom) */}
-              <div className="shrink-0 pt-2 border-t border-[var(--stroke-subtle)]">
-                <h3 className="text-sm font-mono text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <ListChecks size={16} /> Secuencia de Orquestación
-                </h3>
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  
-                  {/* Step 1 */}
-                  <div 
-                    onClick={() => setZone2ActiveTab('phases')}
-                    className={`p-4 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] ${
-                    phase1Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 
-                    phase1Interview ? 'border-blue-500/50 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.1)]' : 
-                    'border-zinc-800/50 bg-zinc-900/30 opacity-60'
-                  }`}>
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                        phase1Complete ? 'bg-emerald-500/20 text-emerald-400' : 
-                        phase1Interview ? 'bg-blue-500/20 text-blue-400 animate-pulse' : 
-                        'bg-zinc-800 text-zinc-500'
-                      }`}>
-                        <Brain size={16} weight="duotone" />
-                      </div>
-                      <h4 className={`text-sm font-semibold leading-tight ${phase1Complete ? 'text-emerald-400' : phase1Interview ? 'text-blue-400' : 'text-zinc-400'}`}>
-                        Fase 1: Triage
-                      </h4>
-                    </div>
-                  </div>
+               <div className="grid grid-cols-1 gap-2">
+                 <select value={selectedRoomPresetId} onChange={(e) => setSelectedRoomPresetId(e.target.value)} className="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400">
+                   {roomPresets.map((preset) => (
+                     <option key={preset.id} value={preset.id} className="bg-slate-900">{preset.name}</option>
+                   ))}
+                 </select>
 
-                  {/* Step 2 */}
-                  <div 
-                    onClick={() => setZone2ActiveTab('phases')}
-                    className={`p-4 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] ${
-                    phase2Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 
-                    (phase1Complete && !phase2Complete) ? 'border-purple-500/50 bg-purple-500/10 shadow-[0_0_15px_rgba(168,85,247,0.1)]' : 
-                    'border-zinc-800/50 bg-zinc-900/30 opacity-60'
-                  }`}>
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                        phase2Complete ? 'bg-emerald-500/20 text-emerald-400' : 
-                        (phase1Complete && !phase2Complete) ? 'bg-purple-500/20 text-purple-400 animate-pulse' : 
-                        'bg-zinc-800 text-zinc-500'
-                      }`}>
-                        <Robot size={16} weight="duotone" />
-                      </div>
-                      <h4 className={`text-sm font-semibold leading-tight ${phase2Complete ? 'text-emerald-400' : (phase1Complete && !phase2Complete) ? 'text-purple-400' : 'text-zinc-400'}`}>
-                        Fase 2: Extracción
-                      </h4>
-                    </div>
-                  </div>
+                 {roomPresets.length > 0 && (
+                   <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
+                     <div className="text-sm font-semibold text-white/90">{roomPresets.find((preset) => preset.id === selectedRoomPresetId)?.name}</div>
+                     <div className="mt-1 text-[11px] text-white/55 leading-relaxed">{roomPresets.find((preset) => preset.id === selectedRoomPresetId)?.description}</div>
+                     <div className="mt-2 flex flex-wrap gap-2">
+                       {(roomPresets.find((preset) => preset.id === selectedRoomPresetId)?.participants || []).map((participant) => (
+                         <span key={participant.id} className="px-2 py-1 rounded-lg border border-violet-400/20 bg-violet-500/10 text-violet-200 text-[10px]">{participant.name}</span>
+                       ))}
+                     </div>
+                   </div>
+                 )}
 
-                  {/* Step 3 */}
-                  <div 
-                    onClick={() => setZone2ActiveTab('phases')}
-                    className={`p-4 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] ${
-                    phase3Complete ? 'border-emerald-500/30 bg-emerald-500/5' : 
-                    (phase2Complete && !phase3Complete) ? 'border-amber-500/50 bg-amber-500/10 shadow-[0_0_15px_rgba(245,158,11,0.1)]' : 
-                    'border-zinc-800/50 bg-zinc-900/30 opacity-60'
-                  }`}>
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                        phase3Complete ? 'bg-emerald-500/20 text-emerald-400' : 
-                        (phase2Complete && !phase3Complete) ? 'bg-amber-500/20 text-amber-400 animate-pulse' : 
-                        'bg-zinc-800 text-zinc-500'
-                      }`}>
-                        <Lightning size={16} weight="duotone" />
-                      </div>
-                      <h4 className={`text-sm font-semibold leading-tight ${phase3Complete ? 'text-emerald-400' : (phase2Complete && !phase3Complete) ? 'text-amber-400' : 'text-zinc-400'}`}>
-                        Fase 3: Blueprint
-                      </h4>
-                    </div>
-                  </div>
+                 <div className="max-h-[132px] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                   {roomRuns.length === 0 ? (
+                     <div className="text-xs text-white/40 border border-dashed border-white/10 rounded-xl px-3 py-4">Aún no hay simulaciones de room persistidas.</div>
+                   ) : roomRuns.slice(0, 4).map((run) => (
+                     <button key={run.id} onClick={() => setSelectedRoomRunId(run.id)} className={`w-full text-left rounded-xl border px-3 py-3 transition-colors ${selectedRoomRunId === run.id ? 'border-violet-400/50 bg-violet-500/10' : 'border-white/10 bg-white/5 hover:bg-white/8'}`}>
+                       <div className="flex items-center justify-between gap-3">
+                         <div className="text-sm font-semibold text-white/90 truncate">{run.objective}</div>
+                         <div className="text-[10px] px-2 py-1 rounded-full bg-white/10 text-white/60">{run.status}</div>
+                       </div>
+                       <div className="mt-2 text-[11px] text-white/45">{run.preset_name || run.preset_id}</div>
+                     </button>
+                   ))}
+                 </div>
 
-                  {/* Step 4 */}
-                  <div 
-                    onClick={() => {
-                      if (phase3Complete) {
-                        window.dispatchEvent(new CustomEvent('agentos:navigate', { detail: { view: 'infinityboard', fitView: true } }));
-                      }
-                    }}
-                    className={`p-4 rounded-xl border transition-all ${phase3Complete ? 'cursor-pointer hover:scale-[1.02]' : 'cursor-not-allowed'} ${
-                    phase3Complete ? 'border-cyan-500/50 bg-cyan-500/10 shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 
-                    'border-zinc-800/50 bg-zinc-900/30 opacity-60'
-                  }`}>
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                        phase3Complete ? 'bg-cyan-500/20 text-cyan-400 animate-pulse' : 
-                        'bg-zinc-800 text-zinc-500'
-                      }`}>
-                        <RocketLaunch size={16} weight="duotone" />
-                      </div>
-                      <h4 className={`text-sm font-semibold leading-tight ${phase3Complete ? 'text-cyan-400' : 'text-zinc-400'}`}>
-                        Ensamblaje
-                      </h4>
-                    </div>
-                  </div>
+                 {selectedRoomRunId && roomRuns.some((run) => run.id === selectedRoomRunId) && (
+                   <RoomRunPreview runId={selectedRoomRunId} />
+                 )}
 
-                </div>
-              </div>
-            </div>
-          </div>
+                 <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
+                   <div className="text-[11px] uppercase tracking-[0.18em] text-white/40 font-bold mb-2">Characters</div>
+                   <div className="flex flex-wrap gap-2">
+                     {characterProfiles.length === 0 ? <span className="text-[11px] text-white/40">Sin perfiles clonados todavía.</span> : characterProfiles.slice(0, 6).map((profile) => (
+                       <span key={profile.id} title={profile.essence || profile.speaking_style || ''} className="px-2 py-1 rounded-lg border border-violet-400/20 bg-violet-500/10 text-violet-200 text-[10px]">{profile.name}</span>
+                     ))}
+                   </div>
+                 </div>
+               </div>
+             </div>
 
-                    {/* ── Fases (Columnas 1, 2 y 3) ── */}
-          <div className={zone2ActiveTab === 'phases' ? 'flex-1 flex w-full h-full relative overflow-hidden bg-zinc-900/50' : 'hidden'}>
-            
-            {/* ── Columna 1: Triage ── */}
-            <div className="flex-1 flex flex-col h-full border-r border-[var(--stroke-subtle)] bg-[var(--surface-canvas)]">
-              <div className="shrink-0 pt-5 pb-4 px-6 border-b border-[var(--stroke-subtle)] bg-zinc-900/30">
-                <h2 className="text-[15px] text-[var(--text-primary)] font-semibold flex items-center gap-2">
-                  <Brain size={18} weight="duotone" className="text-blue-400" /> Fase 1: Entrevista de Triaje
-                </h2>
-              </div>
-              <div className="flex-1 overflow-y-auto px-6 py-4 custom-scrollbar">
-                {phase1Interview ? (
-                  <div className="text-[13px] leading-relaxed markdown-body animate-fade-in text-[var(--text-primary)]">
-                    {phase1Interview.split('===USER_ANSWER_START===').map((chunk1, i) => {
-                      if (i === 0) return <ReactMarkdown key={i}>{chunk1}</ReactMarkdown>;
-                      const parts = chunk1.split('===USER_ANSWER_END===');
-                      return (
-                        <React.Fragment key={i}>
-                          <div className="user-answer-block font-medium my-4 pl-4 border-l-2 border-emerald-400/50 bg-emerald-400/5 p-3 rounded-r-lg">
-                            <ReactMarkdown>{parts[0]}</ReactMarkdown>
-                          </div>
-                          {parts[1] && <ReactMarkdown>{parts[1]}</ReactMarkdown>}
-                        </React.Fragment>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-zinc-500 text-center gap-3">
-                    <Brain size={28} weight="duotone" />
-                    <p className="text-xs">AureliOS está esperando tu petición en el chat.</p>
-                  </div>
-                )}
-              </div>
-              {!phase1Complete ? (
-                <div className="shrink-0 bg-black p-4 border-t border-[var(--stroke-subtle)] h-[160px] flex flex-col justify-end gap-3">
-                  <textarea 
-                    id="phase1-input"
-                    className="w-full h-20 p-3 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-blue-500/50 resize-none custom-scrollbar"
-                    placeholder="Escribe tu respuesta..."
-                  />
-                  <div className="flex justify-between items-center">
-                    <button className="p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors" title="Micrófono">
-                      <Microphone size={16} />
-                    </button>
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={async () => {
-                          if (!phase1Interview) return;
-                          const textarea = document.getElementById('phase1-input') as HTMLTextAreaElement;
-                          const prevValue = textarea.value;
-                          textarea.value = "Generando respuesta con GenAI...";
-                          textarea.disabled = true;
-                          try {
-                            const hasText = prevValue.trim().length > 0;
-                            const prompt = hasText
-                              ? `Mejora, ordena y da formato profesional coherente a mi siguiente respuesta (NO inventes información, solo pule mi idea):\n\n${prevValue}`
-                              : `Actúa como el usuario experto o product owner. Responde a la siguiente entrevista de Triage de manera clara, creativa y directa, inventando los requerimientos lógicos que falten para que el proyecto sea viable.\n\nREGLAS ESTRICTAS:\n1. Responde OBLIGATORIAMENTE en ESPAÑOL.\n2. PROHIBIDO usar formato Markdown.\n3. Estructura de forma numerada.\n\nENTREVISTA:\n${phase1Interview}`;
-                            const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001/api/v1';
-                            const modelToUse = localStorage.getItem('aurelios_model') || 'free.ai/auto';
-                            const res = await fetch(`${API_URL}/studio/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: prompt, model: modelToUse }) });
-                            const data = await res.json();
-                            if (res.ok) textarea.value = data.response;
-                            else { textarea.value = "Error GenAI: " + (data.detail || "Error"); setTimeout(() => { textarea.value = prevValue; }, 3000); }
-                          } catch (e: any) { textarea.value = "Error de red."; setTimeout(() => { textarea.value = prevValue; }, 3000); }
-                          finally { textarea.disabled = false; }
-                        }}
-                        className="px-3 py-1.5 bg-purple-600/10 border border-purple-500/30 hover:bg-purple-600/20 text-purple-300 rounded-lg text-[11px] font-bold transition-colors flex items-center gap-1.5"
-                      >
-                        <Robot size={14} weight="duotone" /> GenAI
-                      </button>
-                      <button 
-                        onClick={() => {
-                          const val = (document.getElementById('phase1-input') as HTMLTextAreaElement).value;
-                          if (!val.trim() || val.includes("Generando")) return;
-                          const trigger = useStudioStore.getState().triggerChatSend;
-                          if (trigger) {
-                            const current = useStudioStore.getState().phase1Interview || '';
-                            useStudioStore.getState().setPhase1Interview(current + `\n\n---\n**💡 Tus respuestas enviadas:**\n\n===USER_ANSWER_START===\n${val}\n===USER_ANSWER_END===\n\n---\n*AureliOS está analizando tus respuestas...*`);
-                            (document.getElementById('phase1-input') as HTMLTextAreaElement).value = '';
-                            trigger("--- [Respuesta del usuario] ---\n" + val);
-                          }
-                        }}
-                        className="px-3 py-1.5 bg-white text-black hover:bg-zinc-200 rounded-lg text-[11px] font-bold transition-colors"
-                      >
-                        Enviar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="shrink-0 bg-zinc-950 border-t border-[#eab308]/20 p-4 flex items-center justify-center text-[#eab308] h-[160px]">
-                  <div className="flex items-center gap-2 text-sm font-bold">
-                    <CheckCircle size={18} weight="fill" /> Fase 1: Triaje aprobada
-                  </div>
-                </div>
-              )}
-            </div>
+             <div className="flex items-center justify-between">
+               <div className="text-[11px] uppercase tracking-[0.2em] text-white/40 font-bold">Runs recientes</div>
+               <button onClick={refreshSwarmRuns} className="text-[11px] text-white/60 hover:text-white">Refrescar</button>
+             </div>
 
-            {/* ── Columna 2: Extracción ── */}
-            <div className="flex-1 flex flex-col h-full border-r border-[var(--stroke-subtle)] bg-[var(--surface-canvas)]">
-              <div className="shrink-0 pt-5 pb-4 px-6 border-b border-[var(--stroke-subtle)] bg-zinc-900/30">
-                <h2 className="text-[15px] text-[var(--text-primary)] font-semibold flex items-center gap-2">
-                  <Robot size={18} weight="duotone" className="text-purple-400" /> Fase 2: Extracción
-                </h2>
-              </div>
-              <div className="flex-1 overflow-y-auto px-6 py-4 custom-scrollbar">
-                {phase2Content ? (
-                  <div className="text-[13px] leading-relaxed markdown-body animate-fade-in text-[var(--text-primary)]">
-                    <ReactMarkdown>{phase2Content}</ReactMarkdown>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-zinc-500 text-center gap-3">
-                    <Robot size={28} weight="duotone" />
-                    <p className="text-xs">Esperando aprobación de Fase 1.</p>
-                  </div>
-                )}
-              </div>
-              {!phase2Content && (
-                <div className="shrink-0 bg-[var(--surface-canvas)] border-t border-[var(--stroke-subtle)] h-[160px]" />
-              )}
-              {phase2Content && !phase2Complete && (
-                <div className="shrink-0 bg-black p-4 border-t border-[var(--stroke-subtle)] h-[160px] flex flex-col justify-end gap-3">
-                  <textarea 
-                    id="phase2-input"
-                    className="w-full h-20 p-3 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-purple-500/50 resize-none custom-scrollbar"
-                    placeholder="Escribe 'Acepto' o indica tus modificaciones..."
-                  />
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <button className="p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors" title="Micrófono">
-                        <Microphone size={16} />
-                      </button>
-                      <label className="flex items-center gap-1.5 text-xs text-zinc-400 cursor-pointer hover:text-white transition-colors">
-                        <input 
-                          type="checkbox" 
-                          checked={isPromptChecked}
-                          onChange={(e) => setIsPromptChecked(e.target.checked)}
-                          className="w-3.5 h-3.5 accent-purple-500 rounded bg-zinc-900 border-zinc-700" 
-                        />
-                        Prompt
-                      </label>
-                    </div>
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={async () => {
-                          const textarea = document.getElementById('phase2-input') as HTMLTextAreaElement;
-                          const prevValue = textarea.value;
-                          if (!prevValue.trim()) {
-                            // GenAI Automático sin texto
-                            textarea.value = "Generando modificación automática con GenAI...";
-                            textarea.disabled = true;
-                            try {
-                              const prompt = `Analiza este contrato técnico y genera una revisión o corrección automática para mejorarlo según las buenas prácticas: \n${phase2Content}`;
-                              const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001/api/v1';
-                              const modelToUse = localStorage.getItem('aurelios_model') || 'free.ai/auto';
-                              const res = await fetch(`${API_URL}/studio/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: prompt, model: modelToUse }) });
-                              const data = await res.json();
-                              if (res.ok) textarea.value = data.response;
-                              else { textarea.value = "Error GenAI"; setTimeout(() => { textarea.value = prevValue; }, 3000); }
-                            } catch (e) { textarea.value = "Error de red."; setTimeout(() => { textarea.value = prevValue; }, 3000); }
-                            finally { textarea.disabled = false; }
-                          } else {
-                            // GenAI con texto
-                            textarea.disabled = true;
-                            const original = textarea.value;
-                            textarea.value = "Procesando con GenAI...";
-                            try {
-                              const prompt = isPromptChecked 
-                                ? `Actúa como asistente técnico. Tienes este contrato: \n${phase2Content}\n\nAplica estrictamente esta instrucción del usuario para modificarlo y entrégalo en el mismo formato:\n"${original}"`
-                                : `Mejora, ordena y da formato profesional coherente a mis correcciones sobre el contrato (NO inventes información, solo pule mis palabras):\n"${original}"`;
-                              const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001/api/v1';
-                              const modelToUse = localStorage.getItem('aurelios_model') || 'free.ai/auto';
-                              const res = await fetch(`${API_URL}/studio/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: prompt, model: modelToUse }) });
-                              const data = await res.json();
-                              if (res.ok) textarea.value = data.response;
-                              else { textarea.value = "Error GenAI"; setTimeout(() => { textarea.value = original; }, 3000); }
-                            } catch (e) { textarea.value = "Error de red."; setTimeout(() => { textarea.value = original; }, 3000); }
-                            finally { textarea.disabled = false; }
-                          }
-                        }}
-                        className="px-3 py-1.5 bg-purple-600/10 border border-purple-500/30 hover:bg-purple-600/20 text-purple-300 rounded-lg text-[11px] font-bold transition-colors flex items-center gap-1.5"
-                      >
-                        <Robot size={14} weight="duotone" /> GenAI
-                      </button>
-                      <button 
-                        onClick={() => {
-                          const val = (document.getElementById('phase2-input') as HTMLTextAreaElement).value;
-                          if (!val.trim() || val.includes("Generando") || val.includes("Procesando")) return;
-                          const trigger = useStudioStore.getState().triggerChatSend;
-                          if (trigger) {
-                            if (val.trim().toLowerCase() === "acepto" || val.trim().toLowerCase() === "aceptar") {
-                              trigger("Acepto el contrato de la fase 2. Procede a la fase 3 de Blueprint.");
-                            } else {
-                              trigger("--- [Corrección Fase 2] ---\n" + val);
-                            }
-                            (document.getElementById('phase2-input') as HTMLTextAreaElement).value = '';
-                          }
-                        }}
-                        className="px-3 py-1.5 bg-white text-black hover:bg-zinc-200 rounded-lg text-[11px] font-bold transition-colors"
-                      >
-                        Enviar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {phase2Complete && (
-                <div className="shrink-0 bg-zinc-950 border-t border-[#eab308]/20 p-4 flex items-center justify-center text-[#eab308] h-[160px]">
-                  <div className="flex items-center gap-2 text-sm font-bold">
-                    <CheckCircle size={18} weight="fill" /> Fase 2: Extracción aprobada
-                  </div>
-                </div>
-              )}
-            </div>
+             <div className="max-h-[300px] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+               {swarmRuns.length === 0 ? (
+                 <div className="text-xs text-white/40 border border-dashed border-white/10 rounded-xl px-3 py-4">Aún no hay runs persistidos. Ejecuta el board para crear trazabilidad real.</div>
+               ) : swarmRuns.slice(0, 8).map((run) => (
+                 <button
+                   key={run.id}
+                   onClick={() => setSelectedRunId(run.id)}
+                   className={`w-full text-left rounded-xl border px-3 py-3 transition-colors ${selectedRunId === run.id ? 'border-cyan-400/50 bg-cyan-500/10' : 'border-white/10 bg-white/5 hover:bg-white/8'}`}
+                 >
+                   <div className="flex items-center justify-between gap-3">
+                     <div className="text-sm font-semibold text-white/90 truncate">{run.objective}</div>
+                     <div className={`text-[10px] px-2 py-1 rounded-full ${run.status === 'completed' ? 'bg-emerald-500/15 text-emerald-300' : run.status === 'completed_with_warnings' ? 'bg-amber-500/15 text-amber-300' : 'bg-white/10 text-white/60'}`}>{run.status}</div>
+                   </div>
+                   <div className="mt-2 flex items-center justify-between text-[11px] text-white/45">
+                     <span>score: {run.score ?? 0}%</span>
+                     <span>{run.artifacts?.length || 0} artefactos</span>
+                   </div>
+                 </button>
+               ))}
+             </div>
 
-            {/* ── Columna 3: Blueprint ── */}
-            <div className="flex-1 flex flex-col h-full bg-[var(--surface-canvas)]">
-              <div className="shrink-0 pt-5 pb-4 px-6 border-b border-[var(--stroke-subtle)] bg-zinc-900/30">
-                <h2 className="text-[15px] text-[var(--text-primary)] font-semibold flex items-center gap-2">
-                  <Lightning size={18} weight="duotone" className="text-amber-400" /> Fase 3: Blueprint
-                </h2>
-              </div>
-              <div className="flex-1 overflow-y-auto px-6 py-4 custom-scrollbar">
-                {phase3Content ? (
-                  <div className="text-[13px] leading-relaxed markdown-body animate-fade-in text-[var(--text-primary)]">
-                    <ReactMarkdown>{phase3Content}</ReactMarkdown>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-zinc-500 text-center gap-3">
-                    <Lightning size={28} weight="duotone" />
-                    <p className="text-xs">Esperando Extracción para diseñar Arquitectura.</p>
-                  </div>
-                )}
-              </div>
-              {!phase3Content && (
-                <div className="shrink-0 bg-[var(--surface-canvas)] border-t border-[var(--stroke-subtle)] h-[160px]" />
-              )}
-              {phase3Content && !phase3Complete && (
-                <div className="shrink-0 bg-black p-4 border-t border-[var(--stroke-subtle)] h-[160px] flex flex-col justify-end">
-                  <button 
-                    onClick={() => {
-                      const trigger = useStudioStore.getState().triggerChatSend;
-                      if (trigger) trigger("Acepto el Blueprint. Procede a enviarlo a Infinity Board.");
-                    }}
-                    className="w-full py-2.5 bg-cyan-500 text-zinc-950 hover:bg-cyan-400 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2"
-                  >
-                    <RocketLaunch size={16} /> Go2iboard
-                  </button>
-                </div>
-              )}
-              {phase3Complete && (
-                <div className="shrink-0 bg-emerald-500 p-4 flex items-center justify-center text-zinc-950 h-[160px]">
-                  <div className="flex items-center gap-2 text-sm font-bold">
-                    <CheckCircle size={18} weight="fill" /> Fase 3: Blueprint aprobada
-                  </div>
-                </div>
-              )}
-            </div>
-
-          </div>
-
-
-          {/* ── Historial de Chats (Ocupa toda la vista de Zone 2) ── */}
-          <div className={zone2ActiveTab === 'history' ? 'flex-1 flex flex-col h-full bg-[var(--surface-canvas)] relative overflow-hidden' : 'hidden'}>
-            <div className="shrink-0 pt-8 pb-4 px-8 border-b border-[var(--stroke-subtle)] bg-zinc-900/30">
-               <h2 className="text-xl text-[var(--text-primary)] font-semibold flex items-center gap-2">
-                 <ClockCounterClockwise size={24} className="text-emerald-400" /> Historial de Chats
-               </h2>
-               <p className="text-sm text-zinc-400 mt-1">Recupera un punto de restauración anterior. El sistema hidratará el espacio de trabajo.</p>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                {historyItems.map((item) => (
-                  <div key={item.id} className="p-5 rounded-xl border border-white/10 bg-zinc-900/50 hover:bg-zinc-800 transition-colors flex flex-col gap-3 relative group">
-                    <div className="flex justify-between items-start">
-                       <h3 className="text-sm font-bold text-white leading-snug break-words pr-6">{item.flowName}</h3>
-                       <button onClick={() => deleteHistoryItem(item.id)} className="text-zinc-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 absolute top-4 right-4">
-                         <Trash size={16} />
-                       </button>
-                    </div>
-                    <p className="text-xs text-zinc-400 line-clamp-2">{item.theme}</p>
-                    <div className="flex flex-wrap gap-1 mt-auto pt-2">
-                      {item.detectedAgents.slice(0, 3).map((a, i) => (
-                        <span key={i} className="text-[10px] bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/20">{a}</span>
-                      ))}
-                      {item.detectedAgents.length > 3 && <span className="text-[10px] bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded border border-zinc-700">+{item.detectedAgents.length - 3}</span>}
-                    </div>
-                    <div className="flex justify-between items-center mt-1 border-t border-white/5 pt-3">
-                      <span className="text-[10px] text-zinc-500">{new Date(item.updatedAt).toLocaleString()}</span>
-                      <button 
-                        onClick={() => {
-                          loadHistoryItem(item.id, (snapshot) => {
-                             useStudioStore.setState({
-                               ...snapshot
-                             });
-                             useStudioStore.getState().setZone2ActiveTab('okr');
-                          });
-                        }}
-                        className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
-                      >
-                        Restaurar <CheckCircle size={14} weight="bold" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                {historyItems.length === 0 && (
-                  <div className="col-span-full py-20 text-center text-zinc-500 flex flex-col items-center gap-3">
-                    <ClockCounterClockwise size={48} weight="duotone" className="opacity-20" />
-                    <p className="text-sm">No hay historial guardado todavía.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-          </div>
-          </>
-        )}
+             {selectedRun && (
+               <div className="rounded-xl border border-white/10 bg-white/5 p-3 space-y-2">
+                 <div className="text-xs uppercase tracking-[0.18em] text-white/40 font-bold">Detalle activo</div>
+                 <div className="text-sm text-white/85 font-semibold">{selectedRun.objective}</div>
+                 <div className="text-xs text-white/50">{selectedRun.steps?.length || 0} nodos · score {selectedRun.score ?? 0}%</div>
+                 <div className="space-y-1 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar">
+                   {(selectedRun.steps || []).map((step) => (
+                     <div key={`${selectedRun.id}_${step.index}`} className="flex items-center justify-between text-xs text-white/70">
+                       <span className="truncate mr-2">{step.index}. {step.node_name}</span>
+                       <span className={step.contract_status === 'PASS' ? 'text-emerald-300' : 'text-amber-300'}>{step.contract_status}</span>
+                     </div>
+                   ))}
+                 </div>
+                 {(selectedRun.artifacts || []).length > 0 && (
+                   <div className="pt-2 border-t border-white/10">
+                     <div className="text-[11px] text-white/40 mb-2 uppercase tracking-[0.18em] font-bold">Artefactos</div>
+                     <div className="flex flex-wrap gap-2">
+                       {(selectedRun.artifacts || []).map((artifact, idx) => (
+                         <button
+                           key={`${selectedRun.id}_artifact_${idx}`}
+                           onClick={() => useStudioStore.getState().setActiveArtifact({ name: artifact.name, content: artifact.content })}
+                           className="px-2 py-1 rounded-lg border border-amber-400/20 bg-amber-500/10 text-amber-300 text-xs hover:bg-amber-500/20"
+                         >
+                           {artifact.name}
+                         </button>
+                       ))}
+                     </div>
+                   </div>
+                 )}
+               </div>
+             )}
+           </div>
+         </div>
       </div>
-      
+
       <style dangerouslySetInnerHTML={{__html: `
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }

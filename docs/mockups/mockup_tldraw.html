@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity OS - TLDraw Mockup</title>
+    <!-- Cargamos los estilos base de tldraw -->
+    <link rel="stylesheet" href="https://unpkg.com/tldraw@2.4.4/tldraw.css" />
+    
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f4f5;
+        }
+
+        #root {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Forzamos el color Índigo en la interfaz nativa de TLDraw */
+        :root {
+            --color-accent: #6366f1 !important; /* Indigo 500 */
+            --color-accent-hover: #4f46e5 !important;
+            --color-selection-stroke: #6366f1 !important;
+            --color-selection-fill: rgba(99, 102, 241, 0.05) !important;
+        }
+
+        /* Overlay simulando la cabecera del OS por encima de TLDraw */
+        .os-header {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 1000; /* Por encima del canvas */
+            background: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid #e4e4e7;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            pointer-events: auto;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: #6366f1;
+            border-radius: 50%;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+    </style>
+
+    <!-- Usamos Import Maps para cargar React y TLDraw nativamente en el navegador sin empaquetador -->
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "https://esm.sh/react@18.2.0",
+            "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+            "tldraw": "https://esm.sh/tldraw@2.4.4?deps=react@18.2.0,react-dom@18.2.0"
+        }
+    }
+    </script>
+</head>
+<body>
+
+    <!-- UI Overlay de Antigravity OS -->
+    <div class="os-header">
+        <div class="dot"></div>
+        <div style="font-weight: 600; color: #1f2937; font-size: 14px;">
+            Antigravity OS <span style="color: #9ca3af; font-weight: 400; margin-left: 6px;">TLDraw Engine</span>
+        </div>
+    </div>
+
+    <!-- Contenedor donde React inyectará el lienzo -->
+    <div id="root"></div>
+
+    <!-- Lógica de React -->
+    <script type="module">
+        import React from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { Tldraw } from 'tldraw';
+
+        function App() {
+            // Renderizamos el componente Tldraw a pantalla completa
+            return React.createElement(
+                'div', 
+                { style: { width: '100%', height: '100%' } },
+                React.createElement(Tldraw, { 
+                    persistenceKey: "tldraw-antigravity", // Guarda tus dibujos en localStorage
+                    darkMode: false
+                })
+            );
+        }
+
+        // Montamos la App
+        const root = createRoot(document.getElementById('root'));
+        root.render(React.createElement(App));
+    </script>
+</body>
+</html>

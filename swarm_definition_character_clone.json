@@ -1,0 +1,13 @@
+{
+  "id": "clone-character-swarm-full",
+  "description": "Parallel execution of full character cloning pipeline.",
+  "nodes": [
+    { "id": "node_schema", "agent": "character-systems-designer", "input": { "task": "expand_schema" } },
+    { "id": "node_service", "agent": "runtime-operator", "input": { "task": "create_service_file" } },
+    { "id": "node_endpoints", "agent": "runtime-operator", "input": { "task": "add_endpoints" } },
+    { "id": "node_ui", "agent": "ui-designer", "input": { "task": "build_ui_panel" } },
+    { "id": "node_test", "agent": "test-runner", "input": { "task": "run_smoke_tests" } }
+  ],
+  "edges": [],
+  "contract": "OUT: JSON"
+}

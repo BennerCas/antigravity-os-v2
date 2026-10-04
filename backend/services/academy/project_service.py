@@ -1,9 +1,9 @@
 import uuid
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
-from pydantic import BaseModel, Field
+from typing import Any
 
 import db
+from pydantic import BaseModel, Field
 
 
 class Milestone(BaseModel):
@@ -11,7 +11,7 @@ class Milestone(BaseModel):
     title: str
     description: str
     completed: bool = False
-    completed_at: Optional[str] = None
+    completed_at: str | None = None
 
 
 class LearningProjectModel(BaseModel):
@@ -19,10 +19,10 @@ class LearningProjectModel(BaseModel):
     user_id: str
     title: str
     status: str  # draft, in_progress, under_review, approved
-    spec: Dict[str, Any] = Field(default_factory=dict)
-    artifacts: List[Dict[str, Any]] = Field(default_factory=list)
-    milestones: List[Dict[str, Any]] = Field(default_factory=list)
-    reviews: List[Dict[str, Any]] = Field(default_factory=list)
+    spec: dict[str, Any] = Field(default_factory=dict)
+    artifacts: list[dict[str, Any]] = Field(default_factory=list)
+    milestones: list[dict[str, Any]] = Field(default_factory=list)
+    reviews: list[dict[str, Any]] = Field(default_factory=list)
     updated_at: str
 
 
@@ -33,15 +33,42 @@ class ProjectService:
     """
 
     DEFAULT_MILESTONES = [
-        {"id": "m1_spec", "title": "Especificación Arquitectónica", "description": "Definición formal de contratos, diagramas C4 y metas de confiabilidad.", "completed": False},
-        {"id": "m2_graph", "title": "Construcción de Topología", "description": "Implementación del grafo en Builder con validación sin bloqueantes.", "completed": False},
-        {"id": "m3_chaos", "title": "Prueba de Estrés y Fallas", "description": "Inyección de fallas en Failure Lab con verificación de recuperación.", "completed": False},
-        {"id": "m4_transfer", "title": "Validación de Transferencia", "description": "Superación del reto de transferencia en dominio secundario.", "completed": False},
-        {"id": "m5_production", "title": "Promoción y Despliegue", "description": "Clonado a workspace de producción con cadena de evidencia.", "completed": False},
+        {
+            "id": "m1_spec",
+            "title": "Especificación Arquitectónica",
+            "description": "Definición formal de contratos, diagramas C4 y metas de confiabilidad.",
+            "completed": False,
+        },
+        {
+            "id": "m2_graph",
+            "title": "Construcción de Topología",
+            "description": "Implementación del grafo en Builder con validación sin bloqueantes.",
+            "completed": False,
+        },
+        {
+            "id": "m3_chaos",
+            "title": "Prueba de Estrés y Fallas",
+            "description": "Inyección de fallas en Failure Lab con verificación de recuperación.",
+            "completed": False,
+        },
+        {
+            "id": "m4_transfer",
+            "title": "Validación de Transferencia",
+            "description": "Superación del reto de transferencia en dominio secundario.",
+            "completed": False,
+        },
+        {
+            "id": "m5_production",
+            "title": "Promoción y Despliegue",
+            "description": "Clonado a workspace de producción con cadena de evidencia.",
+            "completed": False,
+        },
     ]
 
     @classmethod
-    def create_project(cls, user_id: str, title: str, spec: Optional[Dict[str, Any]] = None) -> LearningProjectModel:
+    def create_project(
+        cls, user_id: str, title: str, spec: dict[str, Any] | None = None
+    ) -> LearningProjectModel:
         now_str = datetime.now(timezone.utc).isoformat()
         project_id = f"proj_{uuid.uuid4().hex[:10]}"
 
@@ -54,26 +81,28 @@ class ProjectService:
             "artifacts": [],
             "milestones": list(cls.DEFAULT_MILESTONES),
             "reviews": [],
-            "updated_at": now_str
+            "updated_at": now_str,
         }
 
         db.project_upsert(record)
         return LearningProjectModel(**record)
 
     @classmethod
-    def get_project(cls, project_id: str) -> Optional[LearningProjectModel]:
+    def get_project(cls, project_id: str) -> LearningProjectModel | None:
         data = db.project_get(project_id)
         if not data:
             return None
         return LearningProjectModel(**data)
 
     @classmethod
-    def list_user_projects(cls, user_id: str) -> List[LearningProjectModel]:
+    def list_user_projects(cls, user_id: str) -> list[LearningProjectModel]:
         records = db.projects_user(user_id)
         return [LearningProjectModel(**r) for r in records]
 
     @classmethod
-    def complete_milestone(cls, project_id: str, milestone_id: str) -> LearningProjectModel:
+    def complete_milestone(
+        cls, project_id: str, milestone_id: str
+    ) -> LearningProjectModel:
         data = db.project_get(project_id)
         if not data:
             raise ValueError(f"Project '{project_id}' not found.")
@@ -100,13 +129,15 @@ class ProjectService:
             **data,
             "milestones": milestones,
             "status": status,
-            "updated_at": now_str
+            "updated_at": now_str,
         }
         db.project_upsert(updated)
         return LearningProjectModel(**updated)
 
     @classmethod
-    def attach_artifact(cls, project_id: str, artifact: Dict[str, Any]) -> LearningProjectModel:
+    def attach_artifact(
+        cls, project_id: str, artifact: dict[str, Any]
+    ) -> LearningProjectModel:
         data = db.project_get(project_id)
         if not data:
             raise ValueError(f"Project '{project_id}' not found.")
@@ -115,14 +146,14 @@ class ProjectService:
         artifact_record = {
             "id": f"art_{uuid.uuid4().hex[:8]}",
             "attached_at": datetime.now(timezone.utc).isoformat(),
-            **artifact
+            **artifact,
         }
         artifacts.append(artifact_record)
 
         updated = {
             **data,
             "artifacts": artifacts,
-            "updated_at": datetime.now(timezone.utc).isoformat()
+            "updated_at": datetime.now(timezone.utc).isoformat(),
         }
         db.project_upsert(updated)
         return LearningProjectModel(**updated)

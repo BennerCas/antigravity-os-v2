@@ -1,5 +1,6 @@
-import sys
 import os
+import sys
+
 import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -22,7 +23,7 @@ def test_evidence_recording_and_hashing():
         evidence_type="graph",
         source="builder_canvas",
         payload={"nodes_count": 3, "edges_count": 2},
-        confidence=1.0
+        confidence=1.0,
     )
     assert record.id.startswith("evi_")
     assert len(record.validation_hash) == 64  # SHA256 hex string
@@ -37,7 +38,7 @@ def test_evidence_chain_verification():
         session_id="sess_102",
         evidence_type="contract",
         source="validator",
-        payload={"branches": ["true", "false"]}
+        payload={"branches": ["true", "false"]},
     )
     rec2 = EvidenceService.record_evidence(
         user_id="user_evidence_2",
@@ -46,7 +47,7 @@ def test_evidence_chain_verification():
         session_id="sess_102",
         evidence_type="runtime",
         source="simulator",
-        payload={"exit_code": 0}
+        payload={"exit_code": 0},
     )
 
     is_valid = EvidenceService.verify_evidence_chain([rec1.id, rec2.id])

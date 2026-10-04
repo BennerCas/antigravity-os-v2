@@ -1,5 +1,6 @@
-import sys
 import os
+import sys
+
 import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -27,30 +28,75 @@ def test_capstone_architecture_audit_and_defense():
     # Build compliant Capstone flow:
     # 8 agents, 2 subflows, fork/join reducer, expiring human gate, prompts
     nodes = [
-        {"id": "node_start", "type": "start", "data": {"title": "Ingest Orchestrator", "role": "start"}},
-        {"id": "fork_node", "type": "action", "data": {"title": "Router Splitter", "role": "action"}},
+        {
+            "id": "node_start",
+            "type": "start",
+            "data": {"title": "Ingest Orchestrator", "role": "start"},
+        },
+        {
+            "id": "fork_node",
+            "type": "action",
+            "data": {"title": "Router Splitter", "role": "action"},
+        },
     ]
     # 8 agents
     for i in range(8):
-        nodes.append({
-            "id": f"agent_{i}",
-            "type": "action",
-            "data": {
-                "title": f"Specialist Agent {i}",
-                "role": "agent",
-                "prompt": f"You are expert agent {i}. Adhere to safety and idempotency.",
-                "variants": [f"variant_{i}_v1", f"variant_{i}_v2"]
+        nodes.append(
+            {
+                "id": f"agent_{i}",
+                "type": "action",
+                "data": {
+                    "title": f"Specialist Agent {i}",
+                    "role": "agent",
+                    "prompt": f"You are expert agent {i}. Adhere to safety and idempotency.",
+                    "variants": [f"variant_{i}_v1", f"variant_{i}_v2"],
+                },
             }
-        })
+        )
     # 2 subflows
-    nodes.append({"id": "subflow_1", "type": "subflow", "data": {"title": "Financial Audit Subflow", "role": "subflow"}})
-    nodes.append({"id": "subflow_2", "type": "subflow", "data": {"title": "Compliance Vault Subflow", "role": "subflow"}})
+    nodes.append(
+        {
+            "id": "subflow_1",
+            "type": "subflow",
+            "data": {"title": "Financial Audit Subflow", "role": "subflow"},
+        }
+    )
+    nodes.append(
+        {
+            "id": "subflow_2",
+            "type": "subflow",
+            "data": {"title": "Compliance Vault Subflow", "role": "subflow"},
+        }
+    )
     # Reducer join node
-    nodes.append({"id": "reducer_join", "type": "action", "data": {"title": "State Reducer", "role": "action"}})
+    nodes.append(
+        {
+            "id": "reducer_join",
+            "type": "action",
+            "data": {"title": "State Reducer", "role": "action"},
+        }
+    )
     # Expiring human gate
-    nodes.append({"id": "gate_human", "type": "human", "data": {"title": "C-Level Approval Gate", "role": "human", "timeout_seconds": 3600, "timeout_action": "escalate"}})
+    nodes.append(
+        {
+            "id": "gate_human",
+            "type": "human",
+            "data": {
+                "title": "C-Level Approval Gate",
+                "role": "human",
+                "timeout_seconds": 3600,
+                "timeout_action": "escalate",
+            },
+        }
+    )
     # End
-    nodes.append({"id": "node_end", "type": "end", "data": {"title": "Terminal Complete", "role": "end"}})
+    nodes.append(
+        {
+            "id": "node_end",
+            "type": "end",
+            "data": {"title": "Terminal Complete", "role": "end"},
+        }
+    )
 
     # Connect edges
     edges = [
@@ -65,7 +111,7 @@ def test_capstone_architecture_audit_and_defense():
         {"id": "e_sub1", "source": "reducer_join", "target": "subflow_1"},
         {"id": "e_sub2", "source": "subflow_1", "target": "subflow_2"},
         {"id": "e_gate", "source": "subflow_2", "target": "gate_human"},
-        {"id": "e_end", "source": "gate_human", "target": "node_end"}
+        {"id": "e_end", "source": "gate_human", "target": "node_end"},
     ]
 
     capstone_flow = {"nodes": nodes, "edges": edges}
@@ -75,7 +121,7 @@ def test_capstone_architecture_audit_and_defense():
         user_id=uid,
         capstone_id="mission_18",
         flow=capstone_flow,
-        spec={"architecture": "Distributed Multi-Agent Mesh"}
+        spec={"architecture": "Distributed Multi-Agent Mesh"},
     )
     assert res["architecture_audit"]["is_valid"] is True
     assert res["status"] == "under_defense"
@@ -90,7 +136,7 @@ def test_capstone_architecture_audit_and_defense():
     defense_answers = {
         "q1_topology_tradeoff": "Se eligió una topología desacoplada donde cada agente posee aislamiento de fallas y un contrato estricto, mitigando la sobrecarga de contexto y latencia que sufriría un único orquestador monolítico.",
         "q2_concurrency_reducer": "El nodo reductor implementa deduplicación basada en idempotencia con llaves de negocio y backoff exponencial, garantizando consistencia eventual aún si una de las ramas experimenta degradación temporal.",
-        "q3_hitl_timeout_policy": "La compuerta humana tiene un timeout de 3600 segundos; tras la expiración ejecuta una política de escalacion segura hacia la cola de auditoría sin autorizar transacciones a ciegas."
+        "q3_hitl_timeout_policy": "La compuerta humana tiene un timeout de 3600 segundos; tras la expiración ejecuta una política de escalacion segura hacia la cola de auditoría sin autorizar transacciones a ciegas.",
     }
 
     final_eval = CapstoneService.submit_and_evaluate(
@@ -98,7 +144,7 @@ def test_capstone_architecture_audit_and_defense():
         capstone_id="mission_18",
         flow=capstone_flow,
         spec={"architecture": "Distributed Multi-Agent Mesh"},
-        defense_answers=defense_answers
+        defense_answers=defense_answers,
     )
 
     assert final_eval["is_passed"] is True

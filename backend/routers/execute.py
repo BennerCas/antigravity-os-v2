@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional, List
 from services.prompt_builder import generate_prompt_from_preset
+
 from routers.builder_actions import call_ai
 
 COHESION_PROMPT_DOC = (
@@ -17,7 +17,7 @@ COHESION_PROMPT_DOC = (
     "4. El 'content' debe terminar SIEMPRE con la linea exacta: 'RULES: ALWAYS EXECUTE, REASON, AND RESPOND STRICTLY IN ENGLISH.'\n"
     "5. 'variables': lista snake_case separada por comas con las variables que el prompt espera recibir (vacio si ninguna).\n"
     "6. 'framework': crewai (creativo/colaborativo), autogen (codigo/ingenieria), langgraph (maquinas de estado/condicionales) o 'auto'.\n"
-    "7. 'llm_model': usa siempre 'hermes3:8b'.\n\n"
+    "7. 'llm_model': usa siempre 'hermes3:unlocked'.\n\n"
     "FORMATO DE SALIDA OBLIGATORIO: devuelve UNICAMENTE un JSON valido (sin marcas markdown, sin comentarios, sin texto extra) "
     "donde cada clave sea el ID del nodo y el valor un objeto con las claves: role, content, variables, framework, llm_model. "
     "Incluye TODOS los nodos del grafo, incluso los que no modificaste (con sus valores originales)."
@@ -45,38 +45,45 @@ ORCHESTRATOR_PROMPT_DOC = (
     "PLAN: <detailed execution plan, in Spanish, structured with numbered phases>"
 )
 
-router = APIRouter(
-    prefix="/execute",
-    tags=["Execution"]
-)
+router = APIRouter(prefix="/execute", tags=["Execution"])
+
 
 class ExecuteRequest(BaseModel):
     framework: str  # 'autogen' or 'crewai'
     task_description: str
-    preset_name: Optional[str] = "saas-landing"
+    preset_name: str | None = "saas-landing"
+
 
 class ExecuteResponse(BaseModel):
     status: str
     framework_used: str
-    generated_prompt: Optional[str] = None
+    generated_prompt: str | None = None
     message: str
+
 
 @router.post("/", response_model=ExecuteResponse)
 def execute_task(request: ExecuteRequest):
     # Determine the framework to use
     framework = request.framework.lower()
-    
+
     if framework not in ["autogen", "crewai"]:
-        raise HTTPException(status_code=400, detail="Unsupported framework. Choose 'autogen' or 'crewai'.")
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported framework. Choose 'autogen' or 'crewai'.",
+        )
 
     # Integrate the modular concepts from Promter
     # This generates a prompt based on the chosen preset and task
     try:
         composed_prompt = generate_prompt_from_preset(request.preset_name)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating prompt from Promter: {str(e)}")
-        
-    full_prompt = f"Task: {request.task_description}\n\nContext Prompt:\n{composed_prompt}"
+        raise HTTPException(
+            status_code=500, detail=f"Error generating prompt from Promter: {e!s}"
+        )
+
+    full_prompt = (
+        f"Task: {request.task_description}\n\nContext Prompt:\n{composed_prompt}"
+    )
 
     # Here we would initialize and run either autogen or crewai
     if framework == "autogen":
@@ -85,7 +92,7 @@ def execute_task(request: ExecuteRequest):
             status="success",
             framework_used="autogen",
             generated_prompt=full_prompt,
-            message="Scaffolding ready. AutoGen framework would be executed here."
+            message="Scaffolding ready. AutoGen framework would be executed here.",
         )
     elif framework == "crewai":
         # TODO: Implement CrewAI execution logic here
@@ -93,8 +100,9 @@ def execute_task(request: ExecuteRequest):
             status="success",
             framework_used="crewai",
             generated_prompt=full_prompt,
-            message="Scaffolding ready. CrewAI framework would be executed here."
+            message="Scaffolding ready. CrewAI framework would be executed here.",
         )
+
 
 class NodeData(BaseModel):
     id: str
@@ -104,56 +112,65 @@ class NodeData(BaseModel):
     framework: str = "auto"
     type: str = "mainPrompt"
     variables: str = ""
-    llm_model: str = "hermes3:8b"
+    llm_model: str = "hermes3:unlocked"
     temperature: float = 0.7
     output_schema: str = '{"type": "object"}'
+
 
 class EdgeData(BaseModel):
     source: str
     target: str
 
+
 class TaskNodeExecuteRequest(BaseModel):
     task_description: str
-    nodes: List[NodeData] = []
-    edges: List[EdgeData] = []
+    nodes: list[NodeData] = []
+    edges: list[EdgeData] = []
+
 
 class TaskNodeExecuteResponse(BaseModel):
     framework: str
     execution_plan: str
     model_used: str
-    updated_nodes: Optional[List[NodeData]] = None
+    updated_nodes: list[NodeData] | None = None
     cohesion_applied: bool = False
-    cohesion_error: Optional[str] = None
+    cohesion_error: str | None = None
+
 
 @router.post("/task", response_model=TaskNodeExecuteResponse)
 async def execute_task_endpoint(request: TaskNodeExecuteRequest):
     import json
-    
+
     # 1. Pre-Processing: Cohesion & Autocomplete
     # Check if we need to auto-configure nodes (e.g., missing role, very short content)
-    needs_autoconfig = any(n.role == "Default Agent" or len(n.content) < 30 for n in request.nodes)
+    needs_autoconfig = any(
+        n.role == "Default Agent" or len(n.content) < 30 for n in request.nodes
+    )
     cohesion_applied = False
     cohesion_error = None
-    
+
     if needs_autoconfig:
         cohesion_sys = COHESION_PROMPT_DOC
-        
+
         graph_desc = f"Task Global: {request.task_description}\nNodos:\n"
         for n in request.nodes:
             graph_desc += f"- ID: {n.id} | Título: {n.title} | Rol: {n.role} | Prompt: {n.content}\n"
         graph_desc += "\nConexiones:\n"
         for e in request.edges:
             graph_desc += f"- {e.source} -> {e.target}\n"
-            
+
         try:
             cohesion_res, _ = await call_ai(cohesion_sys, graph_desc)
-            cohesion_res = cohesion_res.replace("```json", "").replace("```", "").strip()
+            cohesion_res = (
+                cohesion_res.replace("```json", "").replace("```", "").strip()
+            )
             import re
+
             updates = None
             last_err = None
             # Intento 1: JSON directo. Intento 2: extraer el objeto mas externo. Intento 3: reparar comillas simples.
             candidates = [cohesion_res]
-            m = re.search(r'\{.*\}', cohesion_res, re.DOTALL)
+            m = re.search(r"\{.*\}", cohesion_res, re.DOTALL)
             if m:
                 candidates.append(m.group(0))
             for cand in candidates:
@@ -169,7 +186,12 @@ async def execute_task_endpoint(request: TaskNodeExecuteRequest):
                     break
             if updates is None:
                 cohesion_error = f"JSON no parseable: {last_err}"
-                print("[COHESION] Parse failed:", last_err, "| Raw (200):", cohesion_res[:200])
+                print(
+                    "[COHESION] Parse failed:",
+                    last_err,
+                    "| Raw (200):",
+                    cohesion_res[:200],
+                )
             else:
                 applied = 0
                 for n in request.nodes:
@@ -192,12 +214,14 @@ async def execute_task_endpoint(request: TaskNodeExecuteRequest):
             cohesion_error = str(e)
             print("[COHESION] Failed:", e)
     system_prompt = ORCHESTRATOR_PROMPT_DOC
-    
+
     # Format the graph for the LLM
-    graph_str = f"Task Description: {request.task_description}\n\nNodes (Agents/Steps):\n"
+    graph_str = (
+        f"Task Description: {request.task_description}\n\nNodes (Agents/Steps):\n"
+    )
     for n in request.nodes:
         graph_str += f"- [{n.id}] {n.title} (Role: {n.role} | Preferred FW: {n.framework})\n  Prompt: {n.content}\n"
-    
+
     graph_str += "\nConnections (Data Flow):\n"
     for e in request.edges:
         graph_str += f"- {e.source} -> {e.target}\n"
@@ -206,28 +230,32 @@ async def execute_task_endpoint(request: TaskNodeExecuteRequest):
         f"{graph_str}\n\n"
         "Analyze the above graph. Which framework should orchestrate this workflow, and how will it be executed?"
     )
-    
+
     try:
         result_text, model_name = await call_ai(system_prompt, user_prompt)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-        
+
     framework = "crewai"
     lines = result_text.split("\n")
     for line in lines:
         if line.upper().startswith("FRAMEWORK:"):
             fw = line.split(":", 1)[1].strip().lower()
-            if "crewai" in fw: framework = "crewai"
-            elif "autogen" in fw: framework = "autogen"
-            elif "langgraph" in fw: framework = "langgraph"
-            else: framework = fw
+            if "crewai" in fw:
+                framework = "crewai"
+            elif "autogen" in fw:
+                framework = "autogen"
+            elif "langgraph" in fw:
+                framework = "langgraph"
+            else:
+                framework = fw
             break
-            
+
     return TaskNodeExecuteResponse(
         framework=framework,
         execution_plan=result_text,
         model_used=model_name,
         updated_nodes=request.nodes,
         cohesion_applied=cohesion_applied,
-        cohesion_error=cohesion_error
+        cohesion_error=cohesion_error,
     )

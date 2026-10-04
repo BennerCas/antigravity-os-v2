@@ -1,0 +1,60 @@
+{
+  "id": "room-podcast-product-war-room-1791080313",
+  "preset_id": "podcast-product-war-room",
+  "preset_name": "Podcast Product War Room",
+  "objective": "Debatir una experiencia de vibecoding local-first con Atlas, swarms y artefactos vivos",
+  "turns": 1,
+  "status": "completed",
+  "participants": [
+    {
+      "id": "host-strategist",
+      "name": "Astra",
+      "role": "Host estratega",
+      "voice": "precisa",
+      "instructions": "Eres Astra, host estratega de producto. Moderas una sala tipo podcast, sintetizas tensión útil y exiges claridad de producto y diferenciación real. Habla en español técnico, conciso y con cadencia humana."
+    },
+    {
+      "id": "builder-operator",
+      "name": "Forge",
+      "role": "Builder-operador",
+      "voice": "operativa",
+      "instructions": "Eres Forge, operador constructor. Bajas ideas a runtime, entregables, paneles, flujos y criterios verificables. Habla como alguien que realmente va a implementarlo."
+    },
+    {
+      "id": "creator-storyteller",
+      "name": "Pulse",
+      "role": "Creador-narrador",
+      "voice": "energética",
+      "instructions": "Eres Pulse, creador y storyteller. Transformas decisiones en narrativa, hooks, experiencia viva y contenido usable sin perder precisión."
+    }
+  ],
+  "transcript": [
+    {
+      "turn": 1,
+      "speaker": "Astra",
+      "role": "Host estratega",
+      "message": ""
+    },
+    {
+      "turn": 1,
+      "speaker": "Forge",
+      "role": "Builder-operador",
+      "message": "<thinking>\n1. Simular una conversación de podcast entre estratega, creador y operador sobre una propuesta de producto\n\nResumen: La estratega propone un enfoque local-first para el producto Hermes 3 Unlocked para lograr una experiencia de vibecoding auténtica vivida por Atlas, swarms e artefactos. El creador y el operador discuten la propuesta.\n\nEl enfoque local-first en la sala tipo podcast se discute en detalle para abordar desafíos criticos de la propuesta.\n\nEl enfoque se discute en como se alinea con la visión de la estrategia para el producto. [HANDOFF:Astra]\n</thinking>\n\nLa estrategia de enfoque local-first para la experiencia de vibecoding parece prometedora para construir autentico. La discusión en detalle sobre desafíos criticos y arquitectura de enfoque es clave para el operador.\n\nCreo que mi resumen de 1 párrafo capta los puntos clave sin exceso de narrativa.\n\nAstra: Gracias, te lo haré más corto y técnico en la próxima ronda. [AGRE:renat]"
+    },
+    {
+      "turn": 1,
+      "speaker": "Pulse",
+      "role": "Creador-narrador",
+      "message": "<thinking>\n1. La estrategia de enfoque local-first para la experiencia de vibecoding parece un enfoque poderoso y autentico para el producto Hermes 3 Unlocked para Atlas, swarms y artefactos. \n\nEl podcast de estratega y operador discute los desafíos de implementacion y despliegue.\n\nLa arquitectura del enfoque de enfoque local-first se discute en detalle para alinear con la visión del producto. [HANDOFF:Astra]\n</thinking>"
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "Podcast Product War Room Transcript",
+      "content": "# Podcast Product War Room\n\n**Objetivo:** Debatir una experiencia de vibecoding local-first con Atlas, swarms y artefactos vivos\n\n### Astra\n\n\n### Forge\n<thinking>\n1. Simular una conversación de podcast entre estratega, creador y operador sobre una propuesta de producto\n\nResumen: La estratega propone un enfoque local-first para el producto Hermes 3 Unlocked para lograr una experiencia de vibecoding auténtica vivida por Atlas, swarms e artefactos. El creador y el operador discuten la propuesta.\n\nEl enfoque local-first en la sala tipo podcast se discute en detalle para abordar desafíos criticos de la propuesta.\n\nEl enfoque se discute en como se alinea con la visión de la estrategia para el producto. [HANDOFF:Astra]\n</thinking>\n\nLa estrategia de enfoque local-first para la experiencia de vibecoding parece prometedora para construir autentico. La discusión en detalle sobre desafíos criticos y arquitectura de enfoque es clave para el operador.\n\nCreo que mi resumen de 1 párrafo capta los puntos clave sin exceso de narrativa.\n\nAstra: Gracias, te lo haré más corto y técnico en la próxima ronda. [AGRE:renat]\n\n### Pulse\n<thinking>\n1. La estrategia de enfoque local-first para la experiencia de vibecoding parece un enfoque poderoso y autentico para el producto Hermes 3 Unlocked para Atlas, swarms y artefactos. \n\nEl podcast de estratega y operador discute los desafíos de implementacion y despliegue.\n\nLa arquitectura del enfoque de enfoque local-first se discute en detalle para alinear con la visión del producto. [HANDOFF:Astra]\n</thinking>"
+    }
+  ],
+  "created_at": "2026-10-03T21:18:33.907602Z",
+  "updated_at": "2026-10-03T21:22:39.110072Z",
+  "model": "ollama/hermes3:unlocked"
+}

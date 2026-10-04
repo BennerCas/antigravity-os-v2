@@ -1,0 +1,37 @@
+{
+  "id": "d316ec6b023847d3a2c41e812810dfb3",
+  "name": "crear-un-resumen-t-ctico-en-json-de-una-arquitectura-local-first",
+  "objective": "Crear un resumen táctico en JSON de una arquitectura local-first.",
+  "model": "hermes3:unlocked",
+  "status": "completed_with_warnings",
+  "created_at": "2026-10-03T20:55:16.564273Z",
+  "updated_at": "2026-10-03T20:55:23.942120Z",
+  "node_count": 1,
+  "steps": [
+    {
+      "index": 1,
+      "node_id": "architect-node",
+      "node_name": "Arquitecto Local",
+      "agent_id": "aurelios-core",
+      "contract": "OUT: JSON",
+      "contract_status": "FAIL",
+      "contract_reason": "El contrato pide JSON y la salida no parsea",
+      "output": "<thinking>\n1) Objetivo: Definir arquitectura local-first JSON.\n2) Restricciones: Solo JSON, keys objective/stack/artifact, estilo técnico.\n3) Plan: Generar JSON con stack local-first (Svelte/SQLite/IndexedDB).\n</thinking>\n\n<artifact name=\"local-first-summary\">\n{\n  \"objective\": \"Implementar arquitectura local-first para baja latencia y privacidad.\",\n  \"stack\": [\n    \"SvelteKit\",\n    \"SQLite (WASM)\",\n    \"IndexedDB\",\n    \"CRDTs\",\n    \"PWA\"\n  ],\n  \"artifact\": \"src/lib/local-first-engine.svelte\"\n}\n</artifact>",
+      "updated_at": "2026-10-03T20:55:23.941107Z",
+      "artifacts": [
+        {
+          "name": "local-first-summary",
+          "content": "{\n  \"objective\": \"Implementar arquitectura local-first para baja latencia y privacidad.\",\n  \"stack\": [\n    \"SvelteKit\",\n    \"SQLite (WASM)\",\n    \"IndexedDB\",\n    \"CRDTs\",\n    \"PWA\"\n  ],\n  \"artifact\": \"src/lib/local-first-engine.svelte\"\n}"
+        }
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "local-first-summary",
+      "content": "{\n  \"objective\": \"Implementar arquitectura local-first para baja latencia y privacidad.\",\n  \"stack\": [\n    \"SvelteKit\",\n    \"SQLite (WASM)\",\n    \"IndexedDB\",\n    \"CRDTs\",\n    \"PWA\"\n  ],\n  \"artifact\": \"src/lib/local-first-engine.svelte\"\n}"
+    }
+  ],
+  "final_output": "<thinking>\n1) Objetivo: Definir arquitectura local-first JSON.\n2) Restricciones: Solo JSON, keys objective/stack/artifact, estilo técnico.\n3) Plan: Generar JSON con stack local-first (Svelte/SQLite/IndexedDB).\n</thinking>\n\n<artifact name=\"local-first-summary\">\n{\n  \"objective\": \"Implementar arquitectura local-first para baja latencia y privacidad.\",\n  \"stack\": [\n    \"SvelteKit\",\n    \"SQLite (WASM)\",\n    \"IndexedDB\",\n    \"CRDTs\",\n    \"PWA\"\n  ],\n  \"artifact\": \"src/lib/local-first-engine.svelte\"\n}\n</artifact>",
+  "score": 0.0
+}

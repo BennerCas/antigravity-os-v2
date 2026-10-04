@@ -1,19 +1,31 @@
-import os
 import json
+import os
+
 from google.antigravity import Agent, LocalOpenAIAgentConfig
+
+from backend.model_defaults import (DEFAULT_LOCAL_MODEL,
+                                    FREE_AI_FALLBACK_MODEL, is_local_model,
+                                    normalize_ollama_base_url,
+                                    strip_model_provider)
 from backend.services.chroma_db import vector_db
 
-async def run_match_fuse(nodes_or_prompt, model_name="qwen3-8b", progress_callback=None) -> str:
+
+async def run_match_fuse(
+    nodes_or_prompt, model_name=DEFAULT_LOCAL_MODEL, progress_callback=None
+) -> str:
     """
     Pipeline Match & Fuse — Triángulo Dorado (3 etapas):
     1. Decomposer  — extrae genes lógicos
     2. Synthesizer — cruza ADN + Atlas KB
     3. Evaluator   — valida y corrige JSON (Sandbox Umpire)
     """
+
     async def emit(stage: str, pct: int):
         if progress_callback:
             try:
-                await progress_callback({"type": "match_fuse_progress", "stage": stage, "pct": pct})
+                await progress_callback(
+                    {"type": "match_fuse_progress", "stage": stage, "pct": pct}
+                )
             except Exception:
                 pass
 
@@ -32,7 +44,11 @@ async def run_match_fuse(nodes_or_prompt, model_name="qwen3-8b", progress_callba
     atlas_knowledge = vector_db.search_atlas(prompt, n_results=3)
 
     context_agents = "\n---\n".join(agent_genes) if agent_genes else "Sin agentes base."
-    context_atlas = "\n---\n".join(atlas_knowledge) if atlas_knowledge else "Sin conocimiento extra."
+    context_atlas = (
+        "\n---\n".join(atlas_knowledge)
+        if atlas_knowledge
+        else "Sin conocimiento extra."
+    )
 
     system_prompt = f"""Act as a Principal Cognitive Systems Architect specializing in multi-agent frameworks. Your objective is to design a cohesive SWARM of highly specialized AI agents based on the user's intent. You MUST decompose the user's request into AT LEAST 3 distinct, complementary agents that work together.
 
@@ -86,25 +102,27 @@ After completing your <thinking> phase, output ONLY a valid JSON ARRAY containin
 ]
 """
 
-    LOCAL_MODELS = {"hermes3:8b", "llama3.1:8b", "mistral", "qwen2.5:7b", "phi3:3.8b", "qwen2.5:3b", "qwen2.5:1.5b"}
-    is_local = model_name in LOCAL_MODELS or ":" in model_name
+    clean_model_name = strip_model_provider(model_name)
+    is_local = is_local_model(clean_model_name)
 
     if is_local:
-        # Ollama OpenAI-compatible en 11434/v1 (8080 = Open WebUI, NO compatible)
-        base_url = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
-        final_model = model_name
+        base_url = normalize_ollama_base_url(
+            os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
+        )
+        final_model = clean_model_name or DEFAULT_LOCAL_MODEL
     else:
         base_url = "https://api.free.ai/v1"
-        final_model = "qwen3-8b"
+        final_model = clean_model_name or FREE_AI_FALLBACK_MODEL
 
     config = LocalOpenAIAgentConfig(
         model=final_model,
         base_url=base_url,
         system_instructions=system_prompt,
-        env={"OPENAI_API_KEY": os.getenv("FREE_AI_API_KEY", "localai")}
+        env={"OPENAI_API_KEY": os.getenv("FREE_AI_API_KEY", "localai")},
     )
 
     import asyncio
+
     max_retries = 3
 
     await emit("🧬 Etapa 1/3 — Descomposición de genes (Decomposer)...", 15)
@@ -153,12 +171,12 @@ After completing your <thinking> phase, output ONLY a valid JSON ARRAY containin
 
                 if final_text.startswith("```json"):
                     final_text = final_text.replace("```json", "", 1)
-                if final_text.endswith("```"):
-                    final_text = final_text[:-3]
+                final_text = final_text.removesuffix("```")
                 final_text = final_text.strip()
 
                 import re
-                json_match = re.search(r'\[[\s\S]*\]|\{[\s\S]*\}', final_text)
+
+                json_match = re.search(r"\[[\s\S]*\]|\{[\s\S]*\}", final_text)
                 if json_match:
                     final_text = json_match.group(0)
 
@@ -167,62 +185,103 @@ After completing your <thinking> phase, output ONLY a valid JSON ARRAY containin
                     if "agent_profile" in parsed:
                         parsed = [parsed]
                     elif "agent_profile" in parsed.get("agent_profiles", {}):
-                         # LLM hallucinated wrapper
-                         parsed = [parsed["agent_profiles"]]
+                        # LLM hallucinated wrapper
+                        parsed = [parsed["agent_profiles"]]
                     else:
                         parsed = [parsed]
-                        
+
                 if isinstance(parsed, list):
                     mapped_cards = []
                     import uuid
+
                     for p in parsed:
                         if "agent_profile" in p:
                             profile = p["agent_profile"]
-                            genes = [{"kind": str(g.get("gene_id", "gene")), "value": str(g.get("functional_description", ""))} for g in profile.get("complex_genes", [])]
-                            tools = [str(t.get("tool_name", "tool")) for t in profile.get("sandbox_tools", [])]
+                            genes = [
+                                {
+                                    "kind": str(g.get("gene_id", "gene")),
+                                    "value": str(g.get("functional_description", "")),
+                                }
+                                for g in profile.get("complex_genes", [])
+                            ]
+                            tools = [
+                                str(t.get("tool_name", "tool"))
+                                for t in profile.get("sandbox_tools", [])
+                            ]
                             try:
-                                in_val = profile.get("sandbox_tools", [{}])[0].get("parameters", {}).get("inputs", "?")
-                                out_val = profile.get("sandbox_tools", [{}])[0].get("parameters", {}).get("expected_outputs", "?")
+                                in_val = (
+                                    profile.get("sandbox_tools", [{}])[0]
+                                    .get("parameters", {})
+                                    .get("inputs", "?")
+                                )
+                                out_val = (
+                                    profile.get("sandbox_tools", [{}])[0]
+                                    .get("parameters", {})
+                                    .get("expected_outputs", "?")
+                                )
                                 contract = f"IN: {in_val} -> OUT: {out_val}"
                             except:
                                 contract = "IN: Datos -> OUT: Acción"
-                            
+
                             inst = profile.get("system_instructions", [])
                             if isinstance(inst, list):
                                 desc = "\n\n".join(inst)
                             else:
                                 desc = str(inst)
-                            mapped_cards.append({
-                                "id": f"agent-{str(uuid.uuid4())[:8]}",
-                                "name": str(profile.get("role", "Cognitive Agent"))[:60],
-                                "role": str(profile.get("role", "Cognitive Agent")).upper()[:30],
-                                "description": desc,
-                                "color": "#8B5CF6",
-                                "noveltyScore": 0.95,
-                                "evalStatus": "PASS",
-                                "inputOutputContract": contract,
-                                "requiredTools": tools,
-                                "health": "green",
-                                "genes": genes
-                            })
+                            mapped_cards.append(
+                                {
+                                    "id": f"agent-{str(uuid.uuid4())[:8]}",
+                                    "name": str(profile.get("role", "Cognitive Agent"))[
+                                        :60
+                                    ],
+                                    "role": str(
+                                        profile.get("role", "Cognitive Agent")
+                                    ).upper()[:30],
+                                    "description": desc,
+                                    "color": "#8B5CF6",
+                                    "noveltyScore": 0.95,
+                                    "evalStatus": "PASS",
+                                    "inputOutputContract": contract,
+                                    "requiredTools": tools,
+                                    "health": "green",
+                                    "genes": genes,
+                                }
+                            )
                         else:
                             mapped_cards.append(p)
-                            
+
                     final_mapped_text = json.dumps(mapped_cards)
-                    await emit(f"✅ Pipeline completado — {len(mapped_cards)} agente(s) generado(s)", 100)
+                    await emit(
+                        f"✅ Pipeline completado — {len(mapped_cards)} agente(s) generado(s)",
+                        100,
+                    )
                     return final_mapped_text
                 else:
                     raise ValueError("No es lista JSON válida")
 
             except Exception as e:
                 if attempt < max_retries - 1:
-                    await emit(f"⚠️ Reintento {attempt+2}/3 — corrigiendo JSON...", 80 + attempt * 5)
+                    await emit(
+                        f"⚠️ Reintento {attempt+2}/3 — corrigiendo JSON...",
+                        80 + attempt * 5,
+                    )
                     await asyncio.sleep(3)
                 else:
                     await emit("❌ Pipeline fallido tras 3 intentos", 0)
-                    return json.dumps([{
-                        "id": "error_agent", "name": "Fallback Agent", "role": "Error",
-                        "description": f"Falló tras {max_retries} intentos. Error: {e}",
-                        "color": "#ff0000", "noveltyScore": 0, "evalStatus": "FAIL",
-                        "inputOutputContract": "None", "requiredTools": [], "health": "red", "genes": []
-                    }])
+                    return json.dumps(
+                        [
+                            {
+                                "id": "error_agent",
+                                "name": "Fallback Agent",
+                                "role": "Error",
+                                "description": f"Falló tras {max_retries} intentos. Error: {e}",
+                                "color": "#ff0000",
+                                "noveltyScore": 0,
+                                "evalStatus": "FAIL",
+                                "inputOutputContract": "None",
+                                "requiredTools": [],
+                                "health": "red",
+                                "genes": [],
+                            }
+                        ]
+                    )

@@ -1,5 +1,6 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useState, useCallback } from 'react';
 import { BrowserRouter as Router, Navigate, useLocation } from 'react-router-dom';
+import { OllamaSplash } from './components/OllamaSplash';
 
 function RouteTracker() {
   const location = useLocation();
@@ -74,10 +75,18 @@ function App(): React.ReactElement {
     return localStorage.getItem('tourCompleted') !== 'true';
   });
 
+  // Splash: show while Ollama is loading on startup
+  const [splashDone, setSplashDone] = useState(false);
+  const handleSplashReady = useCallback(() => setSplashDone(true), []);
+
   const handleTourComplete = () => {
     localStorage.setItem('tourCompleted', 'true');
     setRunTour(false);
   };
+
+  if (!splashDone) {
+    return <OllamaSplash onReady={handleSplashReady} />;
+  }
 
   return (
     <Router basename={import.meta.env.BASE_URL.replace(/\/$/, '') || '/'}>

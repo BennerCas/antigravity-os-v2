@@ -1,14 +1,15 @@
-import sys
 import os
+import sys
+
 import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+import uuid
+
 import db
 from services.academy.mastery_engine import MasteryEngine
 
-
-import uuid
 
 @pytest.fixture(autouse=True)
 def setup_db():
@@ -31,7 +32,7 @@ def test_mastery_autonomous_pass():
         passed_cleanly=True,
         hints_used=[],
         has_transfer=False,
-        has_reflection=True
+        has_reflection=True,
     )
     assert record.mastery_score > 0.60
     assert record.dimensions.independence == 1.0
@@ -47,7 +48,7 @@ def test_false_mastery_hint_penalty():
         passed_cleanly=True,
         hints_used=[1, 2, 3, 4],  # Used level 4 solution clue
         has_transfer=False,
-        has_reflection=False
+        has_reflection=False,
     )
     # Pass without hints
     record_autonomous = MasteryEngine.update_skill_mastery(
@@ -56,10 +57,13 @@ def test_false_mastery_hint_penalty():
         passed_cleanly=True,
         hints_used=[],
         has_transfer=False,
-        has_reflection=True
+        has_reflection=True,
     )
     # The autonomous learner must have higher independence and score
-    assert record_autonomous.dimensions.independence > record_hinted.dimensions.independence
+    assert (
+        record_autonomous.dimensions.independence
+        > record_hinted.dimensions.independence
+    )
     assert record_autonomous.mastery_score > record_hinted.mastery_score
 
 
@@ -71,7 +75,7 @@ def test_mastery_expert_promotion():
         hints_used=[],
         has_transfer=True,
         has_reflection=True,
-        complexity_score=1.0
+        complexity_score=1.0,
     )
     assert record_expert.mastery_score >= 0.80
     assert record_expert.dimensions.transfer >= 0.5

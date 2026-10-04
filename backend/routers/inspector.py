@@ -1,23 +1,28 @@
-from fastapi import APIRouter, HTTPException
+from typing import Any
+
+from fastapi import APIRouter
 from pydantic import BaseModel
-from typing import List, Dict, Any
 
 router = APIRouter(prefix="/api/v1/inspector", tags=["inspector"])
+
 
 class TraceResult(BaseModel):
     trace_id: str
     run_id: str
     status: str
-    spans: List[Dict[str, Any]]
+    spans: list[dict[str, Any]]
+
 
 class ReplayRequest(BaseModel):
     trace_id: str
     node_id: str
 
+
 class ReplayResult(BaseModel):
     scenario_id: str
     status: str
     details: str
+
 
 class ErrorLogResult(BaseModel):
     log_id: str
@@ -25,7 +30,8 @@ class ErrorLogResult(BaseModel):
     message: str
     trace_id: str
 
-@router.get("/traces/{run_id}", response_model=List[TraceResult])
+
+@router.get("/traces/{run_id}", response_model=list[TraceResult])
 async def get_telemetry_traces(run_id: str):
     """
     Fetch telemetry traces and spans for a specific run execution.
@@ -36,11 +42,22 @@ async def get_telemetry_traces(run_id: str):
             run_id=run_id,
             status="OK",
             spans=[
-                {"span_id": "span-1", "node": "trigger", "duration_ms": 12, "cost": 0.0},
-                {"span_id": "span-2", "node": "lead_qual", "duration_ms": 1500, "cost": 0.021}
-            ]
+                {
+                    "span_id": "span-1",
+                    "node": "trigger",
+                    "duration_ms": 12,
+                    "cost": 0.0,
+                },
+                {
+                    "span_id": "span-2",
+                    "node": "lead_qual",
+                    "duration_ms": 1500,
+                    "cost": 0.021,
+                },
+            ],
         )
     ]
+
 
 @router.post("/replay", response_model=ReplayResult)
 async def create_replay_session(request: ReplayRequest):
@@ -50,10 +67,11 @@ async def create_replay_session(request: ReplayRequest):
     return ReplayResult(
         scenario_id="scenario_mock_123",
         status="CREATED",
-        details=f"Replay session ready for trace {request.trace_id} at node {request.node_id}"
+        details=f"Replay session ready for trace {request.trace_id} at node {request.node_id}",
     )
 
-@router.get("/errors", response_model=List[ErrorLogResult])
+
+@router.get("/errors", response_model=list[ErrorLogResult])
 async def get_error_logs():
     """
     Fetch active error logs and incident reports.
@@ -63,6 +81,6 @@ async def get_error_logs():
             log_id="err-001",
             severity="HIGH",
             message="SCHEMA_MISMATCH in router node",
-            trace_id="trace-err-001"
+            trace_id="trace-err-001",
         )
     ]

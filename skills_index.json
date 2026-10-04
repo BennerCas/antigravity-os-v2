@@ -53482,6 +53482,28 @@
     }
   },
   {
+    "id": "x402-express-wrapper",
+    "path": "skills/x402-express-wrapper",
+    "category": "backend",
+    "name": "x402-express-wrapper",
+    "description": "Wrapper oficial de M2MCent (Node.js) para inyectar muros de pago x402 en APIs o servidores Model Context Protocol (MCP). Usar al construir nuevos servicios que requieran monetizaci\u00f3n m\u00e1quina a m\u00e1quina.",
+    "risk": "critical",
+    "source": "community",
+    "date_added": "2026-09-04",
+    "plugin": {
+      "targets": {
+        "codex": "supported",
+        "claude": "supported"
+      },
+      "setup": {
+        "type": "none",
+        "summary": "",
+        "docs": null
+      },
+      "reasons": []
+    }
+  },
+  {
     "id": "xiaohongshu-content-strategist",
     "path": "skills/xiaohongshu-content-strategist",
     "category": "marketing",

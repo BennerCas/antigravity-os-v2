@@ -1,19 +1,19 @@
-import sys
 import os
+import sys
+
 import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 import db
-from services.academy.catalog_service import CatalogService
-from services.academy.sandbox_service import SandboxService
-from services.academy.failure_lab_service import FailureLabService
 from services.academy.assessment_service import AssessmentService
-from services.academy.transfer_service import TransferService
-from services.academy.evidence_service import EvidenceService
+from services.academy.catalog_service import CatalogService
 from services.academy.certification_service import CertificationService
+from services.academy.evidence_service import EvidenceService
+from services.academy.failure_lab_service import FailureLabService
 from services.academy.portfolio_service import PortfolioService
+from services.academy.sandbox_service import SandboxService
 
 
 @pytest.fixture(autouse=True)
@@ -32,19 +32,21 @@ def test_academy_v4_full_industrial_lifecycle_e2e():
     # Provide valid flow for Mission 00 (Connect Start to End)
     valid_flow = {
         "nodes": [
-            {"id": "node_start", "type": "start", "data": {"title": "Inicio", "role": "start"}},
-            {"id": "node_end", "type": "end", "data": {"title": "Fin", "role": "end"}}
+            {
+                "id": "node_start",
+                "type": "start",
+                "data": {"title": "Inicio", "role": "start"},
+            },
+            {"id": "node_end", "type": "end", "data": {"title": "Fin", "role": "end"}},
         ],
-        "edges": [
-            {"id": "e_main", "source": "node_start", "target": "node_end"}
-        ]
+        "edges": [{"id": "e_main", "source": "node_start", "target": "node_end"}],
     }
     session = SandboxService.update_flow(session.id, valid_flow)
 
     # 2. Test In-Place Chaos Injection on learner's flow
     chaos_res = FailureLabService.inject_scenario(session.id, "fail_rate_limit")
     assert chaos_res["status"] == "injected"
-    
+
     # Restore valid flow after fixing failure
     session = SandboxService.update_flow(session.id, valid_flow)
 
@@ -57,7 +59,7 @@ def test_academy_v4_full_industrial_lifecycle_e2e():
     refl_res = AssessmentService.submit_reflection(
         session.id,
         "Diseñé este flujo con un contrato directo entre inicio y fin para validar la topología básica de ejecución.",
-        "¿Por qué diseñaste esta arquitectura?"
+        "¿Por qué diseñaste esta arquitectura?",
     )
     assert refl_res["status"] == "success"
 

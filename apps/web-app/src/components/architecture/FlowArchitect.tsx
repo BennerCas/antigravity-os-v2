@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArchitectureSpec } from '../../types/architecture';
 import { API_URL } from '../../lib/api';
+import { DEFAULT_LOCAL_MODEL, LOCAL_MODEL_OPTIONS } from '../../lib/modelDefaults';
 import { useTTSStore } from '../../lib/ttsStore';
 import { SpeakerHigh } from '@phosphor-icons/react';
 
@@ -22,14 +23,14 @@ export const FlowArchitect: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [models, setModels] = useState<{name: string, source: string}[]>([]);
-  const [selectedModel, setSelectedModel] = useState<string>('gpt-4o');
+  const [selectedModel, setSelectedModel] = useState<string>(DEFAULT_LOCAL_MODEL);
 
   useEffect(() => {
     fetch(`${API_URL}/builder/models`)
       .then(res => res.json())
       .then(data => {
         if (data.models && data.models.length > 0) {
-          const chatOptimized = ["anthropic/claude-3.5-sonnet", "openai/gpt-4o", "meta-llama/llama-3.1-70b-instruct", "qwen/qwen-2.5-72b-instruct", "hermes3:8b", "hermes3:latest"];
+          const chatOptimized = ["anthropic/claude-3.5-sonnet", "openai/gpt-4o", "meta-llama/llama-3.1-70b-instruct", "qwen/qwen-2.5-72b-instruct", DEFAULT_LOCAL_MODEL, ...LOCAL_MODEL_OPTIONS];
           // Sort so that chatOptimized are at the top
           const sorted = [...data.models].sort((a, b) => {
             const aName = a.name.replace('free.ai/', '');
@@ -197,7 +198,7 @@ export const FlowArchitect: React.FC = () => {
             content: nodeContent,
             role: n.kind || 'architect',
             framework: 'auto',
-            llm_model: 'hermes3:8b',
+            llm_model: DEFAULT_LOCAL_MODEL,
             temperature: 0.7,
           }
         };
@@ -313,7 +314,7 @@ export const FlowArchitect: React.FC = () => {
           >
             {models.length === 0 && <option value="gpt-4o">gpt-4o</option>}
             {models.map(m => {
-              const isRecommended = ["anthropic/claude-3.5-sonnet", "openai/gpt-4o", "meta-llama/llama-3.1-70b-instruct", "qwen/qwen-2.5-72b-instruct", "hermes3:8b", "hermes3:latest"].includes(m.name.replace('free.ai/', ''));
+              const isRecommended = ["anthropic/claude-3.5-sonnet", "openai/gpt-4o", "meta-llama/llama-3.1-70b-instruct", "qwen/qwen-2.5-72b-instruct", DEFAULT_LOCAL_MODEL, ...LOCAL_MODEL_OPTIONS].includes(m.name.replace('free.ai/', ''));
               return (
                 <option key={m.name} value={m.name}>{m.name} ({m.source}) {isRecommended ? '⭐ Recomendado' : ''}</option>
               );

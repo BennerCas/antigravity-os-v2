@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AureliOS - La Esencia del Orquestador</title>
+    <style>
+        :root {
+            --gold: #E5C158;
+            --bg-dark: #040405;
+            --panel-bg: #0b0b0e;
+            --border: rgba(229, 193, 88, 0.2);
+        }
+        body {
+            background-color: var(--bg-dark);
+            color: #d1d5db;
+            font-family: 'Inter', -apple-system, sans-serif;
+            margin: 0;
+            padding: 2rem 4rem;
+        }
+        h1 {
+            color: var(--gold);
+            font-weight: 300;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            text-align: center;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 15px rgba(229, 193, 88, 0.3);
+        }
+        .lore-text {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 3rem auto;
+            color: #8b949e;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        .row {
+            display: flex;
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+        .visual {
+            flex: 0 0 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 2rem;
+            border-right: 1px solid var(--border);
+            background: radial-gradient(circle at center, #15151a 0%, var(--panel-bg) 100%);
+            position: relative;
+        }
+        .visual h3 {
+            margin-top: 2rem;
+            font-size: 1.1rem;
+            color: var(--gold);
+            letter-spacing: 2px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        .visual p {
+            font-size: 0.8rem;
+            text-align: center;
+            color: #6b7280;
+            margin-top: 0.5rem;
+        }
+        .icon-container {
+            width: 140px;
+            height: 140px;
+        }
+        .icon-svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+        .code-section {
+            flex: 1;
+            padding: 0;
+            position: relative;
+            background: #070709;
+        }
+        .code-header {
+            background: rgba(0,0,0,0.6);
+            padding: 12px 20px;
+            font-size: 0.8rem;
+            color: #9ca3af;
+            border-bottom: 1px solid rgba(229,193,88,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        pre {
+            margin: 0;
+            padding: 20px;
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 300px;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            color: #a8b2c1;
+        }
+        pre::-webkit-scrollbar { width: 6px; height: 6px; }
+        pre::-webkit-scrollbar-track { background: transparent; }
+        pre::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        
+        .copy-btn {
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 6px 16px;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+        .copy-btn:hover {
+            background: var(--gold);
+            color: #000;
+            box-shadow: 0 0 10px rgba(229,193,88,0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>La Esencia de AureliOS</h1>
+    <p class="lore-text">"El Olimpo de los 13 Dioses de la Arquitectura. El Motor Central que orquesta el enjambre con autoridad absoluta y visión sistémica inigualable. Cero confianza, optimización total."<br>Estos iconos reflejan dominación algorítmica, jerarquía y control.</p>
+
+    <!-- ALTERNATIVA 1 -->
+    <div class="row">
+        <div class="visual">
+            <div class="icon-container" id="svg-1">
+<svg viewBox="0 0 100 100" class="icon-svg" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .a1-eye { fill: none; stroke: #E5C158; stroke-width: 1.5; filter: drop-shadow(0 0 4px #E5C158); }
+    .a1-pupil { fill: #E5C158; animation: a1-breathe 4s cubic-bezier(0.8, 0, 0.2, 1) infinite; transform-origin: 50px 50px; }
+    .a1-ring { fill: none; stroke: rgba(229,193,88,0.3); stroke-width: 0.5; stroke-dasharray: 2 4; animation: a1-spin 15s linear infinite; transform-origin: 50px 50px; }
+    @keyframes a1-breathe { 0%, 100% { transform: scale(0.8); opacity: 0.7; } 50% { transform: scale(1.2); opacity: 1; filter: drop-shadow(0 0 12px #E5C158); } }
+    @keyframes a1-spin { to { transform: rotate(360deg); } }
+  </style>
+  <!-- Anillo perimetral de monitoreo -->
+  <circle cx="50" cy="50" r="40" class="a1-ring" />
+  <circle cx="50" cy="50" r="35" class="a1-ring" style="animation-direction: reverse; stroke-dasharray: 10 5;" />
+  <!-- Estructura del Ojo / Visión Sistémica -->
+  <polygon points="10,50 50,30 90,50 50,70" class="a1-eye" />
+  <!-- Núcleo de Autoridad (Pupila) -->
+  <polygon points="50,38 58,50 50,62 42,50" class="a1-pupil" />
+</svg>
+            </div>
+            <h3>El Ojo de la Arquitectura</h3>
+            <p>Visión sistémica inigualable. El orquestador que monitorea de forma perpetua y absoluta todo el grafo de ejecución del Swarm.</p>
+        </div>
+        <div class="code-section">
+            <div class="code-header"><span>SVG DOMINATION CODE</span> <button class="copy-btn" onclick="copyCode(1)">Copiar</button></div>
+            <pre><code id="code-1"></code></pre>
+        </div>
+    </div>
+
+    <!-- ALTERNATIVA 2 -->
+    <div class="row">
+        <div class="visual">
+            <div class="icon-container" id="svg-2">
+<svg viewBox="0 0 100 100" class="icon-svg" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .a2-apex { fill: #E5C158; filter: drop-shadow(0 0 8px #E5C158); animation: a2-throb 3s infinite alternate; transform-origin: 50px 20px;}
+    .a2-line { fill: none; stroke: rgba(229,193,88,0.2); stroke-width: 1; }
+    .a2-flow { fill: none; stroke: #E5C158; stroke-width: 1.5; stroke-dasharray: 40; stroke-dashoffset: 40; animation: a2-cascade 2s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+    .a2-node { fill: rgba(229,193,88,0.8); }
+    @keyframes a2-throb { 0% { transform: scale(1); } 100% { transform: scale(1.15); filter: drop-shadow(0 0 15px #E5C158); } }
+    @keyframes a2-cascade { 0% { stroke-dashoffset: 40; opacity: 1; } 100% { stroke-dashoffset: -40; opacity: 0; } }
+  </style>
+  <!-- Red de Autoridad Absoluta (Directivas hacia los agentes) -->
+  <path d="M 50 20 L 20 75 M 50 20 L 50 75 M 50 20 L 80 75" class="a2-line" />
+  <!-- Comandos delegados descendiendo -->
+  <path d="M 50 20 L 20 75 M 50 20 L 50 75 M 50 20 L 80 75" class="a2-flow" />
+  <!-- Nodos del Swarm sometidos en la base -->
+  <polygon points="20,70 25,75 20,80 15,75" class="a2-node" />
+  <polygon points="50,70 55,75 50,80 45,75" class="a2-node" />
+  <polygon points="80,70 85,75 80,80 75,75" class="a2-node" />
+  <!-- El Apex (AureliOS) -->
+  <polygon points="50,5 60,20 50,35 40,20" class="a2-apex" />
+</svg>
+            </div>
+            <h3>El Ápice (Jerarquía Pura)</h3>
+            <p>La estructura vertical de un DAG perfecto. AureliOS en la cima, dictando órdenes descendentes y unificadas hacia los nodos.</p>
+        </div>
+        <div class="code-section">
+            <div class="code-header"><span>SVG DOMINATION CODE</span> <button class="copy-btn" onclick="copyCode(2)">Copiar</button></div>
+            <pre><code id="code-2"></code></pre>
+        </div>
+    </div>
+
+    <!-- ALTERNATIVA 3 -->
+    <div class="row">
+        <div class="visual">
+            <div class="icon-container" id="svg-3">
+<svg viewBox="0 0 100 100" class="icon-svg" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .a3-base { fill: none; stroke: rgba(229,193,88,0.2); stroke-width: 1; }
+    .a3-beam { fill: none; stroke: #E5C158; stroke-width: 2; stroke-dasharray: 100; animation: a3-scan 4s ease-in-out infinite alternate; filter: drop-shadow(0 0 5px #E5C158); }
+    .a3-core { fill: #E5C158; opacity: 0; animation: a3-flash 4s ease-in-out infinite alternate; }
+    @keyframes a3-scan { 0% { stroke-dashoffset: 100; } 100% { stroke-dashoffset: 0; } }
+    @keyframes a3-flash { 85% { opacity: 0; transform: scale(0.5); } 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 20px #E5C158); } }
+  </style>
+  <!-- La Fortaleza Inexpugnable / Corona del Olimpo -->
+  <polygon points="20,80 80,80 65,25 50,45 35,25" class="a3-base" />
+  <polygon points="20,80 80,80 65,25 50,45 35,25" class="a3-beam" />
+  <!-- El destello central al completarse el ciclo -->
+  <polygon points="43,55 57,55 50,70" class="a3-core" transform-origin="50px 60px" />
+</svg>
+            </div>
+            <h3>El Monolito del Olimpo</h3>
+            <p>Una estructura impenetrable que se dibuja perpetuamente. Representa a los "13 Dioses" blindados bajo una única fortaleza operativa.</p>
+        </div>
+        <div class="code-section">
+            <div class="code-header"><span>SVG DOMINATION CODE</span> <button class="copy-btn" onclick="copyCode(3)">Copiar</button></div>
+            <pre><code id="code-3"></code></pre>
+        </div>
+    </div>
+
+    <!-- ALTERNATIVA 4 -->
+    <div class="row">
+        <div class="visual">
+            <div class="icon-container" id="svg-4">
+<svg viewBox="0 0 100 100" class="icon-svg" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .a4-shield { fill: none; stroke: #E5C158; stroke-width: 2.5; stroke-linejoin: miter; filter: drop-shadow(0 0 6px #E5C158); }
+    .a4-scanner { fill: rgba(229,193,88,0.4); animation: a4-scan 2s cubic-bezier(0.8, 0, 0.2, 1) infinite alternate; filter: drop-shadow(0 0 2px #E5C158); }
+    .a4-bg { fill: none; stroke: rgba(229,193,88,0.1); stroke-width: 1; }
+    @keyframes a4-scan { 0% { transform: translateY(-15px); opacity: 0.2; } 50% { opacity: 1; } 100% { transform: translateY(15px); opacity: 0.2; } }
+  </style>
+  <!-- Fondo Estructural -->
+  <polygon points="50,10 90,90 10,90" class="a4-bg" />
+  <!-- Escudo / Letra A Inquebrantable -->
+  <path d="M 50 20 L 30 75 M 50 20 L 70 75 M 36 60 L 64 60" class="a4-shield" />
+  <!-- Barras de validación Zero-Trust -->
+  <rect x="25" y="45" width="50" height="2" class="a4-scanner" />
+  <rect x="25" y="55" width="50" height="2" class="a4-scanner" style="animation-delay: 0.2s" />
+</svg>
+            </div>
+            <h3>El Escudo Zero-Trust</h3>
+            <p>La "A" jerárquica cruzada por escáneres de validación. Mandato de Zero-Trust y ejecución determinista sin margen de error.</p>
+        </div>
+        <div class="code-section">
+            <div class="code-header"><span>SVG DOMINATION CODE</span> <button class="copy-btn" onclick="copyCode(4)">Copiar</button></div>
+            <pre><code id="code-4"></code></pre>
+        </div>
+    </div>
+
+    <!-- ALTERNATIVA 5 -->
+    <div class="row">
+        <div class="visual">
+            <div class="icon-container" id="svg-5">
+<svg viewBox="0 0 100 100" class="icon-svg" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .a5-master { fill: #E5C158; filter: drop-shadow(0 0 10px #E5C158); }
+    .a5-link { fill: none; stroke: #E5C158; stroke-width: 1; stroke-dasharray: 4 4; animation: a5-flow 3s linear infinite; }
+    .a5-node { fill: rgba(229,193,88,0.8); }
+    .a5-swarm { transform-origin: 50px 50px; animation: a5-rotate 30s linear infinite; }
+    @keyframes a5-flow { to { stroke-dashoffset: -20; } }
+    @keyframes a5-rotate { to { transform: rotate(360deg); } }
+  </style>
+  <!-- Núcleo Maestro Fijo -->
+  <polygon points="50,38 62,50 50,62 38,50" class="a5-master" />
+  <!-- Anillo Interior Estático -->
+  <circle cx="50" cy="50" r="18" fill="none" stroke="rgba(229,193,88,0.3)" stroke-width="1"/>
+  
+  <g class="a5-swarm">
+    <!-- Enlaces Rígidos a los Dioses/Agentes -->
+    <line x1="50" y1="50" x2="50" y2="10" class="a5-link" />
+    <line x1="50" y1="50" x2="90" y2="50" class="a5-link" />
+    <line x1="50" y1="50" x2="50" y2="90" class="a5-link" />
+    <line x1="50" y1="50" x2="10" y2="50" class="a5-link" />
+    <line x1="50" y1="50" x2="78" y2="22" class="a5-link" />
+    <line x1="50" y1="50" x2="22" y2="78" class="a5-link" />
+    <!-- Los Nodos sometidos y orbitando -->
+    <polygon points="50,6 54,10 50,14 46,10" class="a5-node" />
+    <polygon points="90,46 94,50 90,54 86,50" class="a5-node" />
+    <polygon points="50,86 54,90 50,94 46,90" class="a5-node" />
+    <polygon points="10,46 14,50 10,54 6,50" class="a5-node" />
+    <polygon points="78,18 82,22 78,26 74,22" class="a5-node" />
+    <polygon points="22,74 26,78 22,82 18,78" class="a5-node" />
+  </g>
+</svg>
+            </div>
+            <h3>El Motor Aurelius</h3>
+            <p>El núcleo masivo en el centro irradiando directivas exactas. Los nodos especializados (agentes) orbitan forzosamente sin libertad de desviación.</p>
+        </div>
+        <div class="code-section">
+            <div class="code-header"><span>SVG DOMINATION CODE</span> <button class="copy-btn" onclick="copyCode(5)">Copiar</button></div>
+            <pre><code id="code-5"></code></pre>
+        </div>
+    </div>
+
+    <script>
+        // Insert exact SVG code into the PRE tags automatically
+        for(let i=1; i<=5; i++) {
+            let svgContent = document.getElementById('svg-' + i).innerHTML;
+            svgContent = svgContent.trim();
+            document.getElementById('code-' + i).textContent = svgContent;
+        }
+
+        function copyCode(id) {
+            const codeText = document.getElementById('code-' + id).textContent;
+            navigator.clipboard.writeText(codeText).then(() => {
+                const btn = document.querySelector(#code-+id).parentElement.previousElementSibling.querySelector('button');
+                const originalText = btn.innerText;
+                btn.innerText = '¡Copiado!';
+                setTimeout(() => btn.innerText = originalText, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

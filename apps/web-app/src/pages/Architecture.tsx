@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { API_URL } from '../lib/api';
 import { useTTSStore } from '../lib/ttsStore';
 import ReactMarkdown from 'react-markdown';
@@ -28,6 +28,54 @@ interface ArchitectureData {
   engine: { name: string; cloud: string; local: string; rule: string; hybrid_enabled: boolean; cloud_options: string[]; local_options: string[] };
   flow: FlowStep[];
   apps: FlowStep[];
+}
+
+interface LibraryPrompt {
+  id?: string;
+  title: string;
+  category: string;
+  content: string;
+  isMultiPrompt?: boolean;
+  source_type?: string;
+  namespace?: string;
+  updated_at?: string;
+}
+
+interface AtlasSource {
+  id: string;
+  name: string;
+  source_type: string;
+  source_value: string;
+  namespace: string;
+  strategy: string;
+  auto_sync?: boolean;
+  active?: boolean;
+  last_synced_at?: string | null;
+  last_error?: string | null;
+}
+
+interface AtlasJob {
+  id: string;
+  name: string;
+  status: string;
+  source_type: string;
+  namespace: string;
+  updated_at?: string;
+  error?: string;
+  title?: string;
+}
+
+interface AtlasKnowledgeStatus {
+  library_count: number;
+  source_count: number;
+  active_source_count: number;
+  running_jobs: number;
+  queued_jobs: number;
+  last_job?: AtlasJob | null;
+  sources: AtlasSource[];
+  jobs: AtlasJob[];
+  items: LibraryPrompt[];
+  auto_sync_interval_sec: number;
 }
 
 const STEP_ICONS: Record<string, React.ReactNode> = {
@@ -86,17 +134,24 @@ export default function Architecture() {
 
   // Library tab states
   const [libAgents, setLibAgents] = useState<{id:string;name:string;category:string;description:string;instructions:string;risk?:string}[]>([]);
-  const [libPrompts, setLibPrompts] = useState<{id?:string;title:string;category:string;content:string;isMultiPrompt?:boolean}[]>([]);
+  const [libPrompts, setLibPrompts] = useState<LibraryPrompt[]>([]);
   const [libAgentSearch, setLibAgentSearch] = useState('');
   const [libKBSearch, setLibKBSearch] = useState('');
   const [libSelectedAgent, setLibSelectedAgent] = useState<{id:string;name:string;category:string;description:string;instructions:string;risk?:string}|null>(null);
-  const [libSelectedKB, setLibSelectedKB] = useState<{id?:string;title:string;category:string;content:string;isMultiPrompt?:boolean}|null>(null);
+  const [libSelectedKB, setLibSelectedKB] = useState<LibraryPrompt | null>(null);
   const [libSpeaking, setLibSpeaking] = useState(false);
   const [libTranslating, setLibTranslating] = useState<string|null>(null);
   const [libTranslated, setLibTranslated] = useState<Record<string,string>>({});
   const [libUpgrading, setLibUpgrading] = useState<string|null>(null);
   const [libExplaining, setLibExplaining] = useState<string|null>(null);
   const [libExplanations, setLibExplanations] = useState<Record<string,string>>({});
+  const [libAutoPrompts, setLibAutoPrompts] = useState<LibraryPrompt[]>([]);
+  const [atlasStatus, setAtlasStatus] = useState<AtlasKnowledgeStatus | null>(null);
+  const [atlasWebInput, setAtlasWebInput] = useState('');
+  const [atlasNamespace, setAtlasNamespace] = useState('atlas-forge');
+  const [atlasStrategy, setAtlasStrategy] = useState('rag');
+  const [atlasAutoSync, setAtlasAutoSync] = useState(true);
+  const [atlasSubmitting, setAtlasSubmitting] = useState<'web' | 'file' | 'sync' | null>(null);
 
   const [selectedForBatch, setSelectedForBatch] = useState<string[]>(() => {
     try {
@@ -114,6 +169,44 @@ export default function Architecture() {
   
   const [isBatchOptimizing, setIsBatchOptimizing] = useState(false);
 
+  const refreshKnowledgeState = async () => {
+    try {
+      const [statusRes, libraryRes] = await Promise.all([
+        fetch(`${API_URL}/architecture/knowledge/status?_t=${Date.now()}`),
+        fetch(`${API_URL}/architecture/knowledge/library?_t=${Date.now()}`),
+      ]);
+      if (statusRes.ok) {
+        const statusData: AtlasKnowledgeStatus = await statusRes.json();
+        setAtlasStatus(statusData);
+      }
+      if (libraryRes.ok) {
+        const libraryData = await libraryRes.json();
+        setLibAutoPrompts(libraryData.items || []);
+      }
+    } catch (err) {
+      console.error('knowledge refresh failed', err);
+    }
+  };
+
+  const mergedLibPrompts = useMemo(() => {
+    const seen = new Set<string>();
+    return [...libAutoPrompts, ...libPrompts].filter((item) => {
+      const key = item.id || `${item.title}:${item.category}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [libAutoPrompts, libPrompts]);
+
+  const filteredLibPrompts = useMemo(() => {
+    const query = libKBSearch.toLowerCase();
+    return mergedLibPrompts.filter((item) =>
+      item.title?.toLowerCase().includes(query) ||
+      (item.category || '').toLowerCase().includes(query) ||
+      (item.namespace || '').toLowerCase().includes(query)
+    );
+  }, [mergedLibPrompts, libKBSearch]);
+
   useEffect(() => {
     localStorage.setItem('arch_single_optimized', JSON.stringify(optimizedPrompts));
   }, [optimizedPrompts]);
@@ -127,7 +220,7 @@ export default function Architecture() {
   }, [mainTab]);
 
   useEffect(() => {
-    if (mainTab === 'library') {
+    if (mainTab === 'library' || mainTab === 'atlas') {
       if (libAgents.length === 0) {
         fetch((import.meta.env.BASE_URL || '/') + 'skills_v2.json?t=' + Date.now())
           .then(r => r.json()).then(setLibAgents).catch(() => {});
@@ -136,8 +229,18 @@ export default function Architecture() {
         fetch((import.meta.env.BASE_URL || '/') + 'prompts_db.json?t=' + Date.now())
           .then(r => r.json()).then(setLibPrompts).catch(() => {});
       }
+      refreshKnowledgeState();
     }
   }, [mainTab]);
+
+  useEffect(() => {
+    if ((mainTab === 'atlas' || mainTab === 'library') && ((atlasStatus?.running_jobs || 0) > 0 || (atlasStatus?.queued_jobs || 0) > 0)) {
+      const timer = window.setTimeout(() => {
+        refreshKnowledgeState();
+      }, 3000);
+      return () => window.clearTimeout(timer);
+    }
+  }, [mainTab, atlasStatus?.running_jobs, atlasStatus?.queued_jobs]);
 
   useEffect(() => {
     fetch(`${API_URL}/architecture?_t=${Date.now()}`)
@@ -432,6 +535,71 @@ export default function Architecture() {
     }
   };
 
+  const queueWebKnowledge = async () => {
+    if (!atlasWebInput.trim()) return;
+    setAtlasSubmitting('web');
+    try {
+      const res = await fetch(`${API_URL}/architecture/knowledge/ingest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source_type: 'web',
+          source_value: atlasWebInput.trim(),
+          name: atlasWebInput.trim(),
+          namespace: atlasNamespace.trim() || 'atlas-forge',
+          strategy: atlasStrategy,
+          auto_sync: atlasAutoSync,
+          active: true,
+        }),
+      });
+      if (!res.ok) throw new Error('No se pudo encolar la fuente web.');
+      setAtlasWebInput('');
+      await refreshKnowledgeState();
+      alert('Fuente web enviada a Atlas Forge.');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error en Atlas Forge.');
+    } finally {
+      setAtlasSubmitting(null);
+    }
+  };
+
+  const queueFileKnowledge = async (file: File | null) => {
+    if (!file) return;
+    setAtlasSubmitting('file');
+    try {
+      const body = new FormData();
+      body.append('file', file);
+      body.append('namespace', atlasNamespace.trim() || 'atlas-forge');
+      body.append('strategy', atlasStrategy);
+      body.append('auto_sync', String(atlasAutoSync));
+      body.append('active', 'true');
+      const res = await fetch(`${API_URL}/architecture/knowledge/upload`, {
+        method: 'POST',
+        body,
+      });
+      if (!res.ok) throw new Error('No se pudo subir el archivo.');
+      await refreshKnowledgeState();
+      alert('Archivo enviado a Atlas Forge.');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error subiendo archivo.');
+    } finally {
+      setAtlasSubmitting(null);
+    }
+  };
+
+  const runKnowledgeSync = async () => {
+    setAtlasSubmitting('sync');
+    try {
+      const res = await fetch(`${API_URL}/architecture/knowledge/sync`, { method: 'POST' });
+      if (!res.ok) throw new Error('No se pudo disparar la sincronización.');
+      await refreshKnowledgeState();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error sincronizando Atlas.');
+    } finally {
+      setAtlasSubmitting(null);
+    }
+  };
+
   const handleLibTTS = (text: string) => {
     const tts = useTTSStore.getState();
     if (libSpeaking) { tts.stop(); setLibSpeaking(false); return; }
@@ -681,7 +849,7 @@ export default function Architecture() {
           {/* Panel Atlas KB */}
           <div style={{flex:1, display:'flex', flexDirection:'column', overflow:'hidden'}}>
             <div style={{padding:'12px 16px', borderBottom:'1px solid #111', display:'flex', alignItems:'center', gap:'8px', flexShrink:0}}>
-              <span style={{fontSize:'13px', fontWeight:700, color:'#8080cc'}}>📚 Atlas KB ({libPrompts.length})</span>
+              <span style={{fontSize:'13px', fontWeight:700, color:'#8080cc'}}>📚 Atlas KB ({mergedLibPrompts.length})</span>
               <input value={libKBSearch} onChange={e=>setLibKBSearch(e.target.value)} placeholder="Buscar conocimiento..."
                 style={{flex:1, backgroundColor:'#0d0d0d', border:'1px solid #1a1a1a', borderRadius:'6px', padding:'5px 10px', fontSize:'12px', color:'#ccc', outline:'none'}} />
               <button 
@@ -693,7 +861,7 @@ export default function Architecture() {
               </button>
             </div>
             <div style={{flex:1, overflowY:'auto', padding:'8px'}}>
-              {libPrompts.filter(p=>p.title?.toLowerCase().includes(libKBSearch.toLowerCase())||(p.category||'').toLowerCase().includes(libKBSearch.toLowerCase())).map((prompt,i)=>(
+              {filteredLibPrompts.map((prompt,i)=>(
                 <div key={prompt.id||i} onClick={()=>setLibSelectedKB(libSelectedKB?.title===prompt.title?null:prompt)}
                   style={{padding:'10px 12px', marginBottom:'4px', borderRadius:'8px', cursor:'pointer', backgroundColor:libSelectedKB?.title===prompt.title?'#0a0a1a':'#080808', border:`1px solid ${libSelectedKB?.title===prompt.title?'#1a1a4a':'#111'}`, transition:'all 0.15s'}}>
                   <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
@@ -735,41 +903,142 @@ export default function Architecture() {
       ) : mainTab === 'atlas' ? (
         <div className="flex flex-col h-full bg-[#050505] border border-[#1a1a1a] rounded-xl p-6 overflow-y-auto">
           <h2 className="text-xl font-bold text-[#ff8080] mb-4 flex items-center gap-2"><Database weight="duotone" /> Atlas Forge Pipeline</h2>
-          <p className="text-[#888] mb-8">Arrastra archivos masivos o introduce nichos para que el enjambre de 8 agentes transmute conocimiento crudo en Master Prompts.</p>
-          
-          <div className="flex gap-6 h-full">
-            {/* Zona de Ingesta */}
-            <div className="flex-1 flex flex-col gap-4 border border-[#1a1a1a] rounded-lg p-6 bg-[#0a0a0a]">
-              <h3 className="text-sm font-bold text-[#ccc] mb-2 flex items-center gap-2"><Globe size={16}/> Modo Web (20 Fuentes de Élite)</h3>
+          <p className="text-[#888] mb-6">Ingesta continua de TXT, PDF, EPUB y web. El conocimiento transmutado entra en Atlas KB y queda disponible para AureliOS y los agentes locales.</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
+            <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-4">
+              <div className="text-[11px] uppercase tracking-widest text-[#666] mb-1">Items Atlas</div>
+              <div className="text-2xl font-bold text-[#f3f3f3]">{atlasStatus?.library_count ?? 0}</div>
+            </div>
+            <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-4">
+              <div className="text-[11px] uppercase tracking-widest text-[#666] mb-1">Fuentes activas</div>
+              <div className="text-2xl font-bold text-[#f3f3f3]">{atlasStatus?.active_source_count ?? 0}</div>
+            </div>
+            <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-4">
+              <div className="text-[11px] uppercase tracking-widest text-[#666] mb-1">Jobs vivos</div>
+              <div className="text-2xl font-bold text-[#f3f3f3]">{(atlasStatus?.queued_jobs ?? 0) + (atlasStatus?.running_jobs ?? 0)}</div>
+            </div>
+            <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-4">
+              <div className="text-[11px] uppercase tracking-widest text-[#666] mb-1">Cadencia autosync</div>
+              <div className="text-lg font-bold text-[#f3f3f3]">{Math.max(1, Math.round((atlasStatus?.auto_sync_interval_sec ?? 60) / 60))} min</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_1.4fr] gap-6 h-full">
+            <div className="flex flex-col gap-4 border border-[#1a1a1a] rounded-lg p-6 bg-[#0a0a0a]">
+              <h3 className="text-sm font-bold text-[#ccc] flex items-center gap-2"><Globe size={16}/> Fuente web / query</h3>
+              <input
+                type="text"
+                value={atlasWebInput}
+                onChange={(e) => setAtlasWebInput(e.target.value)}
+                placeholder="https://... o un query para descubrimiento web"
+                className="bg-[#050505] border border-[#222] rounded px-3 py-2 text-sm text-white"
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  value={atlasNamespace}
+                  onChange={(e) => setAtlasNamespace(e.target.value)}
+                  placeholder="Namespace Atlas"
+                  className="bg-[#050505] border border-[#222] rounded px-3 py-2 text-sm text-white"
+                />
+                <select
+                  value={atlasStrategy}
+                  onChange={(e) => setAtlasStrategy(e.target.value)}
+                  className="bg-[#050505] border border-[#222] rounded px-3 py-2 text-sm text-white"
+                >
+                  <option value="rag">RAG</option>
+                  <option value="research">Research</option>
+                  <option value="playbook">Playbook</option>
+                </select>
+              </div>
+              <label className="flex items-center gap-2 text-xs text-[#999]">
+                <input type="checkbox" checked={atlasAutoSync} onChange={(e) => setAtlasAutoSync(e.target.checked)} />
+                Mantener esta fuente en autosync de segundo plano
+              </label>
               <div className="flex gap-2">
-                <input type="text" placeholder="Ej. Arquitectura Clean, Ciberseguridad..." className="flex-1 bg-[#050505] border border-[#222] rounded px-3 py-2 text-sm text-white" />
-                <button className="bg-[#1a0a0a] border border-[#5e2a2a] text-[#ff8080] px-4 py-2 rounded text-sm font-bold hover:bg-[#2a1010] transition-colors">Escanear Web</button>
+                <button onClick={queueWebKnowledge} disabled={atlasSubmitting !== null} className="bg-[#1a0a0a] border border-[#5e2a2a] text-[#ff8080] px-4 py-2 rounded text-sm font-bold hover:bg-[#2a1010] transition-colors disabled:opacity-50">
+                  {atlasSubmitting === 'web' ? 'Encolando...' : 'Escanear e ingerir'}
+                </button>
+                <button onClick={runKnowledgeSync} disabled={atlasSubmitting !== null} className="bg-[#0b1118] border border-[#1b3248] text-[#7fb6ff] px-4 py-2 rounded text-sm font-bold hover:bg-[#111b28] transition-colors disabled:opacity-50">
+                  {atlasSubmitting === 'sync' ? 'Sincronizando...' : 'Forzar sync'}
+                </button>
               </div>
-              
-              <div className="my-4 border-t border-[#1a1a1a]"></div>
-              
-              <h3 className="text-sm font-bold text-[#ccc] mb-2 flex items-center gap-2"><CloudArrowDown size={16}/> Modo Archivo (PDF, MD, TXT hasta 1GB)</h3>
-              <div className="flex-1 border-2 border-dashed border-[#222] rounded-lg flex flex-col items-center justify-center text-[#555] hover:border-[#ff8080] hover:text-[#ff8080] transition-colors cursor-pointer bg-[#050505]">
-                <CloudArrowDown size={48} className="mb-2 opacity-50" />
-                <span className="text-sm font-semibold">Arrastra un archivo aquí</span>
-                <span className="text-xs opacity-60 mt-1">Soporta PDF, MD, TXT (Chunking Semántico Automático)</span>
-              </div>
+
+              <div className="my-2 border-t border-[#1a1a1a]"></div>
+
+              <h3 className="text-sm font-bold text-[#ccc] flex items-center gap-2"><CloudArrowDown size={16}/> Archivo local</h3>
+              <label className="border-2 border-dashed border-[#222] rounded-lg flex flex-col items-center justify-center text-[#777] hover:border-[#ff8080] hover:text-[#ff8080] transition-colors cursor-pointer bg-[#050505] py-8 px-4">
+                <CloudArrowDown size={42} className="mb-2 opacity-60" />
+                <span className="text-sm font-semibold">Seleccionar TXT, PDF, EPUB, MD o JSON</span>
+                <span className="text-xs opacity-60 mt-1">Chunking automático + upsert a Atlas KB</span>
+                <input type="file" accept=".txt,.md,.json,.pdf,.epub" className="hidden" onChange={(e) => queueFileKnowledge(e.target.files?.[0] ?? null)} />
+              </label>
+              <div className="text-xs text-[#666]">La fuente queda registrada y, si autosync está activo, Atlas la volverá a procesar automáticamente.</div>
             </div>
 
-            {/* Zona de Pipeline / Monitoreo */}
-            <div className="flex-[1.5] border border-[#1a1a1a] rounded-lg p-6 bg-[#0a0a0a] flex flex-col">
-              <h3 className="text-sm font-bold text-[#ccc] mb-4 flex items-center gap-2"><Brain size={16}/> Telemetría del Enjambre (8 Nodos)</h3>
-              <div className="flex-1 flex flex-col gap-2 overflow-y-auto pr-2">
-                {/* Mocks de nodos para la UI inicial */}
-                {['Recolector', 'Destilador', 'Analista Táctico', 'Transmutador', 'Inquisidor', 'Optimizador', 'Curador', 'Escribano'].map((node, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 rounded bg-[#050505] border border-[#111]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-[#111] border border-[#333] flex items-center justify-center text-[10px] text-[#666] font-mono">{idx+1}</div>
-                      <span className="text-sm text-[#888] font-medium">{node}</span>
-                    </div>
-                    <span className="text-xs font-mono text-[#444]">Esperando datos...</span>
+            <div className="border border-[#1a1a1a] rounded-lg p-6 bg-[#0a0a0a] flex flex-col gap-4 min-h-[420px]">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-sm font-bold text-[#ccc] flex items-center gap-2"><Brain size={16}/> Flujo vivo de Atlas</h3>
+                <button onClick={refreshKnowledgeState} className="text-xs px-3 py-1.5 rounded border border-[#222] text-[#aaa] hover:text-white hover:border-[#444]">Refrescar</button>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="bg-[#050505] border border-[#111] rounded-lg p-4">
+                  <div className="text-xs font-bold text-[#888] mb-3">Fuentes registradas</div>
+                  <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                    {(atlasStatus?.sources || []).length === 0 ? (
+                      <div className="text-xs text-[#555]">Aún no hay fuentes registradas.</div>
+                    ) : (atlasStatus?.sources || []).map((source) => (
+                      <div key={source.id} className="border border-[#151515] rounded p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm text-[#ddd] font-medium truncate">{source.name}</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-[#111] text-[#888]">{source.source_type.toUpperCase()}</span>
+                        </div>
+                        <div className="text-[11px] text-[#666] mt-1 truncate">{source.namespace} · {source.strategy}</div>
+                        <div className="text-[11px] text-[#555] mt-1 truncate">{source.source_value}</div>
+                        <div className="text-[11px] mt-2 text-[#777]">{source.last_error ? `Error: ${source.last_error}` : `Última sync: ${source.last_synced_at || 'pendiente'}`}</div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                <div className="bg-[#050505] border border-[#111] rounded-lg p-4">
+                  <div className="text-xs font-bold text-[#888] mb-3">Jobs recientes</div>
+                  <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                    {(atlasStatus?.jobs || []).length === 0 ? (
+                      <div className="text-xs text-[#555]">No hay jobs aún.</div>
+                    ) : (atlasStatus?.jobs || []).map((job) => (
+                      <div key={job.id} className="border border-[#151515] rounded p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm text-[#ddd] font-medium truncate">{job.name}</span>
+                          <span className={`text-[10px] px-2 py-0.5 rounded ${job.status === 'done' ? 'bg-[#0d1a0d] text-[#7B9C7F]' : job.status === 'error' ? 'bg-[#1a0d0d] text-[#ff8080]' : 'bg-[#111] text-[#ccc]'}`}>{job.status}</span>
+                        </div>
+                        <div className="text-[11px] text-[#666] mt-1">{job.namespace} · {job.source_type}</div>
+                        <div className="text-[11px] text-[#555] mt-1">{job.updated_at || 'pendiente'}</div>
+                        {job.error && <div className="text-[11px] text-[#ff8080] mt-1">{job.error}</div>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-[#050505] border border-[#111] rounded-lg p-4 flex-1 min-h-[180px]">
+                <div className="text-xs font-bold text-[#888] mb-3">Últimos artefactos de conocimiento</div>
+                <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
+                  {(atlasStatus?.items || []).length === 0 ? (
+                    <div className="text-xs text-[#555]">Atlas aún no ha forjado artefactos.</div>
+                  ) : (atlasStatus?.items || []).map((item) => (
+                    <div key={item.id || item.title} className="border border-[#151515] rounded p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm text-[#ddd] font-medium truncate">{item.title}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-[#111] text-[#888]">{item.source_type?.toUpperCase() || 'KB'}</span>
+                      </div>
+                      <div className="text-[11px] text-[#666] mt-1">{item.namespace || item.category}</div>
+                      <div className="text-[11px] text-[#777] mt-2 whitespace-pre-wrap">{item.content?.slice(0, 180)}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

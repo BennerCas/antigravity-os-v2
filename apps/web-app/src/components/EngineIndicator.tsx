@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { API_URL } from '../lib/api';
+import { DEFAULT_LOCAL_MODEL } from '../lib/modelDefaults';
 
 interface EngineStatus {
   active: 'cloud' | 'local' | 'offline';
@@ -9,7 +10,7 @@ interface EngineStatus {
 
 /**
  * Indicador del Motor Híbrido: muestra qué cerebro respondería ahora.
- * 🌐 GPT-4o (nube) · 💻 Hermes3 (local) · ⚠️ offline
+ * 💻 Hermes 3 Unlocked (local por defecto) · ☁️ nube opcional · ⚠️ offline
  */
 export function EngineIndicator() {
   const [status, setStatus] = useState<EngineStatus | null>(null);
@@ -49,7 +50,7 @@ export function EngineIndicator() {
   return (
     <div
       className="flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-lg border border-[var(--stroke-subtle)] cursor-default"
-      title={`${detail} · ${status.cloud.ready ? '☁️ nube lista' : '☁️ sin key'} · ${status.local.ready ? '💻 hermes3 listo' : '💻 ollama no disponible'}`}
+      title={`${detail} · ${status.cloud.ready ? '☁️ nube lista' : '☁️ sin key'} · ${status.local.ready ? `💻 ${DEFAULT_LOCAL_MODEL} listo` : '💻 ollama no disponible'}`}
     >
       <span className={`w-2 h-2 rounded-full ${isCloud ? 'bg-sky-400' : status.active === 'local' ? 'bg-amber-400' : 'bg-red-500'} animate-pulse`} />
       <span className="font-mono text-[var(--text-primary)]">{isCloud ? '🌐' : '💻'} {label}</span>

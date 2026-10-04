@@ -47,3 +47,27 @@
 - [`sources/sources.md`](sources/sources.md)
 - [`sources/LICENSE-MICROSOFT`](sources/LICENSE-MICROSOFT)
 - [`sources/microsoft-skills-attribution.json`](sources/microsoft-skills-attribution.json)
+
+## API Endpoints
+
+### Character Clone Endpoint
+
+`POST /api/v1/clone`
+
+This endpoint allows completing the character cloning process.
+
+**Request Payload:**
+```json
+{
+  "name": "TestCharacter",
+  "attributes": {
+    "strength": 10
+  }
+}
+```
+
+**Response:**
+Returns the processed character data.
+
+**Testing:**
+Run `pytest tests/ -q` to execute unit and integration tests for this endpoint.

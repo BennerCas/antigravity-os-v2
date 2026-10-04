@@ -1,0 +1,26 @@
+{
+  "id": "2f291a94386641b8934dac0390a7250d",
+  "name": "crear-un-resumen-t-ctico-en-json-de-una-arquitectura-local-first",
+  "objective": "Crear un resumen táctico en JSON de una arquitectura local-first.",
+  "model": "hermes3:unlocked",
+  "status": "completed",
+  "created_at": "2026-10-03T20:56:37.929914Z",
+  "updated_at": "2026-10-03T20:56:48.021665Z",
+  "node_count": 1,
+  "steps": [
+    {
+      "index": 1,
+      "node_id": "architect-node",
+      "node_name": "Arquitecto Local",
+      "agent_id": "aurelios-core",
+      "contract": "OUT: JSON",
+      "contract_status": "PASS",
+      "contract_reason": "JSON válido",
+      "output": "{\n  \"objective\": \"Definir la estructura base de una arquitectura local-first centrada en la soberanía de datos, sincronización asíncrona y ejecución en el dispositivo cliente.\",\n  \"stack\": [\n    \"CRDT (Yjs/Automerge)\",\n    \"SQLite/WAL\",\n    \"Tauri/Electron\",\n    \"Service Workers\",\n    \"WebAssembly\"\n  ],\n  \"artifact\": \"<artifact name=\\\"local-first-schema\\\">\\n{\\n  \\\"layer\\\": \\\"persistence\\\",\\n  \\\"engine\\\": \\\"sqlite\\\",\\n  \\\"sync\\\": \\\"conflict_free_resolving\\\",\\n  \\\"security\\\": \\\"local_encryption\\\"\\n}</artifact>\"\n}",
+      "updated_at": "2026-10-03T20:56:48.018613Z"
+    }
+  ],
+  "artifacts": [],
+  "final_output": "{\n  \"objective\": \"Definir la estructura base de una arquitectura local-first centrada en la soberanía de datos, sincronización asíncrona y ejecución en el dispositivo cliente.\",\n  \"stack\": [\n    \"CRDT (Yjs/Automerge)\",\n    \"SQLite/WAL\",\n    \"Tauri/Electron\",\n    \"Service Workers\",\n    \"WebAssembly\"\n  ],\n  \"artifact\": \"<artifact name=\\\"local-first-schema\\\">\\n{\\n  \\\"layer\\\": \\\"persistence\\\",\\n  \\\"engine\\\": \\\"sqlite\\\",\\n  \\\"sync\\\": \\\"conflict_free_resolving\\\",\\n  \\\"security\\\": \\\"local_encryption\\\"\\n}</artifact>\"\n}",
+  "score": 100.0
+}

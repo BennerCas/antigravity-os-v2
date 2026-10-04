@@ -20,7 +20,6 @@ export function Sidebar() {
     { path: '/academy',       label: 'Academy',        icon: <GraduationCap size={20} weight="light" /> },
     { path: '/architecture',  label: 'Arquitectura',   icon: <TreeStructure size={20} weight="light" /> },
     { path: '/automations',   label: 'Automatización', icon: <Code          size={20} weight="light" /> },
-    { path: '/coautoria',     label: 'CoautorIA',      icon: <UserSwitch      size={20} weight="light" /> },
     { path: '/setup',         label: 'Setup',          icon: <Gear            size={20} weight="light" /> },
   ];
 

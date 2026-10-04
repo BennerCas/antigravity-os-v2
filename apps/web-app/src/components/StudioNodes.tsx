@@ -1,6 +1,7 @@
 import React from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
-import { Brain, Lightning, Wrench, GitFork, User, ArrowCircleDown } from '@phosphor-icons/react';
+import { Brain, Lightning, Wrench, GitFork, User, ArrowCircleDown, FileCode, DownloadSimple, ClockCounterClockwise, Copy, Eye } from '@phosphor-icons/react';
+import { useStudioStore } from '../stores/useStudioStore';
 
 /* ─── Paleta por kind ─────────────────────────────────────────── */
 export const KIND_META: Record<string, { label: string; color: string; Icon: React.FC<any> }> = {
@@ -10,6 +11,7 @@ export const KIND_META: Record<string, { label: string; color: string; Icon: Rea
   router:  { label: 'ROUTER',  color: '#a855f7', Icon: GitFork },
   human:   { label: 'HUMAN',   color: '#ec4899', Icon: User },
   sink:    { label: 'SINK',    color: '#64748b', Icon: ArrowCircleDown },
+  artifact:{ label: 'ARTIFACT',color: '#eab308', Icon: FileCode },
 };
 
 /* ─── Nodo base compartido ───────────────────────────────────── */
@@ -113,12 +115,86 @@ const StudioNode: React.FC<NodeProps> = ({ data, selected }) => {
   );
 };
 
+const ArtifactNode: React.FC<NodeProps> = ({ data, selected }) => {
+  const meta = KIND_META.artifact;
+  const { Icon, color, label } = meta;
+
+  const handleOpenLive = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    useStudioStore.getState().setActiveArtifact({
+      name: String(data.name || data.label || 'Dashboard'),
+      content: String(data.content || data.description || '')
+    });
+  };
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(String(data.content || data.description || ''));
+  };
+  const handleDownload = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const blob = new Blob([String(data.content || data.description || '')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = String(data.name || 'artifact') + '.html';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  const handleHistory = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    alert('Historial de modificaciones: \n- Versión 1: Creación base');
+  };
+
+  return (
+    <div 
+      onClick={handleOpenLive}
+      className={`relative flex flex-col min-w-[220px] max-w-[300px] bg-zinc-900 border rounded-lg shadow-xl transition-all cursor-pointer hover:border-amber-400 ${
+        selected ? 'ring-2 ring-offset-2 ring-offset-zinc-950' : ''
+      }`} 
+      style={{ borderColor: color, ...(selected ? { ringColor: color } : {}) }}
+    >
+      
+      {/* Floating Toolbar (only on hover/select) */}
+      <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1 bg-zinc-800 rounded-lg shadow-lg border border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity" style={{ opacity: selected ? 1 : undefined }}>
+        <button onClick={handleOpenLive} title="Abrir y Ejecutar Render Vivo" className="p-1.5 hover:bg-amber-500/20 rounded text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1 font-bold text-xs">
+          <Eye size={16} weight="bold" /> Render Vivo
+        </button>
+        <button onClick={handleCopy} title="Copiar código/texto" className="p-1.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-white transition-colors"><Copy size={16} /></button>
+        <button onClick={handleDownload} title="Descargar" className="p-1.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-white transition-colors"><DownloadSimple size={16} /></button>
+        <button onClick={handleHistory} title="Ver Historial" className="p-1.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-white transition-colors"><ClockCounterClockwise size={16} /></button>
+      </div>
+
+      <div className="flex items-center gap-2 p-2 border-b border-zinc-800 bg-zinc-900/50 rounded-t-lg">
+        <Icon size={18} style={{ color }} weight="duotone" />
+        <span className="text-[10px] font-bold tracking-widest uppercase opacity-80" style={{ color }}>{label}</span>
+        <span className="ml-auto text-[9px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-mono font-bold">CLICK PARA ABRIR</span>
+      </div>
+      <div className="p-3">
+        <div className="text-[13px] font-semibold text-white truncate">{String(data.name || data.label || 'Untitled Artifact')}</div>
+        {typeof data.description === 'string' && data.description.trim() !== '' && (
+          <div className="text-[11px] text-zinc-400 mt-1 line-clamp-3 leading-relaxed">
+            {data.description}
+          </div>
+        )}
+      </div>
+
+      <Handle type="target" position={Position.Left} style={{ background: color, width: 10, height: 10, border: '2px solid #0d1117', left: -6 }} />
+      <Handle type="source" position={Position.Right} style={{ background: color, width: 10, height: 10, border: '2px solid #0d1117', right: -6 }} />
+    </div>
+  );
+};
+
+import SupervisorNode from './nodes/SupervisorNode';
+
 /* Exportar un nodeTypes object para ReactFlow */
 export const studioNodeTypes = {
   agent:   StudioNode,
   trigger: StudioNode,
   tool:    StudioNode,
   router:  StudioNode,
+  supervisor: SupervisorNode,
   human:   StudioNode,
   sink:    StudioNode,
+  artifact: ArtifactNode,
 };

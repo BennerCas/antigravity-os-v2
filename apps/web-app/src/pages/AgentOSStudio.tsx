@@ -1,100 +1,103 @@
 import { useTTSStore } from '../lib/ttsStore';
 import ReactMarkdown from 'react-markdown';
 import React, { useState, useEffect, useRef } from 'react';
-import { ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState } from '@xyflow/react';
+import { ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState, Panel } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { studioNodeTypes, KIND_META } from '../components/StudioNodes';
 import { SwarmOrchestrationPanel } from '../components/studio/SwarmOrchestrationPanel';
-import { useStudioStore, TabId, parseAIResponseToFlow } from '../stores/useStudioStore';
+import { useStudioStore, TabId, parseAIResponseToFlow, detectKind } from '../stores/useStudioStore';
 import { useHistoryStore } from '../stores/useHistoryStore';
 import { API_URL, WS_STUDIO_ACTIVITY_URL } from '../lib/api';
-import { Gear, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, MagnifyingGlass, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock, Stop, Microphone, Database, Globe, TerminalWindow, FileText, CodeBlock, Scan, AppWindow, File, MaskHappy, Chats, ArrowUUpLeft, ArrowUUpRight } from '@phosphor-icons/react';
+import { CLOUD_MODEL_OPTIONS, DEFAULT_AURELIOS_MODEL, LOCAL_MODEL_OPTIONS, normalizeAureliosModel } from '../lib/modelDefaults';
+import { Gear, Archive, Star, MagnifyingGlass, X, Check, Robot, Columns, Trash, Wrench, SpeakerHigh, PaperPlaneRight, Cpu, Network, Scales, Strategy, Cube, ShieldCheck, CurrencyDollar, Brain, HardDrives, Plugs, BugBeetle, PaintBrush, Copy, ArrowsClockwise, Clock, Stop, Microphone, Database, Globe, TerminalWindow, FileText, CodeBlock, Scan, AppWindow, File, MaskHappy, Chats, ArrowUUpLeft, ArrowUUpRight, FloppyDisk, DownloadSimple, Eye } from '@phosphor-icons/react';
 
+
+import remarkGfm from 'remark-gfm';
 
 const AURELIOS_THEMES: Record<string, any> = {
   obsidian: {
-    name: 'Obsidian Emperor', bg: 'bg-zinc-950', text: 'text-white', border: 'border-zinc-800',
+    name: 'Obsidian Emperor', bg: 'bg-zinc-950', text: 'text-zinc-100', border: 'border-zinc-800',
     panelBg: 'bg-zinc-900', panelBorder: 'border-zinc-700', primary: 'text-cyan-400',
     toolBg: 'bg-zinc-800', toolHover: 'hover:border-zinc-500', aiBubble: 'bg-zinc-900 border-zinc-700 text-zinc-100',
-    humanBubble: 'bg-green-500/10 border border-green-500/30 text-green-400', inputBg: 'bg-zinc-900 border-zinc-700', inputFocus: 'focus:border-cyan-400',
-    sendActive: 'bg-cyan-400 text-black hover:bg-cyan-300', sendDisabled: 'bg-zinc-800 text-zinc-600'
+    humanBubble: 'bg-green-900 border border-green-700 text-green-100', inputBg: 'bg-zinc-900 border-zinc-700', inputFocus: 'focus:border-cyan-400',
+    sendActive: 'bg-cyan-400 text-zinc-950 hover:bg-cyan-300', sendDisabled: 'bg-zinc-900 text-zinc-500'
   },
   marble: {
     name: 'Marble Stoic', bg: 'bg-gray-50', text: 'text-gray-900', border: 'border-gray-300',
-    panelBg: 'bg-white', panelBorder: 'border-gray-400', primary: 'text-amber-600',
-    toolBg: 'bg-gray-200', toolHover: 'hover:border-gray-500', aiBubble: 'bg-white border-gray-300 text-gray-900',
+    panelBg: 'bg-white', panelBorder: 'border-gray-400', primary: 'text-amber-700',
+    toolBg: 'bg-gray-200', toolHover: 'hover:border-gray-400', aiBubble: 'bg-white border-gray-300 text-gray-900',
     humanBubble: 'bg-blue-700 text-white', inputBg: 'bg-white border-gray-300', inputFocus: 'focus:border-blue-700',
-    sendActive: 'bg-blue-700 text-white hover:bg-blue-600', sendDisabled: 'bg-gray-200 text-gray-500'
+    sendActive: 'bg-blue-700 text-white hover:bg-blue-800', sendDisabled: 'bg-gray-200 text-gray-600'
   },
   crimson: {
     name: 'Crimson Forge', bg: 'bg-red-950', text: 'text-red-100', border: 'border-red-800',
-    panelBg: 'bg-red-900', panelBorder: 'border-red-700', primary: 'text-red-400',
+    panelBg: 'bg-red-900', panelBorder: 'border-red-700', primary: 'text-red-300',
     toolBg: 'bg-red-800', toolHover: 'hover:border-red-500', aiBubble: 'bg-red-900 border-red-700 text-red-100',
-    humanBubble: 'bg-red-600 text-white', inputBg: 'bg-red-900 border-red-800', inputFocus: 'focus:border-red-400',
-    sendActive: 'bg-red-600 text-white hover:bg-red-500', sendDisabled: 'bg-red-800 text-red-400'
+    humanBubble: 'bg-red-700 text-white', inputBg: 'bg-red-900 border-red-700', inputFocus: 'focus:border-red-400',
+    sendActive: 'bg-red-600 text-white hover:bg-red-500', sendDisabled: 'bg-red-900 text-red-400'
   },
   legion: {
     name: 'Cyber Legion', bg: 'bg-emerald-950', text: 'text-emerald-100', border: 'border-emerald-800',
-    panelBg: 'bg-emerald-900', panelBorder: 'border-emerald-700', primary: 'text-emerald-400',
+    panelBg: 'bg-emerald-900', panelBorder: 'border-emerald-700', primary: 'text-emerald-300',
     toolBg: 'bg-emerald-800', toolHover: 'hover:border-emerald-500', aiBubble: 'bg-emerald-900 border-emerald-700 text-emerald-100',
-    humanBubble: 'bg-emerald-600 text-white', inputBg: 'bg-emerald-900 border-emerald-800', inputFocus: 'focus:border-emerald-400',
-    sendActive: 'bg-emerald-600 text-white hover:bg-emerald-500', sendDisabled: 'bg-emerald-800 text-emerald-500'
+    humanBubble: 'bg-emerald-700 text-white', inputBg: 'bg-emerald-900 border-emerald-700', inputFocus: 'focus:border-emerald-400',
+    sendActive: 'bg-emerald-600 text-white hover:bg-emerald-500', sendDisabled: 'bg-emerald-900 text-emerald-400'
   },
   imperial: {
     name: 'Imperial Purple', bg: 'bg-purple-950', text: 'text-purple-100', border: 'border-purple-800',
-    panelBg: 'bg-purple-900', panelBorder: 'border-purple-700', primary: 'text-purple-400',
+    panelBg: 'bg-purple-900', panelBorder: 'border-purple-700', primary: 'text-purple-300',
     toolBg: 'bg-purple-800', toolHover: 'hover:border-purple-500', aiBubble: 'bg-purple-900 border-purple-700 text-purple-100',
-    humanBubble: 'bg-purple-600 text-white', inputBg: 'bg-purple-900 border-purple-800', inputFocus: 'focus:border-purple-400',
-    sendActive: 'bg-purple-600 text-white hover:bg-purple-500', sendDisabled: 'bg-purple-800 text-purple-500'
+    humanBubble: 'bg-purple-700 text-white', inputBg: 'bg-purple-900 border-purple-700', inputFocus: 'focus:border-purple-400',
+    sendActive: 'bg-purple-600 text-white hover:bg-purple-500', sendDisabled: 'bg-purple-900 text-purple-400'
   },
   solar: {
     name: 'Solar Flare', bg: 'bg-orange-950', text: 'text-orange-100', border: 'border-orange-800',
-    panelBg: 'bg-orange-900', panelBorder: 'border-orange-700', primary: 'text-amber-400',
+    panelBg: 'bg-orange-900', panelBorder: 'border-orange-700', primary: 'text-amber-300',
     toolBg: 'bg-orange-800', toolHover: 'hover:border-amber-500', aiBubble: 'bg-orange-900 border-orange-700 text-orange-100',
-    humanBubble: 'bg-amber-600 text-white', inputBg: 'bg-orange-900 border-orange-800', inputFocus: 'focus:border-amber-400',
-    sendActive: 'bg-amber-500 text-black hover:bg-amber-400', sendDisabled: 'bg-orange-800 text-orange-500'
+    humanBubble: 'bg-amber-700 text-white', inputBg: 'bg-orange-900 border-orange-700', inputFocus: 'focus:border-amber-400',
+    sendActive: 'bg-amber-500 text-black hover:bg-amber-400', sendDisabled: 'bg-orange-900 text-orange-400'
   },
   abyssal: {
-    name: 'Abyssal Ocean', bg: 'bg-slate-950', text: 'text-sky-100', border: 'border-sky-900',
-    panelBg: 'bg-slate-900', panelBorder: 'border-sky-800', primary: 'text-sky-400',
-    toolBg: 'bg-slate-800', toolHover: 'hover:border-sky-500', aiBubble: 'bg-slate-900 border-sky-800 text-sky-100',
-    humanBubble: 'bg-sky-500 text-white', inputBg: 'bg-slate-900 border-sky-900', inputFocus: 'focus:border-sky-400',
-    sendActive: 'bg-sky-500 text-white hover:bg-sky-400', sendDisabled: 'bg-slate-800 text-sky-700'
+    name: 'Abyssal Ocean', bg: 'bg-slate-950', text: 'text-sky-100', border: 'border-sky-800',
+    panelBg: 'bg-slate-900', panelBorder: 'border-sky-700', primary: 'text-sky-300',
+    toolBg: 'bg-slate-800', toolHover: 'hover:border-sky-500', aiBubble: 'bg-slate-900 border-sky-700 text-sky-100',
+    humanBubble: 'bg-sky-700 text-white', inputBg: 'bg-slate-900 border-sky-800', inputFocus: 'focus:border-sky-400',
+    sendActive: 'bg-sky-500 text-white hover:bg-sky-400', sendDisabled: 'bg-slate-900 text-sky-400'
   },
   toxic: {
-    name: 'Toxic Wasteland', bg: 'bg-stone-950', text: 'text-lime-100', border: 'border-lime-900',
-    panelBg: 'bg-stone-900', panelBorder: 'border-lime-800', primary: 'text-lime-400',
-    toolBg: 'bg-stone-800', toolHover: 'hover:border-lime-500', aiBubble: 'bg-stone-900 border-lime-800 text-lime-100',
-    humanBubble: 'bg-lime-600 text-white', inputBg: 'bg-stone-900 border-lime-900', inputFocus: 'focus:border-lime-400',
-    sendActive: 'bg-lime-500 text-black hover:bg-lime-400', sendDisabled: 'bg-stone-800 text-lime-700'
+    name: 'Toxic Wasteland', bg: 'bg-stone-950', text: 'text-lime-100', border: 'border-lime-800',
+    panelBg: 'bg-stone-900', panelBorder: 'border-lime-700', primary: 'text-lime-300',
+    toolBg: 'bg-stone-800', toolHover: 'hover:border-lime-500', aiBubble: 'bg-stone-900 border-lime-700 text-lime-100',
+    humanBubble: 'bg-lime-700 text-black', inputBg: 'bg-stone-900 border-lime-800', inputFocus: 'focus:border-lime-400',
+    sendActive: 'bg-lime-500 text-black hover:bg-lime-400', sendDisabled: 'bg-stone-900 text-lime-400'
   },
   midnight: {
-    name: 'Midnight Rose', bg: 'bg-rose-950', text: 'text-rose-100', border: 'border-rose-900',
-    panelBg: 'bg-rose-900', panelBorder: 'border-rose-800', primary: 'text-pink-400',
-    toolBg: 'bg-rose-800', toolHover: 'hover:border-pink-500', aiBubble: 'bg-rose-900 border-rose-800 text-rose-100',
-    humanBubble: 'bg-pink-600 text-white', inputBg: 'bg-rose-900 border-rose-900', inputFocus: 'focus:border-pink-400',
-    sendActive: 'bg-pink-600 text-white hover:bg-pink-500', sendDisabled: 'bg-rose-800 text-rose-500'
+    name: 'Midnight Rose', bg: 'bg-rose-950', text: 'text-rose-100', border: 'border-rose-800',
+    panelBg: 'bg-rose-900', panelBorder: 'border-rose-700', primary: 'text-pink-300',
+    toolBg: 'bg-rose-800', toolHover: 'hover:border-pink-500', aiBubble: 'bg-rose-900 border-rose-700 text-rose-100',
+    humanBubble: 'bg-pink-700 text-white', inputBg: 'bg-rose-900 border-rose-800', inputFocus: 'focus:border-pink-400',
+    sendActive: 'bg-pink-600 text-white hover:bg-pink-500', sendDisabled: 'bg-rose-900 text-rose-400'
   },
   monochrome: {
-    name: 'Monochrome Terminal', bg: 'bg-black', text: 'text-white', border: 'border-zinc-800',
-    panelBg: 'bg-zinc-900', panelBorder: 'border-zinc-700', primary: 'text-white',
-    toolBg: 'bg-zinc-800', toolHover: 'hover:border-zinc-500', aiBubble: 'bg-zinc-900 border-zinc-700 text-white',
-    humanBubble: 'bg-zinc-700 text-white', inputBg: 'bg-zinc-900 border-zinc-800', inputFocus: 'focus:border-white',
-    sendActive: 'bg-white text-black hover:bg-zinc-200', sendDisabled: 'bg-zinc-800 text-zinc-600'
+    name: 'Monochrome Terminal', bg: 'bg-black', text: 'text-zinc-100', border: 'border-zinc-800',
+    panelBg: 'bg-zinc-900', panelBorder: 'border-zinc-700', primary: 'text-zinc-200',
+    toolBg: 'bg-zinc-800', toolHover: 'hover:border-zinc-500', aiBubble: 'bg-zinc-900 border-zinc-700 text-zinc-100',
+    humanBubble: 'bg-zinc-800 text-white', inputBg: 'bg-zinc-900 border-zinc-700', inputFocus: 'focus:border-white',
+    sendActive: 'bg-zinc-200 text-black hover:bg-white', sendDisabled: 'bg-zinc-900 text-zinc-500'
   },
   claude: {
     name: 'Claude Elegance', bg: 'bg-orange-50', text: 'text-stone-900', border: 'border-stone-300',
     panelBg: 'bg-white', panelBorder: 'border-stone-400', primary: 'text-orange-700',
-    toolBg: 'bg-stone-200', toolHover: 'hover:border-orange-700', aiBubble: 'bg-white border-stone-300 text-stone-900',
+    toolBg: 'bg-stone-200', toolHover: 'hover:border-orange-500', aiBubble: 'bg-white border-stone-300 text-stone-900',
     humanBubble: 'bg-orange-700 text-white', inputBg: 'bg-white border-stone-300', inputFocus: 'focus:border-orange-700',
-    sendActive: 'bg-orange-700 text-white hover:bg-orange-600', sendDisabled: 'bg-stone-200 text-stone-400'
+    sendActive: 'bg-orange-700 text-white hover:bg-orange-800', sendDisabled: 'bg-stone-200 text-stone-600'
   },
   solargrid: {
-    name: 'Solar Grid (Retro)', bg: 'bg-violet-950', text: 'text-yellow-200', border: 'border-violet-800',
-    panelBg: 'bg-violet-900', panelBorder: 'border-purple-700', primary: 'text-orange-500',
-    toolBg: 'bg-violet-800', toolHover: 'hover:border-orange-500', aiBubble: 'bg-violet-900 border-purple-700 text-yellow-200',
-    humanBubble: 'bg-orange-500 text-white', inputBg: 'bg-violet-900 border-violet-800', inputFocus: 'focus:border-orange-500',
-    sendActive: 'bg-orange-500 text-white hover:bg-orange-400', sendDisabled: 'bg-violet-800 text-violet-400'
+    name: 'Solar Grid (Retro)', bg: 'bg-violet-950', text: 'text-yellow-100', border: 'border-violet-800',
+    panelBg: 'bg-violet-900', panelBorder: 'border-purple-700', primary: 'text-orange-400',
+    toolBg: 'bg-violet-800', toolHover: 'hover:border-orange-400', aiBubble: 'bg-violet-900 border-purple-700 text-yellow-100',
+    humanBubble: 'bg-orange-600 text-white', inputBg: 'bg-violet-900 border-violet-700', inputFocus: 'focus:border-orange-400',
+    sendActive: 'bg-orange-500 text-white hover:bg-orange-400', sendDisabled: 'bg-violet-900 text-violet-300'
   }
 };
 
@@ -102,6 +105,10 @@ const FreeChatCapabilitiesGrid = () => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const { freeChatFiles, addFreeChatFiles, screenStream, setScreenStream } = useStudioStore();
+  const [localCapabilities, setLocalCapabilities] = useState<any>(null);
+
+  const speechRecognitionSupported = typeof window !== 'undefined' && Boolean((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
+  const displayCaptureSupported = typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getDisplayMedia);
 
   React.useEffect(() => {
     if (videoRef.current && screenStream) {
@@ -109,11 +116,29 @@ const FreeChatCapabilitiesGrid = () => {
     }
   }, [screenStream]);
 
+  React.useEffect(() => {
+    const loadCapabilities = async () => {
+      try {
+        const res = await fetch(`${API_URL}/engine/local-capabilities`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setLocalCapabilities(data);
+      } catch (error) {
+        console.error('Error loading local capabilities', error);
+      }
+    };
+    loadCapabilities();
+  }, []);
+
   const toggleScreenShare = async () => {
     if (screenStream) {
       screenStream.getTracks().forEach(track => track.stop());
       setScreenStream(null);
     } else {
+      if (!displayCaptureSupported) {
+        alert('Tu navegador no soporta captura de pantalla/ventana/pestaña en esta superficie.');
+        return;
+      }
       try {
         const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
         setScreenStream(stream);
@@ -130,105 +155,153 @@ const FreeChatCapabilitiesGrid = () => {
   };
 
   return (
-    <div className="grid grid-cols-4 gap-1.5 mt-4 px-2 pb-2 w-full animate-in fade-in slide-in-from-top-2 duration-300">
-      <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} accept=".txt,.pdf,.md,.csv,.json" />
-      
-      <div onClick={() => fileInputRef.current?.click()} className="bg-black/40 border border-white/5 rounded-none pl-[0.5cm] py-3 pr-2 hover:border-green-500/50 transition-colors cursor-pointer group flex items-center gap-3">
-        <Database size={32} className="text-gray-400 group-hover:text-green-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-300 group-hover:text-green-400 leading-tight">Ingesta</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Docs locales</p>
-          {freeChatFiles.length > 0 && <p className="text-[11px] text-green-400 mt-0.5 leading-tight">{freeChatFiles.length} listos</p>}
+    <div className="mt-4 px-2 pb-2 w-full animate-in fade-in slide-in-from-top-2 duration-300">
+      <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} accept=".txt,.pdf,.md,.csv,.json,.epub,.html,.htm" />
+
+      <div className="grid grid-cols-4 gap-1.5">
+        <div onClick={() => fileInputRef.current?.click()} className="bg-black/40 border border-white/5 rounded-none pl-[0.5cm] py-3 pr-2 hover:border-green-500/50 transition-colors cursor-pointer group flex items-center gap-3">
+          <Database size={32} className="text-gray-400 group-hover:text-green-400 shrink-0"/>
+          <div className="flex flex-col justify-center">
+            <h4 className="font-bold text-[13px] text-gray-300 group-hover:text-green-400 leading-tight">Ingesta</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">Docs locales</p>
+            {freeChatFiles.length > 0 && <p className="text-[11px] text-green-400 mt-0.5 leading-tight">{freeChatFiles.length} listos</p>}
+          </div>
         </div>
-      </div>
-      
-      <div className="bg-black/40 border border-white/5 rounded-none pl-[0.5cm] py-3 pr-2 hover:border-green-500/50 transition-colors cursor-pointer group flex items-center gap-3">
-        <Globe size={32} className="text-gray-400 group-hover:text-green-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-300 group-hover:text-green-400 leading-tight">Web</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Internet real</p>
+
+        <div className="bg-black/40 border border-white/5 rounded-none pl-[0.5cm] py-3 pr-2 hover:border-green-500/50 transition-colors cursor-pointer group flex items-center gap-3">
+          <Globe size={32} className="text-gray-400 group-hover:text-green-400 shrink-0"/>
+          <div className="flex flex-col justify-center">
+            <h4 className="font-bold text-[13px] text-gray-300 group-hover:text-green-400 leading-tight">Web</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">Internet real</p>
+          </div>
         </div>
-      </div>
-      
-      <div onClick={toggleScreenShare} className={`bg-black/40 border ${screenStream ? 'border-cyan-500' : 'border-white/5'} rounded-none pl-[0.5cm] py-3 pr-2 hover:border-cyan-500/50 transition-colors cursor-pointer group flex items-center gap-3`}>
-        <TerminalWindow size={32} className={`${screenStream ? 'text-cyan-400' : 'text-gray-400 group-hover:text-cyan-400'} shrink-0`}/>
-        <div className="flex flex-col justify-center">
-          <h4 className={`font-bold text-[13px] leading-tight ${screenStream ? 'text-cyan-400' : 'text-gray-300 group-hover:text-cyan-400'}`}>
-            {screenStream ? 'Activa' : 'Pantalla'}
-          </h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Transmite PC</p>
+
+        <div onClick={displayCaptureSupported ? toggleScreenShare : undefined} className={`bg-black/40 border ${screenStream ? 'border-cyan-500' : displayCaptureSupported ? 'border-white/5 hover:border-cyan-500/50' : 'border-white/5 opacity-40'} rounded-none pl-[0.5cm] py-3 pr-2 transition-colors ${displayCaptureSupported ? 'cursor-pointer group flex items-center gap-3' : 'cursor-not-allowed flex items-center gap-3'}`}>
+          <TerminalWindow size={32} className={`${screenStream ? 'text-cyan-400' : displayCaptureSupported ? 'text-gray-400 group-hover:text-cyan-400' : 'text-gray-400'} shrink-0`}/>
+          <div className="flex flex-col justify-center">
+            <h4 className={`font-bold text-[13px] leading-tight ${screenStream ? 'text-cyan-400' : displayCaptureSupported ? 'text-gray-300 group-hover:text-cyan-400' : 'text-gray-400'}`}>
+              {screenStream ? 'Activa' : 'Pantalla'}
+            </h4>
+            <p className="text-[11px] text-gray-500 leading-tight">{displayCaptureSupported ? 'Pantalla / ventana / pestaña' : 'No soportado aquí'}</p>
+          </div>
+        </div>
+
+        <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
+          <MaskHappy size={32} className="text-gray-400 shrink-0"/>
+          <div className="flex flex-col justify-center">
+            <h4 className="font-bold text-[13px] text-gray-400 leading-tight">RolPlay</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">Personajes</p>
+          </div>
+        </div>
+
+        <div className={`bg-black/40 border ${speechRecognitionSupported ? 'border-emerald-500/25 hover:border-emerald-500/50' : 'border-white/5 opacity-40'} rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 ${speechRecognitionSupported ? '' : 'cursor-not-allowed'}`}>
+          <Chats size={32} className={`${speechRecognitionSupported ? 'text-emerald-400' : 'text-gray-400'} shrink-0`}/>
+          <div className="flex flex-col justify-center">
+            <h4 className={`font-bold text-[13px] leading-tight ${speechRecognitionSupported ? 'text-emerald-300' : 'text-gray-400'}`}>Talk</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">{speechRecognitionSupported ? 'Dictado local listo' : 'Voz no disponible'}</p>
+          </div>
+        </div>
+
+        <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
+          <TerminalWindow size={32} className="text-gray-400 shrink-0"/>
+          <div className="flex flex-col justify-center">
+            <h4 className="font-bold text-[13px] text-gray-400 leading-tight">CLI</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">Terminal</p>
+          </div>
+        </div>
+
+        <div 
+          onClick={() => {
+            const { flowNodes, setActiveArtifact, activeArtifact } = useStudioStore.getState();
+            if (activeArtifact) return;
+            const artNode = flowNodes.find(n => n.type === 'artifact' || (n.data as any)?.kind === 'artifact');
+            if (artNode) {
+              setActiveArtifact({
+                name: String((artNode.data as any)?.label || (artNode.data as any)?.name || 'Dashboard'),
+                content: String((artNode.data as any)?.content || (artNode.data as any)?.description || '')
+              });
+            } else {
+              alert('Aún no se ha generado ningún artefacto en el lienzo. Pídele al Enjambre que cree un Dashboard o componente.');
+            }
+          }} 
+          className="bg-black/40 border border-white/5 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-pointer hover:border-amber-500/50 transition-colors group"
+        >
+          <PaintBrush size={32} className="text-gray-400 group-hover:text-amber-400 shrink-0"/>
+          <div className="flex flex-col justify-center">
+            <h4 className="font-bold text-[13px] text-gray-300 group-hover:text-amber-400 leading-tight">UI</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">Render vivo</p>
+          </div>
+        </div>
+
+        <div className={`bg-black/40 border ${(localCapabilities?.ollama?.ready || localCapabilities?.ffmpeg?.ready) ? 'border-emerald-500/25' : 'border-white/5 opacity-40'} rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 ${localCapabilities?.ollama?.ready || localCapabilities?.ffmpeg?.ready ? '' : 'cursor-not-allowed'}`}>
+          <HardDrives size={32} className={`${(localCapabilities?.ollama?.ready || localCapabilities?.ffmpeg?.ready) ? 'text-emerald-400' : 'text-gray-400'} shrink-0`}/>
+          <div className="flex flex-col justify-center">
+            <h4 className={`font-bold text-[13px] leading-tight ${(localCapabilities?.ollama?.ready || localCapabilities?.ffmpeg?.ready) ? 'text-emerald-300' : 'text-gray-400'}`}>RAG</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">{localCapabilities?.ollama?.ready ? 'Atlas local listo' : 'Memoria parcial'}</p>
+          </div>
+        </div>
+
+        <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
+          <Scan size={32} className="text-gray-400 shrink-0"/>
+          <div className="flex flex-col justify-center">
+            <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Crawler</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">Scraping</p>
+          </div>
+        </div>
+
+        <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
+          <CodeBlock size={32} className="text-gray-400 shrink-0"/>
+          <div className="flex flex-col justify-center">
+            <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Sandbox</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">Aislado</p>
+          </div>
+        </div>
+
+        <div className={`bg-black/40 border ${localCapabilities?.android?.ready ? 'border-emerald-500/25' : 'border-white/5 opacity-40'} rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 ${localCapabilities?.android?.ready ? '' : 'cursor-not-allowed'}`}>
+          <AppWindow size={32} className={`${localCapabilities?.android?.ready ? 'text-emerald-400' : 'text-gray-400'} shrink-0`}/>
+          <div className="flex flex-col justify-center">
+            <h4 className={`font-bold text-[13px] leading-tight ${localCapabilities?.android?.ready ? 'text-emerald-300' : 'text-gray-400'}`}>Control</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">{localCapabilities?.android?.ready ? 'ADB / Emulator listo' : 'Computer control pendiente'}</p>
+          </div>
+        </div>
+
+        <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
+          <Network size={32} className="text-gray-400 shrink-0"/>
+          <div className="flex flex-col justify-center">
+            <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Enjambre</h4>
+            <p className="text-[11px] text-gray-500 leading-tight">Paralelo</p>
+          </div>
         </div>
       </div>
 
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
-        <MaskHappy size={32} className="text-gray-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">RolPlay</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Personajes</p>
+      {screenStream && (
+        <div className="mt-2 border border-cyan-500/30 bg-cyan-500/5 rounded-xl p-2">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] uppercase tracking-[0.18em] text-cyan-300 font-bold">Preview de captura viva</span>
+            <button onClick={toggleScreenShare} className="text-[11px] text-cyan-300 hover:text-white">Detener</button>
+          </div>
+          <video ref={videoRef} autoPlay muted playsInline className="w-full max-h-56 rounded-lg border border-cyan-500/20 bg-black object-contain" />
+          <div className="mt-2 text-[11px] text-cyan-100/70">La captura puede venir de pantalla completa, una ventana o una pestaña del navegador según la selección del sistema.</div>
         </div>
-      </div>
+      )}
 
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
-        <Chats size={32} className="text-gray-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Talk</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Voz fluida</p>
+      <div className="mt-2 rounded-xl border border-white/10 bg-black/30 p-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[11px] uppercase tracking-[0.18em] text-white/45 font-bold">Centro local</span>
+          <span className="text-[10px] text-white/35">Estado real del entorno</span>
         </div>
-      </div>
-
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
-        <TerminalWindow size={32} className="text-gray-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">CLI</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Terminal</p>
-        </div>
-      </div>
-
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
-        <PaintBrush size={32} className="text-gray-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">UI</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Render vivo</p>
-        </div>
-      </div>
-
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
-        <HardDrives size={32} className="text-gray-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">RAG</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Memoria</p>
-        </div>
-      </div>
-
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
-        <Scan size={32} className="text-gray-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Crawler</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Scraping</p>
-        </div>
-      </div>
-
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
-        <CodeBlock size={32} className="text-gray-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Sandbox</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Aislado</p>
-        </div>
-      </div>
-
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
-        <AppWindow size={32} className="text-gray-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Control</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Computer</p>
-        </div>
-      </div>
-      
-      <div className="bg-black/40 border border-white/5 opacity-40 rounded-none pl-[0.5cm] py-3 pr-2 flex items-center gap-3 cursor-not-allowed">
-        <Network size={32} className="text-gray-400 shrink-0"/>
-        <div className="flex flex-col justify-center">
-          <h4 className="font-bold text-[13px] text-gray-400 leading-tight">Enjambre</h4>
-          <p className="text-[11px] text-gray-500 leading-tight">Paralelo</p>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { label: 'Ollama', detail: localCapabilities?.ollama?.ready ? 'Hermes listo' : 'No accesible', ready: Boolean(localCapabilities?.ollama?.ready) },
+            { label: 'FFmpeg', detail: localCapabilities?.ffmpeg?.ready ? 'Media local listo' : 'No detectado', ready: Boolean(localCapabilities?.ffmpeg?.ready) },
+            { label: 'Android', detail: localCapabilities?.android?.ready ? 'ADB/Emulator detectado' : 'No detectado', ready: Boolean(localCapabilities?.android?.ready) },
+            { label: 'Voz', detail: speechRecognitionSupported ? 'Dictado local listo' : 'Sin soporte nativo', ready: speechRecognitionSupported },
+          ].map((capability) => (
+            <div key={capability.label} className={`rounded-lg border px-3 py-2 ${capability.ready ? 'border-emerald-500/25 bg-emerald-500/5' : 'border-white/10 bg-white/5'}`}>
+              <div className={`text-[11px] font-bold uppercase tracking-[0.14em] ${capability.ready ? 'text-emerald-300' : 'text-white/55'}`}>{capability.label}</div>
+              <div className="text-[11px] text-white/55 mt-1">{capability.detail}</div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -236,8 +309,10 @@ const FreeChatCapabilitiesGrid = () => {
 };
 
 const FlowArchitect: React.FC = () => {
-    const { chatMessages, addChatMessage, addActivityLog, setFlow, setAgentCards, setBlueprintMd, setTriggerChatSend, activityLogs, quantumPhase, setQuantumPhase, isFreeChat, setFreeChat } = useStudioStore();
-      const [input, setInput] = useState('');
+    const { chatMessages, chatHistories, rollupCurrentChat, toggleMessageStar, saveProject, resetProject, addChatMessage, addActivityLog, setFlow, setAgentCards, setBlueprintMd, setTriggerChatSend, activityLogs, quantumPhase, setQuantumPhase, } = useStudioStore();
+    const [input, setInput] = useState('');
+    const [chatSearch, setChatSearch] = useState('');
+    const [showStarredOnly, setShowStarredOnly] = useState(false);
     const [isListening, setIsListening] = useState(false);
     const recognitionRef = useRef<any>(null);
 
@@ -285,12 +360,10 @@ const FlowArchitect: React.FC = () => {
     const [isTyping, setIsTyping] = useState(false);
   const [thinkingPhrase, setThinkingPhrase] = useState('');
   const [showSetup, setShowSetup] = useState(false);
-  const [selectedAgentId, setSelectedAgentId] = useState('aurelios-core');
-  const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem('aurelios_model') || 'free.ai/auto');
+  const [selectedModel, setSelectedModel] = useState(() => normalizeAureliosModel(localStorage.getItem('aurelios_model') || DEFAULT_AURELIOS_MODEL));
   const [currentThemeKey, setCurrentThemeKey] = useState(() => localStorage.getItem('aurelios_theme') || 'obsidian');
   const [selectedChatAgentId, setSelectedChatAgentId] = useState('aurelios-core');
   const [carouselSlide, setCarouselSlide] = useState(0);
-  const [showSwarmSlider, setShowSwarmSlider] = useState(true);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isHandlingSendRef = useRef<boolean>(false);
   // Ref mutable para que el trigger del store siempre llame a la versión más reciente de handleSend
@@ -326,6 +399,7 @@ const FlowArchitect: React.FC = () => {
 
 
   const clearChat = () => {
+    useStudioStore.getState().saveFlowState(); // Punto de retorno antes de borrar TODO
     useStudioStore.setState({ 
       chatMessages: [],
       // Limpiar Espacio 1 (Activity Log)
@@ -379,66 +453,209 @@ const FlowArchitect: React.FC = () => {
     setThinkingPhrase(THINKING_PHRASES[Math.floor(Math.random() * THINKING_PHRASES.length)]);
     setIsTyping(true);
 
-    if (isFreeChat) {
-      addActivityLog({ source: 'AureliOS FreeChat', message: 'Enviando prompt e ingestando archivos al Modo Libre...', status: 'FREECHAT' });
-      
-      const doFreeChat = async () => {
-        try {
-          const { freeChatFiles } = useStudioStore.getState();
-          let finalPrompt = textToSend;
-          
-          let uploadedFiles = [];
-          
-          if (freeChatFiles && freeChatFiles.length > 0) {
-            addActivityLog({ source: 'AureliOS FreeChat', message: `Procesando ${freeChatFiles.length} archivo(s)...`, status: 'FREECHAT' });
+    
+    // --- OMNICHAT ROUTING ---
+    let targetPhase = 'omni';
+    let actualPrompt = textToSend;
+
+    // Fuerza OmniChat (El Router Maestro / Swarms) para todo mensaje, a menos que el usuario esté en un tab específico de old-machine
+    if (textToSend.trim().toLowerCase().startsWith('/flow')) {
+         targetPhase = 'phase1_triage';
+         actualPrompt = textToSend.substring(5).trim();
+         setQuantumPhase('phase1_triage');
+    } else {
+         targetPhase = 'omni';
+         setQuantumPhase('omni');
+    }
+
+    if (targetPhase === 'omni') {
+        // FREECHAT MODE
+        addActivityLog({ source: 'AureliOS OmniChat', message: 'Ejecutando Modo Sandbox...', status: 'FREECHAT' });
+        
+        const doFreeChat = async () => {
+          try {
+            const { freeChatFiles } = useStudioStore.getState();
             
-            for (const file of freeChatFiles) {
-              const buffer = await file.arrayBuffer();
-              const base64Str = btoa(
-                new Uint8Array(buffer)
-                  .reduce((data, byte) => data + String.fromCharCode(byte), '')
-              );
-              uploadedFiles.push({
-                name: file.name,
-                mime_type: file.type || 'application/octet-stream',
-                data: base64Str
+            let uploadedFiles = [];
+            
+            if (freeChatFiles && freeChatFiles.length > 0) {
+              addActivityLog({ source: 'AureliOS OmniChat', message: `Procesando ${freeChatFiles.length} archivo(s)...`, status: 'FREECHAT' });
+              
+              for (const file of freeChatFiles) {
+                const buffer = await file.arrayBuffer();
+                const base64Str = btoa(
+                  new Uint8Array(buffer)
+                    .reduce((data, byte) => data + String.fromCharCode(byte), '')
+                );
+                uploadedFiles.push({
+                  name: file.name,
+                  mime_type: file.type || 'application/octet-stream',
+                  data: base64Str
+                });
+              }
+              useStudioStore.setState({ freeChatFiles: [] });
+            }
+  
+            const payload = {
+              messages: chatMessages.concat({ role: 'human', content: actualPrompt, id: crypto.randomUUID() }),
+              files: uploadedFiles.length > 0 ? uploadedFiles : undefined,
+              model: selectedModel
+            };
+  
+            const res = await fetch(`${API_URL}/studio/freechat_stream`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+              signal: abortControllerRef.current?.signal
+            });
+            if (!res.ok) throw new Error(`Error en OmniChat: ${res.status}`);
+            
+            const reader = res.body?.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let rawReply = '';
+            
+            // Crea un mensaje inicial vacio
+            addChatMessage({ role: 'agent', content: '...', model: selectedModel });
+            
+            if (reader) {
+                let hasParsedTopology = false;
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    const chunk = decoder.decode(value, { stream: true });
+                    rawReply += chunk;
+                    
+                    if (!hasParsedTopology && (rawReply.includes('</topology>') || (rawReply.includes('```') && (rawReply.includes('"nodes"') || rawReply.includes('"topology"'))))) {
+                        const { nodes, edges, cards, md } = parseAIResponseToFlow(rawReply);
+                        if (nodes.length > 0) {
+                            hasParsedTopology = true;
+                            useStudioStore.getState().setFlow(nodes, edges);
+                            if (cards && cards.length > 0) {
+                                useStudioStore.getState().setAgentCards(cards);
+                            }
+                            if (md) {
+                                useStudioStore.getState().setBlueprintMd(md);
+                            }
+                            useStudioStore.getState().setZone2ActiveTab('infinityboard');
+                        }
+                    }
+                    
+                    let displayReply = rawReply;
+                    const topStart = displayReply.indexOf('<topology>');
+                    if (topStart !== -1) {
+                        const topEnd = displayReply.indexOf('</topology>');
+                        if (topEnd !== -1) {
+                            displayReply = displayReply.substring(0, topStart) + displayReply.substring(topEnd + 11);
+                        } else {
+                            displayReply = displayReply.substring(0, topStart) + "\n> *Generando Topología en InfinityBoard...*\n";
+                        }
+                    } else {
+                        const mdJsonMatch = displayReply.match(/```(?:json)?\s*\{[\s\S]*?"nodes"[\s\S]*?\}\s*```/);
+                        if (mdJsonMatch) {
+                            displayReply = displayReply.replace(mdJsonMatch[0], '\n> **Topología generada:** Arquitectura añadida al lienzo (InfinityBoard).\n');
+                        }
+                    }
+                    
+                    // Limpiar tags de enjambre y disparadores visualmente durante el stream para no romper Markdown
+                    displayReply = displayReply.replace(/<\/?swarm>/g, '');
+                    displayReply = displayReply.replace(/\[(?:EJECUTAR_SWARM|TRIGGER_DYNAMIC_SWARM|TRIGGER_HIVE|EJECUTAR_HIVE)\]/g, '');
+                    
+                    useStudioStore.getState().updateLastChatMessage(displayReply);
+                }
+            }
+
+            const swarmRegex = /<swarm>([\s\S]*?)<\/swarm>/g;
+            let swarmMatch;
+            while ((swarmMatch = swarmRegex.exec(rawReply)) !== null) {
+              addChatMessage({ role: 'swarm', content: swarmMatch[1].trim(), model: selectedModel });
+              rawReply = rawReply.replace(swarmMatch[0], '');
+            }
+
+            const { nodes, edges, cards, md } = parseAIResponseToFlow(rawReply);
+            
+            // Limpieza conversacional para el chat:
+            // Los bloques de arquitectura masivos se canalizan al Blueprint y al Canvas.
+            let conversationalChat = rawReply
+              .replace(/<thinking>[\s\S]*?(?:<\/thinking>|$)/gi, '')
+              .replace(/<(?:topology|json)>[\s\S]*?(?:<\/(?:topology|json)>|$)/gi, '')
+              .replace(/<artifact\s+name="[^"]+">[\s\S]*?(?:<\/artifact>|$)/gi, '')
+              .replace(/```(?:json)?\s*([{\[][\s\S]*?[}\]])\s*```/gi, '')
+              .replace(/\[(?:EJECUTAR_SWARM|TRIGGER_DYNAMIC_SWARM|TRIGGER_HIVE|EJECUTAR_HIVE)\]/g, '')
+              .trim();
+
+            if (nodes.length > 0) {
+              const artNode = nodes.find(n => (n.data as any)?.kind === 'artifact' || n.type === 'artifact');
+              const summaryBadge = `\n\n---\n🎯 **Topología:** ${nodes.length} módulos y ${edges.length} conexiones sincronizados en el **InfinityBoard**.\n🏛️ **Blueprint Técnico:** Especificación completa y contratos archivados en la pestaña **Blueprint**.\n${artNode ? `⚡ **Artefacto Activo:** \`${(artNode.data as any)?.label || 'Componente'}\` listo en el lienzo (haz clic en él para ver el Render Vivo o editarlo).\n` : ''}`;
+              
+              if (!conversationalChat || conversationalChat.length < 20) {
+                conversationalChat = `He diseñado y validado la arquitectura solicitada.${summaryBadge}`;
+              } else {
+                conversationalChat += summaryBadge;
+              }
+            }
+            
+            useStudioStore.getState().updateLastChatMessage(conversationalChat || 'Procesamiento completado.');
+            
+            setIsTyping(false);
+            isHandlingSendRef.current = false;
+            
+            if (nodes.length > 0) {
+               useStudioStore.getState().setFlow(nodes, edges);
+               if (cards && cards.length > 0) {
+                  useStudioStore.getState().setAgentCards(cards);
+               }
+               if (md) {
+                  useStudioStore.getState().setBlueprintMd(md);
+               }
+               
+               // Si se forjó un artefacto, vincularlo de inmediato para Render Vivo
+               const artNode = nodes.find(n => (n.data as any)?.kind === 'artifact' || n.type === 'artifact');
+               if (artNode) {
+                  const artData = (artNode.data as any) || {};
+                  useStudioStore.getState().setActiveArtifact({
+                     name: artData.label || 'Artefacto Generado',
+                     content: artData.content || artData.description || ''
+                  });
+               }
+               
+               useStudioStore.getState().setZone2ActiveTab('infinityboard');
+            }
+
+          } catch (error: any) {
+            if (error.name !== 'AbortError') {
+              console.error('[OmniChat Error]', error);
+              // Mostrar el error real, no un mensaje genérico
+              let errorDetail = error?.message || String(error) || 'Error desconocido';
+              let errorType = '🔴 Error de red';
+              if (errorDetail.includes('fetch') || errorDetail.includes('Failed to fetch') || errorDetail.includes('NetworkError')) {
+                errorType = '🔴 Backend no disponible';
+                errorDetail = 'El servidor Python no responde. ¿Está iniciado el backend en el puerto 8000?';
+              } else if (errorDetail.includes('JSON') || errorDetail.includes('parse') || errorDetail.includes('SyntaxError')) {
+                errorType = '🟡 Error de parsing';
+                errorDetail = 'El modelo generó JSON mal formado. Intenta de nuevo — el modelo regenerará la topología.';
+              } else if (errorDetail.includes('timeout') || errorDetail.includes('408')) {
+                errorType = '🟡 Timeout';
+                errorDetail = 'El modelo tardó demasiado en responder. La iGPU AMD puede estar sobrecargada. Espera 10s e intenta de nuevo.';
+              } else if (errorDetail.includes('500') || errorDetail.includes('Internal Server')) {
+                errorType = '🔴 Error interno del servidor';
+                errorDetail = 'Revisa los logs del backend Python para ver el stack trace completo.';
+              }
+              addChatMessage({
+                role: 'agent',
+                content: `**${errorType}**\n\n\`${errorDetail}\``,
+                model: 'System'
               });
             }
-            useStudioStore.setState({ freeChatFiles: [] });
+            setIsTyping(false);
+            isHandlingSendRef.current = false;
           }
-
-          const payload = {
-            messages: chatMessages.concat({ role: 'human', content: finalPrompt, id: crypto.randomUUID() }),
-            files: uploadedFiles.length > 0 ? uploadedFiles : undefined
-          };
-
-          const res = await fetch(`${API_URL}/studio/freechat`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          
-          const data = await res.json();
-          let responseText = data.response?.content || "No se pudo leer la respuesta del agente.";
-          
-          addChatMessage({ role: 'agent', content: responseText, model: 'AureliOS (Libre)' });
-          addActivityLog({ source: 'AureliOS FreeChat', message: 'Respuesta completada.', status: 'FREECHAT' });
-          speak(responseText);
-
-        } catch (err: any) {
-          addChatMessage({ role: 'agent', content: `[ERROR] Falló la conexión: ${err.message}`, model: 'AureliOS (Libre)' });
-          addActivityLog({ source: 'AureliOS FreeChat', message: `Error: ${err.message}`, status: 'FREECHAT' });
-        } finally {
-          isHandlingSendRef.current = false;
-          setIsTyping(false);
-        }
-      };
-      
-      doFreeChat();
-      return;
+        };
+        
+        doFreeChat();
+        return;
     }
+    // ORCHESTRATOR MODE (PHASES)
+    
 
     abortControllerRef.current = new AbortController();
     const signal = abortControllerRef.current.signal;
@@ -668,23 +885,42 @@ const FlowArchitect: React.FC = () => {
           <button onClick={() => setSelectedChatAgentId('aurelios-core')} title="Reset to Core" className={`hover:brightness-125 transition-opacity ${t.text}`}>
             <ArrowsClockwise size={18} />
           </button>
+          <button onClick={() => setShowStarredOnly(!showStarredOnly)} title="Ver solo favoritos" className={`transition-colors ${showStarredOnly ? 'text-yellow-400' : `hover:text-yellow-400 ${t.text}`}`}>
+            <Star size={18} weight={showStarredOnly ? 'fill' : 'regular'} />
+          </button>
+          
+          <div className="relative group">
+            <MagnifyingGlass size={18} className={`absolute left-2 top-1/2 -translate-y-1/2 opacity-50 ${t.text}`} />
+            <input 
+              type="text" 
+              placeholder="Buscar..." 
+              value={chatSearch}
+              onChange={(e) => setChatSearch(e.target.value)}
+              className={`w-24 focus:w-40 transition-all duration-300 pl-8 pr-2 py-1 text-xs rounded-full bg-black/20 border ${t.border} outline-none ${t.text}`}
+            />
+          </div>
+
           <button onClick={clearChat} title="Limpiar chat" className={`hover:brightness-125 transition-opacity ${t.text}`}>
             <Trash size={18} />
           </button>
 
+          <button onClick={() => rollupCurrentChat()} title="Comprimir Historial (Rollup)" className={`hover:text-purple-400 transition-colors ${t.text}`}>
+            <Archive size={18} />
+          </button>
           
+          <button onClick={() => saveProject()} title="Guardar Proyecto" className={`hover:text-green-400 transition-colors ${t.text}`}>
+            <FloppyDisk size={18} />
+          </button>
+
           <button onClick={() => setShowSetup(true)} title="Configuración de Modelo y Tema" className={`hover:brightness-125 transition-opacity ${t.text}`}>
             <Gear size={18} />
-          </button>
-          <button onClick={() => setShowSwarmSlider(!showSwarmSlider)} title="Ocultar/Mostrar herramientas" className={`hover:brightness-125 transition-opacity ${t.text} ${!showSwarmSlider ? 'opacity-50' : ''}`}>
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M21.5,13.5C21.5,12.12 20.38,11 19,11C18.67,11 18.36,11.07 18.07,11.18L16,8H17C18.1,8 19,7.1 19,6C19,4.9 18.1,4 17,4H14V5C14,6.1 13.1,7 12,7C10.9,7 10,6.1 10,5V4H7C5.9,4 5,4.9 5,6C5,7.1 5.9,8 7,8H8L5.93,11.18C5.64,11.07 5.33,11 5,11C3.62,11 2.5,12.12 2.5,13.5C2.5,14.88 3.62,16 5,16H7.13L8.54,19.31C8.28,19.68 8.12,20.12 8.12,20.6C8.12,21.93 9.19,23 10.52,23C11.6,23 12.52,22.28 12.82,21.28L15.46,19.31C15.87,19.74 16.45,20 17.1,20C18.35,20 19.37,19.04 19.49,17.8L21.5,13.5Z" /></svg>
           </button>
         </div>
       </div>
 
       {/* Model Pill (Always visible) */}
       <div className="flex flex-col items-center gap-2 mb-2 relative z-10 px-4 pt-4 shrink-0">
-        {!isFreeChat && (
+        {quantumPhase !== 'omni' && (
           <div className="flex gap-2 items-center mx-auto">
             <button onClick={() => document.getElementById("agent-carousel")?.scrollTo({ left: 0, behavior: "smooth" })} className={`w-2 h-2 rounded-full transition-colors duration-300 ${carouselSlide === 0 ? t.primary : "bg-gray-500 opacity-40"}`} />
             <button onClick={() => document.getElementById("agent-carousel")?.scrollTo({ left: window.innerWidth, behavior: "smooth" })} className={`w-2 h-2 rounded-full transition-colors duration-300 ${carouselSlide === 1 ? t.primary : "bg-gray-500 opacity-40"}`} />
@@ -694,7 +930,7 @@ const FlowArchitect: React.FC = () => {
         <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/30 border border-white/5 shadow-inner text-[11px] font-mono tracking-widest text-emerald-400/90 font-semibold backdrop-blur-sm">
           <Brain size={14} className="text-emerald-400" weight="duotone" />
           <span>{selectedModel.startsWith('ollama/') ? `LOCAL | ${selectedModel.replace('ollama/', '')}` : `NUBE | ${selectedModel}`}</span>
-          {activeAgentName && !isFreeChat && (
+          {activeAgentName && quantumPhase !== 'omni' && (
             <>
               <span className="text-emerald-400/50">|</span>
               <span className="text-cyan-400 flex items-center gap-1.5 animate-pulse">
@@ -705,165 +941,118 @@ const FlowArchitect: React.FC = () => {
         </div>
       </div>
 
-      <div className={`shrink-0 flex flex-col transition-all duration-300 overflow-hidden ${showSwarmSlider ? (isFreeChat ? 'h-[360px] opacity-100' : 'h-[240px] opacity-100') : 'h-0 opacity-0 !pb-0'}`}>
-        {isFreeChat ? (
-            <FreeChatCapabilitiesGrid />
-          ) : (
-        <div 
-          id="agent-carousel"
-          className="flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory gap-4 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          onScroll={(e) => {
-            const slide = Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth);
-            if (slide !== carouselSlide) setCarouselSlide(slide);
-          }}
-        >
-          {/* Slide 1: Swarms */}
-          <div className="shrink-0 w-full snap-center h-full flex flex-col pt-0 pb-2">
-            <div className="grid grid-cols-3 gap-1.5">
-              {/* Col 1: Enjambre Radar */}
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[9px] font-bold tracking-widest uppercase opacity-70 mb-0.5 text-center flex justify-center items-center gap-1"><Wrench size={12} /> Radar</span>
-                {swarm1.map(tool => (
-                  <div key={tool.id} className="relative group">
-                    <button 
-                      onClick={() => setSelectedChatAgentId(tool.id)} 
-                      className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${selectedChatAgentId === tool.id ? `border-current ${t.primary}` : t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
-                    >
-                      <div className="flex items-center gap-3 overflow-hidden ml-1">
-                        <div className="shrink-0">{tool.icon}</div>
-                        <span className={`text-[10px] font-bold truncate group-hover:brightness-125 transition-all ${selectedChatAgentId === tool.id ? t.primary : ""}`}>{tool.title}</span>
-                      </div>
-                      <div 
-                        onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
-                        className={` hover:brightness-125 ${t.primary} shrink-0 ml-1 cursor-pointer transition-opacity`}
-                        title="Escuchar descripción"
-                      >
-                        <SpeakerHigh size={12} weight="fill" />
-                      </div>
-                    </button>
-                    {/* Invisible custom tooltip */}
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-3 bg-black border border-[#444] text-[13px] text-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.9)] opacity-0 invisible group-hover:brightness-125 group-hover:visible transition-all z-[999] pointer-events-none text-center font-medium leading-relaxed">
-                      {tool.desc}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {/* Col 2: Enjambre Inquisidor */}
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[9px] font-bold tracking-widest uppercase opacity-70 mb-0.5 text-center flex justify-center items-center gap-1"><BugBeetle size={12} /> Inquisidor</span>
-                {swarm2.map(tool => (
-                  <div key={tool.id} className="relative group">
-                    <button 
-                      onClick={() => setSelectedChatAgentId(tool.id)} 
-                      className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${selectedChatAgentId === tool.id ? `border-current ${t.primary}` : t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
-                    >
-                      <div className="flex items-center gap-3 overflow-hidden ml-1">
-                        <div className="shrink-0">{tool.icon}</div>
-                        <span className={`text-[10px] font-bold truncate group-hover:brightness-125 transition-all ${selectedChatAgentId === tool.id ? t.primary : ""}`}>{tool.title}</span>
-                      </div>
-                      <div 
-                        onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
-                        className={` hover:brightness-125 ${t.primary} shrink-0 ml-1 cursor-pointer transition-opacity`}
-                        title="Escuchar descripción"
-                      >
-                        <SpeakerHigh size={12} weight="fill" />
-                      </div>
-                    </button>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-3 bg-black border border-[#444] text-[13px] text-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.9)] opacity-0 invisible group-hover:brightness-125 group-hover:visible transition-all z-[999] pointer-events-none text-center font-medium leading-relaxed">
-                      {tool.desc}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {/* Col 3: Enjambre Forja */}
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[9px] font-bold tracking-widest uppercase opacity-70 mb-0.5 text-center flex justify-center items-center gap-1"><ShieldCheck size={12} /> Forja</span>
-                {swarm3.map(tool => (
-                  <div key={tool.id} className="relative group">
-                    <button 
-                      onClick={() => setSelectedChatAgentId(tool.id)} 
-                      className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${selectedChatAgentId === tool.id ? `border-current ${t.primary}` : t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
-                    >
-                      <div className="flex items-center gap-3 overflow-hidden ml-1">
-                        <div className="shrink-0">{tool.icon}</div>
-                        <span className={`text-[10px] font-bold truncate group-hover:brightness-125 transition-all ${selectedChatAgentId === tool.id ? t.primary : ""}`}>{tool.title}</span>
-                      </div>
-                      <div 
-                        onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
-                        className={` hover:brightness-125 ${t.primary} shrink-0 ml-1 cursor-pointer transition-opacity`}
-                        title="Escuchar descripción"
-                      >
-                        <SpeakerHigh size={12} weight="fill" />
-                      </div>
-                    </button>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-3 bg-black border border-[#444] text-[13px] text-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.9)] opacity-0 invisible group-hover:brightness-125 group-hover:visible transition-all z-[999] pointer-events-none text-center font-medium leading-relaxed">
-                      {tool.desc}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Slide 2: Classic Agents */}
-          <div className="shrink-0 w-full snap-center h-full flex flex-col pt-0 pb-2">
-            <span className="text-[9px] font-bold tracking-widest uppercase opacity-70 mb-2 text-center flex justify-center items-center gap-1"><Wrench size={12} /> God-Tier Prompts</span>
-            <div className="grid grid-cols-3 gap-1.5">
-              {aiTools.map(tool => (
-                <div key={tool.id} className="relative group">
-                    <button 
-                      onClick={() => setSelectedChatAgentId(tool.id)} 
-                      className={`w-full flex items-center justify-between p-1.5 ${t.toolBg} border ${selectedChatAgentId === tool.id ? `border-current ${t.primary}` : t.panelBorder} ${t.toolHover} rounded text-left transition-all duration-300`}
-                    >
-                      <div className="flex items-center gap-3 overflow-hidden ml-1">
-                        <div className="shrink-0">{tool.icon}</div>
-                        <span className={`text-[11px] font-bold truncate group-hover:brightness-125 transition-all ${selectedChatAgentId === tool.id ? t.primary : ''}`}>{tool.title}</span>
-                      </div>
-                      <div 
-                        onClick={(e) => { e.stopPropagation(); speak(tool.desc); }}
-                        className={` hover:brightness-125 ${t.primary} shrink-0 ml-2 cursor-pointer transition-opacity`}
-                        title="Escuchar descripción"
-                      >
-                        <SpeakerHigh size={14} weight="fill" />
-                      </div>
-                    </button>
-                    {/* Invisible custom tooltip */}
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-3 bg-black border border-[#444] text-[13px] text-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.9)] opacity-0 invisible group-hover:brightness-125 group-hover:visible transition-all z-[999] pointer-events-none text-center font-medium leading-relaxed">
-                      {tool.desc}
-                    </div>
-                  </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        )}
-      </div>
-
       {/* Chat History / Invisible Scroll */}
       <div className="flex-1 overflow-y-auto px-4 py-2 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        {chatMessages.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-center  text-base px-8 font-medium leading-relaxed">
+        {chatMessages.length === 0 && (!chatHistories || chatHistories.length === 0) ? (
+          <div className="flex h-full items-center justify-center text-center text-base px-8 font-medium leading-relaxed">
             Selecciona un pilar de AureliOS o escribe tu visión arquitectónica para comenzar.
           </div>
         ) : (
-          chatMessages.map(msg => (
-            <div key={msg.id} className={`flex flex-col max-w-[90%] min-w-0 ${msg.role === 'human' ? 'ml-auto' : 'mr-auto'}`}>
-              <div className={`p-3 text-[14px] leading-relaxed break-words ${
-                msg.role === 'human' ? `${t.humanBubble} rounded-xl rounded-tr-sm font-medium` : `${t.aiBubble} border rounded-xl rounded-tl-sm shadow-sm`
-              } transition-colors duration-500`}>
-                <div className={msg.role === 'agent' ? `markdown-body max-w-none break-words ${t.text}` : 'whitespace-pre-wrap'}>
-                  {msg.role === 'agent' ? (
-                    <ReactMarkdown>
-                      {msg.content}
-                    </ReactMarkdown>
-                  ) : (
-                    msg.content
-                  )}
+          <>
+          {chatHistories && chatHistories.map(history => {
+            const filteredMsgs = history.messages.filter(msg => {
+              if (showStarredOnly && !msg.starred) return false;
+              if (chatSearch && !msg.content.toLowerCase().includes(chatSearch.toLowerCase())) return false;
+              return true;
+            });
+            if (filteredMsgs.length === 0) return null;
+            return (
+              <details key={history.id} className={`w-full border ${t.border} rounded-lg mb-2 cursor-pointer`}>
+                <summary className={`p-2 font-bold ${t.text} bg-black/10 hover:bg-black/20 transition-colors`}>
+                  <Cube className="inline mr-2" /> {history.name} ({filteredMsgs.length} msgs)
+                </summary>
+                <div className="p-4 flex flex-col gap-4 border-t" style={{ borderColor: 'inherit' }}>
+                  {filteredMsgs.map(msg => (
+                    <div key={msg.id} className={`flex flex-col max-w-[90%] min-w-0 ${msg.role === 'human' ? 'ml-auto' : 'mr-auto'}`}>
+                      {msg.role === 'swarm' ? (
+                        <details className={`w-full border ${t.border} rounded-lg mb-2 shadow-sm`}>
+                          <summary className={`p-3 font-semibold ${t.text} bg-purple-500/10 hover:bg-purple-500/20 cursor-pointer transition-colors flex items-center`}>
+                            <Cpu className="inline mr-2 text-purple-400 animate-pulse" /> Enjambre en Ejecución (Discusión)
+                          </summary>
+                          <div className="p-4 flex flex-col gap-3 border-t bg-black/40" style={{ borderColor: 'inherit' }}>
+                            <div className={`text-xs font-mono whitespace-pre-wrap ${t.text} opacity-80`}>
+                              {msg.content.replace(/<thinking>/g, '---\n**🧠 Proceso Cognitivo:**\n\n_').replace(/<\/thinking>/g, '_\n\n---')}
+                            </div>
+                          </div>
+                        </details>
+                      ) : (
+                        <div className={`p-3 text-[14px] leading-relaxed break-words relative ${
+                          msg.role === 'human' ? `${t.humanBubble} rounded-xl rounded-tr-sm font-medium` : `${t.aiBubble} border rounded-xl rounded-tl-sm shadow-sm`
+                        } transition-colors duration-500`}>
+                          <button onClick={() => toggleMessageStar(msg.id)} className={`absolute -left-6 top-1/2 -translate-y-1/2 transition-opacity opacity-0 group-hover:opacity-100 ${msg.starred ? 'text-yellow-400 opacity-100' : 'text-zinc-500'}`}>
+                            <Star size={16} weight={msg.starred ? 'fill' : 'regular'} />
+                          </button>
+                          <div className={msg.role === 'agent' ? `markdown-body max-w-none break-words ${t.text}` : 'whitespace-pre-wrap'}>
+                            {msg.role === 'agent' ? <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
+  code({node, className, children, ...props}: any) {
+    const match = /language-(\w+)/.exec(className || '');
+    if (match && match[1] === 'countdown') {
+      return <CountdownTimer initialSeconds={parseInt(String(children).replace(/\n$/, '')) || 120} />;
+    }
+    return <code className={className} {...props}>{children}</code>;
+  }
+}}>{msg.content.replace(/<thinking>/g, '---\n**🧠 Proceso Cognitivo:**\n\n_').replace(/<\/thinking>/g, '_\n\n---')}</ReactMarkdown> : msg.content}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              </div>
+              </details>
+            )
+          })}
+          {chatMessages.filter(msg => {
+            if (showStarredOnly && !msg.starred) return false;
+            if (chatSearch && !msg.content.toLowerCase().includes(chatSearch.toLowerCase())) return false;
+            return true;
+          }).map(msg => (
+            <div key={msg.id} className={`flex flex-col max-w-[90%] min-w-0 ${msg.role === 'human' ? 'ml-auto' : 'mr-auto'}`}>
+              {msg.role === 'swarm' ? (
+                <details className={`w-full border ${t.border} rounded-lg mb-2 shadow-sm`}>
+                  <summary className={`p-3 font-semibold ${t.text} bg-purple-500/10 hover:bg-purple-500/20 cursor-pointer transition-colors flex items-center`}>
+                    <Cpu className="inline mr-2 text-purple-400 animate-pulse" /> Enjambre en Ejecución (Discusión)
+                  </summary>
+                  <div className="p-4 flex flex-col gap-3 border-t bg-black/40" style={{ borderColor: 'inherit' }}>
+                    <div className={`text-xs font-mono whitespace-pre-wrap ${t.text} opacity-80`}>
+                      {msg.content.replace(/<thinking>/g, '---\n**🧠 Proceso Cognitivo:**\n\n_').replace(/<\/thinking>/g, '_\n\n---')}
+                    </div>
+                  </div>
+                </details>
+              ) : (
+                <div className={`p-3 text-[14px] leading-relaxed break-words relative group ${
+                  msg.role === 'human' ? `${t.humanBubble} rounded-xl rounded-tr-sm font-medium` : `${t.aiBubble} border rounded-xl rounded-tl-sm shadow-sm`
+                } transition-colors duration-500`}>
+                  <button onClick={() => toggleMessageStar(msg.id)} className={`absolute -left-6 top-1/2 -translate-y-1/2 transition-opacity opacity-0 group-hover:opacity-100 ${msg.starred ? 'text-yellow-400 opacity-100' : 'text-zinc-500'}`}>
+                    <Star size={16} weight={msg.starred ? 'fill' : 'regular'} />
+                  </button>
+                  <div className={msg.role === 'agent' ? `markdown-body max-w-none break-words ${t.text}` : 'whitespace-pre-wrap'}>
+                    {msg.role === 'agent' ? (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
+                          code({node, className, children, ...props}: any) {
+                            const match = /language-(\w+)/.exec(className || '');
+                            if (match && match[1] === 'countdown') {
+                              return <CountdownTimer initialSeconds={parseInt(String(children).replace(/\n$/, '')) || 120} />;
+                            }
+                            return <code className={className} {...props}>{children}</code>;
+                          }
+                        }}>
+                          {msg.content.replace(/<thinking>/g, '---\n**🧠 Proceso Cognitivo:**\n\n_').replace(/<\/thinking>/g, '_\n\n---')}
+                        </ReactMarkdown>
+                    ) : (
+                      msg.content
+                    )}
+                  </div>
+                </div>
+              )}
               {msg.role === 'human' && (
-                <div className="flex justify-end mt-1 px-1">
+                <div className="flex justify-end mt-1 px-1 gap-2">
+                  <button 
+                    onClick={() => toggleMessageStar(msg.id)}
+                    className={`${msg.starred ? 'text-amber-400' : 'text-zinc-500'} hover:text-amber-300 transition-colors`}
+                    title={msg.starred ? "Quitar destacado" : "Destacar mensaje"}
+                  >
+                    <Star size={14} weight={msg.starred ? "fill" : "regular"} />
+                  </button>
                   <button 
                     onClick={() => navigator.clipboard.writeText(msg.content)}
                     className="text-zinc-500 hover:text-blue-400 transition-colors"
@@ -888,6 +1077,8 @@ const FlowArchitect: React.FC = () => {
               )}
             </div>
           ))
+          }
+          </>
         )}
         {isTyping && (
           <div className="flex flex-col max-w-[85%] mr-auto mt-4">
@@ -924,17 +1115,7 @@ const FlowArchitect: React.FC = () => {
             </button>
           ) : (
             <>
-              <button
-                onClick={() => { setFreeChat(!isFreeChat) }}
-                  className={`p-3 rounded-xl transition-all shadow-md flex items-center justify-center shrink-0 hover:scale-105 border ${
-                    isFreeChat 
-                      ? 'bg-green-500 text-white border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.6)]' 
-                      : 'bg-cyan-500 text-white border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.6)]'
-                  }`}
-                  title={isFreeChat ? "Modo FreeChat Activo" : "Modo Orquestación Activo"}
-                >
-                  <Brain weight="fill" size={22} />
-                </button>
+              
                 <button
                   onClick={toggleListen}
                   className={`p-3 rounded-xl transition-all shadow-md flex items-center justify-center shrink-0 ${
@@ -976,7 +1157,7 @@ const FlowArchitect: React.FC = () => {
                 <h4 className="font-bold flex items-center gap-2 text-[14px] uppercase tracking-wider mb-2"><Cpu size={16} /> Modelos IA</h4>
                 
                 <div className="text-[11px] font-bold uppercase tracking-wider text-white/50 mt-1 mb-1">NUBE</div>
-                {['anthropic/claude-3.5-sonnet', 'openai/gpt-4o', 'meta-llama/llama-3.1-70b-instruct', 'qwen/qwen-2.5-72b-instruct'].map(m => (
+                {CLOUD_MODEL_OPTIONS.map((m: string) => (
                   <button 
                     key={m}
                     onClick={() => setSelectedModel(m)}
@@ -988,7 +1169,7 @@ const FlowArchitect: React.FC = () => {
                 ))}
 
                 <div className="text-[11px] font-bold uppercase tracking-wider text-white/50 mt-3 mb-1">LOCAL</div>
-                {['hermes3:8b', 'llama3.1:8b', 'mistral', 'qwen2.5:7b', 'phi3:3.8b'].map(m => (
+                {LOCAL_MODEL_OPTIONS.map((m: string) => (
                     <button 
                       key={m}
                       onClick={() => setSelectedModel(`ollama/${m}`)}
@@ -1027,7 +1208,7 @@ const FlowArchitect: React.FC = () => {
 };
 
 const FlowDiagram: React.FC = () => {
-  const { flowNodes, flowEdges, isSynthesizing, setPipelineProgress, pipelineStage, pipelineProgress } = useStudioStore();
+  const { flowNodes, flowEdges, isSynthesizing, setPipelineProgress, pipelineStage, pipelineProgress, showLegend, setShowLegend, showMiniMap, setShowMiniMap, undoFlow, redoFlow, pastFlows, futureFlows } = useStudioStore();
   const [nodes, setNodes, onNodesChange] = useNodesState(flowNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(flowEdges);
   const [selectedNode, setSelectedNode] = useState<any>(null);
@@ -1072,19 +1253,38 @@ const FlowDiagram: React.FC = () => {
         minZoom={0.2}
         attributionPosition="bottom-left"
       >
-        <Background color="#0f172a" gap={24} size={1} />
-        <Controls position="bottom-left" className="!bg-[#0d1117] !border-[#1e293b] !rounded-xl" />
+        
+          <Panel position="top-left" className="!m-4">
+            <div className="bg-[#0d1117]/90 backdrop-blur-md border border-[#1e293b] rounded-xl p-3 flex flex-col gap-2 shadow-xl">
+              <h3 className="text-xs font-bold text-gray-400 mb-1 uppercase tracking-widest">Leyenda de Nodos</h3>
+              {Object.entries(KIND_META).map(([k, meta]) => {
+                const Icon = meta.Icon;
+                return (
+                  <div key={k} className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded flex items-center justify-center" style={{ backgroundColor: `${meta.color}22`, border: `1px solid ${meta.color}66` }}>
+                      <Icon size={14} weight="bold" style={{ color: meta.color }} />
+                    </div>
+                    <span className="text-xs font-semibold" style={{ color: '#cbd5e1' }}>{meta.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </Panel>
+<Background color="#0f172a" gap={24} size={1} />
+        
+        {showMiniMap && (
         <MiniMap
-          position="bottom-left"
-          style={{ left: 60, bottom: 0 }}
-          nodeColor={(n) => {
-            const k = (n.data?.kind as string) || 'agent';
-            const colors: Record<string,string> = { agent:'#3b82f6', trigger:'#10b981', tool:'#f59e0b', router:'#a855f7', human:'#ec4899', sink:'#64748b' };
-            return colors[k] || '#3b82f6';
-          }}
-          maskColor="rgba(0,0,0,0.85)"
-          className="!bg-[#0d1117] !border-[#1e293b]"
-        />
+                  position="bottom-left"
+                  style={{ left: 60, bottom: 0 }}
+                  nodeColor={(n) => {
+                    const k = (n.data?.kind as string) || 'agent';
+                    const colors: Record<string,string> = { agent:'#3b82f6', trigger:'#10b981', tool:'#f59e0b', router:'#a855f7', human:'#ec4899', sink:'#64748b' };
+                    return colors[k] || '#3b82f6';
+                  }}
+                  maskColor="rgba(0,0,0,0.85)"
+                  className="!bg-[#0d1117] !border-[#1e293b]"
+                />
+      )}
       </ReactFlow>
 
 
@@ -1201,7 +1401,7 @@ const AgentCarousel: React.FC = () => {
 
   React.useEffect(() => {
     if (!isSynthesizing || !synthStartTime) { setTimeLeft(300); return; }
-    const calcTime = () => Math.max(0, 900 - Math.floor((Date.now() - synthStartTime) / 1000));
+    const calcTime = () => Math.max(0, 1200 - Math.floor((Date.now() - synthStartTime) / 1000));
     setTimeLeft(calcTime());
     const interval = setInterval(() => setTimeLeft(calcTime()), 1000);
     return () => clearInterval(interval);
@@ -1557,29 +1757,62 @@ const ArchitectureBlueprint: React.FC = () => {
       
       saveFlowState(); // Guardar historial antes de modificar
 
-      // Encontrar la posición más baja de los nodos existentes para colocar los nuevos debajo
+      let cardIndex = 0;
+      const updatedNodes = flowNodes.map(node => {
+        // Actualizamos los nodos abstractos con los perfiles detallados
+        if ((node.type === 'agent' || node.type === 'mainPrompt' || node.data?.kind === 'agent') && cardIndex < agentCards.length) {
+          const card = agentCards[cardIndex];
+          cardIndex++;
+          return {
+            ...node,
+            type: node.type || detectKind(card.name, card.description),
+            data: {
+              ...node.data,
+              kind: node.data?.kind || detectKind(card.name, card.description),
+              label: card.name,
+              role: card.role,
+              fullDescription: card.description,
+              allTools: card.requiredTools || [],
+              inputPort: card.inputOutputContract?.split('->')[0] || '',
+              outputPort: card.inputOutputContract?.split('->')[1] || ''
+            }
+          };
+        }
+        return node;
+      });
+
+      // Si el motor descubrió más agentes de los que había en el grafo original, los añadimos debajo
       const maxExistingY = flowNodes.reduce((max, node) => Math.max(max, node.position.y), 0);
       const startY = maxExistingY > 0 ? maxExistingY + 250 : 100;
 
-      const newNodes = agentCards.map((card, i) => ({
-        id: card.id,
-        type: 'agent',
-        position: { x: 100 + (i % 3) * 350, y: startY + Math.floor(i / 3) * 200 },
-        data: {
-          label: card.name,
-          role: card.role,
-          fullDescription: card.description,
-          allTools: card.requiredTools || [],
-          inputPort: card.inputOutputContract?.split('->')[0] || '',
-          outputPort: card.inputOutputContract?.split('->')[1] || ''
-        }
-      }));
-      setFlow([...flowNodes, ...newNodes], flowEdges);
+      const newNodes = [];
+      for (let i = cardIndex; i < agentCards.length; i++) {
+        const card = agentCards[i];
+        const inferredKind = detectKind(card.name, card.description);
+        newNodes.push({
+          id: card.id,
+          type: inferredKind,
+          position: { x: 100 + ((i - cardIndex) % 3) * 350, y: startY + Math.floor((i - cardIndex) / 3) * 200 },
+          data: {
+            kind: inferredKind,
+            label: card.name,
+            role: card.role,
+            fullDescription: card.description,
+            allTools: card.requiredTools || [],
+            inputPort: card.inputOutputContract?.split('->')[0] || '',
+            outputPort: card.inputOutputContract?.split('->')[1] || ''
+          }
+        });
+      }
+
+      // Reemplazamos los nodos fusionados y añadimos los nuevos
+      setFlow([...updatedNodes, ...newNodes], flowEdges);
       setActiveTab('discovery');
-      addChatMessage({ role: 'agent', content: '✅ CHECKLIST COMPLETADO: Nodos de los AgentCards agregados al Infinity Board manteniendo el flujo anterior.', model: 'aurelios' });
+      addChatMessage({ role: 'agent', content: '✨ FUSIÓN COMPLETADA: Los perfiles sintetizados se han inyectado en el grafo, actualizando los nodos base y preservando sus conexiones.', model: 'aurelios' });
     };
 
-    const runMatchAndFusePipeline = async () => {
+        const runMatchAndFusePipeline = async () => {
+      (window as any).runMatchAndFuse = runMatchAndFusePipeline;
 
     const { flowNodes, setAgentCards, setActiveTab, setIsSynthesizing, isSynthesizing, setSynthStartTime } = useStudioStore.getState();
     if (isSynthesizing) return; // Prevent multiple concurrent executions
@@ -1596,10 +1829,10 @@ const ArchitectureBlueprint: React.FC = () => {
 
     // AbortController con 15 minutos — el pipeline SDK tiene 3 etapas y puede tardar ~90s en Ollama, pero con contexto largo y iGPU puede llegar a 8-10 min
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15 * 60 * 1000);
+    const timeoutId = setTimeout(() => controller.abort(), 20 * 60 * 1000);
 
     try {
-      const selectedModel = localStorage.getItem('aurelios_model') || 'ollama/hermes3:8b';
+      const selectedModel = normalizeAureliosModel(localStorage.getItem('aurelios_model') || DEFAULT_AURELIOS_MODEL);
       
       const res = await fetch(`${API_URL}/studio/match_fuse`, {
         method: 'POST',
@@ -1667,26 +1900,56 @@ const ArchitectureBlueprint: React.FC = () => {
       // 1. Restaurar los nodos originales desde el markdown base
       const { nodes: baseNodes, edges: baseEdges } = parseAIResponseToFlow(phase3Content);
       
-      // 2. Conservar los AgentCards y reposicionarlos debajo
+      // 2. Fusionar las tarjetas (AgentCards) con los nodos base
+      let cardIndex = 0;
+      const updatedNodes = baseNodes.map(node => {
+        if ((node.type === 'agent' || node.type === 'mainPrompt' || node.data?.kind === 'agent') && cardIndex < agentCards.length) {
+          const card = agentCards[cardIndex];
+          cardIndex++;
+          return {
+            ...node,
+            type: node.type || detectKind(card.name, card.description),
+            data: {
+              ...node.data,
+              kind: node.data?.kind || detectKind(card.name, card.description),
+              label: card.name,
+              role: card.role,
+              fullDescription: card.description,
+              allTools: card.requiredTools || [],
+              inputPort: card.inputOutputContract?.split('->')[0] || '',
+              outputPort: card.inputOutputContract?.split('->')[1] || ''
+            }
+          };
+        }
+        return node;
+      });
+
+      // Si sobran agentCards, se añaden debajo
       const maxExistingY = baseNodes.reduce((max, node) => Math.max(max, node.position.y), 0);
       const startY = maxExistingY > 0 ? maxExistingY + 250 : 100;
 
-      const cardNodes = agentCards.map((card, i) => ({
-        id: card.id,
-        type: 'agent',
-        position: { x: 100 + (i % 3) * 350, y: startY + Math.floor(i / 3) * 200 },
-        data: {
-          label: card.name,
-          role: card.role,
-          fullDescription: card.description,
-          allTools: card.requiredTools || [],
-          inputPort: card.inputOutputContract?.split('->')[0] || '',
-          outputPort: card.inputOutputContract?.split('->')[1] || ''
-        }
-      }));
+      const newNodes = [];
+      for (let i = cardIndex; i < agentCards.length; i++) {
+        const card = agentCards[i];
+        const inferredKind = detectKind(card.name, card.description);
+        newNodes.push({
+          id: card.id,
+          type: inferredKind,
+          position: { x: 100 + ((i - cardIndex) % 3) * 350, y: startY + Math.floor((i - cardIndex) / 3) * 200 },
+          data: {
+            kind: inferredKind,
+            label: card.name,
+            role: card.role,
+            fullDescription: card.description,
+            allTools: card.requiredTools || [],
+            inputPort: card.inputOutputContract?.split('->')[0] || '',
+            outputPort: card.inputOutputContract?.split('->')[1] || ''
+          }
+        });
+      }
 
-      // 3. Fusionar el grafo original con las tarjetas
-      setFlow([...baseNodes, ...cardNodes], baseEdges);
+      // 3. Establecer el grafo fusionado
+      setFlow([...updatedNodes, ...newNodes], baseEdges);
     } else {
       console.warn("No base markdown content found to recover.");
     }
@@ -1718,6 +1981,29 @@ const ArchitectureBlueprint: React.FC = () => {
         <div className="flex-1" />
         {activeTab === 'discovery' && (
           <div className="flex items-center gap-3">
+            
+            {/* New Toolbar Actions */}
+            <div className="flex bg-black/40 rounded-full overflow-hidden border border-white/10">
+              <button onClick={() => (window as any).runMatchAndFuse()} disabled={isSynthesizing} title="Detectar Agentes" className="flex items-center gap-1.5 px-3 py-1.5 transition-all text-xs font-bold hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed border-r border-white/10">
+                 <Brain size={16} weight={isSynthesizing ? "regular" : "duotone"} className={isSynthesizing ? "text-gray-500" : "text-[#00D9FF]"} />
+              </button>
+              <button onClick={() => alert('Fusión Infinita: El motor ahora analizará las conexiones (Edges) de tu grafo para orquestar y evolucionar todos los agentes cohesivamente.')} title="Upgrade" className="flex items-center gap-1.5 px-3 py-1.5 transition-all text-xs font-bold hover:bg-white/10 hover:text-white border-r border-white/10">
+                 <Network size={16} weight="duotone" className="text-purple-400" />
+              </button>
+              <button onClick={() => useStudioStore.getState().setShowLegend(!useStudioStore.getState().showLegend)} title="Toggle Nodos" className="flex items-center gap-1.5 px-3 py-1.5 transition-all text-xs font-bold hover:bg-white/10 hover:text-white border-r border-white/10">
+                 <div className="font-bold text-xs text-blue-400">N</div>
+              </button>
+              <button onClick={() => useStudioStore.getState().setShowMiniMap(!useStudioStore.getState().showMiniMap)} title="Toggle Mapa" className="flex items-center gap-1.5 px-3 py-1.5 transition-all text-xs font-bold hover:bg-white/10 hover:text-white">
+                 <div className="font-bold text-xs text-green-400">M</div>
+              </button>
+                <button onClick={() => { useStudioStore.getState().saveFlowState(); useStudioStore.getState().setFlow([], []); }} title="Limpiar Lienzo" className="flex items-center gap-1.5 px-3 py-1.5 transition-all text-xs font-bold hover:bg-red-500/20 hover:text-red-400 border-l border-white/10">
+                   <Trash size={16} weight="duotone" className="text-red-400" />
+                </button>
+                <button onClick={() => { useStudioStore.getState().saveFlowState(); alert("Estado guardado en el Historial (Autoguardado siempre activo en cache local)."); }} title="Guardar / Autoguardado" className="flex items-center gap-1.5 px-3 py-1.5 transition-all text-xs font-bold hover:bg-green-500/20 hover:text-green-400 border-l border-white/10">
+                   <FloppyDisk size={16} weight="duotone" className="text-green-400" />
+                </button>
+            </div>
+
             <div className="flex bg-black/40 rounded-full overflow-hidden border border-white/10">
               <button 
                 onClick={undoFlow}
@@ -1746,43 +2032,29 @@ const ArchitectureBlueprint: React.FC = () => {
             </button>
           </div>
         )}
+        {(activeTab === 'synthesis' || activeTab === 'blueprint') && (
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => { 
+                useStudioStore.getState().saveFlowState(); 
+                useStudioStore.getState().setFlow([], []); 
+                useStudioStore.getState().setAgentCards([]);
+                useStudioStore.getState().setBlueprintMd('');
+              }} 
+              title="Limpiar Board, Agentes y Blueprint" 
+              className="flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs font-bold bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 border border-red-500/20 cursor-pointer shadow-lg"
+            >
+              <Trash size={15} weight="duotone" /> Limpiar Board
+            </button>
+          </div>
+        )}
       </div>
       <div className="flex-1 flex flex-col relative min-h-0 p-4 md:p-5" style={{ background: '#030712' }}>
         <div className="flex-1 flex flex-col relative overflow-hidden bg-transparent">
           {renderContent()}
         </div>
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto flex gap-4">
-          {activeTab === 'synthesis' ? (
-            <button 
-              onClick={go2WF}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-full transition-all font-bold text-sm bg-emerald-500 text-white hover:brightness-110 shadow-[0_0_20px_rgba(16,185,129,0.4)]"
-            >
-              <Robot size={18} weight="duotone" />
-              Go2WF
-            </button>
-          ) : activeTab === 'discovery' ? (
-            <>
-              <button 
-                onClick={runMatchAndFusePipeline}
-                disabled={isSynthesizing}
-                className={`flex items-center gap-2 px-6 py-2.5 rounded-full transition-all font-bold text-sm ${
-                  isSynthesizing
-                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-50 shadow-none'
-                    : 'bg-[#00D9FF] text-black hover:brightness-110 shadow-[0_0_20px_rgba(0,217,255,0.3)]'
-                }`}
-              >
-                <Brain size={18} weight={isSynthesizing ? "regular" : "duotone"} />
-                {isSynthesizing ? 'Sintetizando...' : 'Detectar Agentes'}
-              </button>
-              <button 
-                onClick={() => alert('Fusión Infinita: El motor ahora analizará las conexiones (Edges) de tu grafo para orquestar y evolucionar todos los agentes cohesivamente.')}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-full transition-all font-bold text-sm bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:brightness-110 shadow-[0_0_20px_rgba(168,85,247,0.4)]"
-              >
-                <Network size={18} weight="duotone" />
-                Upgrade
-              </button>
-            </>
-          ) : null}
+          {null}
         </div>
       </div>
     </div>
@@ -1801,8 +2073,171 @@ const THINKING_PHRASES = [
 
 
 
+
+const CountdownTimer = ({ initialSeconds }: { initialSeconds: number }) => {
+  const [timeLeft, setTimeLeft] = React.useState(initialSeconds);
+  React.useEffect(() => {
+    if (timeLeft <= 0) return;
+    const t = setInterval(() => setTimeLeft(l => l - 1), 1000);
+    return () => clearInterval(t);
+  }, [timeLeft]);
+  return <span className="font-mono bg-cyan-900/40 text-cyan-400 border border-cyan-800 px-3 py-1 rounded-md shadow-[0_0_15px_rgba(34,211,238,0.2)]">⏱️ {Math.floor(timeLeft/60)}:{(timeLeft%60).toString().padStart(2, '0')}</span>;
+};
+
+
+const LiveArtifactModal: React.FC = () => {
+  const { activeArtifact, setActiveArtifact } = useStudioStore();
+  const [viewMode, setViewMode] = useState<'preview' | 'code' | 'edit'>('preview');
+  const [copied, setCopied] = useState(false);
+  const [editableContent, setEditableContent] = useState('');
+
+  useEffect(() => {
+    setEditableContent(activeArtifact?.content || '');
+    setViewMode('preview');
+  }, [activeArtifact?.name, activeArtifact?.content]);
+
+  if (!activeArtifact) return null;
+
+  let rawContent = editableContent.trim();
+  const htmlMatch = rawContent.match(/```(?:html|jsx|tsx)?\s*([\s\S]*?)```/);
+  if (htmlMatch) {
+    rawContent = htmlMatch[1];
+  }
+
+  let finalHtml = rawContent;
+  if (!rawContent.includes('<html') && !rawContent.includes('<!DOCTYPE')) {
+    finalHtml = `<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${activeArtifact.name}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { background-color: #0b0f19; color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body class="p-6">
+  ${rawContent}
+</body>
+</html>`;
+  }
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(rawContent);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownload = () => {
+    const blob = new Blob([finalHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${activeArtifact.name.replace(/\s+/g, '_')}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleSaveArtifact = () => {
+    const store = useStudioStore.getState();
+    const updatedNodes = store.flowNodes.map((node) => {
+      const data: any = node.data || {};
+      const nodeName = String(data.label || data.name || '');
+      const isArtifact = node.type === 'artifact' || data.kind === 'artifact';
+      if (!isArtifact || nodeName !== activeArtifact.name) return node;
+      return {
+        ...node,
+        data: {
+          ...data,
+          content: editableContent,
+          description: editableContent,
+        },
+      };
+    });
+    store.setFlow(updatedNodes, store.flowEdges);
+    setActiveArtifact({ ...activeArtifact, content: editableContent });
+    setViewMode('preview');
+  };
+
+  return (
+    <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex flex-col p-4 md:p-6 animate-in fade-in duration-200">
+      <div className="flex items-center justify-between bg-[#111827] border border-white/10 rounded-t-xl px-5 py-3 shadow-2xl">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-amber-500/10 rounded-lg text-amber-400">
+            <AppWindow size={22} weight="duotone" />
+          </div>
+          <div>
+            <h3 className="font-bold text-white text-base tracking-tight">{activeArtifact.name}</h3>
+            <span className="text-[10px] text-amber-400/90 font-mono tracking-wider uppercase">Artefacto Vivo / Dashboard Interactivo</span>
+          </div>
+        </div>
+
+        <div className="flex bg-black/50 border border-white/10 rounded-lg p-1">
+          <button 
+            onClick={() => setViewMode('preview')} 
+            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${viewMode === 'preview' ? 'bg-amber-500 text-black shadow-lg font-black' : 'text-gray-400 hover:text-white'}`}
+          >
+            <Eye size={15} weight="bold" /> Render Vivo
+          </button>
+          <button 
+            onClick={() => setViewMode('code')} 
+            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${viewMode === 'code' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}
+          >
+            <CodeBlock size={15} weight="bold" /> Código
+          </button>
+          <button 
+            onClick={() => setViewMode('edit')} 
+            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${viewMode === 'edit' ? 'bg-cyan-500/20 text-cyan-300' : 'text-gray-400 hover:text-white'}`}
+          >
+            <PaintBrush size={15} weight="bold" /> Editar
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button onClick={handleCopy} title="Copiar código" className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-semibold border border-white/5 flex items-center gap-1.5 transition-colors cursor-pointer">
+            {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />} {copied ? 'Copiado' : 'Copiar'}
+          </button>
+          <button onClick={handleDownload} title="Descargar HTML" className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-semibold border border-white/5 flex items-center gap-1.5 transition-colors cursor-pointer">
+            <DownloadSimple size={14} /> Descargar
+          </button>
+          <button onClick={handleSaveArtifact} title="Guardar cambios en el lienzo" className="px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-xs font-semibold border border-cyan-500/20 flex items-center gap-1.5 transition-colors cursor-pointer">
+            <FloppyDisk size={14} /> Guardar
+          </button>
+          <button onClick={() => setActiveArtifact(null)} title="Cerrar vista previa" className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-colors ml-2 cursor-pointer">
+            <X size={18} weight="bold" />
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 bg-[#0b0f19] border-x border-b border-white/10 rounded-b-xl overflow-hidden relative shadow-2xl">
+        {viewMode === 'preview' ? (
+          <iframe 
+            srcDoc={finalHtml} 
+            title={activeArtifact.name}
+            sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
+            className="w-full h-full border-0 bg-[#0b0f19]"
+          />
+        ) : viewMode === 'code' ? (
+          <pre className="w-full h-full p-6 overflow-auto text-xs font-mono text-gray-300 bg-[#070a12] select-all leading-relaxed">
+            {rawContent}
+          </pre>
+        ) : (
+          <textarea
+            value={editableContent}
+            onChange={(e) => setEditableContent(e.target.value)}
+            className="w-full h-full p-6 text-xs font-mono text-gray-200 bg-[#070a12] outline-none resize-none leading-relaxed"
+            spellCheck={false}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function AgentOSStudio() {
-  const { isSynthesizing, setPipelineProgress, isFreeChat } = useStudioStore();
+  const { isSynthesizing, setPipelineProgress } = useStudioStore();
 
   React.useEffect(() => {
     let timeoutId: any;
@@ -1862,12 +2297,18 @@ export default function AgentOSStudio() {
       </div>
 
       {/* Columna 2 — 70% — Swarm Orchestration */}
-      <div style={{ width: '70%', height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0, position: 'relative', padding: isFreeChat ? '0.5cm' : '0' }}>
-        {isFreeChat ? null : <SwarmOrchestrationPanel />}
+      <div style={{ width: '70%', height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0, position: 'relative', padding: '0' }}>
+        <SwarmOrchestrationPanel />
       </div>
+
+      {/* Modal / Ventana de Render Vivo para Artefactos y Dashboards */}
+      <LiveArtifactModal />
     </div>
   );
 }
+
+
+
 
 
 

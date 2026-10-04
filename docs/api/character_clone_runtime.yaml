@@ -1,0 +1,24 @@
+openapi: 3.0.0
+info:
+  title: Character Clone Runtime API
+  version: "1.0"
+paths:
+  /clone:
+    post:
+      summary: Clone a character profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Character data to clone
+              additionalProperties: true
+      responses:
+        '200':
+          description: Successful clone, returns the same payload
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
