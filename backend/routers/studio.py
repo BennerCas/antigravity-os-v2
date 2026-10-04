@@ -269,6 +269,14 @@ async def clone_character_profile(req: CharacterCloneRequest):
     profile = await clone_character(req.name, req.source_prompt, req.archetype or "")
     return {"status": "ok", "profile": profile}
 
+@router.post("/characters/clone-complete")
+async def clone_character_complete(req: CharacterCloneRequest):
+    from backend.services.character_clone_runtime import clone_complete
+    profile = await clone_complete(req.dict())
+    return {"status": "ok", "profile": profile}
+
+
+
 
 @router.get("/swarm/runs")
 async def list_swarm_runs():
