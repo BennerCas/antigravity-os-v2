@@ -1,4 +1,4 @@
-<!-- registry-sync: version=10.6.0; skills=2452; stars=34791; updated_at=2026-04-24T00:26:24+00:00 -->
+<!-- registry-sync: version=10.6.2; skills=2452; stars=34791; updated_at=2026-04-24T00:26:24+00:00 -->
 # 🌌 Antigravity Awesome Skills: 2,452+ Agentic Skills for Claude Code, Gemini CLI, Cursor, Copilot & More
 
 > **Installable GitHub library of 2,452+ agentic skills for Claude Code, Cursor, Codex CLI, Gemini CLI, Antigravity, and other AI coding assistants.**
@@ -22,7 +22,7 @@ You can use this repo to install a broad multi-tool skill library, start from ro
 [![OpenCode](https://img.shields.io/badge/OpenCode-CLI-gray?style=for-the-badge)](https://github.com/opencode-ai/opencode)
 [![Antigravity](https://img.shields.io/badge/Antigravity-AI%20IDE-red?style=for-the-badge)](https://github.com/sickn33/antigravity-awesome-skills)
 
-**Current release: V10.6.0.** Trusted by 35k+ GitHub stargazers, this repository combines official and community skill collections with bundles, workflows, installation paths, and docs that help you go from first install to daily use quickly.
+**Current release: V10.6.2.** Trusted by 35k+ GitHub stargazers, this repository combines official and community skill collections with bundles, workflows, installation paths, and docs that help you go from first install to daily use quickly.
 
 ## Why This Repo
 
@@ -411,7 +411,6 @@ We officially thank the following contributors for their help in making this rep
 - [@8hrsk](https://github.com/8hrsk)
 - [@fernandorych](https://github.com/fernandorych)
 - [@nikolasdehor](https://github.com/nikolasdehor)
-- [@SnakeEye-sudo](https://github.com/SnakeEye-sudo)
 - [@talesperito](https://github.com/talesperito)
 - [@zebbern](https://github.com/zebbern)
 - [@sstklen](https://github.com/sstklen)
@@ -690,7 +689,6 @@ We officially thank the following contributors for their help in making this rep
 - [@Rudra-G-23](https://github.com/Rudra-G-23)
 - [@runapi-builder](https://github.com/runapi-builder)
 - [@sahilaghara1911](https://github.com/sahilaghara1911)
-- [@samuelbushi](https://github.com/samuelbushi)
 - [@sanjay3290](https://github.com/sanjay3290)
 - [@sarveshtalele](https://github.com/sarveshtalele)
 - [@saudademjj](https://github.com/saudademjj)
@@ -743,17 +741,36 @@ We officially thank the following contributors for their help in making this rep
 - [@ShianMike](https://github.com/ShianMike)
 - [@shitianfang](https://github.com/shitianfang)
 - [@wwewtech](https://github.com/wwewtech)
-- [@axelfreeman](https://github.com/axelfreeman)
 - [@googio](https://github.com/googio)
 - [@HEOJUNFO](https://github.com/HEOJUNFO)
 - [@ianjennings](https://github.com/ianjennings)
 - [@IRONICBo](https://github.com/IRONICBo)
-- [@MuratKaragozgil](https://github.com/MuratKaragozgil)
 - [@OlyaTi](https://github.com/OlyaTi)
 - [@roli-lpci](https://github.com/roli-lpci)
 - [@RomanShprenger](https://github.com/RomanShprenger)
-- [@spicyapi-owner](https://github.com/spicyapi-owner)
 - [@tomelias10](https://github.com/tomelias10)
+- [@alapha888](https://github.com/alapha888)
+- [@anup-a](https://github.com/anup-a)
+- [@beatra-ai](https://github.com/beatra-ai)
+- [@borzelo](https://github.com/borzelo)
+- [@bosmdavid-gif](https://github.com/bosmdavid-gif)
+- [@GeminiGeorge22](https://github.com/GeminiGeorge22)
+- [@gongdear](https://github.com/gongdear)
+- [@hank-metalbear](https://github.com/hank-metalbear)
+- [@javierluraschi](https://github.com/javierluraschi)
+- [@jinliyl](https://github.com/jinliyl)
+- [@ManiShah7](https://github.com/ManiShah7)
+- [@MohammadHijjawi97](https://github.com/MohammadHijjawi97)
+- [@muratkaragozgil](https://github.com/muratkaragozgil)
+- [@Natchannnn](https://github.com/Natchannnn)
+- [@Nedomas](https://github.com/Nedomas)
+- [@omaralbeik](https://github.com/omaralbeik)
+- [@prateeks367](https://github.com/prateeks367)
+- [@ranglang](https://github.com/ranglang)
+- [@Ranjeet2063](https://github.com/Ranjeet2063)
+- [@roberttidball](https://github.com/roberttidball)
+- [@vanshyadav1408](https://github.com/vanshyadav1408)
+- [@yabloky](https://github.com/yabloky)
 
 ## Star History
 
