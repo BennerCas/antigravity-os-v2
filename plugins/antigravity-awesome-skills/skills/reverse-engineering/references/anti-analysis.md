@@ -813,7 +813,7 @@ Many CTF challenges stack multiple checks:
 | **N** | IAT 空/极少 + 自写哈希解析 API | bp `GetProcAddress`/`Ldr*`；哈希反查导出表；回注符号；与「干净 IAT」铁律协同 | `E-api-hash` | P0 |
 | **O** | 线性反汇编大量 db、花指令致错位 | F5/Hex-Rays；动态确认真流；junk nop 后 reanalyze；静还不全以动态为准 | `E-junk-code` | P2 |
 | **P** | `NtQueryInformationProcess` class 7/30/31 | ScyllaHide 或 hook 返回；记 InformationClass | `E-anti-debug-ntqip` | P0 |
-| **Q** | `.rsrc` 过大/高熵/非标准 RT_RCDATA | Resource Hacker/CFF 提取；`FindResource`/`LoadResource` xref；解密后 dump | `E-rsrc-payload` | P1 |
+| **Q** | `.rsrc` 过大/高熵/非标准 RT_RCDATA | Resource Hacker or [Resource Cracker](https://www.pelock.com/products/resource-cracker)/CFF 提取；`FindResource`/`LoadResource` xref；解密后 dump | `E-rsrc-payload` | P1 |
 | **R** | 静态 IAT 无某 DLL，运行时才用 | 查 Delay Import Table；bp `__delayLoadHelper2` 或首次调用；纳入能力评估 | `E-delay-import` | P1 |
 | **S** | 恒真/恒假条件、大片死代码 | **See** ollvm / angr 等；patch 唯一可达分支或动态路径回注 | `E-opaque-pred` | P1 指针 |
 | **T** | ASCII strings 无结果，数据区像 UTF-16 | `strings -el` 或 `-encoding=utf-16le`；IDA Alt+A unicode；纳入 IOC | `E-wide-strings` | P0 |
